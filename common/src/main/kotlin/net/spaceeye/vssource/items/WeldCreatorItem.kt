@@ -2,58 +2,37 @@ package net.spaceeye.vssource.items
 
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
-import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.item.Item
-import net.minecraft.world.item.ItemStack
-import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
-import net.spaceeye.vssource.LOG
-import net.spaceeye.vssource.VSSItems
+import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vssource.utils.Vector3d
 import net.spaceeye.vssource.utils.posShipToWorld
-import org.joml.Quaterniond
-import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
-import org.valkyrienskies.core.apigame.constraints.VSAttachmentOrientationConstraint
-import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
-import org.valkyrienskies.core.util.toAABBd
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class WeldCreatorItem : Item(Properties().tab(VSSItems.TAB).stacksTo(1)) {
-    //TODO find a way to detect if player it's a singular click or a button press
-
+class WeldCreatorItem : BaseTool() {
     var blockPos: BlockPos? = null
 
-    fun tryMakeConnection(level: Level, player: Player, usedHand: InteractionHand) {
+    override fun resetState() {
+        blockPos = null
+    }
+
+    override fun activatePrimaryFunction(level: Level, player: Player, clipResult: BlockHitResult) {
+        if (level.isClientSide) {return}
         if (level !is ServerLevel) {return}
 
-        //TODO maybe just one distance constraint but with rotation constraints?
-
-        val clipResult = level.clip(
-            ClipContext(
-                player.eyePosition,
-                (Vector3d(player.eyePosition)
-                        + Vector3d(player.lookAngle).snormalize() * 100).toMCVec3(),
-                ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE,
-                null
-            )
-        )
-
         if (blockPos == null) {blockPos = clipResult.blockPos; return}
-        if (blockPos == clipResult.blockPos) {blockPos = null ; return}
+        if (blockPos == clipResult.blockPos) {resetState(); return}
 
         val ship1 = level.getShipManagingPos(blockPos!!)
         val ship2 = level.getShipManagingPos(clipResult.blockPos)
 
-        if (ship1 == null && ship2 == null) { blockPos = null ; return }
-        if (ship1 == ship2) { blockPos = null ; return }
+        if (ship1 == null && ship2 == null) { resetState(); return }
+        if (ship1 == ship2) { resetState(); return }
 
         var shipId1: ShipId = ship1?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
         var shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
@@ -111,7 +90,6 @@ class WeldCreatorItem : Item(Properties().tab(VSSItems.TAB).stacksTo(1)) {
             val rpoint1 = if (ship1 == null) point1 else posShipToWorld(ship1, point1)
             val rpoint2 = if (ship2 == null) point2 else posShipToWorld(ship2, point2)
 
-
             val constraint = VSAttachmentConstraint(
                 shipId1, shipId2,
                 1e-10,
@@ -119,17 +97,9 @@ class WeldCreatorItem : Item(Properties().tab(VSSItems.TAB).stacksTo(1)) {
                 1e10, (rpoint1 - rpoint2).dist()
             )
 
-            level.shipObjectWorld.createNewConstraint(constraint)
+            makeConstraint(level, constraint)
         }
 
-        blockPos = null
-    }
-
-    override fun use(level: Level, player: Player, usedHand: InteractionHand): InteractionResultHolder<ItemStack> {
-        if (level.isClientSide) {return super.use(level, player, usedHand)}
-
-        tryMakeConnection(level, player, usedHand)
-
-        return super.use(level, player, usedHand)
+        resetState()
     }
 }

@@ -22,14 +22,14 @@ private class LoadingCluster(
     val neededShipIds: MutableSet<ShipId>,
 ) {
     //boolean is for isStatic status before loading
-    private val shipRefs: MutableList<Pair<ServerShip, Boolean>> = mutableListOf()
+    private val shipRefs: MutableMap<ShipId, Pair<ServerShip, Boolean>> = mutableMapOf()
 
     fun setLoadedId(ship: ServerShip) {
         if (neededShipIds.isEmpty()) {return}
         if (!neededShipIds.remove(ship.id)) { return }
 
-        shipRefs.add(Pair(ship, ship.isStatic))
-        ship.isStatic = true // so that ships don't drift while shit is being loaded
+        shipRefs.computeIfAbsent(ship.id) {Pair(ship, ship.isStatic)}
+        ship.isStatic = true // so that ships don't drift while ships are being loaded
 
         if (neededShipIds.isEmpty()) {
             applyConstraints()
@@ -41,10 +41,12 @@ private class LoadingCluster(
 
     private fun applyConstraints() {
         for (constraint in constraintsToLoad) {
-            level.shipObjectWorld.createNewConstraint(constraint)
+            mMakeConstraint(level, constraint)
         }
-        for (ship in shipRefs) {
-            ship.first.isStatic = ship.second
+        for ((k, ship) in shipRefs) {
+            //TODO figure out why tf it doesn't work
+//            ship.first.isStatic = ship.second
+            ship.first.isStatic = false
         }
     }
 }
@@ -68,16 +70,18 @@ class ConstraintManager: SavedData() {
             shipsTag.put(k.toString(), constraintsTag)
         }
         tag.put("vs_source_ships_constraints", shipsTag)
+
+        instance = null
+
         return tag
     }
 
-    private fun loadDataFromTag(tag: CompoundTag) {
-        val shipsTag = tag["vs_source_ships_constraints"]!! as CompoundTag
+    private fun loadDataFromTag(shipsTag: CompoundTag) {
         for (k in shipsTag.allKeys) {
             val shipConstraintsTag = shipsTag[k]!! as CompoundTag
             val constraints = mutableListOf<VSConstraint>()
             for (kk in shipConstraintsTag.allKeys) {
-                val ctag = shipConstraintsTag[k]!! as CompoundTag
+                val ctag = shipConstraintsTag[kk]!! as CompoundTag
                 val constraint = VSConstraintDeserializationUtil.deserializeConstraint(ctag) ?: continue
                 constraints.add(constraint)
             }
@@ -99,14 +103,16 @@ class ConstraintManager: SavedData() {
         }
     }
 
+    fun setLoadedId(ship: ServerShip) {
+        if (!clusteredToLoadConstraints.containsKey(ship.id)) {return}
+        for (cluster in clusteredToLoadConstraints[ship.id]!!) {
+            cluster.setLoadedId(ship)
+        }
+    }
+
     private fun createConstraints() {
         VSEvents.shipLoadEvent.on { (ship), handler ->
-            handler.unregister()
-            val id = ship.id
-            if (!clusteredToLoadConstraints.containsKey(id)) {return@on}
-            for (cluster in clusteredToLoadConstraints[id]!!) {
-                cluster.setLoadedId(ship)
-            }
+            setLoadedId(ship)
         }
     }
 
@@ -116,10 +122,12 @@ class ConstraintManager: SavedData() {
         createConstraints()
     }
 
+    //TODO REMEMBER TO FUCKING CALL setDirty()
     fun makeConstraint(level: ServerLevel, constraint: VSConstraint): VSConstraintId {
         val constraintId = level.shipObjectWorld.createNewConstraint(constraint)!!
         shipConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(Pair(constraint, constraintId))
         shipConstraints.computeIfAbsent(constraint.shipId1) { mutableListOf() }.add(Pair(constraint, constraintId))
+        setDirty()
         return constraintId
     }
 
@@ -127,6 +135,7 @@ class ConstraintManager: SavedData() {
         private var instance: ConstraintManager? = null
         private var level: ServerLevel? = null
 
+        //TODO look closer into this
         fun getInstance(level: Level): ConstraintManager {
             if (instance != null) {return instance!!}
             level as ServerLevel
@@ -135,7 +144,9 @@ class ConstraintManager: SavedData() {
             return instance!!
         }
 
-        fun create(): ConstraintManager {return ConstraintManager() }
+        fun create(): ConstraintManager {
+            return ConstraintManager()
+        }
         fun load(tag: CompoundTag): ConstraintManager {
             val data = create()
 

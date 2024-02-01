@@ -3,7 +3,6 @@ package net.spaceeye.vssource.utils
 import net.minecraft.nbt.CompoundTag
 import net.spaceeye.vssource.LOG
 import org.valkyrienskies.core.apigame.constraints.*
-import org.valkyrienskies.mod.util.putVector3d
 
 object VSConstraintSerializationUtil {
     private fun saveBaseConstraint(constraint: VSConstraint): CompoundTag {

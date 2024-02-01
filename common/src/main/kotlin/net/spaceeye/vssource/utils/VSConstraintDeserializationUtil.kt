@@ -8,7 +8,6 @@ import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.core.apigame.constraints.VSConstraintType.*
-import org.valkyrienskies.mod.util.getVector3d
 
 private open class BaseConstraintData(
     var shipId0: ShipId,
@@ -76,26 +75,20 @@ object VSConstraintDeserializationUtil {
     }
     
     private fun loadForceData(cTag: CompoundTag, cdata: ForceConstraintData): Boolean {
-        if (!( cTag.contains("localPos0")
-            && cTag.contains("localPos1")
-            && cTag.contains("maxForce")
-            )) {return false}
+        if (!cTag.contains("maxForce")) {return false}
 
-        cdata.localPos0 = cTag.getVector3d("localPos0")!!
-        cdata.localPos1 = cTag.getVector3d("localPos1")!!
+        cdata.localPos0 = cTag.getVector3d("localPos0") ?: return false
+        cdata.localPos1 = cTag.getVector3d("localPos1") ?: return false
         cdata.maxForce = cTag.getDouble("maxForce")
 
         return true
     }
 
     private fun loadTorqueData(cTag: CompoundTag, cdata: TorqueConstraintData): Boolean {
-        if (!( cTag.contains("localRot0")
-            && cTag.contains("localRot1")
-            && cTag.contains("maxTorque")
-            )) {return false}
+        if ( !cTag.contains("maxTorque") ) {return false}
 
-        cdata.localRot0 = cTag.getQuaterniond("localRot0")!!
-        cdata.localRot1 = cTag.getQuaterniond("localRot1")!!
+        cdata.localRot0 = cTag.getQuaterniond("localRot0") ?: return false
+        cdata.localRot1 = cTag.getQuaterniond("localRot1") ?: return false
         cdata.maxTorque = cTag.getDouble("maxTorque")
 
         return true

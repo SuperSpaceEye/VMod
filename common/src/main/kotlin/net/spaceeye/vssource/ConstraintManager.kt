@@ -4,145 +4,133 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.saveddata.SavedData
-import net.spaceeye.vssource.utils.putQuaterniond
+import net.spaceeye.vssource.utils.VSConstraintDeserializationUtil
+import net.spaceeye.vssource.utils.VSConstraintSerializationUtil
+import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
-import org.valkyrienskies.core.apigame.constraints.VSConstraintType.*
+import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
-import org.valkyrienskies.mod.util.putVector3d
 
 inline fun mMakeConstraint(level: ServerLevel, constraint: VSConstraint) {
     ConstraintManager.getInstance(level).makeConstraint(level, constraint)
+}
+
+private class LoadingCluster(
+    val level: ServerLevel,
+    val constraintsToLoad: MutableList<VSConstraint>,
+    val neededShipIds: MutableSet<ShipId>,
+) {
+    //boolean is for isStatic status before loading
+    private val shipRefs: MutableList<Pair<ServerShip, Boolean>> = mutableListOf()
+
+    fun setLoadedId(ship: ServerShip) {
+        if (neededShipIds.isEmpty()) {return}
+        if (!neededShipIds.remove(ship.id)) { return }
+
+        shipRefs.add(Pair(ship, ship.isStatic))
+        ship.isStatic = true // so that ships don't drift while shit is being loaded
+
+        if (neededShipIds.isEmpty()) {
+            applyConstraints()
+
+            constraintsToLoad.clear()
+            shipRefs.clear()
+        }
+    }
+
+    private fun applyConstraints() {
+        for (constraint in constraintsToLoad) {
+            level.shipObjectWorld.createNewConstraint(constraint)
+        }
+        for (ship in shipRefs) {
+            ship.first.isStatic = ship.second
+        }
+    }
 }
 
 //ShipId seem to be unique and are retained by ships after saving/loading
 
 //TODO put constants into constants class
 class ConstraintManager: SavedData() {
-    val shipConstraints = mutableMapOf<ShipId, MutableList<VSConstraint>>()
-    val toLoadConstraints = mutableMapOf<ShipId, MutableList<VSConstraint>>()
+    private val shipConstraints = mutableMapOf<ShipId, MutableList<Pair<VSConstraint, VSConstraintId>>>()
+    private val toLoadConstraints = mutableMapOf<ShipId, MutableList<VSConstraint>>()
+    private val clusteredToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingCluster>>()
 
-    private fun saveBaseConstraint(constraint: VSConstraint): CompoundTag {
-        val ctag = CompoundTag()
-        ctag.putInt("shipId0", constraint.shipId0.toInt())
-        ctag.putInt("shipId1", constraint.shipId1.toInt())
-        ctag.putDouble("compliance", constraint.compliance)
-        ctag.putString("constraintType", constraint.constraintType.toString())
-        return ctag
-    }
-
-    private fun saveForceConstraint(constraint: VSForceConstraint, ctag: CompoundTag): CompoundTag {
-        ctag.putVector3d("localPos0", constraint.localPos0)
-        ctag.putVector3d("localPos1", constraint.localPos1)
-        ctag.putDouble("maxForce", constraint.maxForce)
-        return ctag
-    }
-
-    private fun saveTorqueConstraint(constraint: VSTorqueConstraint, ctag: CompoundTag): CompoundTag {
-        ctag.putQuaterniond("localRot0", constraint.localRot0)
-        ctag.putQuaterniond("localRot1", constraint.localRot1)
-        ctag.putDouble("maxTorque", constraint.maxTorque)
-        return ctag
-    }
-
-    //TODO refactor this
     override fun save(tag: CompoundTag): CompoundTag {
-        val shipsTags = CompoundTag()
+        val shipsTag = CompoundTag()
         for ((k, v) in shipConstraints) {
             val constraintsTag = CompoundTag()
             for ((i, constraint) in v.withIndex()) {
-                var ctag = saveBaseConstraint(constraint)
-
-                when (constraint) {
-                    is VSForceConstraint -> {
-                        ctag = saveForceConstraint(constraint, ctag)
-                        when (constraint.constraintType) {
-                            ATTACHMENT -> {
-                                ctag.putDouble("fixedDistance", (constraint as VSAttachmentConstraint).fixedDistance)
-                            }
-                            POS_DAMPING -> {
-                                ctag.putDouble("posDamping", (constraint as VSPosDampingConstraint).posDamping)
-                            }
-                            ROPE -> {
-                                ctag.putDouble("ropeLength", (constraint as VSRopeConstraint).ropeLength)
-                            }
-                            SLIDE -> {
-                                constraint as VSSlideConstraint
-                                ctag.putVector3d("localSlideAxis0", constraint.localSlideAxis0)
-                                ctag.putDouble("maxDistBetweenPoints", constraint.maxDistBetweenPoints)
-                            }
-                            else -> { LOG("CAN'T SAVE TYPE ${constraint.constraintType} IN VSForceConstraint BLOCK"); continue}
-                        }
-                    }
-                    is VSTorqueConstraint -> {
-                        ctag = saveTorqueConstraint(constraint, ctag)
-
-                        when (constraint.constraintType) {
-                            HINGE_SWING_LIMITS -> {
-                                constraint as VSHingeSwingLimitsConstraint
-                                ctag.putDouble("minSwingAngle", constraint.minSwingAngle)
-                                ctag.putDouble("maxSwingAngle", constraint.maxSwingAngle)
-                            }
-                            HINGE_TARGET_ANGLE -> {
-                                constraint as VSHingeTargetAngleConstraint
-                                ctag.putDouble("targetAngle", constraint.targetAngle)
-                                ctag.putDouble("nextTickTargetAngle", constraint.nextTickTargetAngle)
-                            }
-                            ROT_DAMPING -> {
-                                constraint as VSRotDampingConstraint
-                                ctag.putDouble("rotDamping", constraint.rotDamping)
-                                ctag.putString("rotDampingAxes", constraint.rotDampingAxes.toString())
-                            }
-                            SPHERICAL_SWING_LIMITS -> {
-                                constraint as VSSphericalSwingLimitsConstraint
-                                ctag.putDouble("minSwingAngle", constraint.minSwingAngle)
-                                ctag.putDouble("maxSwingAngle", constraint.maxSwingAngle)
-                            }
-                            SPHERICAL_TWIST_LIMITS -> {
-                                constraint as VSSphericalTwistLimitsConstraint
-                                ctag.putDouble("minTwistAngle", constraint.minTwistAngle)
-                                ctag.putDouble("maxTwistAngle", constraint.maxTwistAngle)
-                            }
-                            FIXED_ORIENTATION -> {}
-                            HINGE_ORIENTATION -> {}
-                            else -> { LOG("CAN'T SAVE TYPE ${constraint.constraintType} IN VSForceConstraint BLOCK"); continue}
-                        }
-                    }
-                    else -> { LOG("CAN'T SAVE UNKNOWN VS CONSTRAINT TYPE ${constraint.constraintType}. SHOULDN'T HAPPEN!!!!!!"); continue }
-                }
+                val ctag = VSConstraintSerializationUtil.serializeConstraint(constraint.first) ?: continue
                 constraintsTag.put(i.toString(), ctag)
             }
-            shipsTags.put(k.toString(), constraintsTag)
+            shipsTag.put(k.toString(), constraintsTag)
         }
-        tag.put("vs_source_ships_constraints", shipsTags)
+        tag.put("vs_source_ships_constraints", shipsTag)
         return tag
     }
 
-    fun loadDataFromTag(tag: CompoundTag) {
-
+    private fun loadDataFromTag(tag: CompoundTag) {
+        val shipsTag = tag["vs_source_ships_constraints"]!! as CompoundTag
+        for (k in shipsTag.allKeys) {
+            val shipConstraintsTag = shipsTag[k]!! as CompoundTag
+            val constraints = mutableListOf<VSConstraint>()
+            for (kk in shipConstraintsTag.allKeys) {
+                val ctag = shipConstraintsTag[k]!! as CompoundTag
+                val constraint = VSConstraintDeserializationUtil.deserializeConstraint(ctag) ?: continue
+                constraints.add(constraint)
+            }
+            toLoadConstraints[k.toLong()] = constraints
+        }
     }
 
-    fun createConstraints() {
+    private fun clusterLoadedData() {
+        for ((k, v) in toLoadConstraints) {
+            val neededShipIds = mutableSetOf<ShipId>()
+            for (constraint in v) {
+                neededShipIds.add(constraint.shipId0)
+                neededShipIds.add(constraint.shipId1)
+            }
+            val cluster = LoadingCluster(level!!, v, neededShipIds)
+            for (id in neededShipIds) {
+                clusteredToLoadConstraints.computeIfAbsent(id) { mutableListOf() }.add(cluster)
+            }
+        }
+    }
 
+    private fun createConstraints() {
+        VSEvents.shipLoadEvent.on { (ship), handler ->
+            handler.unregister()
+            val id = ship.id
+            if (!clusteredToLoadConstraints.containsKey(id)) {return@on}
+            for (cluster in clusteredToLoadConstraints[id]!!) {
+                cluster.setLoadedId(ship)
+            }
+        }
     }
 
     fun load(tag: CompoundTag) {
         loadDataFromTag(tag)
+        clusterLoadedData()
         createConstraints()
     }
 
-    fun makeConstraint(level: ServerLevel, constraint: VSConstraint) {
-        level.shipObjectWorld.createNewConstraint(constraint)
-        shipConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(constraint)
-        shipConstraints.computeIfAbsent(constraint.shipId1) { mutableListOf() }.add(constraint)
+    fun makeConstraint(level: ServerLevel, constraint: VSConstraint): VSConstraintId {
+        val constraintId = level.shipObjectWorld.createNewConstraint(constraint)!!
+        shipConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(Pair(constraint, constraintId))
+        shipConstraints.computeIfAbsent(constraint.shipId1) { mutableListOf() }.add(Pair(constraint, constraintId))
+        return constraintId
     }
 
     companion object {
         private var instance: ConstraintManager? = null
+        private var level: ServerLevel? = null
 
         fun getInstance(level: Level): ConstraintManager {
             if (instance != null) {return instance!!}
             level as ServerLevel
+            this.level = level
             instance = level.server.overworld().dataStorage.computeIfAbsent(::load, ::create, VSS.MOD_ID)
             return instance!!
         }

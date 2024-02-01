@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "vs_source",
+  "version": "${version}",
+
+  "name": "VS-Source",
+  "description": "",
+  "authors": [],
+  "contact": {},
+
+  "license": "MIT",
+  "icon": "icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      {
+        "adapter": "kotlin",
+        "value": "net.spaceeye.vssource.fabric.VSSourceFabric"
+      }
+    ]
+  },
+  "mixins": [
+    "vs_source.mixins.json",
+    "vs_source-common.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.22",
+    "minecraft": ">=1.18.2"
+  }
+}

@@ -20,15 +20,17 @@ private class LoadingCluster(
     val level: ServerLevel,
     val constraintsToLoad: MutableList<VSConstraint>,
     val neededShipIds: MutableSet<ShipId>,
+    val shipIsStaticStatus: MutableMap<ShipId, Boolean>
 ) {
     //boolean is for isStatic status before loading
-    private val shipRefs: MutableMap<ShipId, Pair<ServerShip, Boolean>> = mutableMapOf()
+    private val shipRefs: MutableMap<ShipId, ServerShip> = mutableMapOf()
 
     fun setLoadedId(ship: ServerShip) {
         if (neededShipIds.isEmpty()) {return}
         if (!neededShipIds.remove(ship.id)) { return }
 
-        shipRefs.computeIfAbsent(ship.id) {Pair(ship, ship.isStatic)}
+        shipRefs.computeIfAbsent(ship.id) {ship}
+        shipIsStaticStatus.computeIfAbsent(ship.id) {ship.isStatic}
         ship.isStatic = true // so that ships don't drift while ships are being loaded
 
         if (neededShipIds.isEmpty()) {
@@ -44,9 +46,8 @@ private class LoadingCluster(
             mMakeConstraint(level, constraint)
         }
         for ((k, ship) in shipRefs) {
-            //TODO figure out why tf it doesn't work
-//            ship.first.isStatic = ship.second
-            ship.first.isStatic = false
+            ship.isStatic = shipIsStaticStatus[ship.id] ?: continue
+            shipIsStaticStatus.remove(ship.id)
         }
     }
 }
@@ -58,9 +59,9 @@ class ConstraintManager: SavedData() {
     private val shipConstraints = mutableMapOf<ShipId, MutableList<Pair<VSConstraint, VSConstraintId>>>()
     private val toLoadConstraints = mutableMapOf<ShipId, MutableList<VSConstraint>>()
     private val clusteredToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingCluster>>()
+    private val shipIsStaticStatus = mutableMapOf<ShipId, Boolean>()
 
     override fun save(tag: CompoundTag): CompoundTag {
-        LOG("SAVING SHIT")
         val shipsTag = CompoundTag()
         for ((k, v) in shipConstraints) {
             val constraintsTag = CompoundTag()
@@ -73,7 +74,6 @@ class ConstraintManager: SavedData() {
         tag.put("vsource_ships_constraints", shipsTag)
 
         instance = null
-        LOG("FINISHED SAVING SHIT")
 
         return tag
     }
@@ -98,7 +98,7 @@ class ConstraintManager: SavedData() {
                 neededShipIds.add(constraint.shipId0)
                 neededShipIds.add(constraint.shipId1)
             }
-            val cluster = LoadingCluster(level!!, v, neededShipIds)
+            val cluster = LoadingCluster(level!!, v, neededShipIds, shipIsStaticStatus)
             for (id in neededShipIds) {
                 clusteredToLoadConstraints.computeIfAbsent(id) { mutableListOf() }.add(cluster)
             }

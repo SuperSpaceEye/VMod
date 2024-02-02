@@ -16,11 +16,11 @@ object VSItems {
     val TAB: CreativeModeTab = CreativeTabRegistry.create(
         ResourceLocation(
             VS.MOD_ID,
-            "vssource_tab"
+            "vsource_tab"
         )
     ) { ItemStack(LOGO.get()) }
 
-    var LOGO: RegistrySupplier<Item> = ITEMS.register("vssource_logo") { Item(Item.Properties()) }
+    var LOGO: RegistrySupplier<Item> = ITEMS.register("vsource_logo") { Item(Item.Properties()) }
 
 //    var AXIS_CREATOR: RegistrySupplier<Item> = ITEMS.register("axis_creator") { Item(Item.Properties()) }
 //    var BALL_SOCKET_CREATOR: RegistrySupplier<Item> = ITEMS.register("ball_socket_creator") {  }

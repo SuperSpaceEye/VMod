@@ -60,6 +60,7 @@ class ConstraintManager: SavedData() {
     private val clusteredToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingCluster>>()
 
     override fun save(tag: CompoundTag): CompoundTag {
+        LOG("SAVING SHIT")
         val shipsTag = CompoundTag()
         for ((k, v) in shipConstraints) {
             val constraintsTag = CompoundTag()
@@ -69,9 +70,10 @@ class ConstraintManager: SavedData() {
             }
             shipsTag.put(k.toString(), constraintsTag)
         }
-        tag.put("vs_source_ships_constraints", shipsTag)
+        tag.put("vsource_ships_constraints", shipsTag)
 
         instance = null
+        LOG("FINISHED SAVING SHIT")
 
         return tag
     }
@@ -150,8 +152,8 @@ class ConstraintManager: SavedData() {
         fun load(tag: CompoundTag): ConstraintManager {
             val data = create()
 
-            if (tag.contains("vs_source_ships_constraints") && tag["vs_source_ships_constraints"] is CompoundTag) {
-                data.load(tag["vs_source_ships_constraints"]!! as CompoundTag)
+            if (tag.contains("vsource_ships_constraints") && tag["vsource_ships_constraints"] is CompoundTag) {
+                data.load(tag["vsource_ships_constraints"]!! as CompoundTag)
             }
 
             return data

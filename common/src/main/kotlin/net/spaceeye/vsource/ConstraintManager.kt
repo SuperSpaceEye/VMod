@@ -57,10 +57,12 @@ private class LoadingCluster(
 //TODO put constants into constants class
 class ConstraintManager: SavedData() {
     private val shipConstraints = mutableMapOf<ShipId, MutableList<Pair<VSConstraint, VSConstraintId>>>()
+    //TODO think of a way to clear these things
     private val toLoadConstraints = mutableMapOf<ShipId, MutableList<VSConstraint>>()
     private val clusteredToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingCluster>>()
     private val shipIsStaticStatus = mutableMapOf<ShipId, Boolean>()
 
+    //TODO check if ship id exists before saving constraint
     override fun save(tag: CompoundTag): CompoundTag {
         val shipsTag = CompoundTag()
         for ((k, v) in shipConstraints) {
@@ -125,10 +127,10 @@ class ConstraintManager: SavedData() {
     }
 
     //TODO REMEMBER TO FUCKING CALL setDirty()
+    //TODO figure out how to maintain VSConstraintId after save/load
     fun makeConstraint(level: ServerLevel, constraint: VSConstraint): VSConstraintId {
         val constraintId = level.shipObjectWorld.createNewConstraint(constraint)!!
         shipConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(Pair(constraint, constraintId))
-        shipConstraints.computeIfAbsent(constraint.shipId1) { mutableListOf() }.add(Pair(constraint, constraintId))
         setDirty()
         return constraintId
     }

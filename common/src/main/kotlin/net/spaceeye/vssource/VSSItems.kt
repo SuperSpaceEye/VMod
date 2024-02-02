@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.spaceeye.vssource.items.WeldCreatorItem
+import net.spaceeye.vssource.items.AABBWeldCreatorItem
 
 //import org.valkyrienskies.core.apigame.constraints
 
@@ -33,8 +33,10 @@ object VSSItems {
 //    var PULLEY_CREATOR: RegistrySupplier<Item> = ITEMS.register("pulley_creator") { Item(Item.Properties()) }
 //    var ROPE_CREATOR: RegistrySupplier<Item> = ITEMS.register("rope_creator") { Item(Item.Properties()) }
 //    var SLIDER_CREATOR: RegistrySupplier<Item> = ITEMS.register("slider_creator") { Item(Item.Properties()) }
-    var WELD_CREATOR: RegistrySupplier<Item> = ITEMS.register("weld_creator") { WeldCreatorItem() }
+//    var WELD_CREATOR: RegistrySupplier<Item> = ITEMS.register("weld_creator") { WeldCreatorItem() }
 //    var WINCH_CREATOR: RegistrySupplier<Item> = ITEMS.register("winch_creator") { Item(Item.Properties()) }
+
+    var AABBWELD_CREATOR: RegistrySupplier<Item> = ITEMS.register("aabb_weld_creator") { AABBWeldCreatorItem() }
 
 
     fun register() {

@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.BlockHitResult
+import net.spaceeye.vssource.LOG
 import net.spaceeye.vssource.utils.Vector3d
 import net.spaceeye.vssource.utils.posShipToWorld
 import org.joml.primitives.AABBi
@@ -14,10 +15,11 @@ import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class WeldCreatorItem : BaseTool() {
+class AABBWeldCreatorItem : BaseTool() {
     var blockPos: BlockPos? = null
 
     override fun resetState() {
+        LOG("RESETTING STATE")
         blockPos = null
     }
 

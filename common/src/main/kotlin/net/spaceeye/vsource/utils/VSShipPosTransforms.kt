@@ -1,4 +1,4 @@
-package net.spaceeye.vssource.utils
+package net.spaceeye.vsource.utils
 
 import org.valkyrienskies.core.api.ships.Ship
 

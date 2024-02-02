@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "net.spaceeye.vs_source.mixin.fabric",
+  "package": "net.spaceeye.vsource.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
   ],

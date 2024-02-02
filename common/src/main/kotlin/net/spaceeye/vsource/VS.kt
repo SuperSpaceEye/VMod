@@ -1,13 +1,13 @@
-package net.spaceeye.vssource
+package net.spaceeye.vsource
 
 import dev.architectury.platform.Platform
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
-fun LOG(s: String) = VSS.logger.warn(s)
+fun LOG(s: String) = VS.logger.warn(s)
 
-object VSS {
-    const val MOD_ID = "vs_source"
+object VS {
+    const val MOD_ID = "vsource"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!
 
     @JvmStatic
@@ -17,6 +17,6 @@ object VSS {
             return
         }
 
-        VSSItems.register()
+        VSItems.register()
     }
 }

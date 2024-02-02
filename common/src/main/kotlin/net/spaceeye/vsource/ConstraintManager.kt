@@ -1,11 +1,11 @@
-package net.spaceeye.vssource
+package net.spaceeye.vsource
 
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.saveddata.SavedData
-import net.spaceeye.vssource.utils.VSConstraintDeserializationUtil
-import net.spaceeye.vssource.utils.VSConstraintSerializationUtil
+import net.spaceeye.vsource.utils.VSConstraintDeserializationUtil
+import net.spaceeye.vsource.utils.VSConstraintSerializationUtil
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
@@ -140,7 +140,7 @@ class ConstraintManager: SavedData() {
             if (instance != null) {return instance!!}
             level as ServerLevel
             this.level = level
-            instance = level.server.overworld().dataStorage.computeIfAbsent(::load, ::create, VSS.MOD_ID)
+            instance = level.server.overworld().dataStorage.computeIfAbsent(::load, ::create, VS.MOD_ID)
             return instance!!
         }
 

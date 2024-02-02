@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "vs_source",
+  "id": "vsource",
   "version": "${version}",
 
-  "name": "VS-Source",
+  "name": "VSource",
   "description": "",
   "authors": [],
   "contact": {},
@@ -16,13 +16,13 @@
     "main": [
       {
         "adapter": "kotlin",
-        "value": "net.spaceeye.vssource.fabric.VSSourceFabric"
+        "value": "net.spaceeye.vsource.fabric.VSourceFabric"
       }
     ]
   },
   "mixins": [
-    "vs_source.mixins.json",
-    "vs_source-common.mixins.json"
+    "vsource.mixins.json",
+    "vsource-common.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.14.22",

@@ -1,4 +1,4 @@
-package net.spaceeye.vssource.items
+package net.spaceeye.vsource.items
 
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.InteractionHand
@@ -9,16 +9,14 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.BlockHitResult
-import net.spaceeye.vssource.ConstraintManager
-import net.spaceeye.vssource.VSSItems
-import net.spaceeye.vssource.mMakeConstraint
-import net.spaceeye.vssource.utils.Vector3d
+import net.spaceeye.vsource.VSItems
+import net.spaceeye.vsource.mMakeConstraint
+import net.spaceeye.vsource.utils.Vector3d
 import org.valkyrienskies.core.apigame.constraints.VSConstraint
-import org.valkyrienskies.mod.common.shipObjectWorld
 
 //TODO find a way to detect if player it's a singular click or a button press
 
-abstract class BaseTool: Item(Properties().tab(VSSItems.TAB).stacksTo(1)) {
+abstract class BaseTool: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
     abstract fun activatePrimaryFunction(level: Level, player: Player, clipResult: BlockHitResult)
 
     abstract fun resetState()

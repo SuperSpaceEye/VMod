@@ -1,4 +1,4 @@
-package net.spaceeye.vssource.mixin;
+package net.spaceeye.vsource.mixin;
 
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
@@ -8,7 +8,7 @@ import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.ServerLevelData;
-import net.spaceeye.vssource.ConstraintManager;
+import net.spaceeye.vsource.ConstraintManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

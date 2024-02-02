@@ -1,7 +1,7 @@
-package net.spaceeye.vssource.utils
+package net.spaceeye.vsource.utils
 
 import net.minecraft.nbt.CompoundTag
-import net.spaceeye.vssource.LOG
+import net.spaceeye.vsource.LOG
 import org.valkyrienskies.core.apigame.constraints.*
 
 object VSConstraintSerializationUtil {

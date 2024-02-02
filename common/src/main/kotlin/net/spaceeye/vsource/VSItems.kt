@@ -1,4 +1,4 @@
-package net.spaceeye.vssource
+package net.spaceeye.vsource
 
 import dev.architectury.registry.CreativeTabRegistry
 import dev.architectury.registry.registries.DeferredRegister
@@ -8,16 +8,14 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.spaceeye.vssource.items.AABBWeldCreatorItem
+import net.spaceeye.vsource.items.AABBWeldCreatorItem
 
-//import org.valkyrienskies.core.apigame.constraints
-
-object VSSItems {
-    val ITEMS = DeferredRegister.create(VSS.MOD_ID, Registry.ITEM_REGISTRY)
+object VSItems {
+    val ITEMS = DeferredRegister.create(VS.MOD_ID, Registry.ITEM_REGISTRY)
 
     val TAB: CreativeModeTab = CreativeTabRegistry.create(
         ResourceLocation(
-            VSS.MOD_ID,
+            VS.MOD_ID,
             "vssource_tab"
         )
     ) { ItemStack(LOGO.get()) }

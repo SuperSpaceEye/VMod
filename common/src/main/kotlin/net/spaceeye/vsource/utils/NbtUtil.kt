@@ -1,4 +1,4 @@
-package net.spaceeye.vssource.utils
+package net.spaceeye.vsource.utils
 
 import net.minecraft.nbt.CompoundTag
 import org.joml.Quaterniond

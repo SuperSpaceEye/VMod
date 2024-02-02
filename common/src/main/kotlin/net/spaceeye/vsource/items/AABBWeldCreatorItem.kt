@@ -1,13 +1,13 @@
-package net.spaceeye.vssource.items
+package net.spaceeye.vsource.items
 
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.BlockHitResult
-import net.spaceeye.vssource.LOG
-import net.spaceeye.vssource.utils.Vector3d
-import net.spaceeye.vssource.utils.posShipToWorld
+import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.utils.Vector3d
+import net.spaceeye.vsource.utils.posShipToWorld
 import org.joml.primitives.AABBi
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint

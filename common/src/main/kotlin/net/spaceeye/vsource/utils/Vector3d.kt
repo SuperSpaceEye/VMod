@@ -1,4 +1,4 @@
-package net.spaceeye.vssource.utils
+package net.spaceeye.vsource.utils
 
 import net.minecraft.core.BlockPos
 import kotlin.math.max

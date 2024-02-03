@@ -123,18 +123,12 @@ class ConstraintManager: SavedData() {
     private fun setLoadedId(ship: ServerShip) {
         if (!groupedToLoadConstraints.containsKey(ship.id)) {return}
 
-        val toRemove = mutableListOf<LoadingGroup>()
+        //groups are shared between groupedToLoadConstraints, so just notify all groups belonging to this id and just delete all of them
         for (group in groupedToLoadConstraints[ship.id]!!) {
             group.setLoadedId(ship)
-            if (group.isLoaded) {toRemove.add(group)}
         }
 
-        if (toRemove.isEmpty()) {return}
-
-        groupedToLoadConstraints[ship.id]!!.removeAll(toRemove)
-        if (groupedToLoadConstraints[ship.id]!!.isEmpty()) {
-            groupedToLoadConstraints.remove(ship.id)
-        }
+        groupedToLoadConstraints.remove(ship.id)
     }
 
     private fun createConstraints() {

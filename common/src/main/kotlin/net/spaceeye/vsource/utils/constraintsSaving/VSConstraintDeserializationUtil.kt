@@ -1,7 +1,9 @@
-package net.spaceeye.vsource.utils
+package net.spaceeye.vsource.utils.constraintsSaving
 
 import net.minecraft.nbt.CompoundTag
 import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.utils.getQuaterniond
+import net.spaceeye.vsource.utils.getVector3d
 import org.joml.Quaterniond
 import org.joml.Vector3d
 import org.joml.Vector3dc
@@ -70,10 +72,10 @@ object VSConstraintDeserializationUtil {
         cdata.shipId1 = cTag.getLong("shipId1")
         cdata.compliance = cTag.getDouble("compliance")
         cdata.constraintType = VSConstraintType.valueOf(cTag.getString("constraintType"))
-        
+
         return true
     }
-    
+
     private fun loadForceData(cTag: CompoundTag, cdata: ForceConstraintData): Boolean {
         if (!cTag.contains("maxForce")) {return false}
 
@@ -93,26 +95,26 @@ object VSConstraintDeserializationUtil {
 
         return true
     }
-    
+
     private fun makeConstraint(cTag: CompoundTag, cdata: BaseConstraintData): VSConstraint? {
         try {
-        return when (cdata.constraintType) {
-            ROPE               -> { cdata as ForceConstraintData; VSRopeConstraint      (cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localPos0, cdata.localPos1, cdata.maxForce, cTag.getDouble("ropeLength")) }
-            SLIDE              -> { cdata as ForceConstraintData; VSSlideConstraint     (cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localPos0, cdata.localPos1, cdata.maxForce, cTag.getVector3d("localSlideAxis0")!!, cTag.getDouble("maxDistBetweenPoints")) }
-            ATTACHMENT         -> { cdata as ForceConstraintData; VSAttachmentConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localPos0, cdata.localPos1, cdata.maxForce, cTag.getDouble("fixedDistance")) }
-            POS_DAMPING        -> { cdata as ForceConstraintData; VSPosDampingConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localPos0, cdata.localPos1, cdata.maxForce, cTag.getDouble("posDamping")) }
+            return when (cdata.constraintType) {
+                ROPE               -> { cdata as ForceConstraintData; VSRopeConstraint      (cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localPos0, cdata.localPos1, cdata.maxForce, cTag.getDouble("ropeLength")) }
+                SLIDE              -> { cdata as ForceConstraintData; VSSlideConstraint     (cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localPos0, cdata.localPos1, cdata.maxForce, cTag.getVector3d("localSlideAxis0")!!, cTag.getDouble("maxDistBetweenPoints")) }
+                ATTACHMENT         -> { cdata as ForceConstraintData; VSAttachmentConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localPos0, cdata.localPos1, cdata.maxForce, cTag.getDouble("fixedDistance")) }
+                POS_DAMPING        -> { cdata as ForceConstraintData; VSPosDampingConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localPos0, cdata.localPos1, cdata.maxForce, cTag.getDouble("posDamping")) }
 
-            ROT_DAMPING            -> { cdata as TorqueConstraintData; VSRotDampingConstraint      (cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("rotDamping"), VSRotDampingAxes.valueOf(cTag.getString("rotDampingAxes")))}
-            FIXED_ORIENTATION      -> { cdata as TorqueConstraintData; VSFixedOrientationConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque)}
-            HINGE_ORIENTATION      -> { cdata as TorqueConstraintData; VSHingeOrientationConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque)}
-            HINGE_SWING_LIMITS     -> { cdata as TorqueConstraintData; VSHingeSwingLimitsConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("minSwingAngle"), cTag.getDouble("maxSwingAngle"))}
-            HINGE_TARGET_ANGLE     -> { cdata as TorqueConstraintData; VSHingeTargetAngleConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("targetAngle"), cTag.getDouble("nextTickTargetAngle"))}
-            SPHERICAL_SWING_LIMITS -> { cdata as TorqueConstraintData; VSSphericalSwingLimitsConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("minSwingAngle"), cTag.getDouble("maxSwingAngle"))}
-            SPHERICAL_TWIST_LIMITS -> { cdata as TorqueConstraintData; VSSphericalTwistLimitsConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("minTwistAngle"), cTag.getDouble("maxTwistAngle"))}
+                ROT_DAMPING            -> { cdata as TorqueConstraintData; VSRotDampingConstraint      (cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("rotDamping"), VSRotDampingAxes.valueOf(cTag.getString("rotDampingAxes")))}
+                FIXED_ORIENTATION      -> { cdata as TorqueConstraintData; VSFixedOrientationConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque)}
+                HINGE_ORIENTATION      -> { cdata as TorqueConstraintData; VSHingeOrientationConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque)}
+                HINGE_SWING_LIMITS     -> { cdata as TorqueConstraintData; VSHingeSwingLimitsConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("minSwingAngle"), cTag.getDouble("maxSwingAngle"))}
+                HINGE_TARGET_ANGLE     -> { cdata as TorqueConstraintData; VSHingeTargetAngleConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("targetAngle"), cTag.getDouble("nextTickTargetAngle"))}
+                SPHERICAL_SWING_LIMITS -> { cdata as TorqueConstraintData; VSSphericalSwingLimitsConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("minSwingAngle"), cTag.getDouble("maxSwingAngle"))}
+                SPHERICAL_TWIST_LIMITS -> { cdata as TorqueConstraintData; VSSphericalTwistLimitsConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("minTwistAngle"), cTag.getDouble("maxTwistAngle"))}
 
-            FIXED_ATTACHMENT_ORIENTATION -> null
-            else -> {LOG("UNKNOWN VS CONSTRAINT TYPE ${cdata.constraintType}"); null}
-        }
+                FIXED_ATTACHMENT_ORIENTATION -> null
+                else -> {LOG("UNKNOWN VS CONSTRAINT TYPE ${cdata.constraintType}"); null}
+            }
         } catch (e: Exception) {
             LOG("SMTH WENT WRONG, NOT DESERIALIZING TAG ${cTag}")
             return null
@@ -127,7 +129,7 @@ object VSConstraintDeserializationUtil {
             is TorqueConstraintData -> loadTorqueData(cTag, cData)
             else -> throw RuntimeException("IMPOSSIBLE SITUATION. UNKNOWN CONSTRAINT DATA TYPE.")
         }) {return null}
-        
+
         return makeConstraint(cTag, cData)
     }
 }

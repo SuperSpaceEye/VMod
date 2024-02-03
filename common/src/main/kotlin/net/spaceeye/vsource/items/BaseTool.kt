@@ -10,9 +10,7 @@ import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vsource.VSItems
-import net.spaceeye.vsource.mMakeConstraint
 import net.spaceeye.vsource.utils.Vector3d
-import org.valkyrienskies.core.apigame.constraints.VSConstraint
 
 //TODO find a way to detect if player it's a singular click or a button press
 
@@ -20,11 +18,6 @@ abstract class BaseTool: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
     abstract fun activatePrimaryFunction(level: Level, player: Player, clipResult: BlockHitResult)
 
     abstract fun resetState()
-
-    //TODO make saving/loading
-    fun makeConstraint(level: ServerLevel, constraint: VSConstraint) {
-        mMakeConstraint(level, constraint)
-    }
 
     override fun use(
         level: Level,

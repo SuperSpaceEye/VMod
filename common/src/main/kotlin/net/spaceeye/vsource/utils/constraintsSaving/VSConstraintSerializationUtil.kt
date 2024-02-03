@@ -1,7 +1,9 @@
-package net.spaceeye.vsource.utils
+package net.spaceeye.vsource.utils.constraintsSaving
 
 import net.minecraft.nbt.CompoundTag
 import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.utils.putQuaterniond
+import net.spaceeye.vsource.utils.putVector3d
 import org.valkyrienskies.core.apigame.constraints.*
 
 object VSConstraintSerializationUtil {

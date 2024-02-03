@@ -8,7 +8,7 @@ import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.ServerLevelData;
-import net.spaceeye.vsource.ConstraintManager;
+import net.spaceeye.vsource.utils.constraintsSaving.ConstraintManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-//Why this exists? ConstraintManager needs to be called as soon as overworld serverlevel exists to begin loading ship
+// Why this exists? ConstraintManager needs to be called as soon as overworld serverlevel exists to begin loading ship
 // constraints, and idfk better way to do this
 
 @Mixin(ServerLevel.class)
@@ -28,6 +28,6 @@ abstract public class ServerLevelMixin {
         if (!(obj instanceof ServerLevel)) {return;}
         ServerLevel level = (ServerLevel)obj;
         if (level.getServer() == null || level.getServer().overworld() == null) {return;}
-        ConstraintManager.Companion.getInstance((ServerLevel)obj);
+        ConstraintManager.Companion.forceNewInstance((ServerLevel)obj);
     }
 }

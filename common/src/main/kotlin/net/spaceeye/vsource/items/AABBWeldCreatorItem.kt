@@ -7,6 +7,7 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.utils.Vector3d
+import net.spaceeye.vsource.utils.constraintsSaving.makeManagedConstraint
 import net.spaceeye.vsource.utils.posShipToWorld
 import org.joml.primitives.AABBi
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -98,8 +99,7 @@ class AABBWeldCreatorItem : BaseTool() {
                 point1.toJomlVector3d(), point2.toJomlVector3d(),
                 1e10, (rpoint1 - rpoint2).dist()
             )
-
-            makeConstraint(level, constraint)
+            level.makeManagedConstraint(constraint)
         }
 
         resetState()

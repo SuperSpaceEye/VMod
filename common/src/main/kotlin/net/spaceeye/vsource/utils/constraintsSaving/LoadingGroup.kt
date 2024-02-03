@@ -14,6 +14,7 @@ internal class LoadingGroup(
 ) {
     //boolean is for isStatic status before loading
     private val shipRefs: MutableMap<ShipId, ServerShip> = mutableMapOf()
+    var isLoaded = false
 
     fun setLoadedId(ship: ServerShip) {
         if (neededShipIds.isEmpty()) {return}
@@ -28,6 +29,7 @@ internal class LoadingGroup(
 
             constraintsToLoad.clear()
             shipRefs.clear()
+            isLoaded = true
         }
     }
 

@@ -19,6 +19,7 @@ private const val SAVE_TAG_NAME_STRING = "vsource_ships_constraints"
 
 @Internal
 class ConstraintManager: SavedData() {
+    // shipsConstraints and idToConstraint should share MPair
     private val shipsConstraints = mutableMapOf<ShipId, MutableList<MPair<VSConstraint, ManagedConstraintId>>>()
     private val idToConstraint = mutableMapOf<ManagedConstraintId, MPair<VSConstraint, ManagedConstraintId>>()
     private val constraintIdManager = ConstraintIdManager()
@@ -28,12 +29,15 @@ class ConstraintManager: SavedData() {
     private val groupedToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
     private val shipIsStaticStatus = mutableMapOf<ShipId, Boolean>()
 
-    //TODO check if ship id exists before saving constraint
-    override fun save(tag: CompoundTag): CompoundTag {
+    private fun saveActiveConstraints(tag: CompoundTag): CompoundTag {
         val shipsTag = CompoundTag()
         for ((k, v) in shipsConstraints) {
+            if (!level.shipObjectWorld.allShips.contains(k)) {continue}
+
             val constraintsTag = CompoundTag()
             for ((i, constraint) in v.withIndex()) {
+                if (!level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
+
                 val ctag = VSConstraintSerializationUtil.serializeConstraint(constraint.first) ?: continue
                 ctag.putInt("managedID", constraint.second.id)
                 constraintsTag.put(i.toString(), ctag)
@@ -42,8 +46,44 @@ class ConstraintManager: SavedData() {
         }
         tag.put(SAVE_TAG_NAME_STRING, shipsTag)
 
-        instance = null
+        return tag
+    }
 
+    //TODO i don't like how it works but i don't care atm
+    private fun saveNotLoadedConstraints(tag: CompoundTag): CompoundTag {
+        val shipsTag = tag[SAVE_TAG_NAME_STRING]!!
+
+        val savedGroups = mutableSetOf<LoadingGroup>()
+        for ((id, groups) in groupedToLoadConstraints) {
+            if (!level.shipObjectWorld.allShips.contains(id)) {continue}
+
+            val constraintsTag = CompoundTag()
+            for (group in groups) {
+                if (savedGroups.contains(group)) {continue}
+
+                for ((i, constraint) in group.constraintsToLoad.withIndex()) {
+                    if (!level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
+
+                    val ctag = VSConstraintSerializationUtil.serializeConstraint(constraint.first) ?: continue
+                    ctag.putInt("managedID", constraint.second)
+                    constraintsTag.put(i.toString(), ctag)
+                }
+                savedGroups.add(group)
+            }
+        }
+
+        tag.put(SAVE_TAG_NAME_STRING, shipsTag)
+
+        return tag
+    }
+
+    //TODO save will only get called if ConstraintManager is "dirty", so it won't save on every save. Figure out how to
+    // make it save if allShips change
+    override fun save(tag: CompoundTag): CompoundTag {
+        var tag = saveActiveConstraints(tag)
+        tag = saveNotLoadedConstraints(tag)
+
+        instance = null
         return tag
     }
 
@@ -66,6 +106,9 @@ class ConstraintManager: SavedData() {
         for ((k, v) in toLoadConstraints) {
             val neededShipIds = mutableSetOf<ShipId>()
             for (constraint in v) {
+                if (   !level.shipObjectWorld.allShips.contains(constraint.first.shipId0)
+                    || !level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
+
                 neededShipIds.add(constraint.first.shipId0)
                 neededShipIds.add(constraint.first.shipId1)
             }
@@ -79,8 +122,18 @@ class ConstraintManager: SavedData() {
 
     private fun setLoadedId(ship: ServerShip) {
         if (!groupedToLoadConstraints.containsKey(ship.id)) {return}
-        for (cluster in groupedToLoadConstraints[ship.id]!!) {
-            cluster.setLoadedId(ship)
+
+        val toRemove = mutableListOf<LoadingGroup>()
+        for (group in groupedToLoadConstraints[ship.id]!!) {
+            group.setLoadedId(ship)
+            if (group.isLoaded) {toRemove.add(group)}
+        }
+
+        if (toRemove.isEmpty()) {return}
+
+        groupedToLoadConstraints[ship.id]!!.removeAll(toRemove)
+        if (groupedToLoadConstraints[ship.id]!!.isEmpty()) {
+            groupedToLoadConstraints.remove(ship.id)
         }
     }
 

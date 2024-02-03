@@ -9,6 +9,7 @@ import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.spaceeye.vsource.items.AABBWeldCreatorItem
+import net.spaceeye.vsource.items.RopeCreatorItem
 
 object VSItems {
     val ITEMS = DeferredRegister.create(VS.MOD_ID, Registry.ITEM_REGISTRY)
@@ -29,7 +30,7 @@ object VSItems {
 //    var MOTOR_CREATOR: RegistrySupplier<Item> = ITEMS.register("motor_creator") { Item(Item.Properties()) }
 //    var MUSCLE_CREATOR: RegistrySupplier<Item> = ITEMS.register("muscle_creator") { Item(Item.Properties()) }
 //    var PULLEY_CREATOR: RegistrySupplier<Item> = ITEMS.register("pulley_creator") { Item(Item.Properties()) }
-//    var ROPE_CREATOR: RegistrySupplier<Item> = ITEMS.register("rope_creator") { Item(Item.Properties()) }
+    var ROPE_CREATOR: RegistrySupplier<Item> = ITEMS.register("rope_creator") { RopeCreatorItem() }
 //    var SLIDER_CREATOR: RegistrySupplier<Item> = ITEMS.register("slider_creator") { Item(Item.Properties()) }
 //    var WELD_CREATOR: RegistrySupplier<Item> = ITEMS.register("weld_creator") { WeldCreatorItem() }
 //    var WINCH_CREATOR: RegistrySupplier<Item> = ITEMS.register("winch_creator") { Item(Item.Properties()) }

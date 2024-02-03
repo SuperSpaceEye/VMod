@@ -13,98 +13,10 @@ import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-fun ServerLevel.makeManagedConstraint(constraint: VSConstraint) =
-        ConstraintManager.getInstance(this).makeConstraint(this, constraint)
-fun ServerLevel.removeManagedConstraint(constraintId: ManagedConstraintId) =
-        ConstraintManager.getInstance(this).removeConstraint(this, constraintId)
-fun ServerLevel.updateManagedConstraint(constraintId: ManagedConstraintId, constraint: VSConstraint) =
-        ConstraintManager.getInstance(this).updateConstraint(this, constraintId, constraint)
-fun ServerLevel.getAllManagedConstraintsOfId(shipId: ShipId) =
-        ConstraintManager.getInstance(this).getAllConstraintsIdOfId(this, shipId)
-
-// DO NOT USE THIS OUTSIDE OF THIS MODULE
-@Internal
-fun ServerLevel.makeManagedConstraintWithId(constraint: VSConstraint, id: Int) =
-        ConstraintManager.getInstance(this).makeConstraintWithId(this, constraint, id)
-
-private class LoadingGroup(
-    val level: ServerLevel,
-    val constraintsToLoad: MutableList<MPair<VSConstraint, Int>>,
-    val neededShipIds: MutableSet<ShipId>,
-    val shipIsStaticStatus: MutableMap<ShipId, Boolean>
-) {
-    //boolean is for isStatic status before loading
-    private val shipRefs: MutableMap<ShipId, ServerShip> = mutableMapOf()
-
-    fun setLoadedId(ship: ServerShip) {
-        if (neededShipIds.isEmpty()) {return}
-        if (!neededShipIds.remove(ship.id)) { return }
-
-        shipRefs.computeIfAbsent(ship.id) {ship}
-        shipIsStaticStatus.computeIfAbsent(ship.id) {ship.isStatic}
-        ship.isStatic = true // so that ships don't drift while ships are being loaded
-
-        if (neededShipIds.isEmpty()) {
-            applyConstraints()
-
-            constraintsToLoad.clear()
-            shipRefs.clear()
-        }
-    }
-
-    private fun applyConstraints() {
-        for (constraint in constraintsToLoad) {
-            level.makeManagedConstraintWithId(constraint.first, constraint.second)
-        }
-        for ((k, ship) in shipRefs) {
-            ship.isStatic = shipIsStaticStatus[ship.id] ?: continue
-            shipIsStaticStatus.remove(ship.id)
-        }
-    }
-}
-
-class ManagedConstraintId(@JvmField val id: Int) {
-    override fun hashCode(): Int {
-        return id
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as ManagedConstraintId
-
-        return id == other.id
-    }
-}
-
-class ConstraintIdManager {
-    private val idMap = mutableMapOf<ManagedConstraintId, VSConstraintId>()
-    private var counter = 0
-
-    fun getVSid(id: ManagedConstraintId) = idMap[id]
-    fun addVSid(id: VSConstraintId): ManagedConstraintId {
-        val newManagedId = ManagedConstraintId(counter)
-        counter++
-        idMap[newManagedId] = id
-
-        return newManagedId
-    }
-
-    fun setVSid(id: VSConstraintId, to: Int): ManagedConstraintId {
-        val to = if (to < 0) {counter} else {to}
-        val newManagedId = ManagedConstraintId(to)
-        idMap[newManagedId] = id
-        if (id >= counter) {counter = id + 1}
-
-        return newManagedId
-    }
-}
-
-
 //ShipId seem to be unique and are retained by ships after saving/loading
 
-//TODO put constants into constants class
+private const val SAVE_TAG_NAME_STRING = "vsource_ships_constraints"
+
 @Internal
 class ConstraintManager: SavedData() {
     private val shipsConstraints = mutableMapOf<ShipId, MutableList<MPair<VSConstraint, ManagedConstraintId>>>()
@@ -128,7 +40,7 @@ class ConstraintManager: SavedData() {
             }
             shipsTag.put(k.toString(), constraintsTag)
         }
-        tag.put("vsource_ships_constraints", shipsTag)
+        tag.put(SAVE_TAG_NAME_STRING, shipsTag)
 
         instance = null
 
@@ -265,8 +177,8 @@ class ConstraintManager: SavedData() {
         fun load(tag: CompoundTag): ConstraintManager {
             val data = create()
 
-            if (tag.contains("vsource_ships_constraints") && tag["vsource_ships_constraints"] is CompoundTag) {
-                data.load(tag["vsource_ships_constraints"]!! as CompoundTag)
+            if (tag.contains(SAVE_TAG_NAME_STRING) && tag[SAVE_TAG_NAME_STRING] is CompoundTag) {
+                data.load(tag[SAVE_TAG_NAME_STRING]!! as CompoundTag)
             }
 
             return data

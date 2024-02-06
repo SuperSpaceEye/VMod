@@ -7,7 +7,7 @@
     "ServerLevelMixin"
   ],
   "client": [
-    "BlockRenderDispatcherMixin"
+    "GameRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

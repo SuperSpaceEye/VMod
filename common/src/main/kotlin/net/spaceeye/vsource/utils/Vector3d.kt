@@ -11,9 +11,9 @@ typealias JVector3dc = org.joml.Vector3dc
 typealias MCVec3     = net.minecraft.world.phys.Vec3
 
 class Vector3d(x:Number, y:Number, z:Number) {
-    var x = x.toDouble()
-    var y = y.toDouble()
-    var z = z.toDouble()
+    @JvmField var x = x.toDouble()
+    @JvmField var y = y.toDouble()
+    @JvmField var z = z.toDouble()
 
     constructor(): this(0, 0, 0)
     constructor(o: Vector3d): this(o.x, o.y, o.z)

@@ -134,6 +134,9 @@ class ConstraintManager: SavedData() {
     private fun createConstraints() {
         VSEvents.shipLoadEvent.on { (ship), handler ->
             setLoadedId(ship)
+            if (groupedToLoadConstraints.isEmpty()) {
+                handler.unregister()
+            }
         }
     }
 

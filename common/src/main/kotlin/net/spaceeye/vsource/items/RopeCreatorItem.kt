@@ -1,14 +1,20 @@
 package net.spaceeye.vsource.items
 
+import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.rendering.RenderEvents
+import net.spaceeye.vsource.rendering.RenderingUtils
+import net.spaceeye.vsource.utils.CARenderType
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.constraintsSaving.makeManagedConstraint
 import net.spaceeye.vsource.utils.posShipToWorld
+import net.spaceeye.vsource.utils.posShipToWorldRender
+import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
 import org.valkyrienskies.mod.common.dimensionId
@@ -17,45 +23,77 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 
 // TODO make rope ends actual ray hit positions and not just at the center of the blocks
 class RopeCreatorItem: BaseTool() {
-    var blockPos: BlockPos? = null
+    var sBlockPos: BlockPos? = null
+    var cBlockPos: BlockPos? = null
 
     override fun activatePrimaryFunction(level: Level, player: Player, clipResult: BlockHitResult) {
-        if (level.isClientSide) {return}
-        if (level !is ServerLevel) {return}
+        if (level is ServerLevel) {
+            if (sBlockPos == null) {sBlockPos = clipResult.blockPos; return}
+            if (sBlockPos == clipResult.blockPos) {resetState(); return}
+        } else if (level is ClientLevel) {
+            if (cBlockPos == null) {cBlockPos = clipResult.blockPos; return}
+            if (cBlockPos == clipResult.blockPos) {resetState(); return}
+        }
 
-        if (blockPos == null) {blockPos = clipResult.blockPos; return}
-        if (blockPos == clipResult.blockPos) {resetState(); return}
+        val scBlockPos = (if (sBlockPos != null) {sBlockPos} else {cBlockPos})!!
 
-        val ship1 = level.getShipManagingPos(blockPos!!)
+        val ship1 = level.getShipManagingPos(scBlockPos)
         val ship2 = level.getShipManagingPos(clipResult.blockPos)
 
         if (ship1 == null && ship2 == null) { resetState(); return }
         if (ship1 == ship2) { resetState(); return }
 
-        var shipId1: ShipId = ship1?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
-        var shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
-
-        val point1 = Vector3d(blockPos!!) + 0.5
+        val point1 = Vector3d(scBlockPos) + 0.5
         val point2 = Vector3d(clipResult.blockPos) + 0.5
 
-        val rpoint1 = if (ship1 == null) point1 else posShipToWorld(ship1, point1)
-        val rpoint2 = if (ship2 == null) point2 else posShipToWorld(ship2, point2)
+        if (level is ServerLevel) {
+            var shipId1: ShipId = ship1?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
+            var shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
-        val constraint = VSRopeConstraint(
-            shipId1, shipId2,
-            1e-10,
-            point1.toJomlVector3d(), point2.toJomlVector3d(),
-            1e10,
-            (rpoint1 - rpoint2).dist()
-        )
+            val rpoint1 = if (ship1 == null) point1 else posShipToWorld(ship1, point1)
+            val rpoint2 = if (ship2 == null) point2 else posShipToWorld(ship2, point2)
 
-        level.makeManagedConstraint(constraint)
+            val constraint = VSRopeConstraint(
+                shipId1, shipId2,
+                1e-10,
+                point1.toJomlVector3d(), point2.toJomlVector3d(),
+                1e10,
+                (rpoint1 - rpoint2).dist()
+            )
 
-        resetState()
+            level.makeManagedConstraint(constraint)
+
+            sBlockPos = null
+        } else if (level is ClientLevel) {
+            RenderEvents.WORLD.register {
+                poseStack, buffer, camera ->
+                val rpoint1 = if (ship1 == null) point1 else posShipToWorldRender(ship1 as ClientShip, point1)
+                val rpoint2 = if (ship2 == null) point2 else posShipToWorldRender(ship2 as ClientShip, point2)
+
+                val vBuffer = buffer.getBuffer(CARenderType.WIRE)
+
+                poseStack.pushPose()
+
+                val cameraPos = Vector3d(camera.position)
+
+                val tpos1 = rpoint1 - cameraPos
+                val tpos2 = rpoint2 - cameraPos
+                poseStack.translate(tpos1.x, tpos1.y, tpos1.z)
+
+                val matrix = poseStack.last().pose()
+                RenderingUtils.Quad.makeFlatRect(vBuffer, matrix,
+                    255, 0, 0, 255, 255, .2,
+                    tpos1, tpos2)
+
+                poseStack.popPose()
+            }
+            cBlockPos = null
+        }
     }
 
     override fun resetState() {
         LOG("RESETTING STATE")
-        blockPos = null
+        sBlockPos = null
+        cBlockPos = null
     }
 }

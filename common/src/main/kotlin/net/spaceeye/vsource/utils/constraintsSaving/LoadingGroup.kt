@@ -12,7 +12,6 @@ internal class LoadingGroup(
     val neededShipIds: MutableSet<ShipId>,
     val shipIsStaticStatus: MutableMap<ShipId, Boolean>
 ) {
-    //boolean is for isStatic status before loading
     private val shipRefs: MutableMap<ShipId, ServerShip> = mutableMapOf()
 
     fun setLoadedId(ship: ServerShip) {

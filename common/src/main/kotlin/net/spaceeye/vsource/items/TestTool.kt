@@ -39,7 +39,7 @@ class TestTool: BaseTool() {
                     poseStack.translate(tpos1.x, tpos1.y, tpos1.z)
 
                     val matrix = poseStack.last().pose()
-                    RenderingUtils.Quad.makeFlatRect(ivertexBuilder, matrix,
+                    RenderingUtils.Quad.makeFlatRectFacingCamera(ivertexBuilder, matrix,
                         255, 0, 0, 255, 255, 1.0,
                         tpos1, tpos2)
 

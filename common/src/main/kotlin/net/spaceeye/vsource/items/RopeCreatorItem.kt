@@ -81,7 +81,7 @@ class RopeCreatorItem: BaseTool() {
                 poseStack.translate(tpos1.x, tpos1.y, tpos1.z)
 
                 val matrix = poseStack.last().pose()
-                RenderingUtils.Quad.makeFlatRect(vBuffer, matrix,
+                RenderingUtils.Quad.makeFlatRectFacingCamera(vBuffer, matrix,
                     255, 0, 0, 255, 255, .2,
                     tpos1, tpos2)
 

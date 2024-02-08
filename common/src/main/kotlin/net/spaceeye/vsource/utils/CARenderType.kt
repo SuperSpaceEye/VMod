@@ -18,7 +18,7 @@ class CARenderType(
             true,
             CompositeState.builder().setShaderState(
                 RENDERTYPE_LEASH_SHADER
-            ).setTextureState(NO_TEXTURE).setCullState(CULL).setLightmapState(LIGHTMAP).createCompositeState(false)
+            ).setTextureState(NO_TEXTURE).setCullState(NO_CULL).setLightmapState(LIGHTMAP).createCompositeState(false)
         )
     }
 }

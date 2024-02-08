@@ -59,10 +59,10 @@ object RenderingUtils {
             makeBoxTube(buf, matrix, r, g, b, a, lightmapUV, ldb, lub, rub, rdb, ldt, lut, rut, rdt)
         }
 
-        inline fun makeFlatRect(buf: VertexConsumer, matrix: Matrix4f,
-                                r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
-                                width: Double,
-                                pos1: Vector3d, pos2: Vector3d
+        inline fun makeFlatRectFacingCamera(buf: VertexConsumer, matrix: Matrix4f,
+                                            r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
+                                            width: Double,
+                                            pos1: Vector3d, pos2: Vector3d
         ) {
             // wdir = worldPos2 - worldPos1
             // t = (cameraPos - worldPos1).dot(wdir) / wdir.dot(wdir)

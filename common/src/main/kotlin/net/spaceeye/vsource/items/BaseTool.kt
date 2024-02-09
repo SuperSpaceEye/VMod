@@ -24,7 +24,7 @@ abstract class BaseTool: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
         player: Player,
         usedHand: InteractionHand
     ): InteractionResultHolder<ItemStack> {
-        if (!level.isClientSide && player.isShiftKeyDown) { resetState() }
+        if (player.isShiftKeyDown) { resetState() }
 
         val clipResult = level.clip(
             ClipContext(

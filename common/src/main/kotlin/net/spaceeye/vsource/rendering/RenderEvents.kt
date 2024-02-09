@@ -1,6 +1,7 @@
 package net.spaceeye.vsource.rendering
 
 import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.math.Vector3d
 import dev.architectury.event.Event
 import dev.architectury.event.EventFactory
 import net.minecraft.client.Camera
@@ -12,7 +13,7 @@ object RenderEvents {
     val WORLD_EVENTS: Event<RenderEventPool<PoseStack>> = EventFactory.createLoop()
 
     fun interface RenderEvent<T> {
-        fun rendered(matrixStack: T, buffer: MultiBufferSource, camera: Camera)
+        fun rendered(matrixStack: T, camera: Camera)
     }
 
 //    fun t() {

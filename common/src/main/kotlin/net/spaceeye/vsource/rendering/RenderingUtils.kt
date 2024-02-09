@@ -80,8 +80,8 @@ object RenderingUtils {
             val lu =  up * width + pos1
             val ld = -up * width + pos1
 
-            val ru = -up * width + pos1 + wdir * 2
-            val rd =  up * width + pos1 + wdir * 2
+            val ru = -up * width + pos1 + wdir
+            val rd =  up * width + pos1 + wdir
 
             buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
             buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()

@@ -7,12 +7,7 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vsource.LOG
-import net.spaceeye.vsource.networking.Networking
-import net.spaceeye.vsource.networking.TestPacket
 import net.spaceeye.vsource.rendering.RenderEvents
-import net.spaceeye.vsource.rendering.RenderingUtils
-import net.spaceeye.vsource.utils.CARenderType
-import net.spaceeye.vsource.utils.Vector3d
 
 class TestTool: BaseTool() {
     var blockPos: BlockPos? = null
@@ -20,12 +15,12 @@ class TestTool: BaseTool() {
     override fun activatePrimaryFunction(level: Level, player: Player, clipResult: BlockHitResult) {
         when (level) {
             is ClientLevel -> {
-                LOG("SENDING TEST PACKET TO SERVER")
-                Networking.Client.TEST_C2S_CONNECTION.sendToServer(TestPacket())
+//                LOG("SENDING TEST PACKET TO SERVER")
+//                Networking.Client.TEST_C2S_CONNECTION.sendToServer(TestPacket())
 //                if (blockPos == null) {blockPos = clipResult.blockPos; return}
 //                if (blockPos == clipResult.blockPos) {resetState(); return}
 //
-//                RenderEvents.WORLD.clearListeners()
+                RenderEvents.WORLD.clearListeners()
 //
 //                val pos1 = Vector3d(blockPos!!) + 0.5
 //                val pos2 = Vector3d(clipResult.blockPos) + 0.5

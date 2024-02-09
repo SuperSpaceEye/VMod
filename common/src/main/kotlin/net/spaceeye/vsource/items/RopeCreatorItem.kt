@@ -1,5 +1,9 @@
 package net.spaceeye.vsource.items
 
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
@@ -9,11 +13,11 @@ import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.rendering.RenderEvents
 import net.spaceeye.vsource.rendering.RenderingUtils
-import net.spaceeye.vsource.utils.CARenderType
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.constraintsSaving.makeManagedConstraint
 import net.spaceeye.vsource.utils.posShipToWorld
 import net.spaceeye.vsource.utils.posShipToWorldRender
+import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
@@ -66,11 +70,23 @@ class RopeCreatorItem: BaseTool() {
             sBlockPos = null
         } else if (level is ClientLevel) {
             RenderEvents.WORLD.register {
-                poseStack, buffer, camera ->
+                poseStack, camera ->
                 val rpoint1 = if (ship1 == null) point1 else posShipToWorldRender(ship1 as ClientShip, point1)
                 val rpoint2 = if (ship2 == null) point2 else posShipToWorldRender(ship2 as ClientShip, point2)
 
-                val vBuffer = buffer.getBuffer(CARenderType.WIRE)
+                val tesselator = Tesselator.getInstance()
+                val vBuffer = tesselator.builder
+
+                RenderSystem.enableDepthTest()
+                RenderSystem.depthFunc(GL11.GL_LEQUAL)
+                RenderSystem.depthMask(true)
+
+//                RenderSystem.disableDepthTest()
+//                RenderSystem.disableBlend()
+//                RenderSystem.disableCull()
+//                RenderSystem.disableScissor()
+
+                vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_LIGHTMAP)
 
                 poseStack.pushPose()
 
@@ -78,12 +94,14 @@ class RopeCreatorItem: BaseTool() {
 
                 val tpos1 = rpoint1 - cameraPos
                 val tpos2 = rpoint2 - cameraPos
-                poseStack.translate(tpos1.x, tpos1.y, tpos1.z)
+//                poseStack.translate(0.0, 0.0, 0.0)
 
                 val matrix = poseStack.last().pose()
                 RenderingUtils.Quad.makeFlatRectFacingCamera(vBuffer, matrix,
                     255, 0, 0, 255, 255, .2,
                     tpos1, tpos2)
+
+                tesselator.end()
 
                 poseStack.popPose()
             }

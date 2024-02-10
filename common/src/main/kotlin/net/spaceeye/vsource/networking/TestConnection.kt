@@ -5,7 +5,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vsource.LOG
 
-class TestPacket: Packet {
+class TestPacket: Serializable {
     constructor()
     constructor(buf: FriendlyByteBuf) {deserialize(buf)}
 

@@ -17,13 +17,13 @@ object Networking {
         val TEST_S2C_CONNECTION = "test" idWithConn ::TestS2CConnection
     }
 
-    private infix fun <T: Packet> String.idWithConn(constructor: (String) -> C2SConnection<T>): C2SConnection<T> {
+    infix fun <T: Serializable> String.idWithConn(constructor: (String) -> C2SConnection<T>): C2SConnection<T> {
         val instance = constructor(this)
         NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
         return instance
     }
 
-    private infix fun <T: Packet> String.idWithConn(constructor: (String) -> S2CConnection<T>): S2CConnection<T> {
+    infix fun <T: Serializable> String.idWithConn(constructor: (String) -> S2CConnection<T>): S2CConnection<T> {
         val instance = constructor(this)
         NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
         return instance
@@ -36,14 +36,14 @@ interface PacketConn {
     fun getHandler(): NetworkReceiver
 }
 
-interface Packet {
+interface Serializable {
     fun serialize(): FriendlyByteBuf
     fun deserialize(buf: FriendlyByteBuf)
 
     fun getBuffer() = FriendlyByteBuf(Unpooled.buffer())
 }
 
-abstract class C2SConnection<T : Packet>(id: String, connectionName: String): PacketConn {
+abstract class C2SConnection<T : Serializable>(id: String, connectionName: String): PacketConn {
     override val side: NetworkManager.Side = NetworkManager.Side.C2S
     override val id = ResourceLocation(VS.MOD_ID, "c2s$connectionName$id")
 
@@ -53,7 +53,7 @@ abstract class C2SConnection<T : Packet>(id: String, connectionName: String): Pa
     fun sendToServer(packet: T) = NetworkManager.sendToServer(id, packet.serialize())
 }
 
-abstract class S2CConnection<T : Packet>(id: String, connectionName: String): PacketConn {
+abstract class S2CConnection<T : Serializable>(id: String, connectionName: String): PacketConn {
     override val side: NetworkManager.Side = NetworkManager.Side.S2C
     override val id = ResourceLocation(VS.MOD_ID, "s2c$connectionName$id")
 

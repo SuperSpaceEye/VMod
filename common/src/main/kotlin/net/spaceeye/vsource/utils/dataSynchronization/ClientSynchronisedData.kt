@@ -2,6 +2,7 @@ package net.spaceeye.vsource.utils.dataSynchronization
 
 import dev.architectury.networking.NetworkManager
 import net.minecraft.network.FriendlyByteBuf
+import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.networking.S2CConnection
 import java.util.function.Supplier
@@ -9,15 +10,16 @@ import java.util.function.Supplier
 abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance: () -> ServerSynchronisedData<T>, val supplier: Supplier<T>) {
     val serverRequestChecksumResponseConnection = id idWithConn ::ServerDataResponseConnection
     val serverDataUpdateRequestResponseConnection = id idWithConn ::ServerDataUpdateRequestResponseConnection
+    val serverChecksumsUpdatedConnection = id idWithConn ::ServerChecksumsUpdatedConnection
 
     val dataRequestChecksumConnection = {getServerInstance().dataRequestChecksumConnection}
     val dataUpdateRequestConnection   = {getServerInstance().dataUpdateRequestConnection}
 
     //TODO change to synchronised map
-    private val serverChecksums = mutableMapOf<Long, MutableMap<Int, ByteArray>>()
-    private val clientChecksums = mutableMapOf<Long, MutableMap<Int, ByteArray>>()
+    val serverChecksums = mutableMapOf<Long, MutableMap<Int, ByteArray>>()
+    val clientChecksums = mutableMapOf<Long, MutableMap<Int, ByteArray>>()
 
-    protected val cachedData = mutableMapOf<Long, MutableMap<Int, T>>()
+    val cachedData = mutableMapOf<Long, MutableMap<Int, T>>()
 
     fun tryPoolDataUpdate(page: Long): MutableMap<Int, T>? {
         if (!serverChecksums.containsKey(page)) {
@@ -43,7 +45,7 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
 
     fun requestUpdateData(page: Long) {
         val serverPage = serverChecksums[page]!!
-        val clientPage = clientChecksums[page]!!
+        val clientPage = clientChecksums.getOrDefault(page, mutableMapOf())
 
         val serverIds = serverPage.keys
         var clientIds = clientPage.keys
@@ -51,7 +53,7 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
         clientIds.filter { !clientIds.containsAll(serverIds) }.forEach {clientPage.remove(it)}
         clientIds = clientPage.keys
 
-        val toUpdate = serverPage.filter { (k, v) -> !clientPage[k]!!.contentEquals(v) }.map { it.key }.toMutableList()
+        val toUpdate = serverPage.filter { (k, v) -> !clientPage[k].contentEquals(v) }.map { it.key }.toMutableList()
 
         dataUpdateRequestConnection().sendToServer(ClientDataUpdateRequestPacket(page, toUpdate))
     }
@@ -67,6 +69,7 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
             }
 
             clientInstance.serverChecksums[packet.page] = packet.checksums.toMap().toMutableMap()
+            LOG("IM ServerDataResponseConnection")
         }
     }
 
@@ -79,9 +82,21 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
                 clientInstance.cachedData     .remove(packet.page)
                 return
             }
-            val page = clientInstance.cachedData[packet.page] ?: return
-            packet.newData.forEach { (idx, item) -> page[idx] = item}
+            val page = clientInstance.cachedData.getOrPut(packet.page) { mutableMapOf() }
+            packet.newData.forEach { (idx, item) -> page[idx] = item }
             packet.nullData.forEach { page.remove(it) }
+            LOG("IM ServerDataUpdateRequestResponseConnection")
+        }
+    }
+
+    class ServerChecksumsUpdatedConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerChecksumsUpdatedPacket>(id, "server_checksums_updated_packet") {
+        override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+            val packet = ServerChecksumsUpdatedPacket(buf)
+            val page = clientInstance.serverChecksums.getOrPut(packet.page) { mutableMapOf() }
+            packet.updatedIndices.forEach {
+                page[it.first] = it.second
+            }
+            LOG("IM ServerChecksumsUpdatedConnection")
         }
     }
 

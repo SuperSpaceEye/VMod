@@ -3,6 +3,7 @@ package net.spaceeye.vsource.utils.dataSynchronization
 import dev.architectury.networking.NetworkManager
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.Serializable
 
@@ -12,6 +13,7 @@ abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance
 
     val serverRequestChecksumResponseConnection   = {getClientInstance().serverRequestChecksumResponseConnection}
     val serverDataUpdateRequestResponseConnection = {getClientInstance().serverDataUpdateRequestResponseConnection}
+    val serverChecksumsUpdatedConnection          = {getClientInstance().serverChecksumsUpdatedConnection}
 
     // CONNECTIONS FOR CLIENT, HANDLERS FOR SERVER
     val dataRequestChecksumConnection = id idWithConn ::ClientDataRequestConnection
@@ -34,6 +36,7 @@ abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance
                 context.player as ServerPlayer,
                 ServerDataRequestResponsePacket(packet.page, true, checksums.toMutableList())
             )
+            LOG("IM ClientDataRequestConnection")
         }
     }
 
@@ -55,6 +58,7 @@ abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance
                 context.player as ServerPlayer,
                 ServerDataUpdateRequestResponsePacket(true, packet.page, dataToSend, nullData, null)
             )
+            LOG("IM ClientDataUpdateRequestConnection")
         }
     }
 

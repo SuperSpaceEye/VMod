@@ -1,6 +1,7 @@
 package net.spaceeye.vsource.utils
 
 import net.minecraft.core.BlockPos
+import net.minecraft.network.FriendlyByteBuf
 import kotlin.math.max
 import kotlin.math.min
 
@@ -9,6 +10,20 @@ typealias MCVector3f = com.mojang.math.Vector3f
 typealias JVector3d  = org.joml.Vector3d
 typealias JVector3dc = org.joml.Vector3dc
 typealias MCVec3     = net.minecraft.world.phys.Vec3
+
+fun FriendlyByteBuf.writeVector3d(vector3d: Vector3d) {
+    this.writeDouble(vector3d.x)
+    this.writeDouble(vector3d.y)
+    this.writeDouble(vector3d.z)
+}
+
+fun FriendlyByteBuf.readVector3d(): Vector3d {
+    return Vector3d(
+        this.readDouble(),
+        this.readDouble(),
+        this.readDouble()
+    )
+}
 
 class Vector3d(x:Number, y:Number, z:Number) {
     @JvmField var x = x.toDouble()

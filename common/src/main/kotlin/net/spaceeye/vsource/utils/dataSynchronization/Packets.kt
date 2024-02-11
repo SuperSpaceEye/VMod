@@ -1,5 +1,6 @@
 package net.spaceeye.vsource.utils.dataSynchronization
 
+import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vsource.networking.Serializable
 import java.util.function.Supplier
@@ -129,7 +130,7 @@ class ServerDataUpdateRequestResponsePacket<T : DataUnit>(val supplier: Supplier
         buf.writeCollection(newData) {
                 buf, item ->
             buf.writeInt(item.first)
-            buf.writeBytes(item.second.serialize())
+            buf.writeByteArray(item.second.serialize().array())
         }
         buf.writeCollection(nullData) {buf, item -> buf.writeInt(item)}
         return buf
@@ -140,8 +141,42 @@ class ServerDataUpdateRequestResponsePacket<T : DataUnit>(val supplier: Supplier
         page = buf.readLong()
         if (!pageExists) {return}
         newData = buf.readCollection({ mutableListOf()}) {
-            Pair(it.readInt(), supplier!!.get().deserialize(FriendlyByteBuf(it.readBytes(getBuffer()))))
+            val int = it.readInt()
+            val bytes = it.readByteArray()
+            val buffer = FriendlyByteBuf(Unpooled.copiedBuffer(bytes))
+
+            val item = supplier!!.get()
+            item.deserialize(buffer)
+
+            Pair(int, item)
         }
         nullData = buf.readCollection({ mutableListOf()}) {buf.readInt()}
+    }
+}
+
+class ServerChecksumsUpdatedPacket(): Serializable {
+    constructor(buf: FriendlyByteBuf) : this() {deserialize(buf)}
+    constructor(page: Long, updatedIndices: MutableList<Pair<Int, ByteArray>>): this() {
+        this.page = page
+        this.updatedIndices = updatedIndices
+    }
+
+    var page: Long = 0
+    lateinit var updatedIndices: MutableList<Pair<Int, ByteArray>>
+
+    override fun serialize(): FriendlyByteBuf {
+        val buf = getBuffer()
+
+        buf.writeLong(page)
+        buf.writeCollection(updatedIndices) { buf, (idx, arr) -> buf.writeInt(idx); buf.writeByteArray(arr) }
+
+        return buf
+    }
+
+    override fun deserialize(buf: FriendlyByteBuf) {
+        page = buf.readLong()
+        updatedIndices = buf.readCollection({ mutableListOf()}) {
+            Pair(buf.readInt(), buf.readByteArray())
+        }
     }
 }

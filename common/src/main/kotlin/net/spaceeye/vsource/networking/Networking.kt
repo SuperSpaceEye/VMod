@@ -10,12 +10,12 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vsource.VS
 
 object Networking {
-    object Client {
-        val TEST_C2S_CONNECTION = "test" idWithConn ::TestC2SConnection
-    }
-    object Server {
-        val TEST_S2C_CONNECTION = "test" idWithConn ::TestS2CConnection
-    }
+//    object Client {
+//        val TEST_C2S_CONNECTION = "test" idWithConn ::TestC2SConnection
+//    }
+//    object Server {
+//        val TEST_S2C_CONNECTION = "test" idWithConn ::TestS2CConnection
+//    }
 
     infix fun <T: Serializable> String.idWithConn(constructor: (String) -> C2SConnection<T>): C2SConnection<T> {
         val instance = constructor(this)
@@ -40,7 +40,7 @@ interface Serializable {
     fun serialize(): FriendlyByteBuf
     fun deserialize(buf: FriendlyByteBuf)
 
-    fun getBuffer() = FriendlyByteBuf(Unpooled.buffer())
+    fun getBuffer() = FriendlyByteBuf(Unpooled.buffer(512))
 }
 
 abstract class C2SConnection<T : Serializable>(id: String, connectionName: String): PacketConn {

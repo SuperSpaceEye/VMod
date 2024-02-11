@@ -64,7 +64,9 @@ abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance
 
     infix fun <TT: Serializable> String.idWithConn(constructor: (String, ServerSynchronisedData<T>) -> C2SConnection<TT>): C2SConnection<TT> {
         val instance = constructor(this, this@ServerSynchronisedData)
-        NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        try { // Why? so that if it's registered on dedicated client/server it won't die
+            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        } catch(e: NoSuchMethodError) {}
         return instance
     }
 }

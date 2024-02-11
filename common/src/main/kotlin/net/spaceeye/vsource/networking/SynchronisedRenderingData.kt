@@ -40,8 +40,6 @@ class RenderingData(): DataUnit {
     var point1: Vector3d = Vector3d()
     var point2: Vector3d = Vector3d()
 
-    var level: ClientLevel? = Minecraft.getInstance().level
-
     constructor(ship1isShip: Boolean,
                 ship2isShip: Boolean,
                 point1: Vector3d,
@@ -53,7 +51,7 @@ class RenderingData(): DataUnit {
                 }
 
     fun renderData(poseStack: PoseStack, camera: Camera) {
-        if (level == null) {return}
+        val level = Minecraft.getInstance().level
 
         val ship1 = level.getShipManagingPos(point1.toBlockPos())
         val ship2 = level.getShipManagingPos(point2.toBlockPos())

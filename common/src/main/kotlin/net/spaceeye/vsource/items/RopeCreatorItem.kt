@@ -70,6 +70,7 @@ class RopeCreatorItem: BaseTool() {
                 point1, point2
             )
 
+            server.data.getOrPut(shipId2) { mutableMapOf() }
             val page = server.data.getOrPut(shipId1) { mutableMapOf() }
             page[id!!.id] = data
 

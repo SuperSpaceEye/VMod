@@ -83,8 +83,15 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
                 return
             }
             val page = clientInstance.cachedData.getOrPut(packet.page) { mutableMapOf() }
-            packet.newData.forEach { (idx, item) -> page[idx] = item }
-            packet.nullData.forEach { page.remove(it) }
+            val checksumPage = clientInstance.clientChecksums.getOrPut(packet.page) { mutableMapOf() }
+            packet.newData.forEach { (idx, item) ->
+                page[idx] = item
+                checksumPage[idx] = item.hash()
+            }
+            packet.nullData.forEach { idx ->
+                page.remove(idx)
+                checksumPage.remove(idx)
+            }
             LOG("IM ServerDataUpdateRequestResponseConnection")
         }
     }
@@ -102,7 +109,9 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
 
     infix fun <TT: Serializable> String.idWithConn(constructor: (String, ClientSynchronisedData<T>) -> S2CConnection<TT>): S2CConnection<TT> {
         val instance = constructor(this, this@ClientSynchronisedData)
-        NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        try { // Why? so that if it's registered on dedicated client/server it won't die
+            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        } catch(e: NoSuchMethodError) {}
         return instance
     }
 }

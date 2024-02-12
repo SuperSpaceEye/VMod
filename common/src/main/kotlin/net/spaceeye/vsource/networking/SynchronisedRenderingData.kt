@@ -11,6 +11,7 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.client.renderer.GameRenderer
 import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.rendering.RenderingUtils
 import net.spaceeye.vsource.utils.*
@@ -62,14 +63,18 @@ class SimpleRopeRenderer(): RenderingData {
     var point1: Vector3d = Vector3d()
     var point2: Vector3d = Vector3d()
 
+    var length: Double = 0.0
+
     constructor(ship1isShip: Boolean,
                 ship2isShip: Boolean,
                 point1: Vector3d,
-                point2: Vector3d): this() {
+                point2: Vector3d,
+				length: Double): this() {
         this.ship1isShip = ship1isShip
         this.ship2isShip = ship2isShip
         this.point1 = point1
         this.point2 = point2
+        this.length = length
     }
 
     override fun getTypeName() = "SimpleRopeRendering"
@@ -95,13 +100,15 @@ class SimpleRopeRenderer(): RenderingData {
         RenderSystem.enableDepthTest()
         RenderSystem.depthFunc(GL11.GL_LEQUAL)
         RenderSystem.depthMask(true)
+        RenderSystem.setShader(GameRenderer::getPositionTexShader)
+		RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
 
 //                RenderSystem.disableDepthTest()
 //                RenderSystem.disableBlend()
 //                RenderSystem.disableCull()
 //                RenderSystem.disableScissor()
 
-        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_LIGHTMAP)
+        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
 
         poseStack.pushPose()
 
@@ -111,8 +118,9 @@ class SimpleRopeRenderer(): RenderingData {
         val tpos2 = rpoint2 - cameraPos
 
         val matrix = poseStack.last().pose()
-        RenderingUtils.Quad.makeFlatRectFacingCamera(vBuffer, matrix,
-            255, 0, 0, 255, 255, .2,
+        RenderingUtils.Quad.drawRope(vBuffer, matrix,
+            255, 0, 0, 255, 255,
+            .2, 16, length,
             tpos1, tpos2)
 
         tesselator.end()
@@ -133,6 +141,8 @@ class SimpleRopeRenderer(): RenderingData {
         buf.writeVector3d(point1)
         buf.writeVector3d(point2)
 
+        buf.writeDouble(length)
+
         return buf
     }
 
@@ -142,6 +152,8 @@ class SimpleRopeRenderer(): RenderingData {
 
         point1 = buf.readVector3d()
         point2 = buf.readVector3d()
+
+        length = buf.readDouble()
     }
 }
 

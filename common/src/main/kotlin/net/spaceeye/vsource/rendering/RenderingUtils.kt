@@ -2,9 +2,15 @@ package net.spaceeye.vsource.rendering
 
 import com.mojang.blaze3d.vertex.VertexConsumer
 import com.mojang.math.Matrix4f
+import net.minecraft.resources.ResourceLocation
+import net.spaceeye.vsource.VS
 import net.spaceeye.vsource.utils.Vector3d
 
+import kotlin.math.cosh
+import kotlin.math.sinh
+
 object RenderingUtils {
+    val ropeTexture = ResourceLocation(VS.MOD_ID, "textures/misc/rope.png")
     inline fun tof(n: Double) = n.toFloat()
     object Quad {
         inline fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,
@@ -85,6 +91,65 @@ object RenderingUtils {
             buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
             buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
             buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
+        }
+
+        inline fun lerp(a: Vector3d, b: Vector3d, f: Double) : Vector3d {
+			return a + (b - a) * f
+		}
+		
+		// x is position on rope (from 0 to 1)
+		// l is available length (ie. initial distance - actual distance)
+		inline fun height(l: Double, x: Double) : Double {
+			val a = 4*l
+			return x*a*(x - 1)
+		}
+		
+		// ilength is initial rope length
+		inline fun drawRope(buf: VertexConsumer, matrix: Matrix4f,
+            r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
+            width: Double, segments: Int, ilength: Double,
+            pos1: Vector3d, pos2: Vector3d
+        ) {
+            if (segments < 1) return
+			
+			var l = ilength - (pos1-pos2).dist()
+			if (l < 0.0) l = 0.0
+			
+			for (i in 1..segments) {
+				val x0 = (i-1).toDouble() / segments
+				val x1 = i.toDouble() / segments
+				var last = lerp(pos1, pos2, x0)
+				var current = lerp(pos1, pos2, x1)
+				last.y += height(l, x0)
+				current.y += height(l, x1)
+				var d0 = last-current
+				var d1 = d0
+				if (i > 1) {
+					val xm = (i-2).toDouble() / segments
+					d0 = lerp(pos1, pos2, xm)-last + d0
+					d0.y += height(l, xm)
+				}
+				if (i < segments) {
+					val x2 = (i+1).toDouble() / segments
+					d1 = current-lerp(pos1, pos2, x2) + d1
+					d1.y -= height(l, x2)
+				}
+				d0 = d0.normalize()
+				d1 = d1.normalize()
+
+				val up0 = last.normalize().cross(d0).normalize()
+				val up1 = current.normalize().cross(d1).normalize()
+				
+				val lu =  up0 * width + last
+				val ld = -up0 * width + last
+				val ru = -up1 * width + current
+				val rd =  up1 * width + current
+
+				buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(tof(x0), 0.0f).uv2(lightmapUV).endVertex()
+				buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(tof(x0), 1.0f).uv2(lightmapUV).endVertex()
+				buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(tof(x1), 1.0f).uv2(lightmapUV).endVertex()
+				buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(tof(x1), 0.0f).uv2(lightmapUV).endVertex()
+			}
         }
     }
 }

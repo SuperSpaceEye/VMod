@@ -33,8 +33,6 @@ object RenderingUtils {
             buf.vertex(matrix,  tof(b1.x), tof(b1.y), tof(b1.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
         }
 
-        inline fun neq(first: Vector3d, second: Vector3d) = first != second
-
         inline fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,
                                r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
                                width: Double,

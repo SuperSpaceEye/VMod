@@ -7,6 +7,7 @@ import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vsource.VS
 import net.spaceeye.vsource.utils.AVSEvents
 import net.spaceeye.vsource.utils.MPair
+import net.spaceeye.vsource.utils.ServerClosable
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -209,6 +210,12 @@ class ConstraintManager: SavedData() {
 
         init {
             makeServerEvents()
+            ConstraintManagerWatcher // to initialize watcher
+        }
+
+        fun close() {
+            instance = null
+            level = null
         }
 
         //TODO look closer into this
@@ -247,5 +254,11 @@ class ConstraintManager: SavedData() {
                 getInstance(level!!).setDirty()
             }
         }
+    }
+}
+
+object ConstraintManagerWatcher : ServerClosable() {
+    override fun close() {
+        ConstraintManager.close()
     }
 }

@@ -1,8 +1,9 @@
 package net.spaceeye.vsource.utils.constraintsSaving
 
+import net.spaceeye.vsource.utils.ServerClosable
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 
-internal class ConstraintIdManager {
+internal class ConstraintIdManager : ServerClosable() {
     private val idMap = mutableMapOf<ManagedConstraintId, VSConstraintId>()
     private var counter = 0
 
@@ -22,5 +23,10 @@ internal class ConstraintIdManager {
         if (id >= counter) {counter = id + 1}
 
         return newManagedId
+    }
+
+    override fun close() {
+        counter = 0
+        idMap.clear()
     }
 }

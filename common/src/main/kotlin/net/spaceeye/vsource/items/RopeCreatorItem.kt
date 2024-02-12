@@ -67,7 +67,8 @@ class RopeCreatorItem: BaseTool() {
             val data = SimpleRopeRenderer(
                 ship1 != null,
                 ship2 != null,
-                point1, point2
+                point1, point2,
+				(rpoint1 - rpoint2).dist()
             )
 
             server.data.getOrPut(shipId2) { mutableMapOf() }

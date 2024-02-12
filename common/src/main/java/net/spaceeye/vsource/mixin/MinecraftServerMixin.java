@@ -25,7 +25,7 @@ abstract public class MinecraftServerMixin {
         ServerLevelHolder.INSTANCE.setServer((MinecraftServer)(Object)this);
     }
 
-    @Inject(method = "stopServer", at = @At("HEAD"), remap = false)
+    @Inject(method = "stopServer", at = @At("HEAD"))
     void injectStopServer(CallbackInfo ci) {
         LevelEvents.INSTANCE.getServerStopEvent().emit(new LevelEvents.ServerStopEvent((MinecraftServer)(Object)this));
     }

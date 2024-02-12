@@ -9,7 +9,7 @@ import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.utils.ServerClosable
 
 
-abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance: () -> ClientSynchronisedData<T>): ServerClosable() {
+abstract class ServerSynchronisedData<T: DataUnit>(val id: String, getClientInstance: () -> ClientSynchronisedData<T>): ServerClosable() {
     val data = mutableMapOf<Long, MutableMap<Int, T>>()
 
     val serverRequestChecksumResponseConnection   = {getClientInstance().serverRequestChecksumResponseConnection}

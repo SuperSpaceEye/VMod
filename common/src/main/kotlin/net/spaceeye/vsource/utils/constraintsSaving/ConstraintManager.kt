@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vsource.VS
+import net.spaceeye.vsource.networking.SynchronisedRenderingData
 import net.spaceeye.vsource.utils.AVSEvents
 import net.spaceeye.vsource.utils.MPair
 import net.spaceeye.vsource.utils.ServerClosable
@@ -84,6 +85,7 @@ class ConstraintManager: SavedData() {
     override fun save(tag: CompoundTag): CompoundTag {
         var tag = saveActiveConstraints(tag)
         tag = saveNotLoadedConstraints(tag)
+        tag = SynchronisedRenderingData.serverSynchronisedData.nbtSave(tag)
 
         instance = null
         return tag
@@ -243,6 +245,7 @@ class ConstraintManager: SavedData() {
             if (tag.contains(SAVE_TAG_NAME_STRING) && tag[SAVE_TAG_NAME_STRING] is CompoundTag) {
                 data.load(tag[SAVE_TAG_NAME_STRING]!! as CompoundTag)
             }
+            SynchronisedRenderingData.serverSynchronisedData.nbtLoad(tag)
 
             return data
         }

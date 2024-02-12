@@ -6,8 +6,10 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
+import io.netty.buffer.Unpooled
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
+import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.rendering.RenderingUtils
@@ -144,7 +146,53 @@ class SimpleRopeRenderer(): RenderingData {
 }
 
 class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<RenderingData>): ClientSynchronisedData<RenderingData>("rendering_data", getServerInstance)
-class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronisedData<RenderingData>): ServerSynchronisedData<RenderingData>("rendering_data", getClientInstance)
+class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronisedData<RenderingData>): ServerSynchronisedData<RenderingData>("rendering_data", getClientInstance) {
+    //TODO switch from nbt to just directly writing to byte buffer?
+    fun nbtSave(tag: CompoundTag): CompoundTag {
+        val save = CompoundTag()
+
+        for ((k, v) in data) {
+            val shipIdTag = CompoundTag()
+            for ((id, item) in v) {
+                val dataItemTag = CompoundTag()
+
+                val typeIdx = RenderingTypes.typeToIdx(item.getTypeName())
+                if (typeIdx == null) {
+                    LOG("RENDERING ITEM WITH TYPE ${item.getTypeName()} RETURNED NULL TYPE INDEX DURING SAVING")
+                    continue
+                }
+
+                dataItemTag.putInt("typeIdx", typeIdx)
+                dataItemTag.putByteArray("data", item.serialize().accessByteBufWithCorrectSize())
+
+                shipIdTag.put(id.toString(), dataItemTag)
+            }
+            save.put(k.toString(), shipIdTag)
+        }
+
+        tag.put("server_synchronised_data_${id}", save)
+        return tag
+    }
+
+    fun nbtLoad(tag: CompoundTag) {
+        if (!tag.contains("server_synchronised_data_${id}")) {return}
+        val save = tag.get("server_synchronised_data_${id}") as CompoundTag
+
+        for (k in save.allKeys) {
+            val shipIdTag = save.get(k) as CompoundTag
+            val page = data.getOrPut(k.toLong()) { mutableMapOf() }
+            for (kk in shipIdTag.allKeys) {
+                val dataItemTag = shipIdTag[kk] as CompoundTag
+
+                val typeIdx = dataItemTag.getInt("typeIdx")
+                val item = RenderingTypes.idxToSupplier(typeIdx).get()
+                item.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(dataItemTag.getByteArray("data"))))
+
+                page[kk.toInt()] = item
+            }
+        }
+    }
+}
 
 object SynchronisedRenderingData {
     lateinit var clientSynchronisedData: ClientSynchronisedRenderingData

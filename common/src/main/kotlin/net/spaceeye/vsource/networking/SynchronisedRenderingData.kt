@@ -1,5 +1,6 @@
 package net.spaceeye.vsource.networking
 
+import com.google.common.base.Supplier
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
@@ -7,16 +8,14 @@ import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.network.FriendlyByteBuf
+import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.rendering.RenderingUtils
-import net.spaceeye.vsource.utils.Vector3d
+import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.utils.dataSynchronization.ClientSynchronisedData
 import net.spaceeye.vsource.utils.dataSynchronization.DataUnit
+import net.spaceeye.vsource.utils.dataSynchronization.ServerChecksumsUpdatedPacket
 import net.spaceeye.vsource.utils.dataSynchronization.ServerSynchronisedData
-import net.spaceeye.vsource.utils.posShipToWorldRender
-import net.spaceeye.vsource.utils.readVector3d
-import net.spaceeye.vsource.utils.writeVector3d
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.mod.common.getShipManagingPos
@@ -33,7 +32,28 @@ fun mixinRunFn(poseStack: PoseStack, camera: Camera) {
     }
 }
 
-class RenderingData(): DataUnit {
+object RenderingTypes {
+    private val strToIdx = mutableMapOf<String, Int>()
+    private val suppliers = mutableListOf<Supplier<RenderingData>>()
+
+    init {
+        register { SimpleRopeRenderer() }
+    }
+
+    private fun register(supplier: Supplier<RenderingData>) {
+        suppliers.add(supplier)
+        strToIdx[supplier.get().getTypeName()] = suppliers.size - 1
+    }
+
+    fun typeToIdx(type: String) = strToIdx[type]
+    fun idxToSupplier(idx: Int) = suppliers[idx]
+}
+
+interface RenderingData: DataUnit {
+    fun renderData(poseStack: PoseStack, camera: Camera)
+}
+
+class SimpleRopeRenderer(): RenderingData {
     var ship1isShip: Boolean = false
     var ship2isShip: Boolean = false
 
@@ -48,24 +68,21 @@ class RenderingData(): DataUnit {
         this.ship2isShip = ship2isShip
         this.point1 = point1
         this.point2 = point2
-                }
+    }
 
-    fun renderData(poseStack: PoseStack, camera: Camera) {
+    override fun getTypeName() = "SimpleRopeRendering"
+
+    override fun renderData(poseStack: PoseStack, camera: Camera) {
         val level = Minecraft.getInstance().level
 
         val ship1 = level.getShipManagingPos(point1.toBlockPos())
         val ship2 = level.getShipManagingPos(point2.toBlockPos())
 
-        if (ship1isShip) {
-            if (ship1 == null) {return}
-        } else {
-            if (ship1 != null) {return}
-        }
-        if (ship2isShip) {
-            if (ship2 == null) {return}
-        } else {
-            if (ship2 != null) {return}
-        }
+        //I don't think VS reuses shipyard plots so
+        if (ship1isShip && ship1 == null) {return}
+        if (ship2isShip && ship2 == null) {return}
+//        if (!ship1isShip && ship1 != null) {return}
+//        if (!ship2isShip && ship2 != null) {return}
 
         val rpoint1 = if (ship1 == null) point1 else posShipToWorldRender(ship1 as ClientShip, point1)
         val rpoint2 = if (ship2 == null) point2 else posShipToWorldRender(ship2 as ClientShip, point2)
@@ -126,20 +143,32 @@ class RenderingData(): DataUnit {
     }
 }
 
-class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<RenderingData>): ClientSynchronisedData<RenderingData>("rendering_data", getServerInstance, ::RenderingData) {
-}
-
-class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronisedData<RenderingData>): ServerSynchronisedData<RenderingData>("rendering_data", getClientInstance) {
-}
+class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<RenderingData>): ClientSynchronisedData<RenderingData>("rendering_data", getServerInstance)
+class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronisedData<RenderingData>): ServerSynchronisedData<RenderingData>("rendering_data", getClientInstance)
 
 object SynchronisedRenderingData {
     lateinit var clientSynchronisedData: ClientSynchronisedRenderingData
     lateinit var serverSynchronisedData: ServerSynchronisedRenderingData
 
+    //MD2, MD5, SHA-1, SHA-256, SHA-384, SHA-512
     val hasher = MessageDigest.getInstance("MD5")
 
     init {
         clientSynchronisedData = ClientSynchronisedRenderingData { serverSynchronisedData }
         serverSynchronisedData = ServerSynchronisedRenderingData { clientSynchronisedData }
+        makeServerEvents()
+    }
+
+    private fun makeServerEvents() {
+        AVSEvents.serverShipRemoveEvent.on {
+            (shipData), handler ->
+            serverSynchronisedData.data.remove(shipData.id)
+            serverSynchronisedData.serverChecksumsUpdatedConnection()
+                .sendToClients(
+                    ServerLevelHolder.serverLevel!!.server.playerList.players,
+                    ServerChecksumsUpdatedPacket(shipData.id, true)
+                )
+            LOG("SENT DELETED SHIPID")
+        }
     }
 }

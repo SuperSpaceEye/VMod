@@ -7,7 +7,6 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vsource.LOG
-import net.spaceeye.vsource.rendering.RenderEvents
 
 class TestTool: BaseTool() {
     var blockPos: BlockPos? = null
@@ -20,7 +19,7 @@ class TestTool: BaseTool() {
 //                if (blockPos == null) {blockPos = clipResult.blockPos; return}
 //                if (blockPos == clipResult.blockPos) {resetState(); return}
 //
-                RenderEvents.WORLD.clearListeners()
+//                RenderEvents.WORLD.clearListeners()
 //
 //                val pos1 = Vector3d(blockPos!!) + 0.5
 //                val pos2 = Vector3d(clipResult.blockPos) + 0.5

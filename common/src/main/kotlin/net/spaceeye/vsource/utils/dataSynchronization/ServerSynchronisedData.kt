@@ -6,9 +6,10 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.Serializable
+import net.spaceeye.vsource.utils.ServerClosable
 
 
-abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance: () -> ClientSynchronisedData<T>) {
+abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance: () -> ClientSynchronisedData<T>): ServerClosable() {
     val data = mutableMapOf<Long, MutableMap<Int, T>>()
 
     val serverRequestChecksumResponseConnection   = {getClientInstance().serverRequestChecksumResponseConnection}
@@ -18,6 +19,10 @@ abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance
     // CONNECTIONS FOR CLIENT, HANDLERS FOR SERVER
     val dataRequestChecksumConnection = id idWithConn ::ClientDataRequestConnection
     val dataUpdateRequestConnection   = id idWithConn ::ClientDataUpdateRequestConnection
+
+    override fun close() {
+        data.clear()
+    }
 
     class ClientDataRequestConnection<T: DataUnit>(id: String, val serverInstance: ServerSynchronisedData<T>): C2SConnection<ClientDataRequestPacket>(id, "client_data_request_connection") {
         override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
@@ -47,7 +52,7 @@ abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance
             if (page == null) {
                 serverInstance.serverDataUpdateRequestResponseConnection().sendToClient(
                     context.player as ServerPlayer,
-                    ServerDataUpdateRequestResponsePacket(false, packet.page, null)
+                    ServerDataUpdateRequestResponsePacket(false, packet.page)
                 )
                 return
             }
@@ -56,7 +61,7 @@ abstract class ServerSynchronisedData<T: DataUnit>(id: String, getClientInstance
 
             serverInstance.serverDataUpdateRequestResponseConnection().sendToClient(
                 context.player as ServerPlayer,
-                ServerDataUpdateRequestResponsePacket(true, packet.page, dataToSend, nullData, null)
+                ServerDataUpdateRequestResponsePacket(true, packet.page, dataToSend, nullData)
             )
             LOG("IM ClientDataUpdateRequestConnection")
         }

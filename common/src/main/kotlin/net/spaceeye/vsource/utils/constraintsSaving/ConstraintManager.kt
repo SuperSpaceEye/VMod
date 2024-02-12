@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vsource.VS
+import net.spaceeye.vsource.utils.AVSEvents
 import net.spaceeye.vsource.utils.MPair
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -206,6 +207,10 @@ class ConstraintManager: SavedData() {
         private var instance: ConstraintManager? = null
         private var level: ServerLevel? = null
 
+        init {
+            makeServerEvents()
+        }
+
         //TODO look closer into this
         fun getInstance(level: Level): ConstraintManager {
             if (instance != null) {return instance!!}
@@ -224,6 +229,7 @@ class ConstraintManager: SavedData() {
         fun create(): ConstraintManager {
             return ConstraintManager()
         }
+
         fun load(tag: CompoundTag): ConstraintManager {
             val data = create()
 
@@ -232,6 +238,14 @@ class ConstraintManager: SavedData() {
             }
 
             return data
+        }
+
+        private fun makeServerEvents() {
+            AVSEvents.serverShipRemoveEvent.on {
+                (ship), handler ->
+                if (level == null) { return@on }
+                getInstance(level!!).setDirty()
+            }
         }
     }
 }

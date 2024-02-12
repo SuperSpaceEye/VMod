@@ -5,9 +5,9 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.networking.S2CConnection
-import java.util.function.Supplier
+import net.spaceeye.vsource.utils.ClientClosable
 
-abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance: () -> ServerSynchronisedData<T>, val supplier: Supplier<T>) {
+abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance: () -> ServerSynchronisedData<T>) : ClientClosable() {
     val serverRequestChecksumResponseConnection = id idWithConn ::ServerDataResponseConnection
     val serverDataUpdateRequestResponseConnection = id idWithConn ::ServerDataUpdateRequestResponseConnection
     val serverChecksumsUpdatedConnection = id idWithConn ::ServerChecksumsUpdatedConnection
@@ -20,6 +20,12 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
     val clientChecksums = mutableMapOf<Long, MutableMap<Int, ByteArray>>()
 
     val cachedData = mutableMapOf<Long, MutableMap<Int, T>>()
+
+    override fun close() {
+        serverChecksums.clear()
+        clientChecksums.clear()
+        cachedData.clear()
+    }
 
     fun tryPoolDataUpdate(page: Long): MutableMap<Int, T>? {
         if (!serverChecksums.containsKey(page)) {
@@ -75,7 +81,7 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
 
     class ServerDataUpdateRequestResponseConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerDataUpdateRequestResponsePacket<T>>(id, "server_data_update_request_response_packet") {
         override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-            val packet = ServerDataUpdateRequestResponsePacket(buf, clientInstance.supplier)
+            val packet = ServerDataUpdateRequestResponsePacket<T>(buf)
             if (!packet.pageExists) {
                 clientInstance.serverChecksums.remove(packet.page)
                 clientInstance.clientChecksums.remove(packet.page)
@@ -99,7 +105,17 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
     class ServerChecksumsUpdatedConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerChecksumsUpdatedPacket>(id, "server_checksums_updated_packet") {
         override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
             val packet = ServerChecksumsUpdatedPacket(buf)
-            val page = clientInstance.serverChecksums.getOrPut(packet.page) { mutableMapOf() }
+            val pageNum = packet.page
+            val wasRemoved = packet.wasRemoved
+            if (wasRemoved) {
+                clientInstance.serverChecksums.remove(pageNum)
+                clientInstance.clientChecksums.remove(pageNum)
+                clientInstance.cachedData.remove(pageNum)
+                LOG("IM ServerChecksumsUpdatedConnection")
+                return
+            }
+
+            val page = clientInstance.serverChecksums.getOrPut(pageNum) { mutableMapOf() }
             packet.updatedIndices.forEach {
                 page[it.first] = it.second
             }

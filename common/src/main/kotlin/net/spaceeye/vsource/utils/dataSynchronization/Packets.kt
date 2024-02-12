@@ -2,14 +2,16 @@ package net.spaceeye.vsource.utils.dataSynchronization
 
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
+import net.spaceeye.vsource.networking.RenderingTypes
 import net.spaceeye.vsource.networking.Serializable
-import java.util.function.Supplier
 
 interface Hashable {
     fun hash(): ByteArray
 }
 
-interface DataUnit: Hashable, Serializable
+interface DataUnit: Hashable, Serializable {
+    fun getTypeName() : String
+}
 
 class ClientDataRequestPacket(): Serializable {
     constructor(buf: FriendlyByteBuf) : this() { deserialize(buf) }
@@ -103,13 +105,13 @@ class ClientDataUpdateRequestPacket(): Serializable {
     }
 }
 
-class ServerDataUpdateRequestResponsePacket<T : DataUnit>(val supplier: Supplier<T>?): Serializable {
-    constructor(buf: FriendlyByteBuf, supplier: Supplier<T>?) : this(supplier) {deserialize(buf)}
-    constructor(exists: Boolean, page: Long, supplier: Supplier<T>?) : this(supplier) {
+class ServerDataUpdateRequestResponsePacket<T : DataUnit>(): Serializable {
+    constructor(buf: FriendlyByteBuf) : this() {deserialize(buf)}
+    constructor(exists: Boolean, page: Long) : this() {
         this.pageExists = exists
         this.page = page
     }
-    constructor(exists: Boolean, page: Long, data: MutableList<Pair<Int, T>>, nullData: MutableList<Int>, supplier: Supplier<T>?): this(supplier) {
+    constructor(exists: Boolean, page: Long, data: MutableList<Pair<Int, T>>, nullData: MutableList<Int>): this() {
         this.pageExists = exists
         this.page = page
         this.newData = data
@@ -129,6 +131,7 @@ class ServerDataUpdateRequestResponsePacket<T : DataUnit>(val supplier: Supplier
         if (!pageExists) {return buf}
         buf.writeCollection(newData) {
                 buf, item ->
+            buf.writeInt(RenderingTypes.typeToIdx(item.second.getTypeName())!!)
             buf.writeInt(item.first)
             buf.writeByteArray(item.second.serialize().array())
         }
@@ -141,11 +144,13 @@ class ServerDataUpdateRequestResponsePacket<T : DataUnit>(val supplier: Supplier
         page = buf.readLong()
         if (!pageExists) {return}
         newData = buf.readCollection({ mutableListOf()}) {
+            val typeIdx = it.readInt()
+
             val int = it.readInt()
             val bytes = it.readByteArray()
-            val buffer = FriendlyByteBuf(Unpooled.copiedBuffer(bytes))
+            val buffer = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
 
-            val item = supplier!!.get()
+            val item = RenderingTypes.idxToSupplier(typeIdx).get()
             item.deserialize(buffer)
 
             Pair(int, item)
@@ -160,14 +165,21 @@ class ServerChecksumsUpdatedPacket(): Serializable {
         this.page = page
         this.updatedIndices = updatedIndices
     }
+    constructor(page: Long, wasRemoved: Boolean): this() {
+        this.page = page
+        this.wasRemoved = wasRemoved
+    }
 
     var page: Long = 0
+    var wasRemoved = false
     lateinit var updatedIndices: MutableList<Pair<Int, ByteArray>>
 
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
 
         buf.writeLong(page)
+        buf.writeBoolean(wasRemoved)
+        if (wasRemoved) {return buf}
         buf.writeCollection(updatedIndices) { buf, (idx, arr) -> buf.writeInt(idx); buf.writeByteArray(arr) }
 
         return buf
@@ -175,6 +187,8 @@ class ServerChecksumsUpdatedPacket(): Serializable {
 
     override fun deserialize(buf: FriendlyByteBuf) {
         page = buf.readLong()
+        wasRemoved = buf.readBoolean()
+        if (wasRemoved) {return}
         updatedIndices = buf.readCollection({ mutableListOf()}) {
             Pair(buf.readInt(), buf.readByteArray())
         }

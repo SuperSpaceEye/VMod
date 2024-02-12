@@ -8,6 +8,8 @@ import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.ServerLevelData;
+import net.spaceeye.vsource.utils.LevelEvents;
+import net.spaceeye.vsource.utils.ServerLevelHolder;
 import net.spaceeye.vsource.utils.constraintsSaving.ConstraintManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,5 +31,15 @@ abstract public class ServerLevelMixin {
         ServerLevel level = (ServerLevel)obj;
         if (level.getServer() == null || level.getServer().overworld() == null) {return;}
         ConstraintManager.Companion.forceNewInstance((ServerLevel)obj);
+        ServerLevelHolder.INSTANCE.setServerLevel((ServerLevel)obj);
+    }
+
+    @Inject(method = "close", at = @At("HEAD"))
+    public void injectClose(CallbackInfo ci) {
+        Object obj = this;
+        if (!(obj instanceof ServerLevel)) {return;}
+        ServerLevel level = (ServerLevel)obj;
+
+        LevelEvents.INSTANCE.getServerLevelCloseEvent().emit(new LevelEvents.ServerLevelCloseEvent(level));
     }
 }

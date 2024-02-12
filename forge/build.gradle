@@ -23,6 +23,15 @@ architectury {
     forge()
 }
 
+loom {
+    forge {
+        mixinConfig "vsource-common.mixins.json"
+    }
+    mixin {
+//        defaultRefmapName "VSource-common-refmap.json"
+    }
+}
+
 configurations {
     common
     shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.

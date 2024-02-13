@@ -67,11 +67,6 @@ class RopeRenderer(): RenderingData {
         RenderSystem.setShader(GameRenderer::getPositionTexShader)
         RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
 
-//                RenderSystem.disableDepthTest()
-//                RenderSystem.disableBlend()
-//                RenderSystem.disableCull()
-//                RenderSystem.disableScissor()
-
         vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
 
         poseStack.pushPose()

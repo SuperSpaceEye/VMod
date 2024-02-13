@@ -11,6 +11,7 @@ import net.minecraft.world.item.ItemStack
 import net.spaceeye.vsource.items.AABBWeldCreatorItem
 import net.spaceeye.vsource.items.RopeCreatorItem
 import net.spaceeye.vsource.items.TestTool
+import net.spaceeye.vsource.items.WeldCreatorItem
 
 object VSItems {
     val ITEMS = DeferredRegister.create(VS.MOD_ID, Registry.ITEM_REGISTRY)
@@ -33,7 +34,7 @@ object VSItems {
 //    var PULLEY_CREATOR: RegistrySupplier<Item> = ITEMS.register("pulley_creator") { Item(Item.Properties()) }
     var ROPE_CREATOR: RegistrySupplier<Item> = ITEMS.register("rope_creator") { RopeCreatorItem() }
 //    var SLIDER_CREATOR: RegistrySupplier<Item> = ITEMS.register("slider_creator") { Item(Item.Properties()) }
-//    var WELD_CREATOR: RegistrySupplier<Item> = ITEMS.register("weld_creator") { WeldCreatorItem() }
+    var WELD_CREATOR: RegistrySupplier<Item> = ITEMS.register("weld_creator") { WeldCreatorItem() }
 //    var WINCH_CREATOR: RegistrySupplier<Item> = ITEMS.register("winch_creator") { Item(Item.Properties()) }
 
     var AABBWELD_CREATOR: RegistrySupplier<Item> = ITEMS.register("aabb_weld_creator") { AABBWeldCreatorItem() }

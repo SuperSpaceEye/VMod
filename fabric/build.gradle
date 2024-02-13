@@ -26,6 +26,9 @@ repositories {
 }
 
 dependencies {
+//    include (implementation("com.lukflug:panelstudio:0.2.4"))
+//    include (implementation("com.lukflug:panelstudio-mc17:0.2.4"))
+
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
 

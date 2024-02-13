@@ -7,7 +7,9 @@ import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
+import net.minecraft.client.renderer.LightTexture
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.world.level.LightLayer
 import net.spaceeye.vsource.rendering.RenderingData
 import net.spaceeye.vsource.rendering.RenderingUtils
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
@@ -56,15 +58,19 @@ class A2BRenderer(): RenderingData {
 
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
-//
-//        RenderSystem.enableDepthTest()
-//        RenderSystem.depthFunc(GL11.GL_LEQUAL)
-//        RenderSystem.depthMask(true)
 
-        RenderSystem.disableDepthTest()
-        RenderSystem.disableBlend()
-        RenderSystem.disableCull()
-        RenderSystem.disableScissor()
+        RenderSystem.enableDepthTest()
+        RenderSystem.depthFunc(GL11.GL_LEQUAL)
+        RenderSystem.depthMask(true)
+
+//        RenderSystem.disableDepthTest()
+//        RenderSystem.disableBlend()
+//        RenderSystem.disableCull()
+//        RenderSystem.disableScissor()
+
+//        val light = LightTexture.pack(level!!.getBrightness(LightLayer.BLOCK, point1.toBlockPos()), level!!.getBrightness(LightLayer.SKY, point1.toBlockPos()))
+
+        val light = 255
 
         vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_LIGHTMAP)
 
@@ -78,7 +84,7 @@ class A2BRenderer(): RenderingData {
         val matrix = poseStack.last().pose()
         RenderingUtils.Quad.makeFlatRectFacingCamera(
             vBuffer, matrix,
-            255, 0, 0, 255, 255, .2,
+            255, 0, 0, 255, light, .2,
             tpos1, tpos2
         )
 

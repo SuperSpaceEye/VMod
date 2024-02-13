@@ -28,6 +28,10 @@ subprojects {
             name = "ParchmentMC"
             url = "https://maven.parchmentmc.org"
         }
+        maven {
+            name = "lukflug"
+            url = "https://lukflug.github.io/maven/"
+        }
     }
 
     dependencies {
@@ -37,6 +41,9 @@ subprojects {
             officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-${rootProject.minecraft_version}:2022.11.06@zip")
         })
+
+//        implementation "com.lukflug:panelstudio:0.2.4"
+//        implementation "com.lukflug:panelstudio-mc17:0.2.4"
     }
 }
 

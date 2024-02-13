@@ -21,7 +21,7 @@ abstract class BaseTool: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
         player: Player,
         usedHand: InteractionHand
     ): InteractionResultHolder<ItemStack> {
-        if (player.isShiftKeyDown) { resetState() }
+        if (player.isShiftKeyDown) { resetState(); return super.use(level, player, usedHand) }
 
         val raycastResult = RaycastFunctions.raycast(level, player, 100.0)
 

@@ -55,9 +55,6 @@ object RaycastFunctions {
         var unitLookVec = Vector3d(player.lookAngle).snormalize()
         var origin = Vector3d(player.eyePosition)
 
-        var d = (unitLookVec + eps).srdiv(1.0)
-        val rayDistance = unitLookVec.dist()
-
         val clipResult = level.clip(
             ClipContext(
                 player.eyePosition,
@@ -70,7 +67,7 @@ object RaycastFunctions {
 
         val state = level.getBlockState(clipResult.blockPos)
         if (state.isAir) {
-            return RaycastResult(state, origin, unitLookVec, origin + unitLookVec * rayDistance, origin + unitLookVec * rayDistance, clipResult.blockPos, Vector3d())
+            return RaycastResult(state, origin, unitLookVec, origin + unitLookVec * unitLookVec.dist(), origin + unitLookVec * unitLookVec.dist(), clipResult.blockPos, Vector3d())
         }
 
         val ship = level.getShipManagingPos(clipResult.blockPos)
@@ -79,26 +76,22 @@ object RaycastFunctions {
 
         if (ship != null) {
             origin = posWorldToShip(ship, origin)
-            d = Vector3d(ship.transform.transformDirectionNoScalingFromWorldToShip(d.sdiv(1.0).toJomlVector3d(), JVector3d())).sdiv(1.0)
+            unitLookVec = Vector3d(ship.transform.transformDirectionNoScalingFromWorldToShip(unitLookVec.toJomlVector3d(), JVector3d()))
         }
 
-        val result = rayIntersectsBox(AABB(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1), origin, d)
-        var normal = calculateNormal(origin, unitLookVec, result, rayDistance)
+        val result = rayIntersectsBox(AABB(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1), origin, (unitLookVec + eps).srdiv(1.0))
+        var normal = calculateNormal(origin, unitLookVec, result, unitLookVec.dist())
 
-        if (ship != null) {
-            origin = posShipToWorld(ship, origin)
-            d = Vector3d(ship.transform.transformDirectionNoScalingFromShipToWorld(d.sdiv(1.0).toJomlVector3d(), JVector3d())).sdiv(1.0)
-        }
-
-        var worldHitPos: Vector3d = origin + unitLookVec * (rayDistance * result.tToIn)
-        var shipHitPos = Vector3d(worldHitPos)
+        val globalHitPos: Vector3d = origin + unitLookVec * (unitLookVec.dist() * result.tToIn)
+        var worldHitPos = Vector3d(globalHitPos)
 
         if (ship != null) {
             normal = Vector3d(ship.transform.transformDirectionNoScalingFromShipToWorld(normal.toJomlVector3d(), JVector3d()))
-
-            shipHitPos = posWorldToShip(ship, worldHitPos)
+            unitLookVec = Vector3d(ship.transform.transformDirectionNoScalingFromShipToWorld(unitLookVec.toJomlVector3d(), JVector3d()))
+            origin = posShipToWorld(ship, origin)
+            worldHitPos = posShipToWorld(ship, globalHitPos)
         }
 
-        return RaycastResult(state, origin, unitLookVec, worldHitPos, shipHitPos, clipResult.blockPos, normal)
+        return RaycastResult(state, origin, unitLookVec, worldHitPos, globalHitPos, clipResult.blockPos, normal)
     }
 }

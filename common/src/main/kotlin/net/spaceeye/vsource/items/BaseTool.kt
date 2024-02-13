@@ -1,21 +1,18 @@
 package net.spaceeye.vsource.items
 
-import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
-import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vsource.VSItems
-import net.spaceeye.vsource.utils.Vector3d
+import net.spaceeye.vsource.utils.RaycastFunctions
 
 //TODO find a way to detect if player it's a singular click or a button press
 
 abstract class BaseTool: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
-    abstract fun activatePrimaryFunction(level: Level, player: Player, clipResult: BlockHitResult)
+    abstract fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)
 
     abstract fun resetState()
 
@@ -26,18 +23,9 @@ abstract class BaseTool: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
     ): InteractionResultHolder<ItemStack> {
         if (player.isShiftKeyDown) { resetState() }
 
-        val clipResult = level.clip(
-            ClipContext(
-                player.eyePosition,
-                (Vector3d(player.eyePosition)
-                        + Vector3d(player.lookAngle).snormalize() * 100).toMCVec3(),
-                ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE,
-                null
-            )
-        )
+        val raycastResult = RaycastFunctions.raycast(level, player, 100.0)
 
-        activatePrimaryFunction(level, player, clipResult)
+        activatePrimaryFunction(level, player, raycastResult)
 
         return super.use(level, player, usedHand)
     }

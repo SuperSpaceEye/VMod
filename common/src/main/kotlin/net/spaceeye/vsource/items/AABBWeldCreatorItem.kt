@@ -4,8 +4,8 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.constraintsSaving.makeManagedConstraint
 import net.spaceeye.vsource.utils.posShipToWorld
@@ -24,15 +24,15 @@ class AABBWeldCreatorItem : BaseTool() {
         blockPos = null
     }
 
-    override fun activatePrimaryFunction(level: Level, player: Player, clipResult: BlockHitResult) {
+    override fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (level.isClientSide) {return}
         if (level !is ServerLevel) {return}
 
-        if (blockPos == null) {blockPos = clipResult.blockPos; return}
-        if (blockPos == clipResult.blockPos) {resetState(); return}
+        if (blockPos == null) {blockPos = raycastResult.blockPosition; return}
+        if (blockPos == raycastResult.blockPosition) {resetState(); return}
 
         val ship1 = level.getShipManagingPos(blockPos!!)
-        val ship2 = level.getShipManagingPos(clipResult.blockPos)
+        val ship2 = level.getShipManagingPos(raycastResult.blockPosition)
 
         if (ship1 == null && ship2 == null) { resetState(); return }
         if (ship1 == ship2) { resetState(); return }

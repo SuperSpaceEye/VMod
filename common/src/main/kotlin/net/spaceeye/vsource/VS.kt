@@ -1,8 +1,8 @@
 package net.spaceeye.vsource
 
 import dev.architectury.platform.Platform
-import net.spaceeye.vsource.networking.SynchronisedRenderingData
-import net.spaceeye.vsource.utils.LevelEvents
+import net.spaceeye.vsource.rendering.SynchronisedRenderingData
+import net.spaceeye.vsource.events.LevelEvents
 import net.spaceeye.vsource.utils.closeClientObjects
 import net.spaceeye.vsource.utils.closeServerObjects
 import org.apache.logging.log4j.LogManager

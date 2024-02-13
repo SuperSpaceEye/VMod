@@ -5,13 +5,13 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.utils.RaycastFunctions
 
 class TestTool: BaseTool() {
     var blockPos: BlockPos? = null
 
-    override fun activatePrimaryFunction(level: Level, player: Player, clipResult: BlockHitResult) {
+    override fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         when (level) {
             is ClientLevel -> {
 //                LOG("SENDING TEST PACKET TO SERVER")

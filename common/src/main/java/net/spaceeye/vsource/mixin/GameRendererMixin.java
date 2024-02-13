@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static net.spaceeye.vsource.networking.SynchronisedRenderingDataKt.mixinRunFn;
+import static net.spaceeye.vsource.rendering.SynchronisedRenderingDataKt.mixinRunFn;
 
 //@Mixin(LevelRenderer.class)
 //public abstract class GameRendererMixin {
@@ -27,7 +27,6 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "renderLevel", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/GameRenderer;renderHand:Z", opcode = Opcodes.GETFIELD, ordinal = 0 ))
     void vssource_postWorldRender(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
-//        RenderEvents.INSTANCE.getWORLD().invoker().rendered(matrixStack, mainCamera);
         mixinRunFn(matrixStack, mainCamera);
     }
 }

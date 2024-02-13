@@ -2,7 +2,7 @@ package net.spaceeye.vsource.utils.dataSynchronization
 
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vsource.networking.RenderingTypes
+import net.spaceeye.vsource.rendering.RenderingTypes
 import net.spaceeye.vsource.networking.Serializable
 
 interface Hashable {

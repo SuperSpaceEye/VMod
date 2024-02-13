@@ -5,8 +5,8 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vsource.VS
-import net.spaceeye.vsource.networking.SynchronisedRenderingData
-import net.spaceeye.vsource.utils.AVSEvents
+import net.spaceeye.vsource.rendering.SynchronisedRenderingData
+import net.spaceeye.vsource.events.AVSEvents
 import net.spaceeye.vsource.utils.MPair
 import net.spaceeye.vsource.utils.ServerClosable
 import org.jetbrains.annotations.ApiStatus.Internal

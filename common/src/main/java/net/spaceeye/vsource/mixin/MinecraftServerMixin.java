@@ -9,7 +9,7 @@ import net.minecraft.server.level.progress.ChunkProgressListenerFactory;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.level.storage.LevelStorageSource;
-import net.spaceeye.vsource.utils.LevelEvents;
+import net.spaceeye.vsource.events.LevelEvents;
 import net.spaceeye.vsource.utils.ServerLevelHolder;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

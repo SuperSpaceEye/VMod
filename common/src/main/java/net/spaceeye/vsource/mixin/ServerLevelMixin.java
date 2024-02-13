@@ -8,7 +8,7 @@ import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.ServerLevelData;
-import net.spaceeye.vsource.utils.LevelEvents;
+import net.spaceeye.vsource.events.LevelEvents;
 import net.spaceeye.vsource.utils.ServerLevelHolder;
 import net.spaceeye.vsource.utils.constraintsSaving.ConstraintManager;
 import org.spongepowered.asm.mixin.Mixin;

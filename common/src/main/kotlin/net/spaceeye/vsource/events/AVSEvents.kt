@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.utils
+package net.spaceeye.vsource.events
 
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.impl.game.ships.ShipData

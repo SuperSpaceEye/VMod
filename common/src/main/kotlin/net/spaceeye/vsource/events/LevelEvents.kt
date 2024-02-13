@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.utils
+package net.spaceeye.vsource.events
 
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.server.MinecraftServer

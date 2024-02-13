@@ -1,3 +1,0 @@
-grab files in .gradle/loom-cache/remapped_mods/loom_mappings.../org/valkyrienskies/valkyrienskies-118-common from eureka or smth and put it in this project (without pom file)
-why? idfk, but it fixes problem of mangled names
-also, i know that eureka works but i will NOT use it as a template

@@ -13,6 +13,7 @@ import net.spaceeye.vsource.events.AVSEvents
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.*
+import net.spaceeye.vsource.utils.constraintsSaving.ConstraintManager
 import net.spaceeye.vsource.utils.dataSynchronization.ClientSynchronisedData
 import net.spaceeye.vsource.utils.dataSynchronization.DataUnit
 import net.spaceeye.vsource.utils.dataSynchronization.ServerChecksumsUpdatedPacket
@@ -125,6 +126,8 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         data.getOrPut(shipId1) { mutableMapOf() }
         val page = data[idToAttachTo]!!
         page[id] = renderer
+
+        ConstraintManager.getInstance(ServerLevelHolder.serverLevel!!).setDirty()
 
         serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
             idToAttachTo, mutableListOf(Pair(id, renderer.hash()))

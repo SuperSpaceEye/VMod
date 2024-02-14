@@ -100,7 +100,7 @@ object RenderingUtils {
 		// x is position on rope (from 0 to 1)
 		// l is available length (ie. initial distance - actual distance)
 		inline fun height(l: Double, x: Double) : Double {
-			val a = 4*l
+			val a = 2*l
 			return x*a*(x - 1)
 		}
 		

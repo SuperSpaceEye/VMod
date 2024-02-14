@@ -19,7 +19,6 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 class RopeCreatorItem: BaseTool() {
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-
     override fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (level is ClientLevel) {return}
         if (level !is ServerLevel) {return}

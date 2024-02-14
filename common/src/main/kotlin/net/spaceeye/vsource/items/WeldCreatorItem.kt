@@ -17,6 +17,7 @@ import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.awt.Color
 
 class WeldCreatorItem : BaseTool() {
     var previousResult: RaycastFunctions.RaycastResult? = null
@@ -58,6 +59,7 @@ class WeldCreatorItem : BaseTool() {
             ship1 != null,
             ship2 != null,
             spoint1, spoint2,
+            Color(62, 62, 62)
         )
         val idToAttachTo = if (ship1 != null) {shipId1} else {shipId2}
 
@@ -94,7 +96,7 @@ class WeldCreatorItem : BaseTool() {
         val rot2 = ship2?.transform?.shipToWorldRotation ?: ship1!!.transform.shipToWorldRotation
 
         var rotConstraint: VSConstraint = VSRotDampingConstraint(
-            shipId1, shipId2, 1e-10, rot1, rot2, 1e10, 1e10, VSRotDampingAxes.ALL_AXES)
+            shipId1, shipId2, 1e-10, rot1, rot2, 1e200, 1e200, VSRotDampingAxes.ALL_AXES)
 
         level.makeManagedConstraint(rotConstraint)
 

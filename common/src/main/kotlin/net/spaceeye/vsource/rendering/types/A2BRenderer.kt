@@ -20,6 +20,7 @@ import net.spaceeye.vsource.utils.writeVector3d
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.mod.common.getShipManagingPos
+import java.awt.Color
 
 class A2BRenderer(): RenderingData {
     var ship1isShip: Boolean = false
@@ -28,15 +29,19 @@ class A2BRenderer(): RenderingData {
     var point1: Vector3d = Vector3d()
     var point2: Vector3d = Vector3d()
 
+    var color: Color = Color(0)
+
     constructor(ship1isShip: Boolean,
                 ship2isShip: Boolean,
                 point1: Vector3d,
-                point2: Vector3d
+                point2: Vector3d,
+                color: Color,
     ): this() {
         this.ship1isShip = ship1isShip
         this.ship2isShip = ship2isShip
         this.point1 = point1
         this.point2 = point2
+        this.color = color
     }
 
     override fun getTypeName() = "A2BRenderer"
@@ -84,7 +89,7 @@ class A2BRenderer(): RenderingData {
         val matrix = poseStack.last().pose()
         RenderingUtils.Quad.makeFlatRectFacingCamera(
             vBuffer, matrix,
-            255, 0, 0, 255, light, .2,
+            color.red, color.green, color.blue, color.alpha, light, .2,
             tpos1, tpos2
         )
 
@@ -100,6 +105,7 @@ class A2BRenderer(): RenderingData {
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
 
+        buf.writeInt(color.rgb)
         buf.writeBoolean(ship1isShip)
         buf.writeBoolean(ship2isShip)
 
@@ -110,6 +116,7 @@ class A2BRenderer(): RenderingData {
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
+        color = Color(buf.readInt())
         ship1isShip = buf.readBoolean()
         ship2isShip = buf.readBoolean()
 

@@ -57,6 +57,9 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
     fun nbtSave(tag: CompoundTag): CompoundTag {
         val save = CompoundTag()
 
+        LOG("SAVING RENDERING DATA")
+        val point = getNow_ms()
+
         for ((k, v) in data) {
             val shipIdTag = CompoundTag()
             for ((id, item) in v) {
@@ -76,6 +79,8 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
             save.put(k.toString(), shipIdTag)
         }
 
+        LOG("FINISHING SAVING RENDERING DATA IN ${getNow_ms() - point} ms")
+
         tag.put("server_synchronised_data_${id}", save)
         return tag
     }
@@ -83,6 +88,9 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
     fun nbtLoad(tag: CompoundTag) {
         if (!tag.contains("server_synchronised_data_${id}")) {return}
         val save = tag.get("server_synchronised_data_${id}") as CompoundTag
+
+        LOG("LOADING RENDERING DATA")
+        val point = getNow_ms()
 
         for (k in save.allKeys) {
             val shipIdTag = save.get(k) as CompoundTag
@@ -92,11 +100,17 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
 
                 val typeIdx = dataItemTag.getInt("typeIdx")
                 val item = RenderingTypes.idxToSupplier(typeIdx).get()
-                item.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(dataItemTag.getByteArray("data"))))
+                try {
+                    item.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(dataItemTag.getByteArray("data"))))
+                } catch (e: Exception) {
+                    LOG("FAILED TO DESERIALIZE RENDER COMMAND OF SHIP ${page} WITH IDX ${typeIdx} AND TYPE ${item.getTypeName()}")
+                    continue
+                }
 
                 page[kk.toInt()] = item
             }
         }
+        LOG("FINISHING LOADING RENDERING DATA in ${getNow_ms() - point} ms")
     }
 }
 

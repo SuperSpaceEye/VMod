@@ -90,13 +90,16 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
             }
             val page = clientInstance.cachedData.getOrPut(packet.page) { mutableMapOf() }
             val checksumPage = clientInstance.clientChecksums.getOrPut(packet.page) { mutableMapOf() }
+            val serverChecksumPage = clientInstance.serverChecksums.getOrPut(packet.page) { mutableMapOf() }
             packet.newData.forEach { (idx, item) ->
                 page[idx] = item
                 checksumPage[idx] = item.hash()
+                serverChecksumPage[idx] = item.hash()
             }
             packet.nullData.forEach { idx ->
                 page.remove(idx)
                 checksumPage.remove(idx)
+                serverChecksumPage.remove(idx)
             }
             LOG("IM ServerDataUpdateRequestResponseConnection")
         }

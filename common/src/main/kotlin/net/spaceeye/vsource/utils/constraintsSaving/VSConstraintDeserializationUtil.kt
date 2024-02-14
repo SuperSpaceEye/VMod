@@ -1,7 +1,7 @@
 package net.spaceeye.vsource.utils.constraintsSaving
 
 import net.minecraft.nbt.CompoundTag
-import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.utils.getQuaterniond
 import net.spaceeye.vsource.utils.getVector3d
 import org.joml.Quaterniond
@@ -58,7 +58,7 @@ object VSConstraintDeserializationUtil {
             SPHERICAL_TWIST_LIMITS -> TorqueConstraintData()
 
             FIXED_ATTACHMENT_ORIENTATION -> null
-            else -> {LOG("UNKNOWN VS CONSTRAINT TYPE ${type}"); null}
+            else -> {WLOG("UNKNOWN VS CONSTRAINT TYPE ${type}"); null}
         }
     }
 
@@ -113,10 +113,10 @@ object VSConstraintDeserializationUtil {
                 SPHERICAL_TWIST_LIMITS -> { cdata as TorqueConstraintData; VSSphericalTwistLimitsConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("minTwistAngle"), cTag.getDouble("maxTwistAngle"))}
 
                 FIXED_ATTACHMENT_ORIENTATION -> null
-                else -> {LOG("UNKNOWN VS CONSTRAINT TYPE ${cdata.constraintType}"); null}
+                else -> {WLOG("UNKNOWN VS CONSTRAINT TYPE ${cdata.constraintType}"); null}
             }
         } catch (e: Exception) {
-            LOG("SMTH WENT WRONG, NOT DESERIALIZING TAG ${cTag}")
+            WLOG("SOMETHING WENT WRONG, NOT DESERIALIZING TAG ${cTag}")
             return null
         }
     }

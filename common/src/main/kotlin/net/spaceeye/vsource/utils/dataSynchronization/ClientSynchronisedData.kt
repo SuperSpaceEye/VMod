@@ -2,10 +2,12 @@ package net.spaceeye.vsource.utils.dataSynchronization
 
 import dev.architectury.networking.NetworkManager
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.networking.S2CConnection
 import net.spaceeye.vsource.utils.ClientClosable
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListSet
 
 abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance: () -> ServerSynchronisedData<T>) : ClientClosable() {
     val serverRequestChecksumResponseConnection = id idWithConn ::ServerDataResponseConnection
@@ -15,16 +17,22 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
     val dataRequestChecksumConnection = {getServerInstance().dataRequestChecksumConnection}
     val dataUpdateRequestConnection   = {getServerInstance().dataUpdateRequestConnection}
 
-    //TODO change to synchronised map
-    val serverChecksums = mutableMapOf<Long, MutableMap<Int, ByteArray>>()
-    val clientChecksums = mutableMapOf<Long, MutableMap<Int, ByteArray>>()
+    val serverChecksums = ConcurrentHashMap<Long, ConcurrentHashMap<Int, ByteArray>>()
+    val clientChecksums = ConcurrentHashMap<Long, ConcurrentHashMap<Int, ByteArray>>()
 
+    //TODO return to this and see if it's the best solution to concurrent modification problem
+    var cachedDataToMerge = ConcurrentHashMap<Long, ConcurrentHashMap<Int, T>>()
+    val pagesToRemove: MutableList<Long> = Collections.synchronizedList(mutableListOf<Long>())
+    val pageIndicesToRemove = ConcurrentHashMap<Long, ConcurrentSkipListSet<Int>>()
     val cachedData = mutableMapOf<Long, MutableMap<Int, T>>()
 
     override fun close() {
         serverChecksums.clear()
         clientChecksums.clear()
         cachedData.clear()
+        pagesToRemove.clear()
+        cachedDataToMerge.clear()
+        pageIndicesToRemove.clear()
     }
 
     fun tryPoolDataUpdate(page: Long): MutableMap<Int, T>? {
@@ -45,6 +53,38 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
         return cachedData[page]
     }
 
+    fun mergeData() {
+        if (pageIndicesToRemove.isNotEmpty()) {
+            synchronized(pageIndicesToRemove) {
+                for ((pageNum, indices) in pageIndicesToRemove) {
+                    val page = cachedData[pageNum] ?: continue
+                    for (idx in indices) {
+                        page.remove(idx)
+                    }
+                }
+                pageIndicesToRemove.clear()
+            }
+        }
+        if (pagesToRemove.isNotEmpty()) {
+            synchronized(pagesToRemove) {
+                for (pageNum in pagesToRemove) {
+                    cachedData.remove(pageNum)
+                }
+                pagesToRemove.clear()
+            }
+        }
+        if (cachedDataToMerge.isNotEmpty()) {
+            synchronized(cachedDataToMerge) {
+                for ((pageNum, page) in cachedDataToMerge) {
+                    for ((k, item) in page) {
+                        cachedData.getOrPut(pageNum) { mutableMapOf() }[k] = item
+                    }
+                }
+                cachedDataToMerge.clear()
+            }
+        }
+    }
+
     fun requestChecksumsUpdate(page: Long) {
         dataRequestChecksumConnection().sendToServer(ClientDataRequestPacket(page))
     }
@@ -61,6 +101,8 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
 
         val toUpdate = serverPage.filter { (k, v) -> !clientPage[k].contentEquals(v) }.map { it.key }.toMutableList()
 
+        if (toUpdate.isEmpty()) { return }
+
         dataUpdateRequestConnection().sendToServer(ClientDataUpdateRequestPacket(page, toUpdate))
     }
 
@@ -70,12 +112,11 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
             if (!packet.pageExists) {
                 clientInstance.serverChecksums.remove(packet.page)
                 clientInstance.clientChecksums.remove(packet.page)
-                clientInstance.cachedData     .remove(packet.page)
+                clientInstance.pagesToRemove  .add(packet.page)
                 return
             }
 
-            clientInstance.serverChecksums[packet.page] = packet.checksums.toMap().toMutableMap()
-            LOG("IM ServerDataResponseConnection")
+            clientInstance.serverChecksums[packet.page] = ConcurrentHashMap(packet.checksums.toMap().toMutableMap())
         }
     }
 
@@ -85,23 +126,23 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
             if (!packet.pageExists) {
                 clientInstance.serverChecksums.remove(packet.page)
                 clientInstance.clientChecksums.remove(packet.page)
-                clientInstance.cachedData     .remove(packet.page)
+                clientInstance.pagesToRemove  .add(packet.page)
                 return
             }
-            val page = clientInstance.cachedData.getOrPut(packet.page) { mutableMapOf() }
-            val checksumPage = clientInstance.clientChecksums.getOrPut(packet.page) { mutableMapOf() }
-            val serverChecksumPage = clientInstance.serverChecksums.getOrPut(packet.page) { mutableMapOf() }
+            val page = clientInstance.cachedDataToMerge.getOrPut(packet.page) { ConcurrentHashMap() }
+            val toRemove = clientInstance.pageIndicesToRemove.getOrPut(packet.page) { ConcurrentSkipListSet() }
+            val checksumPage = clientInstance.clientChecksums.getOrPut(packet.page) { ConcurrentHashMap() }
+            val serverChecksumPage = clientInstance.serverChecksums.getOrPut(packet.page) { ConcurrentHashMap() }
             packet.newData.forEach { (idx, item) ->
                 page[idx] = item
                 checksumPage[idx] = item.hash()
                 serverChecksumPage[idx] = item.hash()
             }
             packet.nullData.forEach { idx ->
-                page.remove(idx)
+                toRemove.add(idx)
                 checksumPage.remove(idx)
                 serverChecksumPage.remove(idx)
             }
-            LOG("IM ServerDataUpdateRequestResponseConnection")
         }
     }
 
@@ -113,16 +154,14 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
             if (wasRemoved) {
                 clientInstance.serverChecksums.remove(pageNum)
                 clientInstance.clientChecksums.remove(pageNum)
-                clientInstance.cachedData.remove(pageNum)
-                LOG("IM ServerChecksumsUpdatedConnection")
+                clientInstance.pagesToRemove  .add(pageNum)
                 return
             }
 
-            val page = clientInstance.serverChecksums.getOrPut(pageNum) { mutableMapOf() }
+            val page = clientInstance.serverChecksums.getOrPut(pageNum) { ConcurrentHashMap() }
             packet.updatedIndices.forEach {
                 page[it.first] = it.second
             }
-            LOG("IM ServerChecksumsUpdatedConnection")
         }
     }
 

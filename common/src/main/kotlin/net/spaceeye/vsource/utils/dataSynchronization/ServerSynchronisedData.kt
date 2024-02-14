@@ -3,7 +3,6 @@ package net.spaceeye.vsource.utils.dataSynchronization
 import dev.architectury.networking.NetworkManager
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vsource.LOG
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.utils.ServerClosable
@@ -36,12 +35,11 @@ abstract class ServerSynchronisedData<T: DataUnit>(val id: String, getClientInst
             }
             val page = serverInstance.data[packet.page]!!
             val checksums = page.map {(k, v) -> Pair(k, v.hash())}
-            //TODO rework this so that it could send it in pieces
+            //TODO rework this so that it could send data in pieces
             serverInstance.serverRequestChecksumResponseConnection().sendToClient(
                 context.player as ServerPlayer,
                 ServerDataRequestResponsePacket(packet.page, true, checksums.toMutableList())
             )
-            LOG("IM ClientDataRequestConnection")
         }
     }
 
@@ -63,7 +61,6 @@ abstract class ServerSynchronisedData<T: DataUnit>(val id: String, getClientInst
                 context.player as ServerPlayer,
                 ServerDataUpdateRequestResponsePacket(true, packet.page, dataToSend, nullData)
             )
-            LOG("IM ClientDataUpdateRequestConnection")
         }
     }
 

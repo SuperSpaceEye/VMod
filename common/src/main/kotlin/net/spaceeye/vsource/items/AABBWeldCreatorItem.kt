@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.ILOG
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.constraintsSaving.makeManagedConstraint
@@ -20,7 +20,7 @@ class AABBWeldCreatorItem : BaseTool() {
     var blockPos: BlockPos? = null
 
     override fun resetState() {
-        LOG("RESETTING STATE")
+        ILOG("RESETTING STATE")
         blockPos = null
     }
 

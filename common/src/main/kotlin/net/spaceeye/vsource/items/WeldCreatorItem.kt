@@ -3,13 +3,12 @@ package net.spaceeye.vsource.items
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.ILOG
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.constraintsSaving.makeManagedConstraint
-import net.spaceeye.vsource.utils.dataSynchronization.ServerChecksumsUpdatedPacket
 import net.spaceeye.vsource.utils.posShipToWorld
 import net.spaceeye.vsource.utils.posWorldToShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -52,27 +51,14 @@ class WeldCreatorItem : BaseTool() {
 
         val id = level.makeManagedConstraint(attachmentConstraint)
 
-        // RENDERING
-
-        val server = SynchronisedRenderingData.serverSynchronisedData
-        val data = A2BRenderer(
-            ship1 != null,
-            ship2 != null,
-            spoint1, spoint2,
-            Color(62, 62, 62)
-        )
-        val idToAttachTo = if (ship1 != null) {shipId1} else {shipId2}
-
-        server.data.getOrPut(shipId2) { mutableMapOf() }
-        server.data.getOrPut(shipId1) { mutableMapOf() }
-        val page = server.data[idToAttachTo]!!
-        page[id!!.id] = data
-
-        server.serverChecksumsUpdatedConnection().sendToClients(level.players(), ServerChecksumsUpdatedPacket(
-            idToAttachTo, mutableListOf(Pair(id!!.id, data.hash()))
-        ))
-
-        //STOP OF RENDERING
+        SynchronisedRenderingData.serverSynchronisedData
+            .addConstraintRenderer(ship1, shipId1, shipId2, id!!.id,
+                A2BRenderer(
+                ship1 != null,
+                ship2 != null,
+                spoint1, spoint2,
+                Color(62, 62, 62)
+            ))
 
         val dir = (rpoint1 - rpoint2).snormalize()
 
@@ -104,7 +90,7 @@ class WeldCreatorItem : BaseTool() {
     }
 
     override fun resetState() {
-        LOG("RESETTING")
+        ILOG("RESETTING")
         previousResult = null
     }
 }

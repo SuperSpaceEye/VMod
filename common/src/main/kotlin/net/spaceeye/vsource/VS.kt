@@ -8,7 +8,9 @@ import net.spaceeye.vsource.utils.closeServerObjects
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
-fun LOG(s: String) = VS.logger.warn(s)
+fun ILOG(s: String) = VS.logger.info(s)
+fun WLOG(s: String) = VS.logger.warn(s)
+fun DLOG(s: String) = VS.logger.debug(s)
 
 object VS {
     const val MOD_ID = "vsource"
@@ -17,7 +19,7 @@ object VS {
     @JvmStatic
     fun init() {
         if (!Platform.isModLoaded("valkyrienskies")) {
-            LOG("VALKYRIEN SKIES IS NOT INSTALLED. EXITING.")
+            WLOG("VALKYRIEN SKIES IS NOT INSTALLED. NOT INITIALIZING THE MOD.")
             return
         }
         SynchronisedRenderingData

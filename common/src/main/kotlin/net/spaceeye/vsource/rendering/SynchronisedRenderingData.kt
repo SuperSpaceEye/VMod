@@ -7,7 +7,8 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.DLOG
+import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.events.AVSEvents
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.rendering.types.RopeRenderer
@@ -16,11 +17,14 @@ import net.spaceeye.vsource.utils.dataSynchronization.ClientSynchronisedData
 import net.spaceeye.vsource.utils.dataSynchronization.DataUnit
 import net.spaceeye.vsource.utils.dataSynchronization.ServerChecksumsUpdatedPacket
 import net.spaceeye.vsource.utils.dataSynchronization.ServerSynchronisedData
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.security.MessageDigest
 
-fun mixinRunFn(poseStack: PoseStack, camera: Camera) {
+fun renderData(poseStack: PoseStack, camera: Camera) {
     val level = Minecraft.getInstance().level!!
+    SynchronisedRenderingData.clientSynchronisedData.mergeData()
+
     for (ship in level.shipObjectWorld.loadedShips) {
         SynchronisedRenderingData.clientSynchronisedData.tryPoolDataUpdate(ship.id)
         for ((idx, render) in SynchronisedRenderingData.clientSynchronisedData.cachedData[ship.id] ?: continue) {
@@ -57,7 +61,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
     fun nbtSave(tag: CompoundTag): CompoundTag {
         val save = CompoundTag()
 
-        LOG("SAVING RENDERING DATA")
+        DLOG("SAVING RENDERING DATA")
         val point = getNow_ms()
 
         for ((k, v) in data) {
@@ -67,7 +71,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
 
                 val typeIdx = RenderingTypes.typeToIdx(item.getTypeName())
                 if (typeIdx == null) {
-                    LOG("RENDERING ITEM WITH TYPE ${item.getTypeName()} RETURNED NULL TYPE INDEX DURING SAVING")
+                    WLOG("RENDERING ITEM WITH TYPE ${item.getTypeName()} RETURNED NULL TYPE INDEX DURING SAVING")
                     continue
                 }
 
@@ -79,7 +83,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
             save.put(k.toString(), shipIdTag)
         }
 
-        LOG("FINISHING SAVING RENDERING DATA IN ${getNow_ms() - point} ms")
+        DLOG("FINISHING SAVING RENDERING DATA IN ${getNow_ms() - point} ms")
 
         tag.put("server_synchronised_data_${id}", save)
         return tag
@@ -89,7 +93,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         if (!tag.contains("server_synchronised_data_${id}")) {return}
         val save = tag.get("server_synchronised_data_${id}") as CompoundTag
 
-        LOG("LOADING RENDERING DATA")
+        DLOG("LOADING RENDERING DATA")
         val point = getNow_ms()
 
         for (k in save.allKeys) {
@@ -103,14 +107,28 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
                 try {
                     item.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(dataItemTag.getByteArray("data"))))
                 } catch (e: Exception) {
-                    LOG("FAILED TO DESERIALIZE RENDER COMMAND OF SHIP ${page} WITH IDX ${typeIdx} AND TYPE ${item.getTypeName()}")
+                    WLOG("FAILED TO DESERIALIZE RENDER COMMAND OF SHIP ${page} WITH IDX ${typeIdx} AND TYPE ${item.getTypeName()}")
                     continue
                 }
 
                 page[kk.toInt()] = item
             }
         }
-        LOG("FINISHING LOADING RENDERING DATA in ${getNow_ms() - point} ms")
+        DLOG("FINISHING LOADING RENDERING DATA in ${getNow_ms() - point} ms")
+    }
+
+    //TODO think of a better way to expose this
+    fun addConstraintRenderer(ship1: Ship?, shipId1: Long, shipId2: Long, id: Int, renderer: RenderingData) {
+        val idToAttachTo = if (ship1 != null) {shipId1} else {shipId2}
+
+        data.getOrPut(shipId2) { mutableMapOf() }
+        data.getOrPut(shipId1) { mutableMapOf() }
+        val page = data[idToAttachTo]!!
+        page[id] = renderer
+
+        serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
+            idToAttachTo, mutableListOf(Pair(id, renderer.hash()))
+        ))
     }
 }
 
@@ -136,7 +154,7 @@ object SynchronisedRenderingData {
                     ServerLevelHolder.serverLevel!!.server.playerList.players,
                     ServerChecksumsUpdatedPacket(shipData.id, true)
                 )
-            LOG("SENT DELETED SHIPID")
+            DLOG("SENT DELETED SHIPID")
         }
     }
 }

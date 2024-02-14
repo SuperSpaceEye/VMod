@@ -1,7 +1,7 @@
 package net.spaceeye.vsource.utils.constraintsSaving
 
 import net.minecraft.nbt.CompoundTag
-import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.utils.putQuaterniond
 import net.spaceeye.vsource.utils.putVector3d
 import org.valkyrienskies.core.apigame.constraints.*
@@ -41,7 +41,7 @@ object VSConstraintSerializationUtil {
                 cTag.putVector3d("localSlideAxis0", constraint.localSlideAxis0)
                 cTag.putDouble("maxDistBetweenPoints", constraint.maxDistBetweenPoints)
             }
-            else -> { LOG("CAN'T SAVE TYPE ${constraint.constraintType} IN VSForceConstraint BLOCK"); return null}
+            else -> { WLOG("CAN'T SAVE TYPE ${constraint.constraintType} IN VSForceConstraint BLOCK"); return null}
         }
 
         return cTag
@@ -78,7 +78,7 @@ object VSConstraintSerializationUtil {
             }
             VSConstraintType.FIXED_ORIENTATION -> {}
             VSConstraintType.HINGE_ORIENTATION -> {}
-            else -> { LOG("CAN'T SAVE TYPE ${constraint.constraintType} IN VSForceConstraint BLOCK"); return null}
+            else -> { WLOG("CAN'T SAVE TYPE ${constraint.constraintType} IN VSForceConstraint BLOCK"); return null}
         }
         return cTag
     }
@@ -89,7 +89,7 @@ object VSConstraintSerializationUtil {
         when (constraint) {
             is VSForceConstraint -> cTag = serializeForceConstraint(constraint, cTag!!)
             is VSTorqueConstraint -> cTag = serializeTorqueConstraint(constraint, cTag!!)
-            else -> {LOG("CONSTRAINT TYPE ${constraint.constraintType} IS NOT VSForceConstraint OR VSTorqueConstraint. CAN'T SERIALIZE."); return null}
+            else -> {WLOG("CONSTRAINT TYPE ${constraint.constraintType} IS NOT VSForceConstraint OR VSTorqueConstraint. CAN'T SERIALIZE."); return null}
         }
 
         return cTag

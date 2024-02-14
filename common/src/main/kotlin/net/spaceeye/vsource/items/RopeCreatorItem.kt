@@ -4,12 +4,11 @@ import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vsource.LOG
+import net.spaceeye.vsource.ILOG
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.constraintsSaving.makeManagedConstraint
-import net.spaceeye.vsource.utils.dataSynchronization.ServerChecksumsUpdatedPacket
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
 import org.valkyrienskies.mod.common.dimensionId
@@ -52,8 +51,6 @@ class RopeCreatorItem: BaseTool() {
 
         val id = level.makeManagedConstraint(constraint)
 
-        val server = SynchronisedRenderingData.serverSynchronisedData
-
         val data = RopeRenderer(
             ship1 != null,
             ship2 != null,
@@ -65,24 +62,15 @@ class RopeCreatorItem: BaseTool() {
 //            ship2 != null,
 //            spoint1, spoint2,
 //        )
-
-        val idToAttachTo = if (ship1 != null) {shipId1} else {shipId2}
-
-        server.data.getOrPut(shipId2) { mutableMapOf() }
-        server.data.getOrPut(shipId1) { mutableMapOf() }
-        val page = server.data[idToAttachTo]!!
-        page[id!!.id] = data
-
-        server.serverChecksumsUpdatedConnection().sendToClients(level.players(), ServerChecksumsUpdatedPacket(
-            idToAttachTo, mutableListOf(Pair(id!!.id, data.hash()))
-        ))
+        SynchronisedRenderingData.serverSynchronisedData
+            .addConstraintRenderer(ship1, shipId1, shipId2, id!!.id, data)
 
         resetState()
 
     }
 
     override fun resetState() {
-        LOG("RESETTING STATE")
+        ILOG("RESETTING STATE")
         previousResult = null
     }
 }

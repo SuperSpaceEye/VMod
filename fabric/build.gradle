@@ -22,13 +22,13 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        url = "https://repo.essential.gg/repository/maven-public"
+    }
     mavenCentral()
 }
 
 dependencies {
-//    include (implementation("com.lukflug:panelstudio:0.2.4"))
-//    include (implementation("com.lukflug:panelstudio-mc17:0.2.4"))
-
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
 
@@ -47,6 +47,8 @@ dependencies {
     modImplementation("net.fabricmc:fabric-language-kotlin:1.10.10+kotlin.1.9.10")
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21"
     api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
+
+    include (modImplementation("gg.essential:elementa-1.18.1-fabric:622"))
 }
 
 processResources {

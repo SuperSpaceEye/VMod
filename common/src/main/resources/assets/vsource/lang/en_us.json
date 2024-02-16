@@ -2,5 +2,6 @@
   "item.vsource.aabb_weld_creator": "AABB Weld Creator",
   "item.vsource.rope_creator": "Rope Creator",
   "item.vsource.weld_creator": "Weld Creator",
+  "item.vsource.toolgun": "Toolgun",
   "itemGroup.vsource.vsource_tab": "VSource"
 }

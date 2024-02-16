@@ -10,7 +10,7 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.spaceeye.vsource.items.AABBWeldCreatorItem
 import net.spaceeye.vsource.items.RopeCreatorItem
-import net.spaceeye.vsource.items.TestTool
+import net.spaceeye.vsource.items.Toolgun
 import net.spaceeye.vsource.items.WeldCreatorItem
 
 object VSItems {
@@ -39,7 +39,7 @@ object VSItems {
 
     var AABBWELD_CREATOR: RegistrySupplier<Item> = ITEMS.register("aabb_weld_creator") { AABBWeldCreatorItem() }
 
-    var TEST_ITEM = ITEMS.register("test_item") { TestTool() }
+    var TOOLGUN = ITEMS.register("toolgun") { Toolgun() }
 
     fun register() {
         ITEMS.register()

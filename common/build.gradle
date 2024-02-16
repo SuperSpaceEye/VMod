@@ -1,3 +1,10 @@
+repositories {
+    maven {
+        url = "https://repo.essential.gg/repository/maven-public"
+    }
+    mavenCentral()
+}
+
 dependencies {
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
@@ -16,17 +23,8 @@ dependencies {
 
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21"
     api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
-//
-//
-//    api(group: 'org.apache.xmlgraphics', name: 'batik-transcoder', version: '1.17') {
-//        exclude group: "xml-apis", module: "xml-apis"
-//        exclude group: "commons-io", module: "commons-io"
-//    }
-//    api(group: 'org.apache.xmlgraphics', name: 'batik-codec', version: '1.17') {
-//        exclude group: "xml-apis", module: "xml-apis"
-//        exclude group: "commons-io", module: "commons-io"
-//    }
-//    api(group: "de.javagl", name: "obj", version: "0.4.0")
+
+    modImplementation("gg.essential:elementa-1.18.1-forge:622")
 }
 
 architectury {

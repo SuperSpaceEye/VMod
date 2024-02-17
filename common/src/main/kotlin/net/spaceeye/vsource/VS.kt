@@ -1,18 +1,14 @@
 package net.spaceeye.vsource
 
-import com.mojang.blaze3d.vertex.PoseStack
-import dev.architectury.event.events.client.ClientGuiEvent
-import dev.architectury.event.events.client.ClientTickEvent
+import dev.architectury.event.events.client.ClientLifecycleEvent
+import dev.architectury.event.events.common.LifecycleEvent
 import dev.architectury.platform.Platform
-import net.minecraft.client.Minecraft
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
-import net.spaceeye.vsource.events.LevelEvents
-import net.spaceeye.vsource.gui.ExampleGui
+import net.spaceeye.vsource.utils.ServerLevelHolder
 import net.spaceeye.vsource.utils.closeClientObjects
 import net.spaceeye.vsource.utils.closeServerObjects
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.lwjgl.glfw.GLFW
 
 fun ILOG(s: String) = VS.logger.info(s)
 fun WLOG(s: String) = VS.logger.warn(s)
@@ -32,59 +28,58 @@ object VS {
 
         VSItems.register()
 
-        makeClosingEvents()
+        makeEvents()
 
-//        makeTestGui()
+        makeTest()
     }
 
-    fun makeTestGui() {
-//        val keys = BooleanArray(266)
-//        var inited = false
-//        ClientTickEvent.CLIENT_POST.register {
-//            minecraft ->
-//            if (!inited) {
-//                gui?.init(minecraft, 1000, 1000)
-//                ClientGuiEvent.RENDER_POST.register { screen, poseStack, mouseX, mouseY, delta ->
-//                    gui?.render(
-//                        poseStack,
-//                        mouseX,
-//                        mouseY,
-//                        delta
-//                    )
-//                }
-////                ClientGuiEvent.RENDER_HUD.register { cli: PoseStack?, tickDelta: Float -> gui.render(cli!!, 0, 0, tickDelta) }
+    fun makeTest() {
+//        ClientRawInputEvent.KEY_PRESSED.register {
+//                client, keyCode, scanCode, action, modifiers ->
+//            WLOG("${keyCode} ${scanCode} ${action} ${modifiers}")
+//            if (keyCode == GLFW.GLFW_KEY_E && action == GLFW.GLFW_PRESS) {
+//                WLOG("PRESSING E HOLY SHIT")
 //            }
-//            if (!inited) {
-//                for (i in 32 until keys.size) keys[i] =
-//                    GLFW.glfwGetKey(Minecraft.getInstance().window.window, i) == GLFW.GLFW_PRESS
-////                ClientGuiEvent.RENDER_HUD.register { cli: PoseStack?, tickDelta: Float -> gui.render(cli, ) }
-//                inited = true
+//            EventResult.pass()
+//        }
+//
+//        ClientRawInputEvent.MOUSE_CLICKED_PRE.register {
+//            minecraft, button, action, mods->
+//
+//            val sbutton = when(button) {
+//                GLFW.GLFW_MOUSE_BUTTON_LEFT -> "LEFT"
+//                GLFW.GLFW_MOUSE_BUTTON_MIDDLE -> "MIDDLE"
+//                GLFW.GLFW_MOUSE_BUTTON_RIGHT -> "RIGHT"
+//                else -> "unknown"
 //            }
 //
-//            for (i in 32 until keys.size) {
-//                if (keys[i] != (GLFW.glfwGetKey(Minecraft.getInstance().window.window, i) == GLFW.GLFW_PRESS)) {
-//                    keys[i] = !keys[i]
-//                    if (keys[i]) {
-//                        gui.
-//                        if (i == ClickGUIModule.keybind.key) gui.enterGUI()
-//                        if (i == HUDEditorModule.keybind.key) gui.enterHUDEditor()
-//                        gui.(i)
-//                    }
-//                }
+//            val saction = when(action) {
+//                GLFW.GLFW_PRESS -> "PRESSED"
+//                GLFW.GLFW_RELEASE -> "RELEASED"
+//                2 -> "BEING PRESSED"
+//                else -> "unknown"
 //            }
+//
+//            WLOG("Button ${sbutton} IS ${saction} ${mods}")
+//
+//            EventResult.pass()
 //        }
     }
 
     @JvmStatic
-    fun makeClosingEvents() {
-        LevelEvents.clientDisconnectEvent.on {
-            _, _ ->
+    fun makeEvents() {
+        ClientLifecycleEvent.CLIENT_STOPPING.register {
             closeClientObjects()
         }
 
-        LevelEvents.serverStopEvent.on {
-            _, _ ->
+        LifecycleEvent.SERVER_STOPPING.register {
             closeServerObjects()
+        }
+
+        LifecycleEvent.SERVER_STARTED.register {
+            server ->
+            ServerLevelHolder.server = server
+            ServerLevelHolder.serverLevel = server.overworld()
         }
     }
 }

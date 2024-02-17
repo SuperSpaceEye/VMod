@@ -4,9 +4,6 @@
   "package": "net.spaceeye.vsource.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "ClientLevelMixin",
-    "MinecraftServerMixin",
-    "ServerLevelMixin",
     "ShipObjectClientWorldMixin",
     "ShipObjectServerWorldChunkTrackerMixin",
     "ShipObjectServerWorldMixin"

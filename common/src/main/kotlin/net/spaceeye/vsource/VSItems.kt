@@ -8,10 +8,10 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.spaceeye.vsource.items.AABBWeldCreatorItem
-import net.spaceeye.vsource.items.RopeCreatorItem
+import net.spaceeye.vsource.items.old.AABBWeldCreatorItem
 import net.spaceeye.vsource.items.Toolgun
-import net.spaceeye.vsource.items.WeldCreatorItem
+import net.spaceeye.vsource.items.old.RopeCreatorItem
+import net.spaceeye.vsource.items.old.WeldCreatorItem
 
 object VSItems {
     val ITEMS = DeferredRegister.create(VS.MOD_ID, Registry.ITEM_REGISTRY)

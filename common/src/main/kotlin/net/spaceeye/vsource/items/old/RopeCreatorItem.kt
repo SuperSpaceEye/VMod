@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.items
+package net.spaceeye.vsource.items.old
 
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.server.level.ServerLevel

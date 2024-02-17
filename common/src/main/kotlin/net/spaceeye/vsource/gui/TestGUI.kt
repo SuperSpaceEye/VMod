@@ -8,6 +8,7 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.effects.ScissorEffect
+import net.spaceeye.vsource.WLOG
 import java.awt.Color
 
 class ExampleGui : WindowScreen(ElementaVersion.V5) {
@@ -339,7 +340,7 @@ class ExampleGui : WindowScreen(ElementaVersion.V5) {
 
             // Now we need to make the background of the area that will actually hold
             // the sticky note's text area. A darkish gray color will suffice.
-            val textHolder = UIBlock(Color(80, 80, 80)).constrain {
+            val textHolder = UIBlock(Color(120, 80, 80)).constrain {
                 // We want this to also start at the far left of the parent.
                 x = 1.pixel()
 
@@ -378,14 +379,14 @@ class ExampleGui : WindowScreen(ElementaVersion.V5) {
             // outside said component's bounding box (x, y, x + width, y + width).
             // In this case, this means that textHolder's child, the text area, will be cut off
             // from rendering any text that goes past the end of the sticky note.
-            textHolder effect ScissorEffect()
+//            textHolder effect ScissorEffect()
 
             // Next, we need to actually add the text input area so the user can type their notes!
             // We can provide the text input component with a blurb of placeholder text so the
             // user knows they can type in this area. By default, a text input component
             // will also wrap its text, so we don't need to worry about setting that up.
             // We want this text input component to be a child of the [textHolder] component.
-            textArea = (UITextInput(placeholder = "Enter your note...").constrain {
+            textArea = (UITextInput(placeholder = "Enter your note...\n2131231\nerrer\nfgfdgdsf").constrain {
                 // We want to occupy all the text holder's area, but leave
                 // 2 pixels of padding on all sides.
                 x = 2.pixels()
@@ -401,6 +402,7 @@ class ExampleGui : WindowScreen(ElementaVersion.V5) {
                 // Both the [UITextInput] and [UIMultilineTextInput] classes automatically activate/deactivate
                 // themselves when they receive/lose focus respectively, so there is no need to manually add
                 // [onFocus] or [onFocusLost] listeners, unless you wish to override the default behavior.
+                WLOG("IM HERE")
                 grabWindowFocus()
             } childOf textHolder) as UITextInput
         }

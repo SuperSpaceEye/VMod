@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.items
+package net.spaceeye.vsource.items.old
 
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResultHolder

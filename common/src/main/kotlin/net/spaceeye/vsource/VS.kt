@@ -7,6 +7,7 @@ import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.utils.ServerLevelHolder
 import net.spaceeye.vsource.utils.closeClientObjects
 import net.spaceeye.vsource.utils.closeServerObjects
+import net.spaceeye.vsource.utils.constraintsSaving.ConstraintManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
@@ -80,6 +81,7 @@ object VS {
             server ->
             ServerLevelHolder.server = server
             ServerLevelHolder.serverLevel = server.overworld()
+            ConstraintManager.forceNewInstance(server.overworld())
         }
     }
 }

@@ -10,22 +10,19 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vsource.VS
 
 object Networking {
-//    object Client {
-//        val TEST_C2S_CONNECTION = "test" idWithConn ::TestC2SConnection
-//    }
-//    object Server {
-//        val TEST_S2C_CONNECTION = "test" idWithConn ::TestS2CConnection
-//    }
-
     infix fun <T: Serializable> String.idWithConn(constructor: (String) -> C2SConnection<T>): C2SConnection<T> {
         val instance = constructor(this)
-        NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        try {
+            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        } catch(e: NoSuchMethodError) {}
         return instance
     }
 
     infix fun <T: Serializable> String.idWithConn(constructor: (String) -> S2CConnection<T>): S2CConnection<T> {
         val instance = constructor(this)
-        NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        try {
+            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        }  catch(e: NoSuchMethodError) {}
         return instance
     }
 }

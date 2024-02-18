@@ -6,19 +6,12 @@ import dev.architectury.event.events.client.ClientRawInputEvent
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.spaceeye.vsource.VSItems
+import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.toolgun.ClientToolGunState
 import org.lwjgl.glfw.GLFW
+import kotlin.math.E
 
 class Toolgun: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
-
-//    override fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
-//        if (level !is ClientLevel) {return}
-//
-//        val gui = ToolGunGUI()
-//
-//        Minecraft.getInstance().setScreen(gui)
-//    }
-
     companion object {
         @JvmStatic
         fun playerIsUsingToolgun(): Boolean {
@@ -43,7 +36,17 @@ class Toolgun: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
                     return@register EventResult.interruptDefault()
                 }
 
-                EventResult.pass()
+                return@register ClientToolGunState.handleKeyEvent(keyCode, scanCode, action, modifiers)
+            }
+
+            ClientRawInputEvent.MOUSE_CLICKED_PRE.register {
+                client, button, action, mods ->
+                if (!playerIsUsingToolgun()) {return@register EventResult.pass()}
+                if (client.screen != null) {return@register EventResult.pass()}
+
+                ClientToolGunState.handleMouseButtonEvent(button, action, mods)
+
+                return@register EventResult.interruptDefault()
             }
 
             ClientLifecycleEvent.CLIENT_STARTED.register {

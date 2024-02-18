@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.utils.dataSynchronization
+package net.spaceeye.vsource.networking.dataSynchronization
 
 import dev.architectury.networking.NetworkManager
 import net.minecraft.network.FriendlyByteBuf

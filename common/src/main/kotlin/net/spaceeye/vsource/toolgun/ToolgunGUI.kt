@@ -73,6 +73,7 @@ class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
             }.onMouseClick {
                 settingsComponent.clearChildren()
                 component.makeGUISettings(settingsComponent)
+                ClientToolGunState.currentMode = component
             } childOf scrollComponent
 
             UIText(component.itemName, shadow = false).constrain {

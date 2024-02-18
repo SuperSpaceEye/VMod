@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.gui
+package net.spaceeye.vsource.toolgun
 
 import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.WindowScreen
@@ -8,9 +8,10 @@ import gg.essential.elementa.components.UIText
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
+import net.spaceeye.vsource.toolgun.modes.BaseMode
 import java.awt.Color
 
-class ToolGunGUI: WindowScreen(ElementaVersion.V5) {
+class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
     val components = listOf("Weld", "Rope", "AABB Weld", "Thing 1", "Thing 2", "Thing 3", "Thing 4", "Thing 5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")
 
     val mainWindow = UIBlock(Color(200, 200, 200)).constrain {
@@ -39,12 +40,8 @@ class ToolGunGUI: WindowScreen(ElementaVersion.V5) {
         height = 100.percent() - 4.percent()
     } childOf mainWindow
 
-    init {
-        makeScrollComponents()
-    }
-
-    fun makeScrollComponents() {
-        for ((i, name) in components.withIndex()) {
+    fun makeScrollComponents(components: List<BaseMode>) {
+        for ((i, component) in components.withIndex()) {
             val componentColor = if (i % 2 == 0) {
                 Color(100, 100, 100)
             } else {
@@ -73,9 +70,12 @@ class ToolGunGUI: WindowScreen(ElementaVersion.V5) {
                         componentColor.toConstraint()
                     )
                 }
+            }.onMouseClick {
+                settingsComponent.clearChildren()
+                component.makeGUISettings(settingsComponent)
             } childOf scrollComponent
 
-            UIText(name, shadow = false).constrain {
+            UIText(component.itemName, shadow = false).constrain {
                 x = 2.pixels()
                 y = CenterConstraint()
 
@@ -84,17 +84,5 @@ class ToolGunGUI: WindowScreen(ElementaVersion.V5) {
                 color = Color.BLACK.toConstraint()
             } childOf parent
         }
-
-//        repeat(5) {
-//            UIBlock(Color.RED).constrain {
-//                x = CenterConstraint()
-//                y = SiblingConstraint(padding = 2f)
-//
-//                width = 50.pixels()
-//                height = 25.pixels()
-//            } childOf scrollComponent
-//        }
     }
-
-//    fun
 }

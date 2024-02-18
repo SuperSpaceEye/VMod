@@ -1,4 +1,4 @@
 package net.spaceeye.vsource.toolgun.modes
 
-class AABBWeldMode : BaseMode {
-}
+//class AABBWeldMode : BaseMode {
+//}

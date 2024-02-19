@@ -2,6 +2,7 @@ package net.spaceeye.vsource.toolgun
 
 import dev.architectury.event.EventResult
 import net.minecraft.client.Minecraft
+import net.spaceeye.vsource.toolgun.ToolgunModes.modes
 import net.spaceeye.vsource.toolgun.modes.BaseMode
 import net.spaceeye.vsource.toolgun.modes.WeldMode
 import net.spaceeye.vsource.utils.ClientClosable
@@ -9,7 +10,6 @@ import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
     val guiOpenKey = GLFW.GLFW_KEY_E
-    val components = listOf<BaseMode>(WeldMode())
 
     var currentMode: BaseMode? = null
 
@@ -29,9 +29,10 @@ object ClientToolGunState : ClientClosable() {
 
     fun init() {
         gui = ToolgunGUI()
-        gui.makeScrollComponents(components)
+        gui.makeScrollComponents(modes)
     }
 
     override fun close() {
+        currentMode = null
     }
 }

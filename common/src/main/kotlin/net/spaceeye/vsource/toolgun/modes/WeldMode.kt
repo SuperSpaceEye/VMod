@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
+import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.gui.TextEntry
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
@@ -25,6 +26,8 @@ import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
+
+//TODO REFACTOR
 
 class WeldMode() : BaseMode {
     override val itemName = "Weld"
@@ -91,7 +94,7 @@ class WeldMode() : BaseMode {
                 val level = ServerLevelHolder.serverLevel!!
 
                 var serverMode = ServerToolGunState.playerStates.getOrPut(player) {WeldMode()}
-                if (serverMode !is WeldMode) { serverMode = WeldMode() }
+                if (serverMode !is WeldMode) { serverMode = WeldMode(); ServerToolGunState.playerStates[player] = serverMode }
                 serverMode.deserialize(buf)
 
                 val raycastResult = RaycastFunctions.raycast(level, player, 100.0)

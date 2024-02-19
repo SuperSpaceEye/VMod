@@ -3,9 +3,7 @@ package net.spaceeye.vsource.gui
 import gg.essential.elementa.components.UIBlock
 import gg.essential.elementa.components.UIText
 import gg.essential.elementa.components.input.UITextInput
-import gg.essential.elementa.constraints.CenterConstraint
-import gg.essential.elementa.constraints.ChildBasedMaxSizeConstraint
-import gg.essential.elementa.constraints.FillConstraint
+import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import java.awt.Color
 
@@ -22,7 +20,7 @@ class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String
             x = 4.pixels()
             y = CenterConstraint()
 
-            width = 50f.percent()
+            width = ChildBasedSizeConstraint() + 4.pixels()
             height = ChildBasedMaxSizeConstraint()
         } childOf this
 
@@ -35,10 +33,10 @@ class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String
         } childOf strHolder
 
         val textHolder = UIBlock(Color(170, 170, 170)).constrain {
-            x = CenterConstraint()
+            x = SiblingConstraint()
             y = CenterConstraint()
 
-            width = FillConstraint()
+            width = FillConstraint() - 4.pixels() - 4.pixels()
             height = (textScale * 9f)
         } childOf this
         textArea = (((UITextInput().constrain {

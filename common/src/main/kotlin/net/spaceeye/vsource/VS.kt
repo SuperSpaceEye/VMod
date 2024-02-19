@@ -7,6 +7,7 @@ import dev.architectury.event.events.common.LifecycleEvent
 import dev.architectury.platform.Platform
 import net.spaceeye.vsource.items.Toolgun
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
+import net.spaceeye.vsource.toolgun.ToolgunModes
 import net.spaceeye.vsource.utils.ServerLevelHolder
 import net.spaceeye.vsource.utils.closeClientObjects
 import net.spaceeye.vsource.utils.closeServerObjects
@@ -29,6 +30,7 @@ object VS {
             return
         }
         SynchronisedRenderingData
+        ToolgunModes
 
         VSItems.register()
 

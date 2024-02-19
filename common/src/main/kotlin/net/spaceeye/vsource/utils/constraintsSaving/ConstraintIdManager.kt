@@ -25,6 +25,8 @@ internal class ConstraintIdManager : ServerClosable() {
         return newManagedId
     }
 
+    fun setCounter(id: Int) {counter = id}
+
     override fun close() {
         counter = 0
         idMap.clear()

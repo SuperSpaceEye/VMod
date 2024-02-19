@@ -35,41 +35,6 @@ object VS {
         VSItems.register()
 
         makeEvents()
-
-        makeTest()
-    }
-
-    fun makeTest() {
-//        ClientRawInputEvent.KEY_PRESSED.register {
-//                client, keyCode, scanCode, action, modifiers ->
-//            WLOG("${keyCode} ${scanCode} ${action} ${modifiers}")
-//            if (keyCode == GLFW.GLFW_KEY_E && action == GLFW.GLFW_PRESS) {
-//                WLOG("PRESSING E HOLY SHIT")
-//            }
-//            EventResult.pass()
-//        }
-//
-//        ClientRawInputEvent.MOUSE_CLICKED_PRE.register {
-//            minecraft, button, action, mods->
-//
-//            val sbutton = when(button) {
-//                GLFW.GLFW_MOUSE_BUTTON_LEFT -> "LEFT"
-//                GLFW.GLFW_MOUSE_BUTTON_MIDDLE -> "MIDDLE"
-//                GLFW.GLFW_MOUSE_BUTTON_RIGHT -> "RIGHT"
-//                else -> "unknown"
-//            }
-//
-//            val saction = when(action) {
-//                GLFW.GLFW_PRESS -> "PRESSED"
-//                GLFW.GLFW_RELEASE -> "RELEASED"
-//                2 -> "BEING PRESSED"
-//                else -> "unknown"
-//            }
-//
-//            WLOG("Button ${sbutton} IS ${saction} ${mods}")
-//
-//            EventResult.pass()
-//        }
     }
 
     @JvmStatic

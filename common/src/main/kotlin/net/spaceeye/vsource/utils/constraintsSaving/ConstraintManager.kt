@@ -15,6 +15,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
+import kotlin.math.max
 
 //ShipId seem to be unique and are retained by ships after saving/loading
 
@@ -34,12 +35,14 @@ class ConstraintManager: SavedData() {
 
     private fun saveActiveConstraints(tag: CompoundTag): CompoundTag {
         val shipsTag = CompoundTag()
+        val dimensionIds = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
         for ((k, v) in shipsConstraints) {
             if (!level.shipObjectWorld.allShips.contains(k)) {continue}
 
             val constraintsTag = CompoundTag()
             for ((i, constraint) in v.withIndex()) {
-                if (!level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
+                if (!dimensionIds.contains(constraint.first.shipId1) &&
+                    !level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
 
                 val ctag = VSConstraintSerializationUtil.serializeConstraint(constraint.first) ?: continue
                 ctag.putInt("managedID", constraint.second.id)
@@ -55,6 +58,7 @@ class ConstraintManager: SavedData() {
     //TODO i don't like how it works but i don't care atm
     private fun saveNotLoadedConstraints(tag: CompoundTag): CompoundTag {
         val shipsTag = tag[SAVE_TAG_NAME_STRING]!!
+        val dimensionIds = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
         val savedGroups = mutableSetOf<LoadingGroup>()
         for ((id, groups) in groupedToLoadConstraints) {
@@ -65,7 +69,8 @@ class ConstraintManager: SavedData() {
                 if (savedGroups.contains(group)) {continue}
 
                 for ((i, constraint) in group.constraintsToLoad.withIndex()) {
-                    if (!level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
+                    if (!dimensionIds.contains(constraint.first.shipId1) &&
+                        !level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
 
                     val ctag = VSConstraintSerializationUtil.serializeConstraint(constraint.first) ?: continue
                     ctag.putInt("managedID", constraint.second)
@@ -80,41 +85,93 @@ class ConstraintManager: SavedData() {
         return tag
     }
 
+    fun saveDimensionIds(tag: CompoundTag): CompoundTag {
+        val ids = level.shipObjectWorld.dimensionToGroundBodyIdImmutable
+
+        val idsTag = CompoundTag()
+
+        for ((k, id) in ids) {
+            idsTag.putLong(k, id)
+        }
+
+        (tag[SAVE_TAG_NAME_STRING] as CompoundTag).put("lastDimensionIds", idsTag)
+
+        return tag
+    }
+
     //TODO save will only get called if ConstraintManager is "dirty", so it won't save on every save. Figure out how to
     // make it save if allShips change
     override fun save(tag: CompoundTag): CompoundTag {
         var tag = saveActiveConstraints(tag)
         tag = saveNotLoadedConstraints(tag)
+        tag = saveDimensionIds(tag)
         tag = SynchronisedRenderingData.serverSynchronisedData.nbtSave(tag)
 
         instance = null
         return tag
     }
 
+    fun loadDimensionIds(tag: CompoundTag): Map<Long, String> {
+        val ret = mutableMapOf<Long, String>()
+
+        if (!tag.contains("lastDimensionIds")) {
+            return level.shipObjectWorld.dimensionToGroundBodyIdImmutable.map { (k, v) -> Pair(v, k) }.toMap()
+        }
+
+        val dtag = tag["lastDimensionIds"] as CompoundTag
+
+        for (k in dtag.allKeys) {
+            ret[dtag.getLong(k)] = k
+        }
+
+        tag.remove("lastDimensionIds")
+
+        return ret
+    }
+
+    fun tryConvertDimensionId(ctag: CompoundTag, lastDimensionIds: Map<Long, String>) {
+        if (!ctag.contains("shipId1")) {return}
+
+        val id = ctag.getLong("shipId1")
+        val dimensionIdStr = lastDimensionIds[id] ?: return
+        ctag.putLong("shipId1", level.shipObjectWorld.dimensionToGroundBodyIdImmutable[dimensionIdStr]!!)
+    }
+
     private fun loadDataFromTag(shipsTag: CompoundTag) {
+        val lastDimensionIds = loadDimensionIds(shipsTag)
+
+        var maxId = -1
         for (k in shipsTag.allKeys) {
             val shipConstraintsTag = shipsTag[k]!! as CompoundTag
             val constraints = mutableListOf<MPair<VSConstraint, Int>>()
             for (kk in shipConstraintsTag.allKeys) {
                 val ctag = shipConstraintsTag[kk]!! as CompoundTag
+                tryConvertDimensionId(ctag, lastDimensionIds)
                 val constraint = VSConstraintDeserializationUtil.deserializeConstraint(ctag) ?: continue
                 val id = if (ctag.contains("managedID")) ctag.getInt("managedID") else -1
+
+                maxId = max(maxId, id)
 
                 constraints.add(MPair(constraint, id))
             }
             toLoadConstraints[k.toLong()] = constraints
         }
+        constraintIdManager.setCounter(maxId + 1)
     }
 
     private fun groupLoadedData() {
+        val dimensionIds = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
         for ((k, v) in toLoadConstraints) {
             val neededShipIds = mutableSetOf<ShipId>()
             for (constraint in v) {
+                val secondIsDimension = dimensionIds.contains(constraint.first.shipId1)
                 if (   !level.shipObjectWorld.allShips.contains(constraint.first.shipId0)
-                    || !level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
+                    || (!level.shipObjectWorld.allShips.contains(constraint.first.shipId1)
+                            && !secondIsDimension
+                            )) {continue}
 
                 neededShipIds.add(constraint.first.shipId0)
-                neededShipIds.add(constraint.first.shipId1)
+                if (!secondIsDimension) {neededShipIds.add(constraint.first.shipId1)}
             }
             val cluster = LoadingGroup(level!!, v, neededShipIds, shipIsStaticStatus)
             for (id in neededShipIds) {

@@ -12,8 +12,6 @@ import net.spaceeye.vsource.toolgun.modes.BaseMode
 import java.awt.Color
 
 class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
-    val components = listOf("Weld", "Rope", "AABB Weld", "Thing 1", "Thing 2", "Thing 3", "Thing 4", "Thing 5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")
-
     val mainWindow = UIBlock(Color(200, 200, 200)).constrain {
         x = CenterConstraint()
         y = CenterConstraint()

@@ -11,8 +11,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
-import net.spaceeye.vsource.WLOG
-import net.spaceeye.vsource.gui.TextEntry
+import net.spaceeye.vsource.gui.makeTextEntry
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.RopeRenderer
@@ -37,9 +36,7 @@ class RopeMode : BaseMode {
     }
 
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
-        WLOG("HANDLING SHIT")
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
-            WLOG("PRESSED AND SENDING")
             conn.sendToServer(this)
         }
 
@@ -64,40 +61,11 @@ class RopeMode : BaseMode {
 
     override val itemName: String = "Rope"
     override fun makeGUISettings(parentWindow: UIBlock) {
-        val offset = 4
+        val offset = 2.0f
 
-        var entry = TextEntry("Compliance") {
-            compliance = it.toDoubleOrNull() ?: return@TextEntry
-        }
-            .constrain {
-                x = offset.pixels()
-                y = offset.pixels()
-
-                width = 100.percent() - (offset * 2).pixels()
-            } childOf parentWindow
-        entry.textArea.setText(compliance.toString())
-
-        entry = TextEntry("Max Force") {
-            maxForce = it.toDoubleOrNull() ?: return@TextEntry
-        }
-            .constrain {
-                x = offset.pixels()
-                y = SiblingConstraint(2f)
-
-                width = 100.percent() - (offset * 2).pixels()
-            } childOf parentWindow
-        entry.textArea.setText(maxForce.toString())
-
-        entry = TextEntry("Fixed distance") {
-            fixedDistance = it.toDoubleOrNull() ?: return@TextEntry
-        }
-            .constrain {
-                x = offset.pixels()
-                y = SiblingConstraint(2f)
-
-                width = 100.percent() - (offset * 2).pixels()
-            } childOf parentWindow
-        entry.textArea.setText(fixedDistance.toString())
+        makeTextEntry("Compliance",     compliance,    offset, offset, parentWindow, 0.0) {compliance    = it}
+        makeTextEntry("Max Force",      maxForce,      offset, offset, parentWindow, 0.0) {maxForce      = it}
+        makeTextEntry("Fixed Distance", fixedDistance, offset, offset, parentWindow) {fixedDistance = it}
     }
 
     val conn = register {
@@ -139,32 +107,28 @@ class RopeMode : BaseMode {
         val rpoint1 = if (ship1 == null) spoint1 else previousResult!!.worldHitPos
         val rpoint2 = if (ship2 == null) spoint2 else raycastResult.worldHitPos
 
+        val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist()}
+
         val constraint = VSRopeConstraint(
             shipId1, shipId2,
             1e-10,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             1e10,
-            (rpoint1 - rpoint2).dist()
+            dist
         )
 
         val id = level.makeManagedConstraint(constraint)
 
-        val data = RopeRenderer(
-            ship1 != null,
-            ship2 != null,
-            spoint1, spoint2,
-            (rpoint1 - rpoint2).dist()
-        )
-//        val data = A2BRenderer(
-//            ship1 != null,
-//            ship2 != null,
-//            spoint1, spoint2,
-//        )
         SynchronisedRenderingData.serverSynchronisedData
-            .addConstraintRenderer(ship1, shipId1, shipId2, id!!.id, data)
+            .addConstraintRenderer(ship1, shipId1, shipId2, id!!.id,
+                RopeRenderer(
+                ship1 != null,
+                ship2 != null,
+                spoint1, spoint2,
+                dist
+            ))
 
         resetState()
-
     }
 
     fun resetState() {

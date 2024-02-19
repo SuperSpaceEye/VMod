@@ -3,15 +3,13 @@ package net.spaceeye.vsource.toolgun.modes
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
-import gg.essential.elementa.constraints.SiblingConstraint
-import gg.essential.elementa.dsl.*
 import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
-import net.spaceeye.vsource.gui.TextEntry
+import net.spaceeye.vsource.gui.makeTextEntry
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.RaycastFunctions
@@ -59,29 +57,10 @@ class AABBWeldMode : BaseMode {
 
     override val itemName: String = "AABB Weld"
     override fun makeGUISettings(parentWindow: UIBlock) {
-        val offset = 4
+        val offset = 2.0f
 
-        var entry = TextEntry("Compliance") {
-            compliance = it.toDoubleOrNull() ?: return@TextEntry
-        }
-            .constrain {
-                x = offset.pixels()
-                y = offset.pixels()
-
-                width = 100.percent() - (offset * 2).pixels()
-            } childOf parentWindow
-        entry.textArea.setText(compliance.toString())
-
-        entry = TextEntry("Max Force") {
-            maxForce = it.toDoubleOrNull() ?: return@TextEntry
-        }
-            .constrain {
-                x = offset.pixels()
-                y = SiblingConstraint(2f)
-
-                width = 100.percent() - (offset * 2).pixels()
-            } childOf parentWindow
-        entry.textArea.setText(maxForce.toString())
+        makeTextEntry("Compliance", compliance, offset, offset, parentWindow, 0.0) {compliance = it}
+        makeTextEntry("Max Force",  maxForce,   offset, offset, parentWindow, 0.0) {maxForce   = it}
     }
 
     val conn = register {

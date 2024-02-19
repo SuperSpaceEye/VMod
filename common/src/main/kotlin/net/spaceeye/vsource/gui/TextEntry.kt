@@ -7,8 +7,9 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import java.awt.Color
 
-class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String) -> Unit): UIBlock() {
+class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String, entry: TextEntry) -> Unit): UIBlock() {
     val textArea: UITextInput
+    val textHolder: UIBlock
 
     init {
         constrain {
@@ -32,7 +33,7 @@ class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String
             color = Color(0, 0, 0).toConstraint()
         } childOf strHolder
 
-        val textHolder = UIBlock(Color(170, 170, 170)).constrain {
+        textHolder = UIBlock(Color(170, 170, 170)).constrain {
             x = SiblingConstraint()
             y = CenterConstraint()
 
@@ -49,6 +50,35 @@ class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String
             color = Color.BLACK.toConstraint()
         }.onMouseClick {
             grabWindowFocus()
-        }) as UITextInput).onUpdate(fnToApply) childOf textHolder) as UITextInput
+        }) as UITextInput).onUpdate { fnToApply(it, this) } childOf textHolder) as UITextInput
     }
+}
+
+fun makeTextEntry(name: String,
+                  defaultValue: Double,
+                  xPadding: Float,
+                  yPadding: Float,
+                  makeChildOf: UIBlock,
+                  minValue: Double = -Double.MAX_VALUE,
+                  maxValue: Double = Double.MAX_VALUE,
+                  setValue: (Double) -> Unit): TextEntry {
+    val entry = TextEntry(name) {
+        str, entry ->
+
+        val parsedValue = str.toDoubleOrNull()
+
+        if (parsedValue == null || (parsedValue < minValue || parsedValue > maxValue)) {
+            entry.textHolder.setColor(Color(230, 0, 0))
+            return@TextEntry
+        }
+        entry.textHolder.setColor(Color(170, 170, 170))
+
+        setValue(parsedValue)
+    }.constrain {
+        x = xPadding.pixels()
+        y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
+        width = 100.percent() - (xPadding * 2).pixels()
+    } childOf makeChildOf
+    entry.textArea.setText(defaultValue.toString())
+    return entry
 }

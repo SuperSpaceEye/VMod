@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.utils.constraintsSaving
+package net.spaceeye.vsource.constraintsSaving
 
 class ManagedConstraintId(@JvmField val id: Int) {
     override fun hashCode(): Int {

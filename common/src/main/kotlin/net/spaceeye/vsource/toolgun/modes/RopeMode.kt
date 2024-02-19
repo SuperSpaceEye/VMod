@@ -18,7 +18,7 @@ import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.ServerLevelHolder
-import net.spaceeye.vsource.utils.constraintsSaving.makeManagedConstraint
+import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
 import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint

@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.utils.constraintsSaving
+package net.spaceeye.vsource.constraintsSaving
 
 import net.minecraft.nbt.CompoundTag
 import net.spaceeye.vsource.WLOG
@@ -125,7 +125,7 @@ object VSConstraintDeserializationUtil {
         val cData = makeConstraintData(cTag) ?: return null
         if (!loadBaseData(cTag, cData)) {return null}
         if (!when(cData) {
-            is ForceConstraintData  -> loadForceData(cTag, cData)
+            is ForceConstraintData -> loadForceData(cTag, cData)
             is TorqueConstraintData -> loadTorqueData(cTag, cData)
             else -> throw RuntimeException("IMPOSSIBLE SITUATION. UNKNOWN CONSTRAINT DATA TYPE.")
         }) {return null}

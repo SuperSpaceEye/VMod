@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.utils.constraintsSaving
+package net.spaceeye.vsource.constraintsSaving
 
 import net.spaceeye.vsource.utils.ServerClosable
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId

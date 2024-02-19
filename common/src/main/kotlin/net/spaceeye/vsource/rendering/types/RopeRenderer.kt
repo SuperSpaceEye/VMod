@@ -49,11 +49,8 @@ class RopeRenderer(): RenderingData {
         val ship1 = level.getShipManagingPos(point1.toBlockPos())
         val ship2 = level.getShipManagingPos(point2.toBlockPos())
 
-        //I don't think VS reuses shipyard plots so
         if (ship1isShip && ship1 == null) {return}
         if (ship2isShip && ship2 == null) {return}
-//        if (!ship1isShip && ship1 != null) {return}
-//        if (!ship2isShip && ship2 != null) {return}
 
         val rpoint1 = if (ship1 == null) point1 else posShipToWorldRender(ship1 as ClientShip, point1)
         val rpoint2 = if (ship2 == null) point2 else posShipToWorldRender(ship2 as ClientShip, point2)

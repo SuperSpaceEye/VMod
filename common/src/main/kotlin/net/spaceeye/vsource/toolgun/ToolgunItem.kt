@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.items
+package net.spaceeye.vsource.toolgun
 
 import dev.architectury.event.EventResult
 import dev.architectury.event.events.client.ClientLifecycleEvent
@@ -6,12 +6,9 @@ import dev.architectury.event.events.client.ClientRawInputEvent
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.spaceeye.vsource.VSItems
-import net.spaceeye.vsource.WLOG
-import net.spaceeye.vsource.toolgun.ClientToolGunState
 import org.lwjgl.glfw.GLFW
-import kotlin.math.E
 
-class Toolgun: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
+class ToolgunItem: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
     companion object {
         @JvmStatic
         fun playerIsUsingToolgun(): Boolean {
@@ -31,7 +28,7 @@ class Toolgun: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
                     Minecraft.getInstance().setScreen(ClientToolGunState.gui)
                     return@register EventResult.interruptDefault()
                 }
-                if (guiIsOpened && keyCode == GLFW.GLFW_KEY_GRAVE_ACCENT) {
+                if (guiIsOpened && keyCode == GLFW.GLFW_KEY_TAB) {
                     Minecraft.getInstance().setScreen(null)
                     return@register EventResult.interruptDefault()
                 }

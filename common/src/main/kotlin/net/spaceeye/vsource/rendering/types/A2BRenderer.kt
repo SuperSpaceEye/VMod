@@ -7,9 +7,8 @@ import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.LightTexture
+import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.world.level.LightLayer
 import net.spaceeye.vsource.rendering.RenderingData
 import net.spaceeye.vsource.rendering.RenderingUtils
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
@@ -52,11 +51,8 @@ class A2BRenderer(): RenderingData {
         val ship1 = level.getShipManagingPos(point1.toBlockPos())
         val ship2 = level.getShipManagingPos(point2.toBlockPos())
 
-        //I don't think VS reuses shipyard plots so
         if (ship1isShip && ship1 == null) {return}
         if (ship2isShip && ship2 == null) {return}
-//        if (!ship1isShip && ship1 != null) {return}
-//        if (!ship2isShip && ship2 != null) {return}
 
         val rpoint1 = if (ship1 == null) point1 else posShipToWorldRender(ship1 as ClientShip, point1)
         val rpoint2 = if (ship2 == null) point2 else posShipToWorldRender(ship2 as ClientShip, point2)
@@ -67,15 +63,11 @@ class A2BRenderer(): RenderingData {
         RenderSystem.enableDepthTest()
         RenderSystem.depthFunc(GL11.GL_LEQUAL)
         RenderSystem.depthMask(true)
-
-//        RenderSystem.disableDepthTest()
-//        RenderSystem.disableBlend()
-//        RenderSystem.disableCull()
-//        RenderSystem.disableScissor()
+        RenderSystem.setShader(GameRenderer::getPositionColorShader)
 
 //        val light = LightTexture.pack(level!!.getBrightness(LightLayer.BLOCK, point1.toBlockPos()), level!!.getBrightness(LightLayer.SKY, point1.toBlockPos()))
 
-        val light = 255
+        val light = Int.MAX_VALUE
 
         vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_LIGHTMAP)
 

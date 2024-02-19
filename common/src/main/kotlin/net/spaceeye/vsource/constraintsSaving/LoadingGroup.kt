@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.utils.constraintsSaving
+package net.spaceeye.vsource.constraintsSaving
 
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vsource.utils.MPair

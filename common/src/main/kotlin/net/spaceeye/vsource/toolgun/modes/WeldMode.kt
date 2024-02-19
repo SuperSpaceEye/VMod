@@ -14,7 +14,7 @@ import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.*
-import net.spaceeye.vsource.utils.constraintsSaving.makeManagedConstraint
+import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
 import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*

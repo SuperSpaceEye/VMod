@@ -9,12 +9,12 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vsource.DLOG
 import net.spaceeye.vsource.WLOG
+import net.spaceeye.vsource.constraintsSaving.ConstraintManager
 import net.spaceeye.vsource.events.AVSEvents
 import net.spaceeye.vsource.networking.dataSynchronization.ClientSynchronisedData
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.*
-import net.spaceeye.vsource.utils.constraintsSaving.ConstraintManager
 import net.spaceeye.vsource.networking.dataSynchronization.DataUnit
 import net.spaceeye.vsource.networking.dataSynchronization.ServerChecksumsUpdatedPacket
 import net.spaceeye.vsource.networking.dataSynchronization.ServerSynchronisedData

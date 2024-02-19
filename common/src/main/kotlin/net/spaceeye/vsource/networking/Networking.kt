@@ -9,25 +9,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vsource.VS
 
-object Networking {
-    infix fun <T: Serializable> String.idWithConn(constructor: (String) -> C2SConnection<T>): C2SConnection<T> {
-        val instance = constructor(this)
-        try {
-            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
-        } catch(e: NoSuchMethodError) {}
-        return instance
-    }
-
-    infix fun <T: Serializable> String.idWithConn(constructor: (String) -> S2CConnection<T>): S2CConnection<T> {
-        val instance = constructor(this)
-        try {
-            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
-        }  catch(e: NoSuchMethodError) {}
-        return instance
-    }
-}
-
-interface PacketConn {
+interface Connection {
     val side: NetworkManager.Side
     val id: ResourceLocation
     fun getHandler(): NetworkReceiver
@@ -40,9 +22,9 @@ interface Serializable {
     fun getBuffer() = FriendlyByteBuf(Unpooled.buffer(512))
 }
 
-abstract class C2SConnection<T : Serializable>(id: String, connectionName: String): PacketConn {
+abstract class C2SConnection<T : Serializable>(id: String, connectionName: String): Connection {
     override val side: NetworkManager.Side = NetworkManager.Side.C2S
-    override val id = ResourceLocation(VS.MOD_ID, "c2s$connectionName$id")
+    override val id = ResourceLocation(VS.MOD_ID, "c2s_${connectionName}_$id")
 
     override fun getHandler(): NetworkReceiver = NetworkReceiver(::serverHandler)
     abstract fun serverHandler(buf: FriendlyByteBuf, context: PacketContext)
@@ -50,9 +32,9 @@ abstract class C2SConnection<T : Serializable>(id: String, connectionName: Strin
     fun sendToServer(packet: T) = NetworkManager.sendToServer(id, packet.serialize())
 }
 
-abstract class S2CConnection<T : Serializable>(id: String, connectionName: String): PacketConn {
+abstract class S2CConnection<T : Serializable>(id: String, connectionName: String): Connection {
     override val side: NetworkManager.Side = NetworkManager.Side.S2C
-    override val id = ResourceLocation(VS.MOD_ID, "s2c$connectionName$id")
+    override val id = ResourceLocation(VS.MOD_ID, "s2c_${connectionName}_$id")
 
     override fun getHandler(): NetworkReceiver = NetworkReceiver(::clientHandler)
     abstract fun clientHandler(buf: FriendlyByteBuf, context: PacketContext)

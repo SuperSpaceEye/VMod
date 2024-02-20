@@ -4,7 +4,6 @@ import dev.architectury.event.EventResult
 import net.minecraft.client.Minecraft
 import net.spaceeye.vsource.toolgun.ToolgunModes.modes
 import net.spaceeye.vsource.toolgun.modes.BaseMode
-import net.spaceeye.vsource.toolgun.modes.WeldMode
 import net.spaceeye.vsource.utils.ClientClosable
 import org.lwjgl.glfw.GLFW
 

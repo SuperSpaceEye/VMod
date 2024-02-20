@@ -66,5 +66,17 @@ description='''
    modId="kotlinforforge"
    mandatory=true
    versionRange="[3,)"
-   ordering="NONE"
+   ordering="AFTER"
+   side="BOTH"
+[[dependencies.vsource]]
+   modId="architectury"
+   mandatory=true
+   versionRange="[4,)"
+   ordering="AFTER"
+   side="BOTH"
+[[dependencies.vsource]]
+   modId="essential"
+   mandatory=true
+   versionRange="[1,)"
+   ordering="AFTER"
    side="BOTH"

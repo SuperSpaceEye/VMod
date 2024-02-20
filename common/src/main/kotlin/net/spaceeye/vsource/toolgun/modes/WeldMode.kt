@@ -15,6 +15,7 @@ import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
+import org.joml.Quaterniond
 import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
@@ -140,13 +141,16 @@ class WeldMode() : BaseMode {
 
         level.makeManagedConstraint(attachmentConstraint2)
 
-        val rot1 = ship1?.transform?.shipToWorldRotation ?: ship2!!.transform.shipToWorldRotation
-        val rot2 = ship2?.transform?.shipToWorldRotation ?: ship1!!.transform.shipToWorldRotation
+        val rot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
+        val rot2 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
 
-        var rotConstraint: VSConstraint = VSRotDampingConstraint(
-            shipId1, shipId2, 1e-10, rot1, rot2, 1e200, 1e200, VSRotDampingAxes.ALL_AXES)
+        level.makeManagedConstraint(VSSphericalTwistLimitsConstraint(
+            shipId1, shipId2, 1e-10, rot2, rot1, 1e200, 0.0, 0.01
+        ))
 
-        level.makeManagedConstraint(rotConstraint)
+        level.makeManagedConstraint(VSSphericalSwingLimitsConstraint(
+            shipId1, shipId2, 1e-10, rot2, rot1, 1e200, 0.0, 0.01
+        ))
 
         resetState()
     }

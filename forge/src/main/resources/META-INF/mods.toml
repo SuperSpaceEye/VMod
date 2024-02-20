@@ -56,3 +56,15 @@ description='''
    versionRange="[1.18.2,1.19)"
    ordering="NONE"
    side="BOTH"
+[[dependencies.vsource]]
+   modId="valkyrienskies"
+   mandatory=false
+   versionRange="[2,)"
+   ordering="AFTER"
+   side="BOTH"
+[[dependencies.vsource]]
+   modId="kotlinforforge"
+   mandatory=true
+   versionRange="[3,)"
+   ordering="NONE"
+   side="BOTH"

@@ -52,13 +52,14 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        url = "https://repo.essential.gg/repository/maven-public"
+    }
     mavenCentral()
 }
 
-dependencies {
-//    forgeRuntimeLibrary include("com.lukflug:panelstudio:0.2.4") {transitive = false}
-//    forgeRuntimeLibrary include("com.lukflug:panelstudio-mc17:0.2.4") {transitive = false}
 
+dependencies {
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
 
@@ -74,6 +75,9 @@ dependencies {
 
     // Adds KFF as dependency and Kotlin libs
     implementation 'thedarkcolour:kotlinforforge:3.12.0'
+
+    shadowCommon(implementation("gg.essential:elementa-1.18.1-forge:622")) {transitive = false}
+    shadowCommon(implementation("gg.essential:universalcraft-1.18.1-forge:323")) {transitive = false}
 }
 
 processResources {
@@ -89,6 +93,10 @@ shadowJar {
 
     configurations = [project.configurations.shadowCommon]
     archiveClassifier.set("dev-shadow")
+
+    relocate("gg.essential.elementa", "net.spaceeye.elementa")
+    relocate("gg.essential.universal", "net.spaceeye.universal")
+    relocate("gg.essential.universalcraft", "net.spaceeye.universalcraft")
 }
 
 remapJar {

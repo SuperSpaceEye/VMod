@@ -1,14 +1,15 @@
 package net.spaceeye.vsource.constraintsSaving
 
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
-import net.minecraft.world.level.Level
 import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vsource.VS
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.events.AVSEvents
 import net.spaceeye.vsource.utils.MPair
 import net.spaceeye.vsource.utils.ServerClosable
+import net.spaceeye.vsource.utils.ServerLevelHolder
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -23,32 +24,42 @@ private const val SAVE_TAG_NAME_STRING = "vsource_ships_constraints"
 
 @Internal
 class ConstraintManager: SavedData() {
-    // shipsConstraints and idToConstraint should share MPair
-    private val shipsConstraints = mutableMapOf<ShipId, MutableList<MPair<VSConstraint, ManagedConstraintId>>>()
-    private val idToConstraint = mutableMapOf<ManagedConstraintId, MPair<VSConstraint, ManagedConstraintId>>()
+    // shipsConstraints and idToConstraint should share MConstraint
+    private val shipsConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
+    private val idToConstraint = mutableMapOf<ManagedConstraintId, MConstraint>()
     private val constraintIdManager = ConstraintIdManager()
 
-    //TODO think of a way to clear these things
     private val toLoadConstraints = mutableMapOf<ShipId, MutableList<MPair<VSConstraint, Int>>>()
     private val groupedToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
     private val shipIsStaticStatus = mutableMapOf<ShipId, Boolean>()
 
+    class MConstraint(
+        var it: VSConstraint,
+        var mID: ManagedConstraintId
+    ) {
+        val vsID: Int
+            get() {
+                val idManager = getInstance().constraintIdManager
+                return idManager.getVSid(mID) ?: -1
+            }
+    }
+
     private fun saveActiveConstraints(tag: CompoundTag): CompoundTag {
         val shipsTag = CompoundTag()
         val dimensionIds = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
-        for ((k, v) in shipsConstraints) {
-            if (!level.shipObjectWorld.allShips.contains(k)) {continue}
+        for ((shipId, mConstraints) in shipsConstraints) {
+            if (!level.shipObjectWorld.allShips.contains(shipId)) {continue}
 
-            val constraintsTag = CompoundTag()
-            for ((i, constraint) in v.withIndex()) {
-                if (!dimensionIds.contains(constraint.first.shipId1) &&
-                    !level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
+            val constraintsTag = ListTag()
+            for (constraint in mConstraints) {
+                if (!dimensionIds.contains(constraint.it.shipId1) &&
+                    !level.shipObjectWorld.allShips.contains(constraint.it.shipId1)) {continue}
 
-                val ctag = VSConstraintSerializationUtil.serializeConstraint(constraint.first) ?: continue
-                ctag.putInt("managedID", constraint.second.id)
-                constraintsTag.put(i.toString(), ctag)
+                val ctag = VSConstraintSerializationUtil.serializeConstraint(constraint.it) ?: continue
+                ctag.putInt("managedID", constraint.mID.id)
+                constraintsTag.add(ctag)
             }
-            shipsTag.put(k.toString(), constraintsTag)
+            shipsTag.put(shipId.toString(), constraintsTag)
         }
         tag.put(SAVE_TAG_NAME_STRING, shipsTag)
 
@@ -61,20 +72,20 @@ class ConstraintManager: SavedData() {
         val dimensionIds = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
         val savedGroups = mutableSetOf<LoadingGroup>()
-        for ((id, groups) in groupedToLoadConstraints) {
-            if (!level.shipObjectWorld.allShips.contains(id)) {continue}
+        for ((shipId, groups) in groupedToLoadConstraints) {
+            if (!level.shipObjectWorld.allShips.contains(shipId)) {continue}
 
-            val constraintsTag = CompoundTag()
+            val constraintsTag = ListTag()
             for (group in groups) {
                 if (savedGroups.contains(group)) {continue}
 
-                for ((i, constraint) in group.constraintsToLoad.withIndex()) {
+                for (constraint in group.constraintsToLoad) {
                     if (!dimensionIds.contains(constraint.first.shipId1) &&
                         !level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
 
                     val ctag = VSConstraintSerializationUtil.serializeConstraint(constraint.first) ?: continue
                     ctag.putInt("managedID", constraint.second)
-                    constraintsTag.put(i.toString(), ctag)
+                    constraintsTag.add(ctag)
                 }
                 savedGroups.add(group)
             }
@@ -85,22 +96,17 @@ class ConstraintManager: SavedData() {
         return tag
     }
 
-    fun saveDimensionIds(tag: CompoundTag): CompoundTag {
+    private fun saveDimensionIds(tag: CompoundTag): CompoundTag {
         val ids = level.shipObjectWorld.dimensionToGroundBodyIdImmutable
 
         val idsTag = CompoundTag()
-
-        for ((k, id) in ids) {
-            idsTag.putLong(k, id)
-        }
+        for ((dimensionId, shipId) in ids) { idsTag.putLong(dimensionId, shipId) }
 
         (tag[SAVE_TAG_NAME_STRING] as CompoundTag).put("lastDimensionIds", idsTag)
 
         return tag
     }
 
-    //TODO save will only get called if ConstraintManager is "dirty", so it won't save on every save. Figure out how to
-    // make it save if allShips change
     override fun save(tag: CompoundTag): CompoundTag {
         var tag = saveActiveConstraints(tag)
         tag = saveNotLoadedConstraints(tag)
@@ -111,7 +117,8 @@ class ConstraintManager: SavedData() {
         return tag
     }
 
-    fun loadDimensionIds(tag: CompoundTag): Map<Long, String> {
+    //It's loading them the other way around because it needs to get dimensionId from saved shipId
+    private fun loadDimensionIds(tag: CompoundTag): Map<Long, String> {
         val ret = mutableMapOf<Long, String>()
 
         if (!tag.contains("lastDimensionIds")) {
@@ -119,17 +126,15 @@ class ConstraintManager: SavedData() {
         }
 
         val dtag = tag["lastDimensionIds"] as CompoundTag
-
-        for (k in dtag.allKeys) {
-            ret[dtag.getLong(k)] = k
-        }
+        for (dimensionId in dtag.allKeys) { ret[dtag.getLong(dimensionId)] = dimensionId }
 
         tag.remove("lastDimensionIds")
 
         return ret
     }
 
-    fun tryConvertDimensionId(ctag: CompoundTag, lastDimensionIds: Map<Long, String>) {
+    //if constraint is between world and ship, then world's id should be in the second shipId of the constraint
+    private fun tryConvertDimensionId(ctag: CompoundTag, lastDimensionIds: Map<Long, String>) {
         if (!ctag.contains("shipId1")) {return}
 
         val id = ctag.getLong("shipId1")
@@ -141,11 +146,11 @@ class ConstraintManager: SavedData() {
         val lastDimensionIds = loadDimensionIds(shipsTag)
 
         var maxId = -1
-        for (k in shipsTag.allKeys) {
-            val shipConstraintsTag = shipsTag[k]!! as CompoundTag
+        for (shipId in shipsTag.allKeys) {
+            val shipConstraintsTag = shipsTag[shipId]!! as ListTag
             val constraints = mutableListOf<MPair<VSConstraint, Int>>()
-            for (kk in shipConstraintsTag.allKeys) {
-                val ctag = shipConstraintsTag[kk]!! as CompoundTag
+            for (ctag in shipConstraintsTag) {
+                ctag as CompoundTag
                 tryConvertDimensionId(ctag, lastDimensionIds)
                 val constraint = VSConstraintDeserializationUtil.deserializeConstraint(ctag) ?: continue
                 val id = if (ctag.contains("managedID")) ctag.getInt("managedID") else -1
@@ -154,7 +159,7 @@ class ConstraintManager: SavedData() {
 
                 constraints.add(MPair(constraint, id))
             }
-            toLoadConstraints[k.toLong()] = constraints
+            toLoadConstraints[shipId.toLong()] = constraints
         }
         constraintIdManager.setCounter(maxId + 1)
     }
@@ -165,17 +170,16 @@ class ConstraintManager: SavedData() {
             val neededShipIds = mutableSetOf<ShipId>()
             for (constraint in v) {
                 val secondIsDimension = dimensionIds.contains(constraint.first.shipId1)
-                if (   !level.shipObjectWorld.allShips.contains(constraint.first.shipId0)
+                if (    !level.shipObjectWorld.allShips.contains(constraint.first.shipId0)
                     || (!level.shipObjectWorld.allShips.contains(constraint.first.shipId1)
-                            && !secondIsDimension
-                            )) {continue}
+                            && !secondIsDimension)) {continue}
 
                 neededShipIds.add(constraint.first.shipId0)
                 if (!secondIsDimension) {neededShipIds.add(constraint.first.shipId1)}
             }
-            val cluster = LoadingGroup(level!!, v, neededShipIds, shipIsStaticStatus)
+            val group = LoadingGroup(level!!, v, neededShipIds, shipIsStaticStatus)
             for (id in neededShipIds) {
-                groupedToLoadConstraints.computeIfAbsent(id) { mutableListOf() }.add(cluster)
+                groupedToLoadConstraints.computeIfAbsent(id) { mutableListOf() }.add(group)
             }
         }
         toLoadConstraints.clear()
@@ -208,13 +212,14 @@ class ConstraintManager: SavedData() {
     }
 
     //TODO REMEMBER TO FUCKING CALL setDirty()
+    //VERY IMPORTANT!!!! IF CONSTRAINT IS BETWEEN SHIP AND WORLD, WORLD ID SHOULD BE THE shipId1 !!!!!
     fun makeConstraint(level: ServerLevel, constraint: VSConstraint): ManagedConstraintId? {
         val constraintId = level.shipObjectWorld.createNewConstraint(constraint) ?: return null
         val managedId = constraintIdManager.addVSid(constraintId)
 
-        val newPair = MPair(constraint, managedId)
-        shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(newPair)
-        idToConstraint[managedId] = newPair
+        val newMCon = MConstraint(constraint, managedId)
+        shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(newMCon)
+        idToConstraint[managedId] = newMCon
 
         setDirty()
         return managedId
@@ -224,9 +229,9 @@ class ConstraintManager: SavedData() {
         val vsId = constraintIdManager.getVSid(id) ?: return false
         if (!level.shipObjectWorld.removeConstraint(vsId)) {return false}
 
-        val pair = idToConstraint[id] ?: return false
-        val shipConstraints = shipsConstraints[pair.first.shipId0] ?: return false
-        shipConstraints.remove(pair)
+        val mCon = idToConstraint[id] ?: return false
+        val shipConstraints = shipsConstraints[mCon.it.shipId0] ?: return false
+        shipConstraints.remove(mCon)
         idToConstraint.remove(id)
 
         setDirty()
@@ -237,8 +242,8 @@ class ConstraintManager: SavedData() {
         val vsId = constraintIdManager.getVSid(id) ?: return false
         if (!level.shipObjectWorld.updateConstraint(vsId, constraint)) {return false}
 
-        val pair = idToConstraint[id] ?: return false
-        pair.first = constraint
+        val mCon = idToConstraint[id] ?: return false
+        mCon.it = constraint
 
         setDirty()
         return true
@@ -246,7 +251,7 @@ class ConstraintManager: SavedData() {
 
     fun getAllConstraintsIdOfId(level: ServerLevel, shipId: ShipId): List<ManagedConstraintId> {
         val constraints = shipsConstraints[shipId] ?: return listOf()
-        return constraints.map { it.second }
+        return constraints.map { it.mID }
     }
 
     @Internal
@@ -255,9 +260,9 @@ class ConstraintManager: SavedData() {
 
         val managedId = constraintIdManager.setVSid(constraintId, id)
 
-        val newPair = MPair(constraint, managedId)
-        shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(newPair)
-        idToConstraint[managedId] = newPair
+        val newMCon = MConstraint(constraint, managedId)
+        shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(newMCon)
+        idToConstraint[managedId] = newMCon
 
         setDirty()
         return managedId
@@ -277,18 +282,16 @@ class ConstraintManager: SavedData() {
             level = null
         }
 
-        //TODO look closer into this
-        fun getInstance(level: Level): ConstraintManager {
+        fun getInstance(): ConstraintManager {
             if (instance != null) {return instance!!}
-            level as ServerLevel
-            Companion.level = level
-            instance = level.server.overworld().dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
+            level = ServerLevelHolder.serverLevel!!
+            instance = ServerLevelHolder.serverLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
             return instance!!
         }
 
-        fun forceNewInstance(level: ServerLevel): ConstraintManager {
-            Companion.level = level
-            instance = level.server.overworld().dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
+        fun forceNewInstance(): ConstraintManager {
+            level = ServerLevelHolder.serverLevel!!
+            instance = ServerLevelHolder.serverLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
             return instance!!
         }
 
@@ -311,7 +314,7 @@ class ConstraintManager: SavedData() {
             AVSEvents.serverShipRemoveEvent.on {
                 (ship), handler ->
                 if (level == null) { return@on }
-                getInstance(level!!).setDirty()
+                getInstance().setDirty()
             }
         }
     }

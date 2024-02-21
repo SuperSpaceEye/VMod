@@ -51,7 +51,7 @@ object VS {
             server ->
             ServerLevelHolder.server = server
             ServerLevelHolder.serverLevel = server.overworld()
-            ConstraintManager.forceNewInstance(server.overworld())
+            ConstraintManager.forceNewInstance()
         }
 
         ToolgunItem.makeEvents()

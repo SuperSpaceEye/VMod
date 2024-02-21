@@ -127,7 +127,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         val page = data[idToAttachTo]!!
         page[id] = renderer
 
-        ConstraintManager.getInstance(ServerLevelHolder.serverLevel!!).setDirty()
+        ConstraintManager.getInstance().setDirty()
 
         serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
             idToAttachTo, mutableListOf(Pair(id, renderer.hash()))

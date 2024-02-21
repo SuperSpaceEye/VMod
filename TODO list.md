@@ -1,7 +1,7 @@
 mconstraint = managed constraint
 
 ## Constraints
-1. Rework current constraints managing logic to support additional data
+1. ✅ Rework current constraints managing logic to support additional data
 2. Make additional mconstraint "types"
     * Muscle
     * Motor
@@ -25,7 +25,7 @@ mconstraint = managed constraint
 1. Make keybinds changeable
 2. Expand menu with more GUI components (sliders, drop down options, etc)
 3. Make menu look better
-4. Use translatable components
+4. ✅ Use translatable components
 
 ## Custom Access Levels
 1. Allow op users to change server settings of VSource from toolgun menu.
@@ -48,3 +48,6 @@ mconstraint = managed constraint
 ## Rope Constraint
 1. Add ability to change rendering modes
 2. Add more setting options
+
+## Forge
+1. Fix elementa dependency on forge

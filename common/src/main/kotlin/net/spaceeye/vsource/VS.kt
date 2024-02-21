@@ -1,8 +1,9 @@
 package net.spaceeye.vsource
 
-import dev.architectury.event.events.client.ClientLifecycleEvent
+import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.event.events.common.LifecycleEvent
 import dev.architectury.platform.Platform
+import net.minecraft.client.Minecraft
 import net.spaceeye.vsource.constraintsSaving.ConstraintManager
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.toolgun.ToolgunItem
@@ -37,7 +38,8 @@ object VS {
 
     @JvmStatic
     fun makeEvents() {
-        ClientLifecycleEvent.CLIENT_STOPPING.register {
+        ClientPlayerEvent.CLIENT_PLAYER_QUIT.register {
+            if (it != Minecraft.getInstance().player || it == null) {return@register}
             closeClientObjects()
         }
 

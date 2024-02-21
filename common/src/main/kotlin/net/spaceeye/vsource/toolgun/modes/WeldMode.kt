@@ -15,6 +15,10 @@ import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
+import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
+import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
+import net.spaceeye.vsource.translate.GUIComponents.WELD
+import net.spaceeye.vsource.translate.get
 import org.joml.Quaterniond
 import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -27,8 +31,6 @@ import java.awt.Color
 //TODO REFACTOR
 
 class WeldMode() : BaseMode {
-    override val itemName = "Weld"
-
     var compliance:Double = 1e-10
     var maxForce: Double = 1e10
 
@@ -58,11 +60,12 @@ class WeldMode() : BaseMode {
         maxForce = buf.readDouble()
     }
 
+    override val itemName = WELD
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
 
-        makeTextEntry("Compliance", compliance, offset, offset, parentWindow, 0.0) {compliance = it}
-        makeTextEntry("Max Force",  maxForce,   offset, offset, parentWindow, 0.0) {maxForce   = it}
+        makeTextEntry(COMPLIANCE.get(), compliance, offset, offset, parentWindow, 0.0) {compliance = it}
+        makeTextEntry(MAX_FORCE.get(),  maxForce,   offset, offset, parentWindow, 0.0) {maxForce   = it}
     }
 
     val conn = register {

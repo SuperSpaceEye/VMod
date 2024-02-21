@@ -2,6 +2,7 @@ package net.spaceeye.vsource.toolgun
 
 import dev.architectury.event.EventResult
 import dev.architectury.event.events.client.ClientLifecycleEvent
+import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.event.events.client.ClientRawInputEvent
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
@@ -46,8 +47,15 @@ class ToolgunItem: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
                 return@register EventResult.interruptDefault()
             }
 
-            ClientLifecycleEvent.CLIENT_STARTED.register {
+            var inited = false
+            ClientLifecycleEvent.CLIENT_LEVEL_LOAD.register {
+                if (inited) { return@register }
                 ClientToolGunState.init()
+                inited = true
+            }
+            ClientPlayerEvent.CLIENT_PLAYER_QUIT.register {
+                if (it != Minecraft.getInstance().player || it == null) {return@register}
+                inited = false
             }
         }
     }

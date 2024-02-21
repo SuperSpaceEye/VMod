@@ -3,12 +3,13 @@ package net.spaceeye.vsource.toolgun.modes
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
+import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.toolgun.ToolgunModes
 
 interface GUIItem {
-    val itemName: String
+    val itemName: TranslatableComponent
     fun makeGUISettings(parentWindow : UIBlock)
 }
 

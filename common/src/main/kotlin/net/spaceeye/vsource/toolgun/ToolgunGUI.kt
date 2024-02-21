@@ -9,6 +9,7 @@ import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
 import net.spaceeye.vsource.toolgun.modes.BaseMode
+import net.spaceeye.vsource.translate.get
 import java.awt.Color
 
 class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
@@ -74,7 +75,7 @@ class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
                 ClientToolGunState.currentMode = component
             } childOf scrollComponent
 
-            UIText(component.itemName, shadow = false).constrain {
+            UIText(component.itemName.get(), shadow = false).constrain {
                 x = 2.pixels()
                 y = CenterConstraint()
 

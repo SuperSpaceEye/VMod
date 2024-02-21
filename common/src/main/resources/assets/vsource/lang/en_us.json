@@ -1,4 +1,12 @@
 {
+  "gui.weld": "Weld",
+  "gui.rope": "Rope",
+  "gui.aabbweld": "AABB Weld",
+
+  "gui.setting.compliance": "Compliance",
+  "gui.setting.max_force": "Max Force",
+  "gui.setting.fixed_distance": "Fixed Distance",
+
   "item.vsource.toolgun": "Toolgun",
   "itemGroup.vsource.vsource_tab": "VSource"
 }

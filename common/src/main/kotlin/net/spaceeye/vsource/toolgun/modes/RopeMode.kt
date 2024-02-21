@@ -3,8 +3,6 @@ package net.spaceeye.vsource.toolgun.modes
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
-import gg.essential.elementa.constraints.SiblingConstraint
-import gg.essential.elementa.dsl.*
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
@@ -19,6 +17,11 @@ import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.ServerLevelHolder
 import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
+import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
+import net.spaceeye.vsource.translate.GUIComponents.FIXED_DISTANCE
+import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
+import net.spaceeye.vsource.translate.GUIComponents.ROPE
+import net.spaceeye.vsource.translate.get
 import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
@@ -59,13 +62,13 @@ class RopeMode : BaseMode {
         fixedDistance = buf.readDouble()
     }
 
-    override val itemName: String = "Rope"
+    override val itemName = ROPE
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
 
-        makeTextEntry("Compliance",     compliance,    offset, offset, parentWindow, 0.0) {compliance    = it}
-        makeTextEntry("Max Force",      maxForce,      offset, offset, parentWindow, 0.0) {maxForce      = it}
-        makeTextEntry("Fixed Distance", fixedDistance, offset, offset, parentWindow) {fixedDistance = it}
+        makeTextEntry(COMPLIANCE.get(),     compliance,    offset, offset, parentWindow, 0.0) {compliance = it}
+        makeTextEntry(MAX_FORCE.get(),      maxForce,      offset, offset, parentWindow, 0.0) {maxForce   = it}
+        makeTextEntry(FIXED_DISTANCE.get(), fixedDistance, offset, offset, parentWindow) {fixedDistance = it}
     }
 
     val conn = register {

@@ -16,6 +16,10 @@ import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.ServerLevelHolder
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
+import net.spaceeye.vsource.translate.GUIComponents.AABB_WELD
+import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
+import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
+import net.spaceeye.vsource.translate.get
 import net.spaceeye.vsource.utils.posShipToWorld
 import org.joml.primitives.AABBi
 import org.lwjgl.glfw.GLFW
@@ -55,12 +59,12 @@ class AABBWeldMode : BaseMode {
         maxForce = buf.readDouble()
     }
 
-    override val itemName: String = "AABB Weld"
+    override val itemName = AABB_WELD
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
 
-        makeTextEntry("Compliance", compliance, offset, offset, parentWindow, 0.0) {compliance = it}
-        makeTextEntry("Max Force",  maxForce,   offset, offset, parentWindow, 0.0) {maxForce   = it}
+        makeTextEntry(COMPLIANCE.get(), compliance, offset, offset, parentWindow, 0.0) {compliance = it}
+        makeTextEntry(MAX_FORCE.get(),  maxForce,   offset, offset, parentWindow, 0.0) {maxForce   = it}
     }
 
     val conn = register {

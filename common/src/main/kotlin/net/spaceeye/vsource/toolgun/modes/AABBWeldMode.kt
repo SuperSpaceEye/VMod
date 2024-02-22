@@ -38,11 +38,11 @@ class AABBWeldMode : BaseMode {
     }
 
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
             conn.sendToServer(this)
         }
 
-        return EventResult.pass()
+        return EventResult.interruptTrue()
     }
 
     override fun serialize(): FriendlyByteBuf {

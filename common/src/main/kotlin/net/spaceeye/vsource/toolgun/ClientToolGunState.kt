@@ -8,17 +8,17 @@ import net.spaceeye.vsource.utils.ClientClosable
 import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
-    val guiOpenKey = GLFW.GLFW_KEY_E
+    val guiOpenOrCloseKey = GLFW.GLFW_KEY_TAB
 
     var currentMode: BaseMode? = null
 
     fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): EventResult {
-        if (currentMode == null) {return EventResult.pass()}
+        if (currentMode == null) {return EventResult.interruptTrue()}
         return currentMode!!.handleKeyEvent(keyCode, scanCode, action, modifiers)
     }
 
     fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {
-        if (currentMode == null) {return EventResult.pass()}
+        if (currentMode == null) {return EventResult.interruptTrue()}
         return currentMode!!.handleMouseButtonEvent(button, action, modifiers)
     }
 

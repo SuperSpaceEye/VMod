@@ -24,14 +24,15 @@ class ToolgunItem: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
                 if (!playerIsUsingToolgun()) {return@register EventResult.pass()}
 
                 val guiIsOpened = ClientToolGunState.guiIsOpened()
+                val isPressed = action == GLFW.GLFW_PRESS
 
-                if (!guiIsOpened && keyCode == ClientToolGunState.guiOpenKey && action == GLFW.GLFW_PRESS) {
+                if (!guiIsOpened && keyCode == ClientToolGunState.guiOpenOrCloseKey && isPressed) {
                     Minecraft.getInstance().setScreen(ClientToolGunState.gui)
-                    return@register EventResult.interruptDefault()
+                    return@register EventResult.pass()
                 }
-                if (guiIsOpened && keyCode == GLFW.GLFW_KEY_TAB) {
+                if ( guiIsOpened && keyCode == ClientToolGunState.guiOpenOrCloseKey && isPressed) {
                     Minecraft.getInstance().setScreen(null)
-                    return@register EventResult.interruptDefault()
+                    return@register EventResult.pass()
                 }
 
                 return@register ClientToolGunState.handleKeyEvent(keyCode, scanCode, action, modifiers)
@@ -42,9 +43,7 @@ class ToolgunItem: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
                 if (!playerIsUsingToolgun()) {return@register EventResult.pass()}
                 if (client.screen != null) {return@register EventResult.pass()}
 
-                ClientToolGunState.handleMouseButtonEvent(button, action, mods)
-
-                return@register EventResult.interruptDefault()
+                return@register ClientToolGunState.handleMouseButtonEvent(button, action, mods)
             }
 
             var inited = false

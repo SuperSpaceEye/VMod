@@ -36,9 +36,7 @@ mconstraint = managed constraint
     * Some other commands idk
 
 ## Constraints
-1. Make a system to create toolgun constraints by composing VS constraints (a state machine lmao)
-2. Re/Make the rest of constraints with that system
-3. Expose the ability to make custom constraints to users (with some limitations)
+1. Add more constraints
 
 ## Weld Constraint
 1. Change welding to lclick and make it not break blocks on lclick

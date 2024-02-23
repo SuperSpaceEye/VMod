@@ -64,6 +64,16 @@ class WeldMode() : BaseMode {
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
 
+//        val items = mutableListOf<Pair<String, () -> Unit>>()
+//        items.add(Pair("Test1", { WLOG("TEST 1") }))
+//        items.add(Pair("Test2", { WLOG("TEST 2") }))
+//        items.add(Pair("Test3", { WLOG("TEST 3") }))
+//
+//        DropDown("TestMenu", items).constrain {
+//            x = offset.pixels()
+//            y = SiblingConstraint()
+//        } childOf parentWindow
+
         makeTextEntry(COMPLIANCE.get(), compliance, offset, offset, parentWindow, 0.0) {compliance = it}
         makeTextEntry(MAX_FORCE.get(),  maxForce,   offset, offset, parentWindow, 0.0) {maxForce   = it}
     }

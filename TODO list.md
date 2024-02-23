@@ -39,7 +39,7 @@ mconstraint = managed constraint
 1. Add more constraints
 
 ## Weld Constraint
-1. Change welding to lclick and make it not break blocks on lclick
+1. ✅ Change welding to lclick and make it not break blocks on lclick
 2. Make normal weld on lclick and snapping welding on rclick
 3. Add texture for weld rendering
 

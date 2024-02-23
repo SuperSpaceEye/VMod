@@ -11,9 +11,7 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
 import net.spaceeye.vsource.gui.makeTextEntry
 import net.spaceeye.vsource.networking.C2SConnection
-import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.RaycastFunctions
-import net.spaceeye.vsource.utils.ServerLevelHolder
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
 import net.spaceeye.vsource.translate.GUIComponents.AABB_WELD
@@ -39,7 +37,7 @@ class AABBWeldMode : BaseMode {
 
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
-            conn.sendToServer(this)
+            conn_primary.sendToServer(this)
         }
 
         return EventResult.interruptTrue()
@@ -67,21 +65,7 @@ class AABBWeldMode : BaseMode {
         makeTextEntry(MAX_FORCE.get(),  maxForce,   offset, offset, parentWindow, 0.0) {maxForce   = it}
     }
 
-    val conn = register {
-        object : C2SConnection<AABBWeldMode>("aabb_weld_mode", "toolgun_command") {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val player = context.player
-                val level = ServerLevelHolder.serverLevel!!
-
-                var serverMode = ServerToolGunState.playerStates.getOrPut(player) {AABBWeldMode()}
-                if (serverMode !is AABBWeldMode) { serverMode = AABBWeldMode(); ServerToolGunState.playerStates[player] = serverMode }
-                serverMode.deserialize(buf)
-
-                val raycastResult = RaycastFunctions.raycast(level, player, 100.0)
-                serverMode.activatePrimaryFunction(level, player, raycastResult)
-            }
-        }
-    }
+    val conn_primary = register { object : C2SConnection<AABBWeldMode>("aabb_weld_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AABBWeldMode>(context.player, buf, ::AABBWeldMode, ::activatePrimaryFunction) } }
 
     var blockPos: BlockPos? = null
 

@@ -3,10 +3,16 @@ package net.spaceeye.vsource.toolgun.modes
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.entity.player.Player
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.Serializable
+import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.toolgun.ToolgunModes
+import net.spaceeye.vsource.utils.RaycastFunctions
+import net.spaceeye.vsource.utils.ServerLevelHolder
 
 interface GUIItem {
     val itemName: TranslatableComponent
@@ -24,4 +30,17 @@ interface BaseMode : Serializable, GUIItem {
         }
         return instance
     }
+
+}
+
+inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(player: Player, buf: FriendlyByteBuf, constructor: () -> BaseMode, fn: (ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
+    val level = ServerLevelHolder.serverLevel!!
+
+    var serverMode = ServerToolGunState.playerStates.getOrPut(player, constructor)
+    if (serverMode !is T) { serverMode = constructor(); ServerToolGunState.playerStates[player] = serverMode }
+    serverMode.deserialize(buf)
+
+    val result = RaycastFunctions.raycast(level, player, 100.0)
+
+    fn(level, player, result)
 }

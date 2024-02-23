@@ -13,9 +13,7 @@ import net.spaceeye.vsource.gui.makeTextEntry
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.RopeRenderer
-import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.RaycastFunctions
-import net.spaceeye.vsource.utils.ServerLevelHolder
 import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
 import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vsource.translate.GUIComponents.FIXED_DISTANCE
@@ -40,7 +38,7 @@ class RopeMode : BaseMode {
 
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
-            conn.sendToServer(this)
+            conn_primary.sendToServer(this)
         }
 
         return EventResult.interruptTrue()
@@ -71,21 +69,7 @@ class RopeMode : BaseMode {
         makeTextEntry(FIXED_DISTANCE.get(), fixedDistance, offset, offset, parentWindow) {fixedDistance = it}
     }
 
-    val conn = register {
-        object : C2SConnection<RopeMode>("rope_mode", "toolgun_command") {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val player = context.player
-                val level = ServerLevelHolder.serverLevel!!
-
-                var serverMode = ServerToolGunState.playerStates.getOrPut(player) {RopeMode()}
-                if (serverMode !is RopeMode) { serverMode = RopeMode(); ServerToolGunState.playerStates[player] = serverMode }
-                serverMode.deserialize(buf)
-
-                val raycastResult = RaycastFunctions.raycast(level, player, 100.0)
-                serverMode.activatePrimaryFunction(level, player, raycastResult)
-            }
-        }
-    }
+    val conn_primary = register { object : C2SConnection<RopeMode>("rope_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<RopeMode>(context.player, buf, ::RopeMode, ::activatePrimaryFunction) } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 

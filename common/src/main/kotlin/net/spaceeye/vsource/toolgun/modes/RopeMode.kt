@@ -73,26 +73,8 @@ class RopeMode : BaseMode {
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
-        if (level is ClientLevel) {return}
-        if (level !is ServerLevel) {return}
-
-        if (previousResult == null) {previousResult = raycastResult; return}
-
-        val ship1 = level.getShipManagingPos(previousResult!!.blockPosition)
-        val ship2 = level.getShipManagingPos(raycastResult.blockPosition)
-
-        if (ship1 == null && ship2 == null) { resetState(); return }
-        if (ship1 == ship2) { resetState(); return }
-
-        val spoint1 = previousResult!!.globalHitPos
-        val spoint2 = raycastResult.globalHitPos
-
-        var shipId1: ShipId = ship1?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
-        var shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
-
-        val rpoint1 = if (ship1 == null) spoint1 else previousResult!!.worldHitPos
-        val rpoint2 = if (ship2 == null) spoint2 else raycastResult.worldHitPos
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = activateFunction(level, player, raycastResult, ::previousResult, ::resetState) {
+        level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2 ->
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist()}
 

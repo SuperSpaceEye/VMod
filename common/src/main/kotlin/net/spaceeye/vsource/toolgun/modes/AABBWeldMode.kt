@@ -3,9 +3,7 @@ package net.spaceeye.vsource.toolgun.modes
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
-import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
@@ -21,11 +19,7 @@ import net.spaceeye.vsource.translate.get
 import net.spaceeye.vsource.utils.posShipToWorld
 import org.joml.primitives.AABBi
 import org.lwjgl.glfw.GLFW
-import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
-import org.valkyrienskies.mod.common.dimensionId
-import org.valkyrienskies.mod.common.getShipManagingPos
-import org.valkyrienskies.mod.common.shipObjectWorld
 
 class AABBWeldMode : BaseMode {
     var compliance = 1e-10
@@ -67,34 +61,22 @@ class AABBWeldMode : BaseMode {
 
     val conn_primary = register { object : C2SConnection<AABBWeldMode>("aabb_weld_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AABBWeldMode>(context.player, buf, ::AABBWeldMode, ::activatePrimaryFunction) } }
 
-    var blockPos: BlockPos? = null
+    var previousResult: RaycastFunctions.RaycastResult? = null
 
     fun resetState() {
         ILOG("RESETTING STATE")
-        blockPos = null
+        previousResult = null
     }
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
-        if (level.isClientSide) {return}
-        if (level !is ServerLevel) {return}
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = activateFunction(level, player, raycastResult, ::previousResult, ::resetState) {
+        level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2 ->
 
-        if (blockPos == null) {blockPos = raycastResult.blockPosition; return}
-        if (blockPos == raycastResult.blockPosition) {resetState(); return}
+        val bpos = previousResult!!.blockPosition
+        val ship1AttachmentPoints: MutableList<Vector3d> = mutableListOf()
+        val ship2AttachmentPoints: MutableList<Vector3d> = mutableListOf()
 
-        val ship1 = level.getShipManagingPos(blockPos!!)
-        val ship2 = level.getShipManagingPos(raycastResult.blockPosition)
-
-        if (ship1 == null && ship2 == null) { resetState(); return }
-        if (ship1 == ship2) { resetState(); return }
-
-        var shipId1: ShipId = ship1?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
-        var shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
-
-        var ship1AttachmentPoints: MutableList<Vector3d> = mutableListOf()
-        var ship2AttachmentPoints: MutableList<Vector3d> = mutableListOf()
-
-        val saabbF = ship1?.shipAABB ?: AABBi(blockPos!!.x, blockPos!!.y, blockPos!!.z, blockPos!!.x+1, blockPos!!.y+1, blockPos!!.z+1)
-        val saabbS = ship2?.shipAABB ?: AABBi(blockPos!!.x, blockPos!!.y, blockPos!!.z, blockPos!!.x+1, blockPos!!.y+1, blockPos!!.z+1)
+        val saabbF = ship1?.shipAABB ?: AABBi(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1)
+        val saabbS = ship2?.shipAABB ?: AABBi(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1)
 
         val aabbFA = mutableListOf(
             Vector3d(saabbF.minX(), saabbF.minY(), saabbF.minZ()),

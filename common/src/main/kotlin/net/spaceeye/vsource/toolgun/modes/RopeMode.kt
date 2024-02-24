@@ -3,9 +3,7 @@ package net.spaceeye.vsource.toolgun.modes
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
-import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
@@ -21,16 +19,14 @@ import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
 import net.spaceeye.vsource.translate.GUIComponents.ROPE
 import net.spaceeye.vsource.translate.get
 import org.lwjgl.glfw.GLFW
-import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
-import org.valkyrienskies.mod.common.dimensionId
-import org.valkyrienskies.mod.common.getShipManagingPos
-import org.valkyrienskies.mod.common.shipObjectWorld
 
 class RopeMode : BaseMode {
     var compliance = 1e-10
     var maxForce = 1e10
     var fixedDistance = -1.0
+
+    var posMode = PositionModes.NORMAL
 
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
         return EventResult.pass()
@@ -50,6 +46,7 @@ class RopeMode : BaseMode {
         buf.writeDouble(compliance)
         buf.writeDouble(maxForce)
         buf.writeDouble(fixedDistance)
+        buf.writeEnum(posMode)
 
         return buf
     }
@@ -58,6 +55,7 @@ class RopeMode : BaseMode {
         compliance = buf.readDouble()
         maxForce = buf.readDouble()
         fixedDistance = buf.readDouble()
+        posMode = buf.readEnum(posMode.javaClass)
     }
 
     override val itemName = ROPE
@@ -73,7 +71,7 @@ class RopeMode : BaseMode {
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = activateFunction(level, player, raycastResult, ::previousResult, ::resetState) {
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = tryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2 ->
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist()}

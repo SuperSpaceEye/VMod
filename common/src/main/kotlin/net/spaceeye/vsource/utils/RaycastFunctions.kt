@@ -18,10 +18,12 @@ object RaycastFunctions {
         @JvmField var state: BlockState,
         @JvmField var origin: Vector3d,
         @JvmField var lookVec: Vector3d,
-        @JvmField var worldHitPos: Vector3d, // if in shipyard, will transform to world pos
-        @JvmField var globalHitPos: Vector3d, // if in shipyard, will not transform to world pos
-        @JvmField var blockPosition: BlockPos,
-        @JvmField var hitNormal: Vector3d,
+        @JvmField var worldHitPos: Vector3d?, // if in shipyard, will transform to world pos
+        @JvmField var globalHitPos: Vector3d?, // if in shipyard, will not transform to world pos
+        @JvmField var worldCenteredHitPos: Vector3d?,
+        @JvmField var globalCenteredHitPos: Vector3d?,
+        @JvmField var blockPosition: BlockPos?,
+        @JvmField var hitNormal: Vector3d?,
     )
 
     //https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
@@ -66,9 +68,7 @@ object RaycastFunctions {
         )
 
         val state = level.getBlockState(clipResult.blockPos)
-        if (state.isAir) {
-            return RaycastResult(state, origin, unitLookVec, origin + unitLookVec * unitLookVec.dist(), origin + unitLookVec * unitLookVec.dist(), clipResult.blockPos, Vector3d())
-        }
+        if (state.isAir) { return RaycastResult(state, origin, unitLookVec, null, null, null, null, null, null) }
 
         val ship = level.getShipManagingPos(clipResult.blockPos)
 
@@ -85,13 +85,24 @@ object RaycastFunctions {
         val globalHitPos: Vector3d = origin + unitLookVec * (unitLookVec.dist() * result.tToIn)
         var worldHitPos = Vector3d(globalHitPos)
 
+        val diff = globalHitPos - globalHitPos.floor()
+        val offset = Vector3d(0, 0, 0)
+        when {
+            normal.x > 0.5 -> offset.sadd(if (diff.x >= 0.5) {1.0} else {0.0}, 0.5, 0.5)
+            normal.y > 0.5 -> offset.sadd(0.5, if (diff.y >= 0.5) {1.0} else {0.0}, 0.5)
+            normal.z > 0.5 -> offset.sadd(0.5, 0.5, if (diff.z >= 0.5) {1.0} else {0.0})
+        }
+        val globalCenteredHitPos = globalHitPos.floor().sadd(offset.x, offset.y, offset.z)
+        var worldCenteredHitPos = Vector3d(globalCenteredHitPos)
+
         if (ship != null) {
             normal = Vector3d(ship.transform.transformDirectionNoScalingFromShipToWorld(normal.toJomlVector3d(), JVector3d()))
             unitLookVec = Vector3d(ship.transform.transformDirectionNoScalingFromShipToWorld(unitLookVec.toJomlVector3d(), JVector3d()))
             origin = posShipToWorld(ship, origin)
             worldHitPos = posShipToWorld(ship, globalHitPos)
+            worldCenteredHitPos = posShipToWorld(ship, globalCenteredHitPos)
         }
 
-        return RaycastResult(state, origin, unitLookVec, worldHitPos, globalHitPos, clipResult.blockPos, normal)
+        return RaycastResult(state, origin, unitLookVec, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, clipResult.blockPos, normal)
     }
 }

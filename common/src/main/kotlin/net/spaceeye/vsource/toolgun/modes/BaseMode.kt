@@ -30,7 +30,6 @@ interface BaseMode : Serializable, GUIItem {
         }
         return instance
     }
-
 }
 
 inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(player: Player, buf: FriendlyByteBuf, constructor: () -> BaseMode, fn: (ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
@@ -40,6 +39,7 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(player: Play
     if (serverMode !is T) { serverMode = constructor(); ServerToolGunState.playerStates[player] = serverMode }
     serverMode.deserialize(buf)
 
+    //TODO add maxDistance to config
     val result = RaycastFunctions.raycast(level, player, 100.0)
 
     fn(level, player, result)

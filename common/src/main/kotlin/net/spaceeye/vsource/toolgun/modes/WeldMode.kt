@@ -28,6 +28,8 @@ class WeldMode : BaseMode {
     var compliance:Double = 1e-10
     var maxForce: Double = 1e10
 
+    var posMode = PositionModes.NORMAL
+
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
         return EventResult.pass()
     }
@@ -45,6 +47,7 @@ class WeldMode : BaseMode {
 
         buf.writeDouble(compliance)
         buf.writeDouble(maxForce)
+        buf.writeEnum(posMode)
 
         return buf
     }
@@ -52,6 +55,7 @@ class WeldMode : BaseMode {
     override fun deserialize(buf: FriendlyByteBuf) {
         compliance = buf.readDouble()
         maxForce = buf.readDouble()
+        posMode = buf.readEnum(posMode.javaClass)
     }
 
     override val itemName = WELD
@@ -76,7 +80,7 @@ class WeldMode : BaseMode {
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = activateFunction(level, player, raycastResult, ::previousResult, ::resetState) {
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = tryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2 ->
 
         val attachmentConstraint = VSAttachmentConstraint(

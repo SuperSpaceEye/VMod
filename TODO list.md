@@ -49,3 +49,6 @@ mconstraint = managed constraint
 
 ## Forge
 1. Fix elementa dependency on forge
+
+## Config
+1. Make config

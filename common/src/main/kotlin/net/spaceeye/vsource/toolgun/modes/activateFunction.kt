@@ -1,7 +1,6 @@
 package net.spaceeye.vsource.toolgun.modes
 
 import net.minecraft.server.level.ServerLevel
-import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.Vector3d
@@ -13,9 +12,23 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 import kotlin.reflect.KMutableProperty0
 
-fun BaseMode.activateFunction(
+enum class PositionModes {
+    NORMAL,
+    CENTERED_ON_SIDE,
+    CENTERED_IN_BLOCK,
+}
+
+fun getModePositions(mode: PositionModes, prevPos: RaycastFunctions.RaycastResult, pos: RaycastFunctions.RaycastResult): Pair<Vector3d, Vector3d> {
+    return when(mode) {
+        PositionModes.NORMAL -> Pair(prevPos.globalHitPos!!, pos.globalHitPos!!)
+        PositionModes.CENTERED_ON_SIDE -> Pair(prevPos.globalCenteredHitPos!!, pos.globalCenteredHitPos!!)
+        PositionModes.CENTERED_IN_BLOCK -> Pair(Vector3d(prevPos.blockPosition!!) + 0.5, Vector3d(pos.blockPosition!!) + 0.5)
+    }
+}
+
+fun BaseMode.tryActivateFunction(
+    mode: PositionModes,
     level: Level,
-    player: Player,
     raycastResult: RaycastFunctions.RaycastResult,
     previousResult: KMutableProperty0<RaycastFunctions.RaycastResult?>,
     resetFn: () -> Unit,
@@ -31,11 +44,11 @@ fun BaseMode.activateFunction(
         rpoint2: Vector3d) -> Unit
 ) {
     if (level !is ServerLevel) {return}
-
+    if (raycastResult.state.isAir) {return}
     if (previousResult.get() == null) {previousResult.set(raycastResult); return}
 
-    val ship1 = level.getShipManagingPos(previousResult.get()!!.blockPosition)
-    val ship2 = level.getShipManagingPos(raycastResult.blockPosition)
+    val ship1 = level.getShipManagingPos(previousResult.get()!!.blockPosition!!)
+    val ship2 = level.getShipManagingPos(raycastResult.blockPosition!!)
 
     if (ship1 == null && ship2 == null) { resetFn(); return }
     if (ship1 == ship2) { resetFn(); return }
@@ -43,11 +56,10 @@ fun BaseMode.activateFunction(
     val shipId1: ShipId = ship1?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
     val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
-    val spoint1 = previousResult.get()!!.globalHitPos
-    val spoint2 = raycastResult.globalHitPos
+    val (spoint1, spoint2) = getModePositions(mode, previousResult.get()!!, raycastResult)
 
-    val rpoint1 = if (ship1 == null) spoint1 else posShipToWorld(ship1, previousResult.get()!!.globalHitPos)
-    val rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, raycastResult.globalHitPos)
+    val rpoint1 = if (ship1 == null) spoint1 else posShipToWorld(ship1, Vector3d(spoint1))
+    val rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
     fnToActivate(level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2)
 }

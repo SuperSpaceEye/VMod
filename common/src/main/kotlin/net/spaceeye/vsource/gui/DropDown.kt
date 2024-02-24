@@ -1,7 +1,6 @@
 package net.spaceeye.vsource.gui
 
-import gg.essential.elementa.components.UIBlock
-import gg.essential.elementa.components.UIText
+import gg.essential.elementa.components.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import java.awt.Color
@@ -17,47 +16,55 @@ class DropDown(
 
     init {
         constrain {
-            width = FillConstraint()
-            height = ChildBasedMaxSizeConstraint() + 2.pixels() + 50.pixels()
-            color = Color(255, 0, 0).toConstraint()
+            width = 100.percent() - 4.pixels()
+            height = ChildBasedSizeConstraint() + 4.pixels()
         }
-        val holder = UIBlock().constrain {
-            width = 50.pixels()
-            height = 50.pixels()
-            x = CenterConstraint()
-            y = CenterConstraint()
-            color = Color(0, 255, 0).toConstraint()
-        } childOf this
 
-        setColor(Color(255, 0, 0))
+        val textHolder = UIBlock(Color(150, 150, 150)).constrain {
+            width = ChildBasedSizeConstraint() + 4.pixels()
+            height = ChildBasedSizeConstraint() + 4.pixels()
+
+            x = 2.pixels()
+            y = 2.pixels()
+        } childOf this
 
         val text = UIText(menuName, shadow = false).constrain {
-            y = CenterConstraint()
-            x = 4.pixels()
-
             textScale = text_scale.pixels()
 
+            x = CenterConstraint()
+            y = CenterConstraint()
+
             color = Color(0, 0, 0).toConstraint()
-        } childOf this
+        } childOf textHolder
 
         val itemsHolder = UIBlock().constrain {
-            x = CenterConstraint()
-            y = (text.getTextScale() * 9f).pixels() + 2.pixels()
+            y = SiblingConstraint()
 
-            width = FillConstraint()
-            height = ChildBasedMaxSizeConstraint()
+            width = ChildBasedMaxSizeConstraint()
+            height = ChildBasedSizeConstraint() + 2.pixels()
         }
 
-        for((name, fn) in items) {
-            val item = UIBlock().constrain {
-                x = CenterConstraint()
-                y = SiblingConstraint()
+        var first = true
+        for((i, pair) in items.withIndex()) {
+            val (name, fn) = pair
 
-                width = FillConstraint()
-                height = ChildBasedMaxSizeConstraint()
+            val componentColor = if (i % 2 == 0) {
+                Color(120, 120, 120)
+            } else {
+                Color(150, 150, 150)
+            }
+
+            val item = UIBlock(componentColor).constrain {
+                x = 2.pixels()
+                y = SiblingConstraint()
+                if (first) y += 2.pixels()
+
+                width = ChildBasedMaxSizeConstraint() + 4.pixels()
+                height = ChildBasedSizeConstraint() + 4.pixels()
             }.onMouseClick {
                 fn()
             } childOf itemsHolder
+            first = false
 
             UIText(name, shadow = false).constrain {
                 y = CenterConstraint()
@@ -68,13 +75,30 @@ class DropDown(
             } childOf item
         }
 
-        onMouseClick {
+        val _this = this
+
+        textHolder.onMouseClick {
             activated = !activated
             if (activated) {
-                itemsHolder childOf this
+                itemsHolder childOf _this
             } else {
-                removeChild(itemsHolder)
+                _this.removeChild(itemsHolder)
             }
         }
     }
+}
+
+fun makeDropDown(name: String,
+                 makeChildOf: UIBlock,
+                 xPadding: Float,
+                 yPadding: Float,
+                 items: List<Pair<String, () -> Unit>>): DropDown {
+    val dropDown = DropDown(name, items).constrain {
+        x = xPadding.pixels()
+        y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
+
+        width = 100.percent() - (xPadding * 2).pixels()
+    } childOf makeChildOf
+
+    return dropDown
 }

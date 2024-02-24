@@ -18,4 +18,9 @@ object GUIComponents {
     val COMPLIANCE = s("compliance")
     val MAX_FORCE = s("max_force")
     val FIXED_DISTANCE = s("fixed_distance")
+
+    val HITPOS_MODES = s("hitpos_modes")
+    val NORMAL = s("normal")
+    val CENTERED_ON_SIDE = s("centered_on_side")
+    val CENTERED_IN_BLOCK = s("centered_in_block")
 }

@@ -7,6 +7,11 @@
   "gui.setting.max_force": "Max Force",
   "gui.setting.fixed_distance": "Fixed Distance",
 
+  "gui.setting.hitpos_modes": "HitPos Modes",
+  "gui.setting.normal": "Normal",
+  "gui.setting.centered_on_side": "Centered On Side",
+  "gui.setting.centered_in_block": "Centered In Block",
+
   "item.vsource.toolgun": "Toolgun",
   "itemGroup.vsource.vsource_tab": "VSource"
 }

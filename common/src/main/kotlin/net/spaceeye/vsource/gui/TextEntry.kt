@@ -6,6 +6,7 @@ import gg.essential.elementa.components.input.UITextInput
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import java.awt.Color
+import kotlin.reflect.KMutableProperty0
 
 class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String, entry: TextEntry) -> Unit): UIBlock() {
     val textArea: UITextInput
@@ -55,13 +56,12 @@ class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String
 }
 
 fun makeTextEntry(name: String,
-                  defaultValue: Double,
+                  value: KMutableProperty0<Double>,
                   xPadding: Float,
                   yPadding: Float,
                   makeChildOf: UIBlock,
                   minValue: Double = -Double.MAX_VALUE,
-                  maxValue: Double = Double.MAX_VALUE,
-                  setValue: (Double) -> Unit): TextEntry {
+                  maxValue: Double = Double.MAX_VALUE): TextEntry {
     val entry = TextEntry(name) {
         str, entry ->
 
@@ -73,12 +73,12 @@ fun makeTextEntry(name: String,
         }
         entry.textHolder.setColor(Color(170, 170, 170))
 
-        setValue(parsedValue)
+        value.set(parsedValue)
     }.constrain {
         x = xPadding.pixels()
         y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
         width = 100.percent() - (xPadding * 2).pixels()
     } childOf makeChildOf
-    entry.textArea.setText(defaultValue.toString())
+    entry.textArea.setText(value.get().toString())
     return entry
 }

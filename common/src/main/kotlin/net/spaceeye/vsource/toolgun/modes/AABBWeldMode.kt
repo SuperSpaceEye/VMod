@@ -55,8 +55,8 @@ class AABBWeldMode : BaseMode {
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
 
-        makeTextEntry(COMPLIANCE.get(), compliance, offset, offset, parentWindow, 0.0) {compliance = it}
-        makeTextEntry(MAX_FORCE.get(),  maxForce,   offset, offset, parentWindow, 0.0) {maxForce   = it}
+        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 0.0)
+        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 0.0)
     }
 
     val conn_primary = register { object : C2SConnection<AABBWeldMode>("aabb_weld_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AABBWeldMode>(context.player, buf, ::AABBWeldMode, ::activatePrimaryFunction) } }

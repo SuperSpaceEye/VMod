@@ -13,6 +13,7 @@ import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
+import net.spaceeye.vsource.gui.DItem
 import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
 import net.spaceeye.vsource.translate.GUIComponents.WELD
@@ -70,9 +71,9 @@ class WeldMode : BaseMode {
         makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 0.0)
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 0.0)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
-            Pair(NORMAL.get()) { posMode = PositionModes.NORMAL },
-            Pair(CENTERED_ON_SIDE.get()) { posMode = PositionModes.CENTERED_ON_SIDE },
-            Pair(CENTERED_IN_BLOCK.get()) { posMode = PositionModes.CENTERED_IN_BLOCK },
+            DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
+            DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
+            DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK },
         ))
     }
 

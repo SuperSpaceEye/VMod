@@ -20,6 +20,8 @@ import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vsource.translate.GUIComponents.FIXED_DISTANCE
 import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
 import net.spaceeye.vsource.translate.GUIComponents.ROPE
+import net.spaceeye.vsource.translate.GUIComponents.SEGMENTS
+import net.spaceeye.vsource.translate.GUIComponents.WIDTH
 import net.spaceeye.vsource.translate.get
 import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
@@ -30,6 +32,9 @@ class RopeMode : BaseMode {
     var fixedDistance = -1.0
 
     var posMode = PositionModes.NORMAL
+
+    var width: Double = .2
+    var segments: Int = 16
 
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
         return EventResult.pass()
@@ -50,6 +55,8 @@ class RopeMode : BaseMode {
         buf.writeDouble(maxForce)
         buf.writeDouble(fixedDistance)
         buf.writeEnum(posMode)
+        buf.writeDouble(width)
+        buf.writeInt(segments)
 
         return buf
     }
@@ -59,6 +66,8 @@ class RopeMode : BaseMode {
         maxForce = buf.readDouble()
         fixedDistance = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
+        width = buf.readDouble()
+        segments = buf.readInt()
     }
 
     override val itemName = ROPE
@@ -68,6 +77,8 @@ class RopeMode : BaseMode {
         makeTextEntry(COMPLIANCE.get(),     ::compliance,    offset, offset, parentWindow, 0.0)
         makeTextEntry(MAX_FORCE.get(),      ::maxForce,      offset, offset, parentWindow, 0.0)
         makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow)
+        makeTextEntry(WIDTH.get(),          ::width,         offset, offset, parentWindow, 0.0, 1.0)
+        makeTextEntry(SEGMENTS.get(),       ::segments,      offset, offset, parentWindow, 1, 100)
         makeDropDown(GUIComponents.HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(GUIComponents.NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(GUIComponents.CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
@@ -100,7 +111,7 @@ class RopeMode : BaseMode {
                 ship1 != null,
                 ship2 != null,
                 spoint1, spoint2,
-                dist
+                dist, width, segments
             ))
 
         resetState()

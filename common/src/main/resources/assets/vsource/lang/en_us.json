@@ -6,6 +6,8 @@
   "gui.setting.compliance": "Compliance",
   "gui.setting.max_force": "Max Force",
   "gui.setting.fixed_distance": "Fixed Distance",
+  "gui.setting.width": "Width",
+  "gui.setting.segments": "Segments",
 
   "gui.setting.hitpos_modes": "HitPos Modes",
   "gui.setting.normal": "Normal",
@@ -13,7 +15,7 @@
   "gui.setting.centered_in_block": "Centered In Block",
 
   "key.vsource.gui_open_or_close": "Open or Close Toolgun GUI",
-  "vsourse.keymappings_name": "Toolgun",
+  "vsourse.keymappings_name": "VSourse Toolgun",
 
   "item.vsource.toolgun": "Toolgun",
   "itemGroup.vsource.vsource_tab": "VSource"

@@ -30,17 +30,21 @@ class A2BRenderer(): RenderingData {
 
     var color: Color = Color(0)
 
+    var width: Double = .2
+
     constructor(ship1isShip: Boolean,
                 ship2isShip: Boolean,
                 point1: Vector3d,
                 point2: Vector3d,
                 color: Color,
+                width: Double,
     ): this() {
         this.ship1isShip = ship1isShip
         this.ship2isShip = ship2isShip
         this.point1 = point1
         this.point2 = point2
         this.color = color
+        this.width = width
     }
 
     override fun getTypeName() = "A2BRenderer"
@@ -81,7 +85,7 @@ class A2BRenderer(): RenderingData {
         val matrix = poseStack.last().pose()
         RenderingUtils.Quad.makeFlatRectFacingCamera(
             vBuffer, matrix,
-            color.red, color.green, color.blue, color.alpha, light, .2,
+            color.red, color.green, color.blue, color.alpha, light, width,
             tpos1, tpos2
         )
 
@@ -101,6 +105,8 @@ class A2BRenderer(): RenderingData {
         buf.writeBoolean(ship1isShip)
         buf.writeBoolean(ship2isShip)
 
+        buf.writeDouble(width)
+
         buf.writeVector3d(point1)
         buf.writeVector3d(point2)
 
@@ -111,6 +117,8 @@ class A2BRenderer(): RenderingData {
         color = Color(buf.readInt())
         ship1isShip = buf.readBoolean()
         ship2isShip = buf.readBoolean()
+
+        width = buf.readDouble()
 
         point1 = buf.readVector3d()
         point2 = buf.readVector3d()

@@ -29,16 +29,24 @@ class RopeRenderer(): RenderingData {
 
     var length: Double = 0.0
 
+    var width: Double = .2
+    var segments: Int = 16
+
     constructor(ship1isShip: Boolean,
                 ship2isShip: Boolean,
                 point1: Vector3d,
                 point2: Vector3d,
-                length: Double): this() {
+                length: Double,
+                width: Double,
+                segments: Int
+        ): this() {
         this.ship1isShip = ship1isShip
         this.ship2isShip = ship2isShip
         this.point1 = point1
         this.point2 = point2
         this.length = length
+        this.width = width
+        this.segments = segments
     }
 
     override fun getTypeName() = "SimpleRopeRendering"
@@ -77,7 +85,7 @@ class RopeRenderer(): RenderingData {
         RenderingUtils.Quad.drawRope(
             vBuffer, matrix,
             255, 0, 0, 255, 255,
-            .2, 16, length,
+            width, segments, length,
             tpos1, tpos2
         )
 
@@ -101,6 +109,9 @@ class RopeRenderer(): RenderingData {
 
         buf.writeDouble(length)
 
+        buf.writeDouble(width)
+        buf.writeInt(segments)
+
         return buf
     }
 
@@ -112,5 +123,8 @@ class RopeRenderer(): RenderingData {
         point2 = buf.readVector3d()
 
         length = buf.readDouble()
+
+        width = buf.readDouble()
+        segments = buf.readInt()
     }
 }

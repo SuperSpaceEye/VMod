@@ -13,7 +13,8 @@ mconstraint = managed constraint
    * Simple Arbitrary - rendering not tied to ships. Have a dedicated channel that will just always render things, or render depending on the position. Of course, it can only be used for effects (ray from toolgun), and not more "permanent" (like ropes placed on the ground only)  
    * Chunk based Arbitrary
 2. Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
-3. Add effects for toolgun
+3. Add clientside validation 
+4. Add effects for toolgun
 
 ## HUD Rendering
 1. Make system for HUD rendering
@@ -53,3 +54,6 @@ mconstraint = managed constraint
 
 ## Config
 1. Make config
+
+## Server side things
+1. Add server side validation for constraints and rendering

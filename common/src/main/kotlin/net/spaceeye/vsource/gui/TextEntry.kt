@@ -82,3 +82,31 @@ fun makeTextEntry(name: String,
     entry.textArea.setText(value.get().toString())
     return entry
 }
+
+fun makeTextEntry(name: String,
+                  value: KMutableProperty0<Int>,
+                  xPadding: Float,
+                  yPadding: Float,
+                  makeChildOf: UIBlock,
+                  minValue: Int = -Int.MAX_VALUE,
+                  maxValue: Int = Int.MAX_VALUE): TextEntry {
+    val entry = TextEntry(name) {
+            str, entry ->
+
+        val parsedValue = str.toIntOrNull()
+
+        if (parsedValue == null || (parsedValue < minValue || parsedValue > maxValue)) {
+            entry.textHolder.setColor(Color(230, 0, 0))
+            return@TextEntry
+        }
+        entry.textHolder.setColor(Color(170, 170, 170))
+
+        value.set(parsedValue)
+    }.constrain {
+        x = xPadding.pixels()
+        y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
+        width = 100.percent() - (xPadding * 2).pixels()
+    } childOf makeChildOf
+    entry.textArea.setText(value.get().toString())
+    return entry
+}

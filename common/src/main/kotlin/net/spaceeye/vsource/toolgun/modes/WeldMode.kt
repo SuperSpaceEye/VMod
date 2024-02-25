@@ -27,12 +27,14 @@ import net.spaceeye.vsource.translate.GUIComponents.CENTERED_IN_BLOCK
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_ON_SIDE
 import net.spaceeye.vsource.translate.GUIComponents.HITPOS_MODES
 import net.spaceeye.vsource.translate.GUIComponents.NORMAL
+import net.spaceeye.vsource.translate.GUIComponents.WIDTH
 
 //TODO REFACTOR
 
 class WeldMode : BaseMode {
-    var compliance:Double = 1e-10
+    var compliance: Double = 1e-10
     var maxForce: Double = 1e10
+    var width: Double = .2
 
     var posMode = PositionModes.NORMAL
 
@@ -54,6 +56,7 @@ class WeldMode : BaseMode {
         buf.writeDouble(compliance)
         buf.writeDouble(maxForce)
         buf.writeEnum(posMode)
+        buf.writeDouble(width)
 
         return buf
     }
@@ -62,6 +65,7 @@ class WeldMode : BaseMode {
         compliance = buf.readDouble()
         maxForce = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
+        width = buf.readDouble()
     }
 
     override val itemName = WELD
@@ -70,6 +74,7 @@ class WeldMode : BaseMode {
 
         makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 0.0)
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 0.0)
+        makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, 0.0, 1.0)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
@@ -100,7 +105,8 @@ class WeldMode : BaseMode {
                     ship1 != null,
                     ship2 != null,
                     spoint1, spoint2,
-                    Color(62, 62, 62)
+                    Color(62, 62, 62),
+                    width
                 )
             )
 

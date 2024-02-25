@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger
 fun ILOG(s: String) = VS.logger.info(s)
 fun WLOG(s: String) = VS.logger.warn(s)
 fun DLOG(s: String) = VS.logger.debug(s)
+fun ELOG(s: String) = VS.logger.error(s)
 
 object VS {
     const val MOD_ID = "vsource"

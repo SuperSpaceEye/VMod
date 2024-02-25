@@ -7,6 +7,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
+import net.spaceeye.vsource.ELOG
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.toolgun.ServerToolGunState
@@ -32,15 +33,20 @@ interface BaseMode : Serializable, GUIItem {
     }
 }
 
-inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(player: Player, buf: FriendlyByteBuf, constructor: () -> BaseMode, fn: (ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
+inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(player: Player, buf: FriendlyByteBuf, constructor: () -> BaseMode, noinline fn: (ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
     val level = ServerLevelHolder.serverLevel!!
 
     var serverMode = ServerToolGunState.playerStates.getOrPut(player, constructor)
     if (serverMode !is T) { serverMode = constructor(); ServerToolGunState.playerStates[player] = serverMode }
+
+    try {
     serverMode.deserialize(buf)
 
     //TODO add maxDistance to config
     val result = RaycastFunctions.raycast(level, player, 100.0)
 
     fn(level, player, result)
+    } catch (e: Exception) {
+        ELOG("Failed to activate function ${fn.javaClass.name} of ${serverMode.javaClass.simpleName} called by player ${player.name.contents}")
+    }
 }

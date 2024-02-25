@@ -6,6 +6,16 @@
   "gui.setting.compliance": "力顺",
   "gui.setting.max_force": "最大力",
   "gui.setting.fixed_distance": "固定距离",
+  "gui.setting.width": "宽度",
+  "gui.setting.segments": "段数",
+
+  "gui.setting.hitpos_modes": "选点模式",
+  "gui.setting.normal": "普通",
+  "gui.setting.centered_on_side": "面中心",
+  "gui.setting.centered_in_block": "方块中心",
+
+  "key.vsource.gui_open_or_close": "打开或关闭工具枪GUI",
+  "vsourse.keymappings_name": "VSourse 工具枪",
 
   "item.vsource.toolgun": "工具枪",
   "itemGroup.vsource.vsource_tab": "VSource"

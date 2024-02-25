@@ -9,7 +9,6 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vsource.rendering.RenderingData
 import net.spaceeye.vsource.rendering.RenderingUtils
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.utils.Vector3d

@@ -1,10 +1,7 @@
 package net.spaceeye.vsource.rendering
 
 import com.google.common.base.Supplier
-import com.mojang.blaze3d.vertex.PoseStack
 import io.netty.buffer.Unpooled
-import net.minecraft.client.Camera
-import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vsource.DLOG
@@ -15,24 +12,11 @@ import net.spaceeye.vsource.networking.dataSynchronization.ClientSynchronisedDat
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.*
-import net.spaceeye.vsource.networking.dataSynchronization.DataUnit
 import net.spaceeye.vsource.networking.dataSynchronization.ServerChecksumsUpdatedPacket
 import net.spaceeye.vsource.networking.dataSynchronization.ServerSynchronisedData
+import net.spaceeye.vsource.rendering.types.RenderingData
 import org.valkyrienskies.core.api.ships.Ship
-import org.valkyrienskies.mod.common.shipObjectWorld
 import java.security.MessageDigest
-
-fun renderData(poseStack: PoseStack, camera: Camera) {
-    val level = Minecraft.getInstance().level!!
-    SynchronisedRenderingData.clientSynchronisedData.mergeData()
-
-    for (ship in level.shipObjectWorld.loadedShips) {
-        SynchronisedRenderingData.clientSynchronisedData.tryPoolDataUpdate(ship.id)
-        for ((idx, render) in SynchronisedRenderingData.clientSynchronisedData.cachedData[ship.id] ?: continue) {
-            render.renderData(poseStack, camera)
-        }
-    }
-}
 
 object RenderingTypes {
     private val strToIdx = mutableMapOf<String, Int>()
@@ -50,10 +34,6 @@ object RenderingTypes {
 
     fun typeToIdx(type: String) = strToIdx[type]
     fun idxToSupplier(idx: Int) = suppliers[idx]
-}
-
-interface RenderingData: DataUnit {
-    fun renderData(poseStack: PoseStack, camera: Camera)
 }
 
 class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<RenderingData>): ClientSynchronisedData<RenderingData>("rendering_data", getServerInstance)

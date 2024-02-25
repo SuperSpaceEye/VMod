@@ -15,6 +15,7 @@ mconstraint = managed constraint
 2. Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
 3. Add clientside validation 
 4. Add effects for toolgun
+5. Group rendering objects by types to elevate common operations and add shared data between rendering types
 
 ## HUD Rendering
 1. Make system for HUD rendering

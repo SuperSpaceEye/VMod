@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static net.spaceeye.vsource.rendering.SynchronisedRenderingDataKt.renderData;
+import static net.spaceeye.vsource.rendering.CustomRenderingKt.renderInWorld;
 
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
@@ -22,7 +22,7 @@ public abstract class GameRendererMixin {
     @Inject(method = "renderLevel", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/GameRenderer;renderHand:Z", opcode = Opcodes.GETFIELD, ordinal = 0 ))
     void vssource_postWorldRender(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
         minecraft.getProfiler().push("vsource_rendering_stage");
-        renderData(matrixStack, mainCamera);
+        renderInWorld(matrixStack, mainCamera, minecraft);
         minecraft.getProfiler().pop();
     }
 }

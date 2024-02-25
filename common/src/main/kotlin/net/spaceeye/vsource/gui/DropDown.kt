@@ -14,25 +14,25 @@ class DropDown(
     menuName: String,
     dItems: List<DItem>,
 
-    val highlightColor: Color = Color(0, 170, 0),
+    val activatedColor: Color = Color(0, 170, 0),
     text_scale: Float = 1f,
 ): UIBlock() {
     var activated = false
 
-    var highlightStateOfButtons = mutableListOf<Boolean>()
+    var activatedStateOfButtons = mutableListOf<Boolean>()
     var buttons = mutableListOf<Button>()
 
-    fun highlightButtons(highlight: Boolean = true) {
-        buttons.zip(highlightStateOfButtons).forEach {
+    private fun activateButtons(activate: Boolean = true) {
+        buttons.zip(activatedStateOfButtons).forEach {
             (it, activated) ->
             when (activated) {
                 true -> {
-                    it.activeColor = highlightColor
+                    it.activeColor = activatedColor
                     it.animate {
                         setColorAnimation(
                             Animations.OUT_EXP,
                             it.animationTime,
-                            (if (highlight) {it.activeColor.brighter()} else {it.activeColor}).toConstraint()
+                            (if (activate) {it.activeColor.brighter()} else {it.activeColor}).toConstraint()
                         )
                     }
                 }
@@ -50,9 +50,10 @@ class DropDown(
         }
     }
 
-    fun changeColors(clickedButton: Button) {
-        buttons.forEachIndexed { i, it -> highlightStateOfButtons[i] = it == clickedButton }
-        highlightButtons()
+    // is called when any item button was pressed
+    private fun changeColors(clickedButton: Button) {
+        buttons.forEachIndexed { i, it -> activatedStateOfButtons[i] = it == clickedButton }
+        activateButtons()
     }
 
     init {
@@ -64,10 +65,10 @@ class DropDown(
         var _this = this
         lateinit var itemsHolder: UIComponent
 
-        val menuButton = Button(Color(150, 150, 150), menuName) {
+        val menuButton = Button(Color(150, 150, 150), menuName, text_scale) {
             activated = !activated
             when (activated) {
-                true  -> { itemsHolder childOf _this; highlightButtons(false) }
+                true  -> { itemsHolder childOf _this; activateButtons(false) }
                 false -> { _this.removeChild(itemsHolder) }
             }
         }.constrain {
@@ -96,7 +97,7 @@ class DropDown(
             }
 
             lateinit var itemButton: Button
-            itemButton = Button(componentColor, name) {
+            itemButton = Button(componentColor, name, text_scale) {
                 fn()
                 changeColors(itemButton)
             }.constrain {
@@ -109,7 +110,7 @@ class DropDown(
             } childOf itemsHolder
             first = false
 
-            highlightStateOfButtons.add(highlight)
+            activatedStateOfButtons.add(highlight)
             buttons.add(itemButton)
         }
     }

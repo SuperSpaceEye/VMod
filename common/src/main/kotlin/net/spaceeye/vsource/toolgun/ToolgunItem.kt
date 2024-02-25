@@ -22,15 +22,16 @@ class ToolgunItem: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
             ClientRawInputEvent.KEY_PRESSED.register {
                 client, keyCode, scanCode, action, modifiers ->
                 if (!playerIsUsingToolgun()) {return@register EventResult.pass()}
+                if (ClientToolGunState.otherGuiIsOpened()) {return@register EventResult.pass()}
 
                 val guiIsOpened = ClientToolGunState.guiIsOpened()
                 val isPressed = action == GLFW.GLFW_PRESS
 
-                if (!guiIsOpened && keyCode == ClientToolGunState.guiOpenOrCloseKey && isPressed) {
+                if (!guiIsOpened && isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
                     Minecraft.getInstance().setScreen(ClientToolGunState.gui)
                     return@register EventResult.pass()
                 }
-                if ( guiIsOpened && keyCode == ClientToolGunState.guiOpenOrCloseKey && isPressed) {
+                if ( guiIsOpened && isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
                     Minecraft.getInstance().setScreen(null)
                     return@register EventResult.pass()
                 }

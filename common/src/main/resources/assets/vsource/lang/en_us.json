@@ -12,6 +12,9 @@
   "gui.setting.centered_on_side": "Centered On Side",
   "gui.setting.centered_in_block": "Centered In Block",
 
+  "key.vsource.gui_open_or_close": "Open or Close Toolgun GUI",
+  "vsourse.keymappings_name": "Toolgun",
+
   "item.vsource.toolgun": "Toolgun",
   "itemGroup.vsource.vsource_tab": "VSource"
 }

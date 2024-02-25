@@ -13,6 +13,9 @@ import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
+import net.spaceeye.vsource.gui.DItem
+import net.spaceeye.vsource.gui.makeDropDown
+import net.spaceeye.vsource.translate.GUIComponents
 import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vsource.translate.GUIComponents.FIXED_DISTANCE
 import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
@@ -65,13 +68,18 @@ class RopeMode : BaseMode {
         makeTextEntry(COMPLIANCE.get(),     ::compliance,    offset, offset, parentWindow, 0.0)
         makeTextEntry(MAX_FORCE.get(),      ::maxForce,      offset, offset, parentWindow, 0.0)
         makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow)
+        makeDropDown(GUIComponents.HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
+            DItem(GUIComponents.NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
+            DItem(GUIComponents.CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
+            DItem(GUIComponents.CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK },
+        ))
     }
 
     val conn_primary = register { object : C2SConnection<RopeMode>("rope_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<RopeMode>(context.player, buf, ::RopeMode, ::activatePrimaryFunction) } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = tryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverTryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2 ->
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist()}

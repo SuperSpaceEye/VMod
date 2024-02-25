@@ -36,6 +36,9 @@ object VS {
         makeEvents()
     }
 
+//    @JvmStatic
+//    fun clientInit() {}
+
     @JvmStatic
     fun makeEvents() {
         ClientPlayerEvent.CLIENT_PLAYER_QUIT.register {

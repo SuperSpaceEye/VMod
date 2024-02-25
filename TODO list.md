@@ -22,7 +22,7 @@ mconstraint = managed constraint
 1. Add sounds and shit
 
 ## Toolgun Menu
-1. Make keybinds changeable
+1. ✅ Make keybinds changeable
 2. Expand menu with more GUI components (sliders, drop down options, etc)
 3. Make menu look better
 4. ✅ Use translatable components
@@ -37,6 +37,7 @@ mconstraint = managed constraint
 
 ## Constraints
 1. Add more constraints
+2. ✅ Add Hit Position modes
 
 ## Weld Constraint
 1. ✅ Change welding to lclick and make it not break blocks on lclick

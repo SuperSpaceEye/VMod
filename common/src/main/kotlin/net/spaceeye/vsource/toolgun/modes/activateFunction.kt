@@ -26,7 +26,7 @@ fun getModePositions(mode: PositionModes, prevPos: RaycastFunctions.RaycastResul
     }
 }
 
-fun BaseMode.tryActivateFunction(
+fun BaseMode.serverTryActivateFunction(
     mode: PositionModes,
     level: Level,
     raycastResult: RaycastFunctions.RaycastResult,
@@ -43,7 +43,7 @@ fun BaseMode.tryActivateFunction(
         rpoint1: Vector3d,
         rpoint2: Vector3d) -> Unit
 ) {
-    if (level !is ServerLevel) {return}
+    if (level !is ServerLevel) {throw RuntimeException("Function intended for server use only was activated on client level. How.")}
     if (raycastResult.state.isAir) {return}
     if (previousResult.get() == null) {previousResult.set(raycastResult); return}
 

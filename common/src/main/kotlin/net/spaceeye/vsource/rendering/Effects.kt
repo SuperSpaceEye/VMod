@@ -11,7 +11,9 @@ object Effects {
     @JvmStatic
     inline fun rad(deg:Double) = deg * 0.017453292519943295
 
-    fun getRightSide(player: Player): Vector3d {
+    //this looks "fine" from client that casted ray, but from another view it'll look like the ray originated
+    // from player's head
+    fun getRightSideClient(player: Player): Vector3d {
         val p = rad(player.xRot.toDouble()) // picth
         val y =-rad(player.yHeadRot.toDouble()) // yaw
 
@@ -26,10 +28,10 @@ object Effects {
         val endPos = result.worldHitPos ?: (result.origin + result.lookVec * maxDistance)
         SynchronisedRenderingData.serverSynchronisedData.addTimedConstraintRenderer(
             TimedA2BRenderer(
-                getRightSide(playerSource),
+                getRightSideClient(playerSource),
                 endPos,
-                Color(0, 255, 255, 60),
-                .1,
+                Color(0, 255, 255, 200),
+                .05,
                 getNow_ms(),
                 200,
                 200.0,

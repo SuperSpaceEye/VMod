@@ -56,14 +56,20 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
     fun mergeData() {
         if (pageIndicesToRemove.isNotEmpty()) {
             synchronized(pageIndicesToRemove) {
+            synchronized(clientChecksums) {
+            synchronized(serverChecksums) {
                 for ((pageNum, indices) in pageIndicesToRemove) {
                     val page = cachedData[pageNum] ?: continue
+                    val cpage = clientChecksums[pageNum]
+                    val spage = serverChecksums[pageNum]
                     for (idx in indices) {
                         page.remove(idx)
+                        cpage?.remove(idx)
+                        spage?.remove(idx)
                     }
                 }
                 pageIndicesToRemove.clear()
-            }
+            }}}
         }
         if (pagesToRemove.isNotEmpty()) {
             synchronized(pagesToRemove) {

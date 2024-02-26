@@ -29,12 +29,15 @@ private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera) {
     val level = Minecraft.getInstance().level!!
     SynchronisedRenderingData.clientSynchronisedData.mergeData()
 
+    try {
     for (ship in level.shipObjectWorld.loadedShips) {
         SynchronisedRenderingData.clientSynchronisedData.tryPoolDataUpdate(ship.id)
         for ((idx, render) in SynchronisedRenderingData.clientSynchronisedData.cachedData[ship.id] ?: continue) {
             render.renderData(poseStack, camera)
         }
     }
+    // let's hope that it never happens, but if it does, then do nothing
+    } catch (e: ConcurrentModificationException) { ELOG("GOT ConcurrentModificationException WHILE RENDERING.\n${e.stackTraceToString()}"); }
 }
 
 private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera) {
@@ -44,7 +47,7 @@ private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera) {
     val toDelete = mutableListOf<Int>()
     val page = SynchronisedRenderingData.clientSynchronisedData.cachedData[ReservedRenderingPages.TimedRenderingObjects] ?: return
     for ((idx, render) in page) {
-        if (render !is TimedRenderingData || render !is PositionDependentRenderingData) { toDelete.add(idx); ELOG("FOUND RENDERING DATA IN renderTimedObjects THAT DIDN'T IMPLEMENT INTERFACE TimedRenderingData OR PositionDependentRenderingData."); continue }
+        if (render !is TimedRenderingData || render !is PositionDependentRenderingData) { toDelete.add(idx); ELOG("FOUND RENDERING DATA ${render.javaClass.simpleName} IN renderTimedObjects THAT DIDN'T IMPLEMENT INTERFACE TimedRenderingData OR PositionDependentRenderingData."); continue }
         if (!render.wasActivated && render.activeFor_ms == -1L) { render.timestampOfBeginning = now }
         if (render.activeFor_ms + render.timestampOfBeginning < now) { toDelete.add(idx); continue }
         if ((render.renderingPosition - cpos).sqrDist() > render.renderingArea*render.renderingArea) { continue }
@@ -54,7 +57,4 @@ private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera) {
     }
 
     SynchronisedRenderingData.clientSynchronisedData.pageIndicesToRemove.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { ConcurrentSkipListSet(toDelete) }
-    for (idx in toDelete.reversed()) {
-        page.remove(idx)
-    }
 }

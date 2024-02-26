@@ -18,10 +18,10 @@ object Effects {
         val y =-rad(player.yHeadRot.toDouble()) // yaw
 
         val up  = Vector3d(Math.sin(p) * Math.sin(y), Math.cos(p), Math.sin(p) * Math.cos(y))
-//        val dir = Vector3d(Math.cos(p) * Math.sin(y), -Math.sin(p), Math.cos(p) * Math.cos(y))
+        val dir = Vector3d(Math.cos(p) * Math.sin(y), -Math.sin(p), Math.cos(p) * Math.cos(y))
         val right = Vector3d(-Math.cos(y), 0, Math.sin(y))
 
-        return Vector3d(player.eyePosition) - up * 0.08 + right * 0.25
+        return Vector3d(player.eyePosition) - up * 0.1 + right * 0.25 + dir * 0.45
     }
 
     fun sendToolgunRayEffect(playerSource: Player, result: RaycastFunctions.RaycastResult, maxDistance: Double) {

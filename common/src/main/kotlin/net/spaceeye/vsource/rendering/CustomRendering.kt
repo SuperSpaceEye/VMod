@@ -32,7 +32,7 @@ private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera) {
     try {
     for (ship in level.shipObjectWorld.loadedShips) {
         SynchronisedRenderingData.clientSynchronisedData.tryPoolDataUpdate(ship.id)
-        for ((idx, render) in SynchronisedRenderingData.clientSynchronisedData.cachedData[ship.id] ?: continue) {
+        for ((_, render) in SynchronisedRenderingData.clientSynchronisedData.cachedData[ship.id] ?: continue) {
             render.renderData(poseStack, camera)
         }
     }

@@ -1,6 +1,7 @@
 package net.spaceeye.vsource.constraintsSaving
 
 import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vsource.constraintsSaving.types.MConstraint
 import net.spaceeye.vsource.utils.MPair
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -8,7 +9,7 @@ import org.valkyrienskies.core.apigame.constraints.VSConstraint
 
 internal class LoadingGroup(
     val level: ServerLevel,
-    val constraintsToLoad: MutableList<MPair<VSConstraint, Int>>,
+    val constraintsToLoad: MutableList<MConstraint>,
     val neededShipIds: MutableSet<ShipId>,
     val shipIsStaticStatus: MutableMap<ShipId, Boolean>
 ) {
@@ -32,7 +33,7 @@ internal class LoadingGroup(
 
     private fun applyConstraints() {
         for (constraint in constraintsToLoad) {
-            level.makeManagedConstraintWithId(constraint.first, constraint.second)
+            level.makeManagedConstraintWithId(constraint, constraint.mID.id)
         }
         for ((k, ship) in shipRefs) {
             ship.isStatic = shipIsStaticStatus[ship.id] ?: continue

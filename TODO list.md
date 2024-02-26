@@ -1,7 +1,7 @@
 mconstraint = managed constraint
 
 ## Constraints
-1. ✅ Rework current constraints managing logic to support additional data
+1. Rework current constraints managing logic to support additional data
 2. Make additional mconstraint "types"
     * Muscle
     * Motor
@@ -9,12 +9,12 @@ mconstraint = managed constraint
 
 ## Rendering
 1. Expand rendering system to include additional types of rendering like
-   * Timed - After time passes stop rendering
-   * Simple Arbitrary - rendering not tied to ships. Have a dedicated channel that will just always render things, or render depending on the position. Of course, it can only be used for effects (ray from toolgun), and not more "permanent" (like ropes placed on the ground only)  
+   * ✅ Timed - After time passes stop rendering
+   * ✅ Simple Arbitrary - rendering not tied to ships. Have a dedicated channel that will just always render things, or render depending on the position. Of course, it can only be used for effects (ray from toolgun), and not more "permanent" (like ropes placed on the ground only)  
    * Chunk based Arbitrary
 2. Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
 3. Add clientside validation 
-4. Add effects for toolgun
+4. kinda ✅ Add effects for toolgun
 5. Group rendering objects by types to elevate common operations and add shared data between rendering types
 
 ## HUD Rendering

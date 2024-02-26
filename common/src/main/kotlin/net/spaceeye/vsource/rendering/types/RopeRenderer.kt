@@ -93,10 +93,6 @@ class RopeRenderer(): RenderingData {
         poseStack.popPose()
     }
 
-    override fun hash(): ByteArray {
-        return SynchronisedRenderingData.hasher.digest(serialize().accessByteBufWithCorrectSize())
-    }
-
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
 

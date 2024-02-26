@@ -10,6 +10,7 @@ import net.minecraft.world.entity.player.Player
 import net.spaceeye.vsource.ELOG
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.Serializable
+import net.spaceeye.vsource.rendering.Effects.sendToolgunRayEffect
 import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.toolgun.ToolgunModes
 import net.spaceeye.vsource.utils.RaycastFunctions
@@ -44,6 +45,8 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(player: Play
 
     //TODO add maxDistance to config
     val result = RaycastFunctions.raycast(level, player, 100.0)
+
+    sendToolgunRayEffect(player, result, 100.0)
 
     fn(level, player, result)
     } catch (e: Exception) {

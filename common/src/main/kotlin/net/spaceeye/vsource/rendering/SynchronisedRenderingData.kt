@@ -15,6 +15,7 @@ import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.networking.dataSynchronization.ServerChecksumsUpdatedPacket
 import net.spaceeye.vsource.networking.dataSynchronization.ServerSynchronisedData
 import net.spaceeye.vsource.rendering.types.RenderingData
+import net.spaceeye.vsource.rendering.types.TimedA2BRenderer
 import org.valkyrienskies.core.api.ships.Ship
 import java.security.MessageDigest
 
@@ -25,6 +26,7 @@ object RenderingTypes {
     init {
         register { RopeRenderer() }
         register { A2BRenderer() }
+        register { TimedA2BRenderer() }
     }
 
     private fun register(supplier: Supplier<RenderingData>) {
@@ -112,6 +114,18 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
             idToAttachTo, mutableListOf(Pair(id, renderer.hash()))
         ))
+    }
+
+    var idCounter = 0
+
+    fun addTimedConstraintRenderer(renderer: RenderingData) {
+        val page = data.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { mutableMapOf() }
+        page[idCounter] = renderer
+
+        serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
+            ReservedRenderingPages.TimedRenderingObjects, mutableListOf(Pair(idCounter, renderer.hash()))
+        ))
+        idCounter++
     }
 }
 

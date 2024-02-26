@@ -9,12 +9,13 @@ import net.spaceeye.vsource.rendering.types.TimedRenderingData
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.getNow_ms
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.util.concurrent.ConcurrentSkipListSet
 
 object ReservedRenderingPages {
     const val TimedRenderingObjects = -1L
 }
 
-inline fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft) {
+fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft) {
     minecraft.profiler.push("vsource_rendering_ship_objects")
     renderShipObjects(poseStack, camera)
     minecraft.profiler.pop()
@@ -24,7 +25,7 @@ inline fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecr
     minecraft.profiler.pop()
 }
 
-inline fun renderShipObjects(poseStack: PoseStack, camera: Camera) {
+private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera) {
     val level = Minecraft.getInstance().level!!
     SynchronisedRenderingData.clientSynchronisedData.mergeData()
 
@@ -36,7 +37,7 @@ inline fun renderShipObjects(poseStack: PoseStack, camera: Camera) {
     }
 }
 
-inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera) {
+private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera) {
     SynchronisedRenderingData.clientSynchronisedData.tryPoolDataUpdate(ReservedRenderingPages.TimedRenderingObjects)
     val cpos = Vector3d(Minecraft.getInstance().player!!.position())
     val now = getNow_ms()
@@ -45,13 +46,14 @@ inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera) {
     for ((idx, render) in page) {
         if (render !is TimedRenderingData || render !is PositionDependentRenderingData) { toDelete.add(idx); ELOG("FOUND RENDERING DATA IN renderTimedObjects THAT DIDN'T IMPLEMENT INTERFACE TimedRenderingData OR PositionDependentRenderingData."); continue }
         if (!render.wasActivated && render.activeFor_ms == -1L) { render.timestampOfBeginning = now }
-        if (render.activeFor_ms + render.timestampOfBeginning > now) { toDelete.add(idx); continue }
+        if (render.activeFor_ms + render.timestampOfBeginning < now) { toDelete.add(idx); continue }
         if ((render.renderingPosition - cpos).sqrDist() > render.renderingArea*render.renderingArea) { continue }
 
         render.wasActivated = true
         render.renderData(poseStack, camera)
     }
 
+    SynchronisedRenderingData.clientSynchronisedData.pageIndicesToRemove.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { ConcurrentSkipListSet(toDelete) }
     for (idx in toDelete.reversed()) {
         page.remove(idx)
     }

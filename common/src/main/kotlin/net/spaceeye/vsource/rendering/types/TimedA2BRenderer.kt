@@ -9,9 +9,7 @@ import net.minecraft.client.Camera
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vsource.rendering.RenderingUtils
-import net.spaceeye.vsource.utils.Vector3d
-import net.spaceeye.vsource.utils.readVector3d
-import net.spaceeye.vsource.utils.writeVector3d
+import net.spaceeye.vsource.utils.*
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 
@@ -58,6 +56,7 @@ class TimedA2BRenderer(): RenderingData, TimedRenderingData, PositionDependentRe
         RenderSystem.depthFunc(GL11.GL_LEQUAL)
         RenderSystem.depthMask(true)
         RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.enableBlend()
 
         val light = Int.MAX_VALUE
 
@@ -87,7 +86,7 @@ class TimedA2BRenderer(): RenderingData, TimedRenderingData, PositionDependentRe
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
 
-        buf.writeInt(color.rgb)
+        buf.writeColor(color)
         buf.writeDouble(width)
         buf.writeVector3d(point1)
         buf.writeVector3d(point2)
@@ -101,7 +100,7 @@ class TimedA2BRenderer(): RenderingData, TimedRenderingData, PositionDependentRe
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
-        color = Color(buf.readInt())
+        color = buf.readColor()
         width = buf.readDouble()
         point1 = buf.readVector3d()
         point2 = buf.readVector3d()

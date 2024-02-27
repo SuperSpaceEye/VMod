@@ -15,6 +15,9 @@ internal class LoadingGroup(
 ) {
     private val shipRefs: MutableMap<ShipId, ServerShip> = mutableMapOf()
 
+    // flag used in ConstraintManager in saveNotLoadedConstraints and nowhere else
+    var wasSaved = false
+
     fun setLoadedId(ship: ServerShip) {
         if (neededShipIds.isEmpty()) {return}
         if (!neededShipIds.remove(ship.id)) { return }

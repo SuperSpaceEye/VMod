@@ -5,7 +5,6 @@ import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vsource.VS
-import net.spaceeye.vsource.constraintsSaving.types.BasicMConstraint
 import net.spaceeye.vsource.constraintsSaving.types.MConstraint
 import net.spaceeye.vsource.constraintsSaving.types.MConstraintTypes
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
@@ -15,7 +14,6 @@ import net.spaceeye.vsource.utils.ServerLevelHolder
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
 import kotlin.math.max
@@ -57,18 +55,20 @@ class ConstraintManager: SavedData() {
         return tag
     }
 
-    //TODO i don't like how it works but i don't care atm
     private fun saveNotLoadedConstraints(tag: CompoundTag): CompoundTag {
-        val shipsTag = tag[SAVE_TAG_NAME_STRING]!!
+        val shipsTag = tag[SAVE_TAG_NAME_STRING]!! as CompoundTag
         val dimensionIds = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
-        val savedGroups = mutableSetOf<LoadingGroup>()
         for ((shipId, groups) in groupedToLoadConstraints) {
             if (!level.shipObjectWorld.allShips.contains(shipId)) {continue}
 
-            val constraintsTag = ListTag()
+            val constraintsTag = (shipsTag[shipId.toString()] ?: run {
+                val tag = ListTag()
+                shipsTag.put(shipId.toString(), tag)
+                tag
+            }) as ListTag
             for (group in groups) {
-                if (savedGroups.contains(group)) {continue}
+                if (group.wasSaved) {continue}
 
                 for (constraint in group.constraintsToLoad) {
                     if (!dimensionIds.contains(constraint.shipId1) &&
@@ -78,7 +78,7 @@ class ConstraintManager: SavedData() {
                     ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: continue)
                     constraintsTag.add(ctag)
                 }
-                savedGroups.add(group)
+                group.wasSaved = true
             }
         }
 
@@ -251,14 +251,14 @@ class ConstraintManager: SavedData() {
 
         fun getInstance(): ConstraintManager {
             if (instance != null) {return instance!!}
-            level = ServerLevelHolder.serverLevel!!
-            instance = ServerLevelHolder.serverLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
+            level = ServerLevelHolder.overworldServerLevel!!
+            instance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
             return instance!!
         }
 
         fun forceNewInstance(): ConstraintManager {
-            level = ServerLevelHolder.serverLevel!!
-            instance = ServerLevelHolder.serverLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
+            level = ServerLevelHolder.overworldServerLevel!!
+            instance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
             return instance!!
         }
 

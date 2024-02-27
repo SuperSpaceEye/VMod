@@ -41,7 +41,7 @@ class BasicMConstraint(): MConstraint {
 
         val id = ctag.getLong("shipId1")
         val dimensionIdStr = lastDimensionIds[id] ?: return
-        ctag.putLong("shipId1", ServerLevelHolder.serverLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[dimensionIdStr]!!)
+        ctag.putLong("shipId1", ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[dimensionIdStr]!!)
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {

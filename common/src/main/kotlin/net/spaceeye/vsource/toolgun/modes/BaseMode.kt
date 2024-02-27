@@ -35,7 +35,7 @@ interface BaseMode : Serializable, GUIItem {
 }
 
 inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(player: Player, buf: FriendlyByteBuf, constructor: () -> BaseMode, noinline fn: (ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
-    val level = ServerLevelHolder.serverLevel!!
+    val level = player.level as ServerLevel
 
     var serverMode = ServerToolGunState.playerStates.getOrPut(player, constructor)
     if (serverMode !is T) { serverMode = constructor(); ServerToolGunState.playerStates[player] = serverMode }

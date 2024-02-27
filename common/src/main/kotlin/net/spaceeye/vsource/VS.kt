@@ -54,7 +54,7 @@ object VS {
         LifecycleEvent.SERVER_STARTED.register {
             server ->
             ServerLevelHolder.server = server
-            ServerLevelHolder.serverLevel = server.overworld()
+            ServerLevelHolder.overworldServerLevel = server.overworld()
             ConstraintManager.forceNewInstance()
         }
 

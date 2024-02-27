@@ -148,7 +148,7 @@ object SynchronisedRenderingData {
             serverSynchronisedData.data.remove(shipData.id)
             serverSynchronisedData.serverChecksumsUpdatedConnection()
                 .sendToClients(
-                    ServerLevelHolder.serverLevel!!.server.playerList.players,
+                    ServerLevelHolder.overworldServerLevel!!.server.playerList.players,
                     ServerChecksumsUpdatedPacket(shipData.id, true)
                 )
             DLOG("SENT DELETED SHIPID")

@@ -12,6 +12,9 @@ import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class BasicMConstraint(): MConstraint {
+    constructor(constraint_: VSConstraint) :this() {
+        constraint = constraint_
+    }
     constructor(constraint_: VSConstraint,
                 mID_: ManagedConstraintId) : this() {
         constraint = constraint_

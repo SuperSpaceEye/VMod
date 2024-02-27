@@ -59,7 +59,6 @@ class ConstraintManager: SavedData() {
 
     //TODO i don't like how it works but i don't care atm
     private fun saveNotLoadedConstraints(tag: CompoundTag): CompoundTag {
-        TODO()
         val shipsTag = tag[SAVE_TAG_NAME_STRING]!!
         val dimensionIds = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
@@ -72,11 +71,11 @@ class ConstraintManager: SavedData() {
                 if (savedGroups.contains(group)) {continue}
 
                 for (constraint in group.constraintsToLoad) {
-                    if (!dimensionIds.contains(constraint.first.shipId1) &&
-                        !level.shipObjectWorld.allShips.contains(constraint.first.shipId1)) {continue}
+                    if (!dimensionIds.contains(constraint.shipId1) &&
+                        !level.shipObjectWorld.allShips.contains(constraint.shipId1)) {continue}
 
-                    val ctag = VSConstraintSerializationUtil.serializeConstraint(constraint.first) ?: continue
-                    ctag.putInt("managedID", constraint.second)
+                    val ctag = constraint.nbtSerialize() ?: continue
+                    ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: continue)
                     constraintsTag.add(ctag)
                 }
                 savedGroups.add(group)

@@ -1,12 +1,12 @@
-package net.spaceeye.vsource.constraintsSaving
+package net.spaceeye.vsource.constraintsManaging
 
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vsource.VS
-import net.spaceeye.vsource.constraintsSaving.types.MConstraint
-import net.spaceeye.vsource.constraintsSaving.types.MConstraintTypes
+import net.spaceeye.vsource.constraintsManaging.types.MConstraint
+import net.spaceeye.vsource.constraintsManaging.types.MConstraintTypes
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.events.AVSEvents
 import net.spaceeye.vsource.utils.ServerClosable
@@ -197,7 +197,7 @@ class ConstraintManager: SavedData() {
     //TODO REMEMBER TO FUCKING CALL setDirty()
     //VERY IMPORTANT!!!! IF CONSTRAINT IS BETWEEN SHIP AND WORLD, WORLD ID SHOULD BE THE shipId1 !!!!!
     fun makeConstraint(level: ServerLevel, constraint: MConstraint): ManagedConstraintId? {
-        if (!constraint.addVSConstraintsToLevel(level)) {return null}
+        if (!constraint.onMakeMConstraint(level)) {return null}
         constraint.mID = constraintIdCounter.getID()
 
         shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(constraint)
@@ -210,7 +210,7 @@ class ConstraintManager: SavedData() {
     fun removeConstraint(level: ServerLevel, id: ManagedConstraintId): Boolean {
         val mCon = idToConstraint[id] ?: return false
         val shipConstraints = shipsConstraints[mCon.shipId0]!!
-        mCon.removeVSConstraints(level)
+        mCon.onDeleteMConstraint(level)
         shipConstraints.remove(mCon)
         idToConstraint.remove(id)
 
@@ -225,7 +225,7 @@ class ConstraintManager: SavedData() {
 
     @Internal
     fun makeConstraintWithId(level: ServerLevel, constraint: MConstraint, id: Int): ManagedConstraintId? {
-        if (!constraint.addVSConstraintsToLevel(level)) {return null}
+        if (!constraint.onMakeMConstraint(level)) {return null}
         constraint.mID = ManagedConstraintId(id)
 
         shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(constraint)

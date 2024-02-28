@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.constraintsSaving
+package net.spaceeye.vsource.constraintsManaging
 
 import net.minecraft.nbt.CompoundTag
 import net.spaceeye.vsource.WLOG

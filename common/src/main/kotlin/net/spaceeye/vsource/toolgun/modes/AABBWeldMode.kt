@@ -11,7 +11,7 @@ import net.spaceeye.vsource.gui.makeTextEntry
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.Vector3d
-import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
+import net.spaceeye.vsource.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vsource.translate.GUIComponents.AABB_WELD
 import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE

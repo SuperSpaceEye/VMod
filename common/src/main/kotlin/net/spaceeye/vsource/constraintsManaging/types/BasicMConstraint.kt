@@ -1,10 +1,10 @@
-package net.spaceeye.vsource.constraintsSaving.types
+package net.spaceeye.vsource.constraintsManaging.types
 
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vsource.constraintsSaving.ManagedConstraintId
-import net.spaceeye.vsource.constraintsSaving.VSConstraintDeserializationUtil
-import net.spaceeye.vsource.constraintsSaving.VSConstraintSerializationUtil
+import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
+import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil
+import net.spaceeye.vsource.constraintsManaging.VSConstraintSerializationUtil
 import net.spaceeye.vsource.utils.ServerLevelHolder
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraint
@@ -52,12 +52,12 @@ class BasicMConstraint(): MConstraint {
         return this
     }
 
-    override fun addVSConstraintsToLevel(level: ServerLevel): Boolean {
+    override fun onMakeMConstraint(level: ServerLevel): Boolean {
         vsID = level.shipObjectWorld.createNewConstraint(constraint) ?: return false
         return true
     }
 
-    override fun removeVSConstraints(level: ServerLevel) {
+    override fun onDeleteMConstraint(level: ServerLevel) {
         level.shipObjectWorld.removeConstraint(vsID)
     }
 }

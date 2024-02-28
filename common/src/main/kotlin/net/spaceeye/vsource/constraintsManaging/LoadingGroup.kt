@@ -1,11 +1,9 @@
-package net.spaceeye.vsource.constraintsSaving
+package net.spaceeye.vsource.constraintsManaging
 
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vsource.constraintsSaving.types.MConstraint
-import net.spaceeye.vsource.utils.MPair
+import net.spaceeye.vsource.constraintsManaging.types.MConstraint
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraint
 
 internal class LoadingGroup(
     val level: ServerLevel,

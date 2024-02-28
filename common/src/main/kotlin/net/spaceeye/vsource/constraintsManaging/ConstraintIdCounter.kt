@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.constraintsSaving
+package net.spaceeye.vsource.constraintsManaging
 
 import net.spaceeye.vsource.utils.ServerClosable
 

@@ -5,7 +5,7 @@ import dev.architectury.event.EventResult
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
-import net.spaceeye.vsource.toolgun.ToolgunModes.modes
+import net.spaceeye.vsource.toolgun.modes.ToolgunModes.modes
 import net.spaceeye.vsource.toolgun.modes.BaseMode
 import net.spaceeye.vsource.utils.ClientClosable
 

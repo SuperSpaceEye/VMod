@@ -12,7 +12,7 @@ import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.RaycastFunctions
-import net.spaceeye.vsource.constraintsSaving.makeManagedConstraint
+import net.spaceeye.vsource.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vsource.gui.DItem
 import net.spaceeye.vsource.gui.makeDropDown
 import net.spaceeye.vsource.translate.GUIComponents

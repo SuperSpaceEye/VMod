@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.constraintsSaving.types
+package net.spaceeye.vsource.constraintsManaging.types
 
 import java.util.function.Supplier
 
@@ -8,6 +8,7 @@ object MConstraintTypes {
 
     init {
         register { BasicMConstraint() }
+        register { TestMConstraint() }
     }
 
     private fun register(supplier: Supplier<MConstraint>) {

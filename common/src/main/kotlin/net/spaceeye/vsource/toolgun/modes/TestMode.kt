@@ -4,6 +4,7 @@ import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
@@ -13,10 +14,10 @@ import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.constraintsManaging.makeManagedConstraint
+import net.spaceeye.vsource.constraintsManaging.types.TestMConstraint
 import net.spaceeye.vsource.gui.DItem
 import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
-import net.spaceeye.vsource.translate.GUIComponents.WELD
 import net.spaceeye.vsource.translate.get
 import org.joml.Quaterniond
 import org.lwjgl.glfw.GLFW
@@ -29,12 +30,13 @@ import net.spaceeye.vsource.translate.GUIComponents.HITPOS_MODES
 import net.spaceeye.vsource.translate.GUIComponents.NORMAL
 import net.spaceeye.vsource.translate.GUIComponents.WIDTH
 
-//TODO REFACTOR
-
-class WeldMode : BaseMode {
+class TestMode : BaseMode {
     var compliance: Double = 1e-10
     var maxForce: Double = 1e10
     var width: Double = .2
+
+    var additionalDistance = 3.0
+    var period = 60
 
     var posMode = PositionModes.NORMAL
 
@@ -57,6 +59,8 @@ class WeldMode : BaseMode {
         buf.writeDouble(maxForce)
         buf.writeEnum(posMode)
         buf.writeDouble(width)
+        buf.writeDouble(additionalDistance)
+        buf.writeInt(period)
 
         return buf
     }
@@ -66,15 +70,20 @@ class WeldMode : BaseMode {
         maxForce = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
+        additionalDistance = buf.readDouble()
+        period = buf.readInt()
     }
 
-    override val itemName = WELD
+    override val itemName = TranslatableComponent("Test mode")
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
 
         makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 0.0)
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 0.0)
         makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, 0.0, 1.0)
+
+        makeTextEntry("Additional Distance", ::additionalDistance, offset, offset, parentWindow, 0.0)
+        makeTextEntry("Period", ::period, offset, offset, parentWindow, 0)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
@@ -82,19 +91,21 @@ class WeldMode : BaseMode {
         ))
     }
 
-    val conn_primary = register { object : C2SConnection<WeldMode>("weld_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<WeldMode>(context.player, buf, ::WeldMode, ::activatePrimaryFunction) } }
+    val conn_primary = register { object : C2SConnection<TestMode>("test_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<TestMode>(context.player, buf, ::TestMode, ::activatePrimaryFunction) } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverTryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2 ->
 
-        val attachmentConstraint = VSAttachmentConstraint(
+        val attachmentConstraint = TestMConstraint(
             shipId1, shipId2,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce,
-            (rpoint1 - rpoint2).dist()
+            (rpoint1 - rpoint2).dist(),
+            (rpoint1 - rpoint2).dist() + additionalDistance,
+            period
         )
 
         val id = level.makeManagedConstraint(attachmentConstraint)
@@ -118,12 +129,14 @@ class WeldMode : BaseMode {
         val spoint1 = if (ship1 != null) posWorldToShip(ship1, rpoint1) else Vector3d(rpoint1)
         val spoint2 = if (ship2 != null) posWorldToShip(ship2, rpoint2) else Vector3d(rpoint2)
 
-        val attachmentConstraint2 = VSAttachmentConstraint(
+        val attachmentConstraint2 = TestMConstraint(
             shipId1, shipId2,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce,
-            (rpoint1 - rpoint2).dist()
+            (rpoint1 - rpoint2).dist(),
+            (rpoint1 - rpoint2).dist() + additionalDistance,
+            period
         )
 
         level.makeManagedConstraint(attachmentConstraint2)

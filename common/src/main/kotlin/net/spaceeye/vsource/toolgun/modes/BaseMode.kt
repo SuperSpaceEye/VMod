@@ -12,9 +12,7 @@ import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.rendering.Effects.sendToolgunRayEffect
 import net.spaceeye.vsource.toolgun.ServerToolGunState
-import net.spaceeye.vsource.toolgun.ToolgunModes
 import net.spaceeye.vsource.utils.RaycastFunctions
-import net.spaceeye.vsource.utils.ServerLevelHolder
 
 interface GUIItem {
     val itemName: TranslatableComponent

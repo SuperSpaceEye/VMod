@@ -5,10 +5,31 @@ import dev.architectury.registry.registries.DeferredRegister
 import dev.architectury.registry.registries.RegistrySupplier
 import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.InteractionHand
+import net.minecraft.world.InteractionResultHolder
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.Level
+import net.spaceeye.vsource.network.Activate
+import net.spaceeye.vsource.network.Deactivate
+import net.spaceeye.vsource.network.MessagingNetwork
 import net.spaceeye.vsource.toolgun.ToolgunItem
+
+class TestActivate: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
+    override fun use(level: Level, player: Player, usedHand: InteractionHand): InteractionResultHolder<ItemStack> {
+        MessagingNetwork.notify("muscle", Activate())
+        return super.use(level, player, usedHand)
+    }
+}
+
+class TestDeactivate: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
+    override fun use(level: Level, player: Player, usedHand: InteractionHand): InteractionResultHolder<ItemStack> {
+        MessagingNetwork.notify("muscle", Deactivate())
+        return super.use(level, player, usedHand)
+    }
+}
 
 object VSItems {
     val ITEMS = DeferredRegister.create(VS.MOD_ID, Registry.ITEM_REGISTRY)
@@ -22,6 +43,9 @@ object VSItems {
 
     var LOGO: RegistrySupplier<Item> = ITEMS.register("vsource_logo") { Item(Item.Properties()) }
 
+    var ACTIVATE = ITEMS.register("activate") {TestActivate()}
+    var DEACTIVATE = ITEMS.register("deactivate") {TestDeactivate()}
+
 //    var AXIS_CREATOR: RegistrySupplier<Item> = ITEMS.register("axis_creator") { Item(Item.Properties()) }
 //    var BALL_SOCKET_CREATOR: RegistrySupplier<Item> = ITEMS.register("ball_socket_creator") {  }
 //    var ELASTIC_CREATOR: RegistrySupplier<Item> = ITEMS.register("elastic_creator") { Item(Item.Properties()) }
@@ -31,7 +55,6 @@ object VSItems {
 //    var PULLEY_CREATOR: RegistrySupplier<Item> = ITEMS.register("pulley_creator") { Item(Item.Properties()) }
 //    var SLIDER_CREATOR: RegistrySupplier<Item> = ITEMS.register("slider_creator") { Item(Item.Properties()) }
 //    var WINCH_CREATOR: RegistrySupplier<Item> = ITEMS.register("winch_creator") { Item(Item.Properties()) }
-
 
     var TOOLGUN = ITEMS.register("toolgun") { ToolgunItem() }
 

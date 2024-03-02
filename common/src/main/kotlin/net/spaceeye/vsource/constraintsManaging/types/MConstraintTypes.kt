@@ -12,6 +12,7 @@ object MConstraintTypes {
         register { BasicMConstraint() }
         register { RopeMConstraint() }
         register { WeldMConstraint() }
+        register { MuscleMConstraint() }
         register { TestMConstraint() }
     }
 

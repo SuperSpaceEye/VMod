@@ -1,13 +1,16 @@
 package net.spaceeye.vsource.constraintsManaging
 
+import dev.architectury.event.events.common.TickEvent
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vsource.ELOG
 import net.spaceeye.vsource.VS
+import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.constraintsManaging.types.MConstraint
 import net.spaceeye.vsource.constraintsManaging.types.MConstraintTypes
+import net.spaceeye.vsource.constraintsManaging.types.Tickable
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.events.AVSEvents
 import net.spaceeye.vsource.utils.ServerClosable
@@ -32,6 +35,8 @@ class ConstraintManager: SavedData() {
     private val shipsConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
     private val idToConstraint = mutableMapOf<ManagedConstraintId, MConstraint>()
     internal val constraintIdCounter = ConstraintIdCounter()
+
+    private val tickingConstraints = mutableListOf<Tickable>()
 
     private val toLoadConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
     private val groupedToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
@@ -103,6 +108,7 @@ class ConstraintManager: SavedData() {
     }
 
     override fun save(tag: CompoundTag): CompoundTag {
+        WLOG("SAVING SHIT")
         var tag = saveActiveConstraints(tag)
         tag = saveNotLoadedConstraints(tag)
         tag = saveDimensionIds(tag)
@@ -210,6 +216,7 @@ class ConstraintManager: SavedData() {
 
         shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(constraint)
         idToConstraint[constraint.mID] = constraint
+        if (constraint is Tickable) { tickingConstraints.add(constraint) }
 
         setDirty()
         return constraint.mID
@@ -223,6 +230,8 @@ class ConstraintManager: SavedData() {
 
         shipConstraints.remove(mCon)
         idToConstraint.remove(id)
+
+        if (mCon is Tickable) { tickingConstraints.remove(mCon) }
 
         setDirty()
         return true
@@ -243,6 +252,7 @@ class ConstraintManager: SavedData() {
         shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(constraint)
         if (idToConstraint.contains(constraint.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING CONSTRAINT IN makeConstraintWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
         idToConstraint[constraint.mID] = constraint
+        if (constraint is Tickable) { tickingConstraints.add(constraint) }
 
         setDirty()
         return constraint.mID
@@ -258,6 +268,14 @@ class ConstraintManager: SavedData() {
         init {
             makeServerEvents()
             ConstraintManagerWatcher // to initialize watcher
+        }
+
+        fun setDirty() {
+            if (instance == null) {return}
+            if (VS.serverStopping) {
+                return
+            }
+            instance!!.setDirty()
         }
 
         fun close() {
@@ -316,6 +334,16 @@ class ConstraintManager: SavedData() {
                     (instance.idToConstraint[it] ?: return@forEach).onDeleteMConstraint(level!!)
                 }
                 instance.setDirty()
+            }
+
+            TickEvent.SERVER_PRE.register {
+                server ->
+                getInstance()
+                val toRemove = mutableListOf<Tickable>()
+                instance!!.tickingConstraints.forEach {
+                    it.tick(server) {toRemove.add(it)}
+                }
+                instance!!.tickingConstraints.removeAll(toRemove)
             }
         }
     }

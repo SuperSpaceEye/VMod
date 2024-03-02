@@ -1,8 +1,9 @@
 package net.spaceeye.vsource.constraintsManaging.types
 
-import dev.architectury.event.events.common.TickEvent
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.constraintsManaging.ConstraintManager
 import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
@@ -28,7 +29,7 @@ import kotlin.math.sin
 private const val pi2 = Math.PI / 2
 
 //TODO it's not completely done
-class MuscleMConstraint(): MConstraint {
+class MuscleMConstraint(): MConstraint, Tickable {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
     lateinit var rconstraint1: VSSphericalTwistLimitsConstraint
@@ -172,6 +173,39 @@ class MuscleMConstraint(): MConstraint {
         return true
     }
 
+    override fun tick(server: MinecraftServer, unregister: () -> Unit) {
+        if (fnToUse != null) { if (!fnToUse!!()) {fnToUse = null} }
+
+        if (lastExtended == extendedPercent) {return}
+        lastExtended = extendedPercent
+
+        val shipObjectWorld = server.shipObjectWorld
+
+        ConstraintManager.setDirty()
+
+        shipObjectWorld.removeConstraint(cIDs[0])
+        cIDs[0] = shipObjectWorld.createNewConstraint(VSAttachmentConstraint(
+            aconstraint1.shipId0,
+            aconstraint1.shipId1,
+            aconstraint1.compliance,
+            aconstraint1.localPos0,
+            aconstraint1.localPos1,
+            aconstraint1.maxForce,
+            minLength + (maxLength - minLength) * extendedPercent
+        )) ?: return
+
+        shipObjectWorld.removeConstraint(cIDs[1])
+        cIDs[1] = shipObjectWorld.createNewConstraint(VSAttachmentConstraint(
+            aconstraint2.shipId0,
+            aconstraint2.shipId1,
+            aconstraint2.compliance,
+            aconstraint2.localPos0,
+            aconstraint2.localPos1,
+            aconstraint2.maxForce,
+            minLength + addDist + (maxLength - minLength) * extendedPercent
+        )) ?: return
+    }
+
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: return false)
@@ -187,45 +221,6 @@ class MuscleMConstraint(): MConstraint {
                 is Deactivate -> { fnToUse = ::deactivatingFn }
             }
         }
-
-        lateinit var event: TickEvent.Server
-        event = TickEvent.Server {
-            server ->
-            if (wasDeleted) {
-                TickEvent.SERVER_PRE.unregister(event)
-                return@Server
-            }
-            if (fnToUse != null) { if (!fnToUse!!()) {fnToUse = null} }
-            if (lastExtended == extendedPercent) {return@Server}
-            lastExtended = extendedPercent
-
-            val shipObjectWorld = level.shipObjectWorld
-
-            ConstraintManager.getInstance().setDirty()
-
-            shipObjectWorld.removeConstraint(cIDs[0])
-            cIDs[0] = shipObjectWorld.createNewConstraint(VSAttachmentConstraint(
-                aconstraint1.shipId0,
-                aconstraint1.shipId1,
-                aconstraint1.compliance,
-                aconstraint1.localPos0,
-                aconstraint1.localPos1,
-                aconstraint1.maxForce,
-                minLength + (maxLength - minLength) * extendedPercent
-            )) ?: return@Server
-
-            shipObjectWorld.removeConstraint(cIDs[1])
-            cIDs[1] = shipObjectWorld.createNewConstraint(VSAttachmentConstraint(
-                aconstraint2.shipId0,
-                aconstraint2.shipId1,
-                aconstraint2.compliance,
-                aconstraint2.localPos0,
-                aconstraint2.localPos1,
-                aconstraint2.maxForce,
-                minLength + addDist + (maxLength - minLength) * extendedPercent
-            )) ?: return@Server
-        }
-        TickEvent.SERVER_PRE.register(event)
 
         if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!) }
         return true

@@ -37,16 +37,22 @@ object VS {
         makeEvents()
     }
 
+    var serverStopping = false
+
     @JvmStatic
     fun makeEvents() {
         LifecycleEvent.SERVER_LEVEL_SAVE.register {
             if (it != ServerLevelHolder.overworldServerLevel) {return@register}
-            ConstraintManager.getInstance().setDirty()
+            ConstraintManager.setDirty()
         }
 
         ClientPlayerEvent.CLIENT_PLAYER_QUIT.register {
             if (it != Minecraft.getInstance().player || it == null) {return@register}
             closeClientObjects()
+        }
+
+        LifecycleEvent.SERVER_STOPPING.register {
+            serverStopping = true
         }
 
         LifecycleEvent.SERVER_STOPPED.register {
@@ -55,6 +61,7 @@ object VS {
 
         LifecycleEvent.SERVER_STARTED.register {
             server ->
+            serverStopping = false
             ServerLevelHolder.server = server
             ServerLevelHolder.overworldServerLevel = server.overworld()
             ConstraintManager.forceNewInstance()

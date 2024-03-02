@@ -13,6 +13,7 @@ import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.constraintsManaging.makeManagedConstraint
+import net.spaceeye.vsource.constraintsManaging.types.RopeMConstraint
 import net.spaceeye.vsource.gui.DItem
 import net.spaceeye.vsource.gui.makeDropDown
 import net.spaceeye.vsource.translate.GUIComponents
@@ -95,24 +96,20 @@ class RopeMode : BaseMode {
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist()}
 
-        val constraint = VSRopeConstraint(
-            shipId1, shipId2,
-            1e-10,
-            spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-            1e10,
-            dist
-        )
-
-        val id = level.makeManagedConstraint(constraint)
-
-        SynchronisedRenderingData.serverSynchronisedData
-            .addConstraintRenderer(ship1, shipId1, shipId2, id!!.id,
+        level.makeManagedConstraint(
+            RopeMConstraint(
+                shipId1, shipId2,
+                compliance,
+                spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
+                maxForce, dist,
                 RopeRenderer(
-                ship1 != null,
-                ship2 != null,
-                spoint1, spoint2,
-                dist, width, segments
-            ))
+                    ship1 != null,
+                    ship2 != null,
+                    spoint1, spoint2,
+                    dist, width, segments
+                )
+            )
+        )
 
         resetState()
     }

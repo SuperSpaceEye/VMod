@@ -166,7 +166,11 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
 
             val page = clientInstance.serverChecksums.getOrPut(pageNum) { ConcurrentHashMap() }
             packet.updatedIndices.forEach {
-                page[it.first] = it.second
+                if (it.second.isEmpty()) {
+                    page.remove(it.first)
+                } else {
+                    page[it.first] = it.second
+                }
             }
         }
     }

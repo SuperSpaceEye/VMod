@@ -2,6 +2,7 @@ package net.spaceeye.vsource.constraintsManaging
 
 import net.minecraft.nbt.CompoundTag
 import net.spaceeye.vsource.WLOG
+import net.spaceeye.vsource.utils.ServerLevelHolder
 import net.spaceeye.vsource.utils.getQuaterniond
 import net.spaceeye.vsource.utils.getVector3d
 import org.joml.Quaterniond
@@ -10,6 +11,7 @@ import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.core.apigame.constraints.VSConstraintType.*
+import org.valkyrienskies.mod.common.shipObjectWorld
 
 private open class BaseConstraintData(
     var shipId0: ShipId,
@@ -131,5 +133,14 @@ object VSConstraintDeserializationUtil {
         }) {return null}
 
         return makeConstraint(cTag, cData)
+    }
+
+    //if constraint is between world and ship, then world's id should be in the second shipId of the constraint
+    fun tryConvertDimensionId(tag: CompoundTag, lastDimensionIds: Map<Long, String>) {
+        if (!tag.contains("shipId1")) {return}
+
+        val id = tag.getLong("shipId1")
+        val dimensionIdStr = lastDimensionIds[id] ?: return
+        tag.putLong("shipId1", ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[dimensionIdStr]!!)
     }
 }

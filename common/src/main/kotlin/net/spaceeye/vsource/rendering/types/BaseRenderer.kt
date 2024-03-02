@@ -6,13 +6,13 @@ import net.spaceeye.vsource.networking.dataSynchronization.DataUnit
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.utils.Vector3d
 
-interface RenderingData: DataUnit {
+interface BaseRenderer: DataUnit {
     fun renderData(poseStack: PoseStack, camera: Camera)
 
     override fun hash(): ByteArray = SynchronisedRenderingData.hasher.digest(serialize().accessByteBufWithCorrectSize())
 }
 
-interface PositionDependentRenderingData: RenderingData {
+interface PositionDependentRenderer: BaseRenderer {
     // if client is farther than rendering area, then it will not render
     val renderingArea: Double
     // position that will be used in calculation of whenever or not to render the object
@@ -20,7 +20,7 @@ interface PositionDependentRenderingData: RenderingData {
     val renderingPosition: Vector3d
 }
 
-interface TimedRenderingData: RenderingData {
+interface TimedRenderer: BaseRenderer {
     // timestamp of when it was started
     // if -1, then do not take beginning time into account, and always execute it
     var timestampOfBeginning: Long

@@ -14,14 +14,14 @@ import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.networking.dataSynchronization.ServerChecksumsUpdatedPacket
 import net.spaceeye.vsource.networking.dataSynchronization.ServerSynchronisedData
-import net.spaceeye.vsource.rendering.types.RenderingData
+import net.spaceeye.vsource.rendering.types.BaseRenderer
 import net.spaceeye.vsource.rendering.types.TimedA2BRenderer
-import org.valkyrienskies.core.api.ships.Ship
+import org.valkyrienskies.mod.common.shipObjectWorld
 import java.security.MessageDigest
 
 object RenderingTypes {
     private val strToIdx = mutableMapOf<String, Int>()
-    private val suppliers = mutableListOf<Supplier<RenderingData>>()
+    private val suppliers = mutableListOf<Supplier<BaseRenderer>>()
 
     init {
         register { RopeRenderer() }
@@ -29,7 +29,7 @@ object RenderingTypes {
         register { TimedA2BRenderer() }
     }
 
-    private fun register(supplier: Supplier<RenderingData>) {
+    private fun register(supplier: Supplier<BaseRenderer>) {
         suppliers.add(supplier)
         strToIdx[supplier.get().getTypeName()] = suppliers.size - 1
     }
@@ -38,8 +38,8 @@ object RenderingTypes {
     fun idxToSupplier(idx: Int) = suppliers[idx]
 }
 
-class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<RenderingData>): ClientSynchronisedData<RenderingData>("rendering_data", getServerInstance)
-class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronisedData<RenderingData>): ServerSynchronisedData<RenderingData>("rendering_data", getClientInstance) {
+class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<BaseRenderer>): ClientSynchronisedData<BaseRenderer>("rendering_data", getServerInstance)
+class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronisedData<BaseRenderer>): ServerSynchronisedData<BaseRenderer>("rendering_data", getClientInstance) {
     //TODO switch from nbt to just directly writing to byte buffer?
     fun nbtSave(tag: CompoundTag): CompoundTag {
         val save = CompoundTag()
@@ -100,25 +100,40 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         DLOG("FINISHING LOADING RENDERING DATA in ${getNow_ms() - point} ms")
     }
 
-    //TODO think of a better way to expose this
-    fun addConstraintRenderer(ship1: Ship?, shipId1: Long, shipId2: Long, id: Int, renderer: RenderingData) {
-        val idToAttachTo = if (ship1 != null) {shipId1} else {shipId2}
+    var idToPage = mutableMapOf<Int, Long>()
 
+    //TODO think of a better way to expose this
+    fun addRenderer(shipId1: Long, shipId2: Long, id: Int, renderer: BaseRenderer) {
         data.getOrPut(shipId2) { mutableMapOf() }
         data.getOrPut(shipId1) { mutableMapOf() }
-        val page = data[idToAttachTo]!!
+        val idToUse = if (ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.containsValue(shipId1)) {shipId2} else {shipId1}
+        val page = data[idToUse]!!
         page[id] = renderer
+
+        idToPage[id] = idToUse
 
         ConstraintManager.getInstance().setDirty()
 
         serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
-            idToAttachTo, mutableListOf(Pair(id, renderer.hash()))
+            idToUse, mutableListOf(Pair(id, renderer.hash()))
         ))
+    }
+
+    fun removeRenderer(id: Int): Boolean {
+        val pageId = idToPage[id] ?: return false
+        val page = data[pageId] ?: return false
+        page.remove(id)
+
+        serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
+            pageId, mutableListOf(Pair(id, byteArrayOf()))
+        ))
+
+        return true
     }
 
     var idCounter = 0
 
-    fun addTimedConstraintRenderer(renderer: RenderingData) {
+    fun addTimedRenderer(renderer: BaseRenderer) {
         val page = data.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { mutableMapOf() }
         page[idCounter] = renderer
 
@@ -126,6 +141,12 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
             ReservedRenderingPages.TimedRenderingObjects, mutableListOf(Pair(idCounter, renderer.hash()))
         ))
         idCounter++
+    }
+
+    override fun close() {
+        super.close()
+        idCounter = 0
+        idToPage.clear()
     }
 }
 

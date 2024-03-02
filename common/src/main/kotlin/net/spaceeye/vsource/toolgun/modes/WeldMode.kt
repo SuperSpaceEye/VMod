@@ -9,18 +9,16 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
 import net.spaceeye.vsource.gui.makeTextEntry
 import net.spaceeye.vsource.networking.C2SConnection
-import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.constraintsManaging.makeManagedConstraint
+import net.spaceeye.vsource.constraintsManaging.types.WeldMConstraint
 import net.spaceeye.vsource.gui.DItem
 import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
 import net.spaceeye.vsource.translate.GUIComponents.WELD
 import net.spaceeye.vsource.translate.get
-import org.joml.Quaterniond
 import org.lwjgl.glfw.GLFW
-import org.valkyrienskies.core.apigame.constraints.*
 import java.awt.Color
 import net.spaceeye.vsource.gui.makeDropDown
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_IN_BLOCK
@@ -89,54 +87,17 @@ class WeldMode : BaseMode {
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverTryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2 ->
 
-        val attachmentConstraint = VSAttachmentConstraint(
-            shipId1, shipId2,
-            compliance,
-            spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-            maxForce,
-            (rpoint1 - rpoint2).dist()
-        )
-
-        val id = level.makeManagedConstraint(attachmentConstraint)
-
-        SynchronisedRenderingData.serverSynchronisedData
-            .addConstraintRenderer(ship1, shipId1, shipId2, id!!.id,
-                A2BRenderer(
-                    ship1 != null,
-                    ship2 != null,
-                    spoint1, spoint2,
-                    Color(62, 62, 62),
-                    width
-                )
+        level.makeManagedConstraint(WeldMConstraint(
+            spoint1, spoint2, rpoint1, rpoint2,
+            ship1, ship2, shipId1, shipId2,
+            compliance, maxForce,
+            A2BRenderer(
+                ship1 != null,
+                ship2 != null,
+                spoint1, spoint2,
+                Color(62, 62, 62),
+                width
             )
-
-        val dir = (rpoint1 - rpoint2).snormalize()
-
-        val rpoint1 = rpoint1 + dir
-        val rpoint2 = rpoint2 - dir
-
-        val spoint1 = if (ship1 != null) posWorldToShip(ship1, rpoint1) else Vector3d(rpoint1)
-        val spoint2 = if (ship2 != null) posWorldToShip(ship2, rpoint2) else Vector3d(rpoint2)
-
-        val attachmentConstraint2 = VSAttachmentConstraint(
-            shipId1, shipId2,
-            compliance,
-            spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-            maxForce,
-            (rpoint1 - rpoint2).dist()
-        )
-
-        level.makeManagedConstraint(attachmentConstraint2)
-
-        val rot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
-        val rot2 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
-
-        level.makeManagedConstraint(VSSphericalTwistLimitsConstraint(
-            shipId1, shipId2, 1e-10, rot2, rot1, 1e200, 0.0, 0.01
-        ))
-
-        level.makeManagedConstraint(VSSphericalSwingLimitsConstraint(
-            shipId1, shipId2, 1e-10, rot2, rot1, 1e200, 0.0, 0.01
         ))
 
         resetState()

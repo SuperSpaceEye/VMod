@@ -10,7 +10,6 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vsource.rendering.RenderingUtils
-import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.posShipToWorldRender
 import net.spaceeye.vsource.utils.readVector3d
@@ -19,7 +18,7 @@ import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class RopeRenderer(): RenderingData {
+class RopeRenderer(): BaseRenderer {
     var ship1isShip: Boolean = false
     var ship2isShip: Boolean = false
 

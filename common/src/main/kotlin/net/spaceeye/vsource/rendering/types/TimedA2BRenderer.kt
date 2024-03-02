@@ -13,7 +13,7 @@ import net.spaceeye.vsource.utils.*
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 
-class TimedA2BRenderer(): RenderingData, TimedRenderingData, PositionDependentRenderingData {
+class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer {
     var point1: Vector3d = Vector3d()
     var point2: Vector3d = Vector3d()
 

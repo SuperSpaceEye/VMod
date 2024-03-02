@@ -21,7 +21,7 @@ import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color
 
-open class A2BRenderer(): RenderingData {
+open class A2BRenderer(): BaseRenderer {
     var ship1isShip: Boolean = false
     var ship2isShip: Boolean = false
 

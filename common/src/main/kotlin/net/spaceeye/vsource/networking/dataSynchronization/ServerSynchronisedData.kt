@@ -9,6 +9,7 @@ import net.spaceeye.vsource.utils.ServerClosable
 
 
 abstract class ServerSynchronisedData<T: DataUnit>(val id: String, getClientInstance: () -> ClientSynchronisedData<T>): ServerClosable() {
+    //TODO i think this can crash and i need to use ConcurrentHashMap
     val data = mutableMapOf<Long, MutableMap<Int, T>>()
 
     val serverRequestChecksumResponseConnection   = {getClientInstance().serverRequestChecksumResponseConnection}

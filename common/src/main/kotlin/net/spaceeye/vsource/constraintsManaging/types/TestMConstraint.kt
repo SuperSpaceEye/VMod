@@ -60,6 +60,7 @@ class TestMConstraint(): MConstraint {
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         vsID = level.shipObjectWorld.createNewConstraint(aConstraint) ?: return false
 
+        // TODO this is not very efficient
         VSEvents.tickEndEvent.on {
             (shipObjectWorld), handler ->
             if (wasDeleted) {

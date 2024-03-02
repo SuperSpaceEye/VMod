@@ -111,7 +111,7 @@ class TestMode : BaseMode {
         val id = level.makeManagedConstraint(attachmentConstraint)
 
         SynchronisedRenderingData.serverSynchronisedData
-            .addConstraintRenderer(ship1, shipId1, shipId2, id!!.id,
+            .addRenderer(shipId1, shipId2, id!!.id,
                 A2BRenderer(
                     ship1 != null,
                     ship2 != null,

@@ -51,6 +51,7 @@ class MuscleMConstraint(): MConstraint, Tickable {
 
     override lateinit var mID: ManagedConstraintId
     override val typeName: String get() = "MuscleMConstraint"
+    override var saveCounter: Int = -1
 
     override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
         val ship1Exists = allShips.contains(aconstraint1.shipId0)
@@ -196,8 +197,6 @@ class MuscleMConstraint(): MConstraint, Tickable {
         lastExtended = extendedPercent
 
         val shipObjectWorld = server.shipObjectWorld
-
-        ConstraintManager.setDirty()
 
         shipObjectWorld.removeConstraint(cIDs[0])
         cIDs[0] = shipObjectWorld.createNewConstraint(VSAttachmentConstraint(

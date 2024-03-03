@@ -16,8 +16,12 @@ interface Tickable {
 interface MConstraint {
     var mID: ManagedConstraintId
     val typeName: String
+    // SHOULD BE SET TO -1.
+    // DO NOT USE IT ANYWHERE. JUST IMPLEMENT AS SIMPLE VAR
+    var saveCounter: Int
 
     fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
+    // SHOULDN'T RETURN GROUND SHIPID
     fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId>
 
     fun nbtSerialize(): CompoundTag?

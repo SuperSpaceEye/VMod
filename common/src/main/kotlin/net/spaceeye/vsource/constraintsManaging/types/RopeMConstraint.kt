@@ -38,6 +38,7 @@ class RopeMConstraint(): MConstraint {
 
     override lateinit var mID: ManagedConstraintId
     override val typeName: String get() = "RopeMConstraint"
+    override var saveCounter: Int = -1
 
     override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
         val ship1Exists = allShips.contains(constraint.shipId0)

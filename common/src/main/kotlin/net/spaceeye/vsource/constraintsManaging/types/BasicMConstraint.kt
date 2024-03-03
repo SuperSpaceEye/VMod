@@ -28,6 +28,7 @@ class BasicMConstraint(): MConstraint {
 
     override val typeName: String get() = "BasicMConstraint"
     override lateinit var mID: ManagedConstraintId
+    override var saveCounter: Int = -1
 
     override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
         val ship1Exists = allShips.contains(constraint.shipId0)

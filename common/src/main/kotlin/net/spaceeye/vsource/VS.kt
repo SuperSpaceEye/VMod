@@ -64,7 +64,7 @@ object VS {
             serverStopping = false
             ServerLevelHolder.server = server
             ServerLevelHolder.overworldServerLevel = server.overworld()
-            ConstraintManager.forceNewInstance()
+            ConstraintManager.initNewInstance()
         }
 
         ToolgunItem.makeEvents()

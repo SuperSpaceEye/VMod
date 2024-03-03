@@ -6,6 +6,7 @@ import java.util.function.Supplier
 // loading order the shit will break
 object MConstraintTypes {
     private val strToIdx = mutableMapOf<String, Int>()
+    private val idxToStr = mutableMapOf<Int, String>()
     private val suppliers = mutableListOf<Supplier<MConstraint>>()
 
     init {
@@ -19,8 +20,10 @@ object MConstraintTypes {
     private fun register(supplier: Supplier<MConstraint>) {
         suppliers.add(supplier)
         strToIdx[supplier.get().typeName] = suppliers.size - 1
+        idxToStr[suppliers.size - 1] = supplier.get().typeName
     }
 
     fun typeToIdx(type: String) = strToIdx[type]
     fun idxToSupplier(idx: Int) = suppliers[idx]
+    fun idxToType(idx: Int) = idxToStr[idx]
 }

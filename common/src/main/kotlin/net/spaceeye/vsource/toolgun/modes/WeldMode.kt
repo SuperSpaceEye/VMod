@@ -23,6 +23,7 @@ import java.awt.Color
 import net.spaceeye.vsource.gui.makeDropDown
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_IN_BLOCK
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_ON_SIDE
+import net.spaceeye.vsource.translate.GUIComponents.FIXED_DISTANCE
 import net.spaceeye.vsource.translate.GUIComponents.HITPOS_MODES
 import net.spaceeye.vsource.translate.GUIComponents.NORMAL
 import net.spaceeye.vsource.translate.GUIComponents.WIDTH
@@ -33,6 +34,8 @@ class WeldMode : BaseMode {
     var compliance: Double = 1e-10
     var maxForce: Double = 1e10
     var width: Double = .2
+
+    var fixedDistance: Double = -1.0
 
     var posMode = PositionModes.NORMAL
 
@@ -73,6 +76,7 @@ class WeldMode : BaseMode {
         makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 0.0)
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 0.0)
         makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, 0.0, 1.0)
+        makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
@@ -91,6 +95,7 @@ class WeldMode : BaseMode {
             spoint1, spoint2, rpoint1, rpoint2,
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
+            fixedDistance,
             A2BRenderer(
                 ship1 != null,
                 ship2 != null,

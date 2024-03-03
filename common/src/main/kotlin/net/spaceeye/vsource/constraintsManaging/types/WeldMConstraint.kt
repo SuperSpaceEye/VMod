@@ -42,18 +42,23 @@ class WeldMConstraint(): MConstraint {
         shipId1: ShipId,
         compliance: Double,
         maxForce: Double,
+        fixedLength: Double = -1.0,
         renderer: BaseRenderer?
     ): this() {
         aconstraint1 = VSAttachmentConstraint(
             shipId0, shipId1,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-            maxForce, (rpoint1 - rpoint2).dist())
+            maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength)
 
-        val dir = (rpoint1 - rpoint2).snormalize()
+        val dist1 = rpoint1 - rpoint2
+        val dir = dist1.snormalize()
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
+
+        val dist2 = rpoint1 - rpoint2
+        val addDist = dist2.dist() - dist1.dist()
 
         val spoint1 = if (ship1 != null) posWorldToShip(ship1, rpoint1) else Vector3d(rpoint1)
         val spoint2 = if (ship2 != null) posWorldToShip(ship2, rpoint2) else Vector3d(rpoint2)
@@ -62,7 +67,7 @@ class WeldMConstraint(): MConstraint {
             shipId0, shipId1,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-            maxForce, (rpoint1 - rpoint2).dist()
+            maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength + addDist
         )
 
         val rot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()

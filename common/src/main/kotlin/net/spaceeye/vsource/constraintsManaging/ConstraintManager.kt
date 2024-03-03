@@ -46,15 +46,15 @@ class ConstraintManager: SavedData() {
         val shipsTag = CompoundTag()
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values
         for ((shipId, mConstraints) in shipsConstraints) {
-            if (!level.shipObjectWorld.allShips.contains(shipId)) {continue}
+            if (!allShips!!.contains(shipId)) {continue}
 
             val constraintsTag = ListTag()
             for (constraint in mConstraints) {
                 if (!dimensionIds.contains(constraint.shipId0) &&
-                    !level.shipObjectWorld!!.allShips.contains(constraint.shipId0)) {continue}
+                    !allShips!!.contains(constraint.shipId0)) {continue}
 
-                val ctag = constraint.nbtSerialize() ?: continue
-                ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: continue)
+                val ctag = constraint.nbtSerialize() ?: run { WLOG("UNABLE TO SERIALIZE CONSTRAINT ${constraint.typeName} WITH ID ${constraint.mID}"); null } ?: continue
+                ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("CONSTRAINT OF TYPE ${constraint.typeName} WAS NOT REGISTERED"); null } ?: continue)
                 constraintsTag.add(ctag)
             }
             shipsTag.put(shipId.toString(), constraintsTag)
@@ -83,8 +83,8 @@ class ConstraintManager: SavedData() {
                     if (!dimensionIds.contains(constraint.shipId1) &&
                         !allShips!!.contains(constraint.shipId1)) {continue}
 
-                    val ctag = constraint.nbtSerialize() ?: continue
-                    ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: continue)
+                    val ctag = constraint.nbtSerialize() ?: run { WLOG("UNABLE TO SERIALIZE CONSTRAINT ${constraint.typeName} WITH ID ${constraint.mID}"); null } ?: continue
+                    ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("CONSTRAINT OF TYPE ${constraint.typeName} WAS NOT REGISTERED"); null } ?: continue)
                     constraintsTag.add(ctag)
                 }
                 group.wasSaved = true
@@ -108,7 +108,6 @@ class ConstraintManager: SavedData() {
     }
 
     override fun save(tag: CompoundTag): CompoundTag {
-        WLOG("SAVING SHIT")
         var tag = saveActiveConstraints(tag)
         tag = saveNotLoadedConstraints(tag)
         tag = saveDimensionIds(tag)
@@ -143,18 +142,21 @@ class ConstraintManager: SavedData() {
             val constraints = mutableListOf<MConstraint>()
             for (ctag in shipConstraintsTag) {
                 var type = -1
+                var strType = "UNKNOWN"
+
                 try {
                 ctag as CompoundTag
                 type = ctag.getInt("MCONSTRAINT_TYPE")
+                strType = MConstraintTypes.idxToType(type)!!
                 val mConstraint = MConstraintTypes
                     .idxToSupplier(ctag.getInt("MCONSTRAINT_TYPE"))
                     .get()
-                    .nbtDeserialize(ctag, lastDimensionIds) ?: continue
+                    .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("FAILED TO DESEREALIZE CONSTRAINT OF TYPE ${MConstraintTypes.idxToSupplier(type).get().typeName}"); null } ?: continue
 
                 maxId = max(maxId, mConstraint.mID.id)
 
                 constraints.add(mConstraint)
-                } catch (e: Exception) { ELOG("FAILED TO LOAD CONSTRAINT WITH TYPE $type") }
+                } catch (e: Exception) { ELOG("FAILED TO LOAD CONSTRAINT WITH IDX ${type} AND TYPE ${strType}") }
             }
             toLoadConstraints[shipId.toLong()] = constraints
         }
@@ -262,6 +264,9 @@ class ConstraintManager: SavedData() {
         private var instance: ConstraintManager? = null
         private var level: ServerLevel? = null
 
+        // SavedData is saved after VSPhysicsPiplineStage is deleted, so getting allShips and
+        // dimensionToGroundBodyIdImmutable from level.shipObjectWorld is impossible, unless you get it's reference
+        // before it got deleted
         private var dimensionToGroundBodyIdImmutable: Map<DimensionId, ShipId>? = null
         private var allShips: QueryableShipData<Ship>? = null
 
@@ -289,22 +294,15 @@ class ConstraintManager: SavedData() {
             if (instance != null) {return instance!!}
             level = ServerLevelHolder.overworldServerLevel!!
 
-            try {
-                dimensionToGroundBodyIdImmutable = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable
-                allShips = level!!.shipObjectWorld.allShips
-            } catch (e: Error) {}
-
             instance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
             return instance!!
         }
 
-        fun forceNewInstance(): ConstraintManager {
+        fun initNewInstance(): ConstraintManager {
             level = ServerLevelHolder.overworldServerLevel!!
 
-            try {
-                dimensionToGroundBodyIdImmutable = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable
-                allShips = level!!.shipObjectWorld.allShips
-            } catch (e: Error) {}
+            dimensionToGroundBodyIdImmutable = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable
+            allShips = level!!.shipObjectWorld.allShips
 
             instance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VS.MOD_ID)
             return instance!!

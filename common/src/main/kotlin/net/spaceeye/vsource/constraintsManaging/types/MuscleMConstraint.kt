@@ -80,8 +80,7 @@ class MuscleMConstraint(): MConstraint, Tickable {
             maxForce, minLength)
 
         val dist1 = rpoint1 - rpoint2
-
-        val dir = (rpoint1 - rpoint2).snormalize()
+        val dir = dist1.snormalize()
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir

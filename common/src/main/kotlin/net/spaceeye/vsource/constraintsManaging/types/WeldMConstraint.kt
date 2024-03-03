@@ -11,6 +11,7 @@ import net.spaceeye.vsource.rendering.types.BaseRenderer
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.posWorldToShip
 import org.joml.Quaterniond
+import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
@@ -80,9 +81,25 @@ class WeldMConstraint(): MConstraint {
     }
 
     override lateinit var mID: ManagedConstraintId
-    override val shipId0: ShipId get() = aconstraint1.shipId0
-    override val shipId1: ShipId get() = aconstraint1.shipId1
     override val typeName: String get() = "WeldMConstraint"
+
+    override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
+        val ship1Exists = allShips.contains(aconstraint1.shipId0)
+        val ship2Exists = allShips.contains(aconstraint1.shipId1)
+
+        return     (ship1Exists && ship2Exists)
+                || (ship1Exists && dimensionIds.contains(aconstraint1.shipId1))
+                || (ship2Exists && dimensionIds.contains(aconstraint1.shipId0))
+    }
+
+    override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
+        val toReturn = mutableListOf<ShipId>()
+
+        if (!dimensionIds.contains(aconstraint1.shipId0)) {toReturn.add(aconstraint1.shipId0)}
+        if (!dimensionIds.contains(aconstraint1.shipId1)) {toReturn.add(aconstraint1.shipId1)}
+
+        return toReturn
+    }
 
     override fun nbtSerialize(): CompoundTag? {
         val tag = CompoundTag()

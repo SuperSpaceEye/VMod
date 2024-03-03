@@ -9,6 +9,8 @@ import net.spaceeye.vsource.constraintsManaging.VSConstraintSerializationUtil
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.BaseRenderer
 import org.joml.Vector3dc
+import org.valkyrienskies.core.api.ships.QueryableShipData
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -35,9 +37,25 @@ class RopeMConstraint(): MConstraint {
     }
 
     override lateinit var mID: ManagedConstraintId
-    override val shipId0: ShipId get() = constraint.shipId0
-    override val shipId1: ShipId get() = constraint.shipId1
     override val typeName: String get() = "RopeMConstraint"
+
+    override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
+        val ship1Exists = allShips.contains(constraint.shipId0)
+        val ship2Exists = allShips.contains(constraint.shipId1)
+
+        return     (ship1Exists && ship2Exists)
+                || (ship1Exists && dimensionIds.contains(constraint.shipId1))
+                || (ship2Exists && dimensionIds.contains(constraint.shipId0))
+    }
+
+    override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
+        val toReturn = mutableListOf<ShipId>()
+
+        if (!dimensionIds.contains(constraint.shipId0)) {toReturn.add(constraint.shipId0)}
+        if (!dimensionIds.contains(constraint.shipId1)) {toReturn.add(constraint.shipId1)}
+
+        return toReturn
+    }
 
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null

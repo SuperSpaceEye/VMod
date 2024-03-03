@@ -5,6 +5,8 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.valkyrienskies.core.api.ships.QueryableShipData
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
 interface Tickable {
@@ -13,10 +15,10 @@ interface Tickable {
 
 interface MConstraint {
     var mID: ManagedConstraintId
-    val shipId0: ShipId
-    val shipId1: ShipId
-
     val typeName: String
+
+    fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
+    fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId>
 
     fun nbtSerialize(): CompoundTag?
     fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint?

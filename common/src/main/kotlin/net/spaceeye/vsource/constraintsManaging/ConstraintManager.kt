@@ -50,8 +50,7 @@ class ConstraintManager: SavedData() {
 
             val constraintsTag = ListTag()
             for (constraint in mConstraints) {
-                if (!dimensionIds.contains(constraint.shipId0) &&
-                    !allShips!!.contains(constraint.shipId0)) {continue}
+                if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
 
                 val ctag = constraint.nbtSerialize() ?: run { WLOG("UNABLE TO SERIALIZE CONSTRAINT ${constraint.typeName} WITH ID ${constraint.mID}"); null } ?: continue
                 ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("CONSTRAINT OF TYPE ${constraint.typeName} WAS NOT REGISTERED"); null } ?: continue)
@@ -71,17 +70,17 @@ class ConstraintManager: SavedData() {
         for ((shipId, groups) in groupedToLoadConstraints) {
             if (!allShips!!.contains(shipId)) {continue}
 
-            val constraintsTag = (shipsTag[shipId.toString()] ?: run {
-                val tag = ListTag()
-                shipsTag.put(shipId.toString(), tag)
-                tag
-            }) as ListTag
+            val constraintsTag = (shipsTag[shipId.toString()] ?:
+                run {
+                    val tag = ListTag()
+                    shipsTag.put(shipId.toString(), tag)
+                    tag
+                }) as ListTag
             for (group in groups) {
                 if (group.wasSaved) {continue}
 
                 for (constraint in group.constraintsToLoad) {
-                    if (!dimensionIds.contains(constraint.shipId1) &&
-                        !allShips!!.contains(constraint.shipId1)) {continue}
+                    if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
 
                     val ctag = constraint.nbtSerialize() ?: run { WLOG("UNABLE TO SERIALIZE CONSTRAINT ${constraint.typeName} WITH ID ${constraint.mID}"); null } ?: continue
                     ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("CONSTRAINT OF TYPE ${constraint.typeName} WAS NOT REGISTERED"); null } ?: continue)
@@ -165,18 +164,13 @@ class ConstraintManager: SavedData() {
 
     private fun groupLoadedData() {
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values
-        for ((k, v) in toLoadConstraints) {
+        for ((_, mConstraints) in toLoadConstraints) {
             val neededShipIds = mutableSetOf<ShipId>()
-            for (constraint in v) {
-                val secondIsDimension = dimensionIds.contains(constraint.shipId1)
-                if (    !allShips!!.contains(constraint.shipId0)
-                    || (!allShips!!.contains(constraint.shipId1)
-                            && !secondIsDimension)) {continue}
-
-                neededShipIds.add(constraint.shipId0)
-                if (!secondIsDimension) {neededShipIds.add(constraint.shipId1)}
+            for (constraint in mConstraints) {
+                if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
+                neededShipIds.addAll(constraint.attachedToShips(dimensionIds))
             }
-            val group = LoadingGroup(level!!, v, neededShipIds, shipIsStaticStatus)
+            val group = LoadingGroup(level!!, mConstraints, neededShipIds, shipIsStaticStatus)
             for (id in neededShipIds) {
                 groupedToLoadConstraints.computeIfAbsent(id) { mutableListOf() }.add(group)
             }
@@ -216,7 +210,8 @@ class ConstraintManager: SavedData() {
         constraint.mID = constraintIdCounter.getID()
         if (!constraint.onMakeMConstraint(level)) {constraintIdCounter.dec(); return null}
 
-        shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(constraint)
+        //TODO make it copy to every shipId
+        shipsConstraints.computeIfAbsent(constraint.attachedToShips(dimensionToGroundBodyIdImmutable!!.values)[0]) { mutableListOf() }.add(constraint)
         idToConstraint[constraint.mID] = constraint
         if (constraint is Tickable) { tickingConstraints.add(constraint) }
 
@@ -227,7 +222,7 @@ class ConstraintManager: SavedData() {
     fun removeConstraint(level: ServerLevel, id: ManagedConstraintId): Boolean {
         val mCon = idToConstraint[id] ?: return false
 
-        val shipConstraints = shipsConstraints[mCon.shipId0]!!
+        val shipConstraints = shipsConstraints[mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values)[0]]!!
         mCon.onDeleteMConstraint(level)
 
         shipConstraints.remove(mCon)
@@ -251,7 +246,7 @@ class ConstraintManager: SavedData() {
         constraint.mID = ManagedConstraintId(id)
         if (!constraint.onMakeMConstraint(level)) {return null}
 
-        shipsConstraints.computeIfAbsent(constraint.shipId0) { mutableListOf() }.add(constraint)
+        shipsConstraints.computeIfAbsent(constraint.attachedToShips(dimensionToGroundBodyIdImmutable!!.values)[0]) { mutableListOf() }.add(constraint)
         if (idToConstraint.contains(constraint.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING CONSTRAINT IN makeConstraintWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
         idToConstraint[constraint.mID] = constraint
         if (constraint is Tickable) { tickingConstraints.add(constraint) }
@@ -264,7 +259,7 @@ class ConstraintManager: SavedData() {
         private var instance: ConstraintManager? = null
         private var level: ServerLevel? = null
 
-        // SavedData is saved after VSPhysicsPiplineStage is deleted, so getting allShips and
+        // SavedData is saved after VSPhysicsPipelineStage is deleted, so getting allShips and
         // dimensionToGroundBodyIdImmutable from level.shipObjectWorld is impossible, unless you get it's reference
         // before it got deleted
         private var dimensionToGroundBodyIdImmutable: Map<DimensionId, ShipId>? = null

@@ -15,16 +15,14 @@ import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
-import org.valkyrienskies.core.apigame.constraints.VSSphericalSwingLimitsConstraint
-import org.valkyrienskies.core.apigame.constraints.VSSphericalTwistLimitsConstraint
+import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
 
 class WeldMConstraint(): MConstraint {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
-    lateinit var rconstraint1: VSSphericalTwistLimitsConstraint
-    lateinit var rconstraint2: VSSphericalSwingLimitsConstraint
+    lateinit var rconstraint1: VSFixedOrientationConstraint
 
     val cIDs = mutableListOf<ConstraintId>()
 
@@ -53,7 +51,7 @@ class WeldMConstraint(): MConstraint {
             maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength)
 
         val dist1 = rpoint1 - rpoint2
-        val dir = dist1.snormalize()
+        val dir = dist1.normalize()
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -74,8 +72,7 @@ class WeldMConstraint(): MConstraint {
         val rot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
         val rot2 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
 
-        rconstraint1 = VSSphericalTwistLimitsConstraint(shipId0, shipId1, 1e-10, rot2, rot1, 1e200, 0.0, 0.01)
-        rconstraint2 = VSSphericalSwingLimitsConstraint(shipId0, shipId1, 1e-10, rot2, rot1, 1e200, 0.0, 0.01)
+        rconstraint1 = VSFixedOrientationConstraint(shipId0, shipId1, compliance, rot1, rot2, 1e300)
 
         this.renderer = renderer
     }
@@ -108,7 +105,6 @@ class WeldMConstraint(): MConstraint {
         tag.put("c1", VSConstraintSerializationUtil.serializeConstraint(aconstraint1) ?: return null)
         tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
         tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint1) ?: return null)
-        tag.put("c4", VSConstraintSerializationUtil.serializeConstraint(rconstraint2) ?: return null)
         tag.putInt("managedID", mID.id)
 
         return tag
@@ -117,8 +113,7 @@ class WeldMConstraint(): MConstraint {
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSSphericalTwistLimitsConstraint
-        tryConvertDimensionId(tag["c4"] as CompoundTag, lastDimensionIds); rconstraint2 = (deserializeConstraint(tag["c4"] as CompoundTag) ?: return null) as VSSphericalSwingLimitsConstraint
+        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSFixedOrientationConstraint
 
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
         return this
@@ -128,7 +123,6 @@ class WeldMConstraint(): MConstraint {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint1) ?: return false)
-        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint2) ?: return false)
 
         if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!) }
         return true

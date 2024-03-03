@@ -33,8 +33,8 @@ class MuscleMode : BaseMode {
     var maxForce: Double = 1e10
     var width: Double = .2
 
-    var additionalDistance = 3.0
-    var ticksToWork = 60
+    var additionalDistance: Double = 5.0
+    var ticksToWork: Int = 20
 
     var posMode = PositionModes.NORMAL
 
@@ -80,8 +80,8 @@ class MuscleMode : BaseMode {
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 0.0)
         makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, 0.0, 1.0)
 
-        makeTextEntry("Additional Distance", ::additionalDistance, offset, offset, parentWindow, 0.0)
-        makeTextEntry("Ticks to Work", ::ticksToWork, offset, offset, parentWindow, 0)
+        makeTextEntry("Additional Distance", ::additionalDistance, offset, offset, parentWindow, 0.1)
+        makeTextEntry("Ticks to Work", ::ticksToWork, offset, offset, parentWindow, 1)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },

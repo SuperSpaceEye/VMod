@@ -2,12 +2,14 @@
   "gui.weld": "Weld",
   "gui.rope": "Rope",
   "gui.aabbweld": "AABB Weld",
+  "gui.hydraulics": "Hydraulics",
 
   "gui.setting.compliance": "Compliance",
   "gui.setting.max_force": "Max Force",
   "gui.setting.fixed_distance": "Fixed Distance",
   "gui.setting.width": "Width",
   "gui.setting.segments": "Segments",
+  "gui.setting.additional_distance": "Additional Distance",
 
   "gui.setting.hitpos_modes": "HitPos Modes",
   "gui.setting.normal": "Normal",

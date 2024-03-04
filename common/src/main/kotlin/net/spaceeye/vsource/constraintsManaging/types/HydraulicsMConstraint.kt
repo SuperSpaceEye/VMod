@@ -3,8 +3,6 @@ package net.spaceeye.vsource.constraintsManaging.types
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vsource.WLOG
-import net.spaceeye.vsource.constraintsManaging.ConstraintManager
 import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
@@ -23,12 +21,10 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
-import kotlin.math.sin
+import kotlin.math.max
+import kotlin.math.min
 
-private const val pi2 = Math.PI / 2
-
-//TODO Rename muscle constraint to hydraulics
-class MuscleMConstraint(): MConstraint, Tickable {
+class HydraulicsMConstraint(): MConstraint, Tickable {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
     lateinit var rconstraint1: VSConstraint
@@ -37,17 +33,16 @@ class MuscleMConstraint(): MConstraint, Tickable {
 
     var minLength: Double = -1.0
     var maxLength: Double = -1.0
-    var extendedPercent: Double = 0.0 //between 0 and 1
 
-    var ticksToWork = 20
-    var currentTick = 0
+    var extensionSpeed: Double = 1.0
+    var extendedDist: Double = 0.0
 
     var addDist: Double = 0.0
 
     var renderer: BaseRenderer? = null
 
     override lateinit var mID: ManagedConstraintId
-    override val typeName: String get() = "MuscleMConstraint"
+    override val typeName: String get() = "HydraulicsMConstraint"
     override var saveCounter: Int = -1
 
     override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
@@ -84,7 +79,7 @@ class MuscleMConstraint(): MConstraint, Tickable {
 
         minLength: Double,
         maxLength: Double,
-        ticksToWork: Int,
+        extensionSpeed: Double,
 
         renderer: BaseRenderer?,
     ): this() {
@@ -121,7 +116,7 @@ class MuscleMConstraint(): MConstraint, Tickable {
         this.renderer = renderer
         this.minLength = minLength
         this.maxLength = maxLength
-        this.ticksToWork = ticksToWork
+        this.extensionSpeed = extensionSpeed
     }
 
     override fun nbtSerialize(): CompoundTag? {
@@ -133,12 +128,11 @@ class MuscleMConstraint(): MConstraint, Tickable {
 
         tag.putInt("managedID", mID.id)
 
-        tag.putDouble("extendedPercent", extendedPercent)
         tag.putDouble("addDist", addDist)
         tag.putDouble("minDistance", minLength)
         tag.putDouble("maxDistance", maxLength)
-        tag.putInt("ticksToWork", ticksToWork)
-        tag.putInt("currentTick", currentTick)
+        tag.putDouble("extensionSpeed", extensionSpeed)
+        tag.putDouble("extendedDist", extendedDist)
         tag.putBoolean("isActivating", fnToUse == ::activatingFn)
         tag.putBoolean("isDeactivating", fnToUse == ::deactivatingFn)
 
@@ -152,12 +146,11 @@ class MuscleMConstraint(): MConstraint, Tickable {
 
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
 
-        extendedPercent = tag.getDouble("extendedPercent")
         addDist = tag.getDouble("addDist")
         minLength = tag.getDouble("minDistance")
         maxLength = tag.getDouble("maxDistance")
-        ticksToWork = tag.getInt("ticksToWork")
-        currentTick = tag.getInt("currentTick")
+        extensionSpeed = tag.getDouble("extensionSpeed")
+        extendedDist = tag.getDouble("extendedDist")
 
         fnToUse = when {
             tag.getBoolean("isActivating") -> ::activatingFn
@@ -173,26 +166,30 @@ class MuscleMConstraint(): MConstraint, Tickable {
     var lastExtended: Double = 0.0
 
     private fun activatingFn(): Boolean {
-        if (currentTick >= ticksToWork) { return false }
-        extendedPercent = sin(++currentTick / ticksToWork.toDouble() * pi2)
+        extendedDist = min(extendedDist + extensionSpeed, maxLength - minLength)
+        if (extendedDist >= maxLength - minLength) { return false }
         return true
     }
 
     private fun deactivatingFn(): Boolean {
-        if (currentTick <= 0) {return false}
-        extendedPercent = sin(--currentTick / ticksToWork.toDouble() * pi2)
+        extendedDist = max(extendedDist - extensionSpeed, 0.0)
+        if (extendedDist <= 0) {return false}
         return true
     }
 
     override fun tick(server: MinecraftServer, unregister: () -> Unit) {
+        if (wasDeleted) {
+            unregister();
+            return
+        }
         if (fnToUse != null) { if (!fnToUse!!()) {fnToUse = null} }
 
-        if (lastExtended == extendedPercent) {return}
-        lastExtended = extendedPercent
+        if (lastExtended == extendedDist) {return}
+        lastExtended = extendedDist
 
         val shipObjectWorld = server.shipObjectWorld
 
-        shipObjectWorld.removeConstraint(cIDs[0])
+        if (!shipObjectWorld.removeConstraint(cIDs[0])) {return}
         cIDs[0] = shipObjectWorld.createNewConstraint(VSAttachmentConstraint(
             aconstraint1.shipId0,
             aconstraint1.shipId1,
@@ -200,10 +197,10 @@ class MuscleMConstraint(): MConstraint, Tickable {
             aconstraint1.localPos0,
             aconstraint1.localPos1,
             aconstraint1.maxForce,
-            minLength + (maxLength - minLength) * extendedPercent
+            minLength + extendedDist
         )) ?: return
 
-        shipObjectWorld.removeConstraint(cIDs[1])
+        if (!shipObjectWorld.removeConstraint(cIDs[1])) {return}
         cIDs[1] = shipObjectWorld.createNewConstraint(VSAttachmentConstraint(
             aconstraint2.shipId0,
             aconstraint2.shipId1,
@@ -211,7 +208,7 @@ class MuscleMConstraint(): MConstraint, Tickable {
             aconstraint2.localPos0,
             aconstraint2.localPos1,
             aconstraint2.maxForce,
-            minLength + addDist + (maxLength - minLength) * extendedPercent
+            minLength + addDist + extendedDist
         )) ?: return
     }
 

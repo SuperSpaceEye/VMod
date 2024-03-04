@@ -13,7 +13,7 @@ object MConstraintTypes {
         register { BasicMConstraint() }
         register { RopeMConstraint() }
         register { WeldMConstraint() }
-        register { MuscleMConstraint() }
+        register { HydraulicsMConstraint() }
     }
 
     private fun register(supplier: Supplier<MConstraint>) {

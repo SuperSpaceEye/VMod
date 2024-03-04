@@ -16,6 +16,7 @@ import net.spaceeye.vsource.networking.dataSynchronization.ServerChecksumsUpdate
 import net.spaceeye.vsource.networking.dataSynchronization.ServerSynchronisedData
 import net.spaceeye.vsource.rendering.types.BaseRenderer
 import net.spaceeye.vsource.rendering.types.TimedA2BRenderer
+import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.security.MessageDigest
 
@@ -173,6 +174,10 @@ object SynchronisedRenderingData {
                     ServerChecksumsUpdatedPacket(shipData.id, true)
                 )
             DLOG("SENT DELETED SHIPID")
+        }
+        VSEvents.shipLoadEvent.on {
+            (shipData), handler ->
+            serverSynchronisedData.data[shipData.id] = mutableMapOf()
         }
     }
 }

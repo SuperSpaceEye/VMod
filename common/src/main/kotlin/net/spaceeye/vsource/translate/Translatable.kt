@@ -14,12 +14,14 @@ object GUIComponents {
     val WELD = t("weld")
     val ROPE = t("rope")
     val AABB_WELD = t("aabbweld")
+    val HYDRAULICS = t("hydraulics")
 
     val COMPLIANCE = s("compliance")
     val MAX_FORCE = s("max_force")
     val FIXED_DISTANCE = s("fixed_distance")
     val WIDTH = s("width")
     val SEGMENTS = s("segments")
+    val ADDITIONAL_DISTANCE = s("additional_distance")
 
     val HITPOS_MODES = s("hitpos_modes")
     val NORMAL = s("normal")

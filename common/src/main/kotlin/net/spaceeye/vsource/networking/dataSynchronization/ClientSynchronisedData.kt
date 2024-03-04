@@ -97,7 +97,7 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
 
     fun requestUpdateData(page: Long) {
         val serverPage = serverChecksums[page]!!
-        val clientPage = clientChecksums.getOrDefault(page, mutableMapOf())
+        val clientPage = clientChecksums.getOrPut(page) { ConcurrentHashMap() }
 
         val serverIds = serverPage.keys
         var clientIds = clientPage.keys

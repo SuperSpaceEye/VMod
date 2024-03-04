@@ -7,7 +7,7 @@ private inline fun makeComponent(s: String) = TranslatableComponent(s)
 inline fun TranslatableComponent.get(): String = I18n.get(this.key)
 
 object GUIComponents {
-    private const val path = "gui."
+    private const val path = "vsource.gui."
     private inline fun t(s: String) = makeComponent(path+s)
     private inline fun s(s: String) = makeComponent(path+"setting."+s)
 
@@ -22,6 +22,7 @@ object GUIComponents {
     val WIDTH = s("width")
     val SEGMENTS = s("segments")
     val ADDITIONAL_DISTANCE = s("additional_distance")
+    val EXTENSION_SPEED = s("extension_speed")
 
     val HITPOS_MODES = s("hitpos_modes")
     val NORMAL = s("normal")

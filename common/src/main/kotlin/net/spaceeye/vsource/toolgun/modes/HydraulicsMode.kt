@@ -23,6 +23,7 @@ import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.translate.GUIComponents.ADDITIONAL_DISTANCE
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_IN_BLOCK
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_ON_SIDE
+import net.spaceeye.vsource.translate.GUIComponents.EXTENSION_SPEED
 import net.spaceeye.vsource.translate.GUIComponents.HITPOS_MODES
 import net.spaceeye.vsource.translate.GUIComponents.HYDRAULICS
 import net.spaceeye.vsource.translate.GUIComponents.NORMAL
@@ -35,7 +36,7 @@ class HydraulicsMode : BaseMode {
     var width: Double = .2
 
     var additionalDistance: Double = 5.0
-    var extensionSpeed: Double = 0.05
+    var extensionSpeed: Double = 1.0
 
     var posMode = PositionModes.NORMAL
 
@@ -82,7 +83,7 @@ class HydraulicsMode : BaseMode {
         makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, 0.0, 1.0)
 
         makeTextEntry(ADDITIONAL_DISTANCE.get(), ::additionalDistance, offset, offset, parentWindow, 0.1)
-        makeTextEntry("Extension Speed", ::extensionSpeed, offset, offset, parentWindow, 1e-3)
+        makeTextEntry(EXTENSION_SPEED.get(), ::extensionSpeed, offset, offset, parentWindow, 1e-3)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },

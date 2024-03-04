@@ -116,7 +116,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         this.renderer = renderer
         this.minLength = minLength
         this.maxLength = maxLength
-        this.extensionSpeed = extensionSpeed
+        // extensionSpeed is in seconds. Constraint is being updated every mc tick
+        this.extensionSpeed = extensionSpeed / 20.0
     }
 
     override fun nbtSerialize(): CompoundTag? {

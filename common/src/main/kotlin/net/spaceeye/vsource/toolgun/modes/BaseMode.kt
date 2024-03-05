@@ -22,6 +22,7 @@ interface GUIItem {
 interface BaseMode : Serializable, GUIItem {
     fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int) : EventResult
     fun handleMouseButtonEvent(button: Int, action: Int, mods: Int) : EventResult
+    fun serverSideVerifyLimits()
 
      fun <T: Serializable> register(constructor: () -> C2SConnection<T>): C2SConnection<T> {
         val instance = constructor()
@@ -32,7 +33,11 @@ interface BaseMode : Serializable, GUIItem {
     }
 }
 
-inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(player: Player, buf: FriendlyByteBuf, constructor: () -> BaseMode, noinline fn: (ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
+inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
+    player: Player,
+    buf: FriendlyByteBuf,
+    constructor: () -> BaseMode,
+    noinline fn: (item: T, ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
     val level = player.level as ServerLevel
 
     var serverMode = ServerToolGunState.playerStates.getOrPut(player, constructor)
@@ -40,13 +45,14 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(player: Play
 
     try {
     serverMode.deserialize(buf)
+    serverMode.serverSideVerifyLimits()
 
     //TODO add maxDistance to config
     val result = RaycastFunctions.raycast(level, player, 100.0)
 
     sendToolgunRayEffect(player, result, 100.0)
 
-    fn(level, player, result)
+    fn(serverMode as T, level, player, result)
     } catch (e: Exception) {
         ELOG("Failed to activate function ${fn.javaClass.name} of ${serverMode.javaClass.simpleName} called by player ${player.name.contents}")
     }

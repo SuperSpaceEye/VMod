@@ -12,6 +12,7 @@ import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.constraintsManaging.makeManagedConstraint
+import net.spaceeye.vsource.limits.ServerLimits
 import net.spaceeye.vsource.translate.GUIComponents.AABB_WELD
 import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
@@ -51,15 +52,21 @@ class AABBWeldMode : BaseMode {
         maxForce = buf.readDouble()
     }
 
+    override fun serverSideVerifyLimits() {
+        compliance = ServerLimits.instance.compliance.get(compliance)
+        maxForce = ServerLimits.instance.maxForce.get(maxForce)
+    }
+
     override val itemName = AABB_WELD
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
+        val limits = ServerLimits.instance
 
-        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 1e-307, 1.0)
-        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 1.0)
+        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, limits.compliance)
+        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
     }
 
-    val conn_primary = register { object : C2SConnection<AABBWeldMode>("aabb_weld_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AABBWeldMode>(context.player, buf, ::AABBWeldMode, ::activatePrimaryFunction) } }
+    val conn_primary = register { object : C2SConnection<AABBWeldMode>("aabb_weld_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 

@@ -57,4 +57,6 @@ mconstraint = managed constraint
 1. Make config
 
 ## Server side things
-1. Add server side validation for constraints and rendering
+1. Add server side validation for (kinda ✅) constraints and rendering
+2. Add the ability for server to change limits
+3. Add the ability for server and clients to synchronise limits

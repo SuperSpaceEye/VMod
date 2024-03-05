@@ -9,13 +9,15 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
 import net.spaceeye.vsource.gui.makeTextEntry
 import net.spaceeye.vsource.networking.C2SConnection
-import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vsource.constraintsManaging.types.RopeMConstraint
 import net.spaceeye.vsource.gui.DItem
 import net.spaceeye.vsource.gui.makeDropDown
+import net.spaceeye.vsource.limits.DoubleLimit
+import net.spaceeye.vsource.limits.IntLimit
+import net.spaceeye.vsource.limits.ServerLimits
 import net.spaceeye.vsource.translate.GUIComponents
 import net.spaceeye.vsource.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vsource.translate.GUIComponents.FIXED_DISTANCE
@@ -25,7 +27,6 @@ import net.spaceeye.vsource.translate.GUIComponents.SEGMENTS
 import net.spaceeye.vsource.translate.GUIComponents.WIDTH
 import net.spaceeye.vsource.translate.get
 import org.lwjgl.glfw.GLFW
-import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
 
 class RopeMode : BaseMode {
     var compliance = 1e-20
@@ -71,15 +72,22 @@ class RopeMode : BaseMode {
         segments = buf.readInt()
     }
 
+    override fun serverSideVerifyLimits() {
+        compliance = ServerLimits.instance.compliance.get(compliance)
+        maxForce = ServerLimits.instance.maxForce.get(maxForce)
+        fixedDistance = ServerLimits.instance.fixedDistance.get(fixedDistance)
+    }
+
     override val itemName = ROPE
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
+        val limits = ServerLimits.instance
 
-        makeTextEntry(COMPLIANCE.get(),     ::compliance,    offset, offset, parentWindow, 0.0)
-        makeTextEntry(MAX_FORCE.get(),      ::maxForce,      offset, offset, parentWindow, 0.0)
-        makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow)
-        makeTextEntry(WIDTH.get(),          ::width,         offset, offset, parentWindow, 0.0, 1.0)
-        makeTextEntry(SEGMENTS.get(),       ::segments,      offset, offset, parentWindow, 1, 100)
+        makeTextEntry(COMPLIANCE.get(),     ::compliance,    offset, offset, parentWindow, limits.compliance)
+        makeTextEntry(MAX_FORCE.get(),      ::maxForce,      offset, offset, parentWindow, limits.maxForce)
+        makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow, limits.fixedDistance)
+        makeTextEntry(WIDTH.get(),          ::width,         offset, offset, parentWindow, DoubleLimit(0.0, 1.0))
+        makeTextEntry(SEGMENTS.get(),       ::segments,      offset, offset, parentWindow, IntLimit(1, 100))
         makeDropDown(GUIComponents.HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(GUIComponents.NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(GUIComponents.CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
@@ -87,7 +95,7 @@ class RopeMode : BaseMode {
         ))
     }
 
-    val conn_primary = register { object : C2SConnection<RopeMode>("rope_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<RopeMode>(context.player, buf, ::RopeMode, ::activatePrimaryFunction) } }
+    val conn_primary = register { object : C2SConnection<RopeMode>("rope_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 

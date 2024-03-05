@@ -18,6 +18,8 @@ import net.spaceeye.vsource.translate.GUIComponents.MAX_FORCE
 import net.spaceeye.vsource.translate.get
 import org.lwjgl.glfw.GLFW
 import net.spaceeye.vsource.gui.makeDropDown
+import net.spaceeye.vsource.limits.DoubleLimit
+import net.spaceeye.vsource.limits.ServerLimits
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_IN_BLOCK
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_ON_SIDE
@@ -73,16 +75,24 @@ class HydraulicsMode : BaseMode {
         extensionSpeed = buf.readDouble()
     }
 
+    override fun serverSideVerifyLimits() {
+        compliance = ServerLimits.instance.compliance.get(compliance)
+        maxForce = ServerLimits.instance.maxForce.get(maxForce)
+        extensionDistance = ServerLimits.instance.extensionDistance.get(extensionDistance)
+        extensionSpeed = ServerLimits.instance.extensionSpeed.get(extensionSpeed)
+    }
+
     override val itemName = HYDRAULICS
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
+        val limits = ServerLimits.instance
 
-        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 1e-307, 1.0)
-        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 1.0)
-        makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, 0.0, 1.0)
+        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, limits.compliance)
+        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
+        makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, DoubleLimit(0.0, 1.0))
 
-        makeTextEntry(EXTENSION_DISTANCE.get(), ::extensionDistance, offset, offset, parentWindow, 0.1)
-        makeTextEntry(EXTENSION_SPEED.get(), ::extensionSpeed, offset, offset, parentWindow, 1e-3)
+        makeTextEntry(EXTENSION_DISTANCE.get(), ::extensionDistance, offset, offset, parentWindow, DoubleLimit())
+        makeTextEntry(EXTENSION_SPEED.get(), ::extensionSpeed, offset, offset, parentWindow, limits.extensionSpeed)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
@@ -90,7 +100,7 @@ class HydraulicsMode : BaseMode {
         ))
     }
 
-    val conn_primary = register { object : C2SConnection<HydraulicsMode>("hydraulics_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode, ::activatePrimaryFunction) } }
+    val conn_primary = register { object : C2SConnection<HydraulicsMode>("hydraulics_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 

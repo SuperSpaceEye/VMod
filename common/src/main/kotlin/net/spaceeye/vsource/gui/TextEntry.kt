@@ -5,6 +5,8 @@ import gg.essential.elementa.components.UIText
 import gg.essential.elementa.components.input.UITextInput
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
+import net.spaceeye.vsource.limits.DoubleLimit
+import net.spaceeye.vsource.limits.IntLimit
 import java.awt.Color
 import kotlin.reflect.KMutableProperty0
 
@@ -60,14 +62,13 @@ fun makeTextEntry(name: String,
                   xPadding: Float,
                   yPadding: Float,
                   makeChildOf: UIBlock,
-                  minValue: Double = -Double.MAX_VALUE,
-                  maxValue: Double = Double.MAX_VALUE): TextEntry {
+                  limits: DoubleLimit = DoubleLimit()): TextEntry {
     val entry = TextEntry(name) {
         str, entry ->
 
         val parsedValue = str.toDoubleOrNull()
 
-        if (parsedValue == null || (parsedValue < minValue || parsedValue > maxValue)) {
+        if (parsedValue == null || (parsedValue < limits.minValue || parsedValue > limits.maxValue)) {
             entry.textHolder.setColor(Color(230, 0, 0))
             return@TextEntry
         }
@@ -88,14 +89,14 @@ fun makeTextEntry(name: String,
                   xPadding: Float,
                   yPadding: Float,
                   makeChildOf: UIBlock,
-                  minValue: Int = -Int.MAX_VALUE,
-                  maxValue: Int = Int.MAX_VALUE): TextEntry {
+                  limits: IntLimit = IntLimit()
+): TextEntry {
     val entry = TextEntry(name) {
             str, entry ->
 
         val parsedValue = str.toIntOrNull()
 
-        if (parsedValue == null || (parsedValue < minValue || parsedValue > maxValue)) {
+        if (parsedValue == null || (parsedValue < limits.minValue || parsedValue > limits.maxValue)) {
             entry.textHolder.setColor(Color(230, 0, 0))
             return@TextEntry
         }

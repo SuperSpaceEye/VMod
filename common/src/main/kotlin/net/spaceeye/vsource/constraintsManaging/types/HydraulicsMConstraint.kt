@@ -3,6 +3,8 @@ package net.spaceeye.vsource.constraintsManaging.types
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vsource.ELOG
+import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
@@ -90,7 +92,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             maxForce, minLength)
 
         val dist1 = rpoint1 - rpoint2
-        val dir = dist1.normalize() * 20000
+        val dir = dist1.normalize() * 20
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -165,6 +167,13 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
     var wasDeleted = false
     var fnToUse: (() -> Boolean)? = null
     var lastExtended: Double = 0.0
+    // a sum of all activation(+1) and deactivations (-1)
+    // if the sum is 0, then do nothing
+    // if the sum is >0, then set function to activating
+    // if the sum if <0, then set function to deactivating
+    // gets reset every tick
+    // is needed for when there are multiple commands in the same tick
+    var activationCounter = 0
 
     private fun activatingFn(): Boolean {
         extendedDist = min(extendedDist + extensionSpeed, maxLength - minLength)
@@ -187,6 +196,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
         if (lastExtended == extendedDist) {return}
         lastExtended = extendedDist
+        activationCounter = 0
 
         val shipObjectWorld = server.shipObjectWorld
 
@@ -215,17 +225,30 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         cIDs[1] = shipObjectWorld.createNewConstraint(aconstraint2) ?: return
     }
 
+    // TODO sometimes VS2 can't create new constraints. Do something about it in the future
+    private fun <T> clean(level: ServerLevel): T? {
+        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
+        ELOG("HYDRAULICS CONSTRAINT WASN'T CREATED")
+        return null
+    }
+
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
-        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: return false)
-        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: return false)
-        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint1) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint1) ?: clean(level) ?: return false)
 
         MessagingNetwork.register("hydraulics") {
             msg, unregister ->
             if (wasDeleted) {unregister(); return@register}
+
             when (msg) {
-                is Activate -> { fnToUse = ::activatingFn }
-                is Deactivate -> { fnToUse = ::deactivatingFn }
+                is Activate   -> { if(fnToUse == null) {activationCounter = 0}; activationCounter++ }
+                is Deactivate -> { if(fnToUse == null) {activationCounter = 0}; activationCounter-- }
+            }
+
+            when {
+                activationCounter > 0 -> { fnToUse = ::activatingFn }
+                activationCounter < 0 -> { fnToUse = ::deactivatingFn }
             }
         }
 

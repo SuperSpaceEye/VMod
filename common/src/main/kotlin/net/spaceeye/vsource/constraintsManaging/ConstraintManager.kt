@@ -214,7 +214,6 @@ class ConstraintManager: SavedData() {
     }
 
     //TODO REMEMBER TO FUCKING CALL setDirty()
-    //VERY IMPORTANT!!!! IF CONSTRAINT IS BETWEEN SHIP AND WORLD, WORLD ID SHOULD BE THE shipId1 !!!!!
     fun makeConstraint(level: ServerLevel, mCon: MConstraint): ManagedConstraintId? {
         mCon.mID = constraintIdCounter.getID()
         if (!mCon.onMakeMConstraint(level)) {constraintIdCounter.dec(); return null}

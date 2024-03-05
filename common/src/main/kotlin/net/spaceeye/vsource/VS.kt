@@ -32,6 +32,8 @@ object VS {
         SynchronisedRenderingData
         ToolgunModes
 
+        VSBlocks.register()
+        VSBlockEntities.register()
         VSItems.register()
 
         makeEvents()

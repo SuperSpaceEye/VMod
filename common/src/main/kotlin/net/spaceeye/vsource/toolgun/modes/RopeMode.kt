@@ -28,7 +28,7 @@ import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
 
 class RopeMode : BaseMode {
-    var compliance = 1e-10
+    var compliance = 1e-20
     var maxForce = 1e10
     var fixedDistance = -1.0
 

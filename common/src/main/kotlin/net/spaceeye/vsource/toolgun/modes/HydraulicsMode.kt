@@ -4,7 +4,6 @@ import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
@@ -20,9 +19,9 @@ import net.spaceeye.vsource.translate.get
 import org.lwjgl.glfw.GLFW
 import net.spaceeye.vsource.gui.makeDropDown
 import net.spaceeye.vsource.rendering.types.A2BRenderer
-import net.spaceeye.vsource.translate.GUIComponents.ADDITIONAL_DISTANCE
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_IN_BLOCK
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_ON_SIDE
+import net.spaceeye.vsource.translate.GUIComponents.EXTENSION_DISTANCE
 import net.spaceeye.vsource.translate.GUIComponents.EXTENSION_SPEED
 import net.spaceeye.vsource.translate.GUIComponents.HITPOS_MODES
 import net.spaceeye.vsource.translate.GUIComponents.HYDRAULICS
@@ -31,11 +30,11 @@ import net.spaceeye.vsource.translate.GUIComponents.WIDTH
 import java.awt.Color
 
 class HydraulicsMode : BaseMode {
-    var compliance: Double = 1e-10
+    var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2
 
-    var additionalDistance: Double = 5.0
+    var extensionDistance: Double = 5.0
     var extensionSpeed: Double = 1.0
 
     var posMode = PositionModes.NORMAL
@@ -59,7 +58,7 @@ class HydraulicsMode : BaseMode {
         buf.writeDouble(maxForce)
         buf.writeEnum(posMode)
         buf.writeDouble(width)
-        buf.writeDouble(additionalDistance)
+        buf.writeDouble(extensionDistance)
         buf.writeDouble(extensionSpeed)
 
         return buf
@@ -70,7 +69,7 @@ class HydraulicsMode : BaseMode {
         maxForce = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
-        additionalDistance = buf.readDouble()
+        extensionDistance = buf.readDouble()
         extensionSpeed = buf.readDouble()
     }
 
@@ -78,11 +77,11 @@ class HydraulicsMode : BaseMode {
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
 
-        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 0.0)
-        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 0.0)
+        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 1e-307, 1.0)
+        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 1.0)
         makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, 0.0, 1.0)
 
-        makeTextEntry(ADDITIONAL_DISTANCE.get(), ::additionalDistance, offset, offset, parentWindow, 0.1)
+        makeTextEntry(EXTENSION_DISTANCE.get(), ::extensionDistance, offset, offset, parentWindow, 0.1)
         makeTextEntry(EXTENSION_SPEED.get(), ::extensionSpeed, offset, offset, parentWindow, 1e-3)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
@@ -91,19 +90,20 @@ class HydraulicsMode : BaseMode {
         ))
     }
 
-    val conn_primary = register { object : C2SConnection<HydraulicsMode>("muscle_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode, ::activatePrimaryFunction) } }
+    val conn_primary = register { object : C2SConnection<HydraulicsMode>("hydraulics_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode, ::activatePrimaryFunction) } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverTryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2 ->
 
+        val dist = (rpoint1 - rpoint2).dist()
         level.makeManagedConstraint(HydraulicsMConstraint(
             spoint1, spoint2, rpoint1, rpoint2,
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
-            (rpoint1 - rpoint2).dist(),
-            (rpoint1 - rpoint2).dist() + additionalDistance,
+            dist,
+            dist + extensionDistance,
             extensionSpeed,
             A2BRenderer(
                 ship1 != null,

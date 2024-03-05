@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentSkipListSet
 
 object ReservedRenderingPages {
     const val TimedRenderingObjects = -1L
+
+    val reservedPagesList = mutableListOf(TimedRenderingObjects)
 }
 
 fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft) {

@@ -1,9 +1,9 @@
 mconstraint = managed constraint
 
 ## Constraints
-1. Rework current constraints managing logic to support additional data
+1. ✅ Rework current constraints managing logic to support additional data
 2. Make additional mconstraint "types"
-    * Muscle
+    * ✅ Hydraulics
     * Motor
 3. Expand mconstraints and rendering system to allow for mconstraints to be tied to blocks instead to whole ships. I guess i can mixin into server levelChunk and inject additional data + inject into setState to track when smth becomes air, and check if chunk has constraints and then also check if the block has any constraint connected to it, and if it did, then remove constraint and renderer (if it exists). For saving/loading inject into ChunkMap.
 

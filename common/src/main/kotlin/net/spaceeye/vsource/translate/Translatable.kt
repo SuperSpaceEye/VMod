@@ -23,6 +23,7 @@ object GUIComponents {
     val SEGMENTS = s("segments")
     val ADDITIONAL_DISTANCE = s("additional_distance")
     val EXTENSION_SPEED = s("extension_speed")
+    val EXTENSION_DISTANCE = s("extension_distance")
 
     val HITPOS_MODES = s("hitpos_modes")
     val NORMAL = s("normal")

@@ -28,10 +28,8 @@ import net.spaceeye.vsource.translate.GUIComponents.HITPOS_MODES
 import net.spaceeye.vsource.translate.GUIComponents.NORMAL
 import net.spaceeye.vsource.translate.GUIComponents.WIDTH
 
-//TODO REFACTOR
-
 class WeldMode : BaseMode {
-    var compliance: Double = 1e-10
+    var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2
 

@@ -14,6 +14,7 @@ import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.networking.dataSynchronization.ServerChecksumsUpdatedPacket
 import net.spaceeye.vsource.networking.dataSynchronization.ServerSynchronisedData
+import net.spaceeye.vsource.rendering.ReservedRenderingPages.reservedPagesList
 import net.spaceeye.vsource.rendering.types.BaseRenderer
 import net.spaceeye.vsource.rendering.types.TimedA2BRenderer
 import org.valkyrienskies.core.impl.hooks.VSEvents
@@ -48,9 +49,12 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         DLOG("SAVING RENDERING DATA")
         val point = getNow_ms()
 
-        for ((k, v) in data) {
+        for ((pageId, items) in data) {
+            if (reservedPagesList.contains(pageId)) { continue }
+            if (!ConstraintManager.allShips!!.contains(pageId)) { continue }
+
             val shipIdTag = CompoundTag()
-            for ((id, item) in v) {
+            for ((id, item) in items) {
                 val dataItemTag = CompoundTag()
 
                 val typeIdx = RenderingTypes.typeToIdx(item.getTypeName())
@@ -64,7 +68,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
 
                 shipIdTag.put(id.toString(), dataItemTag)
             }
-            save.put(k.toString(), shipIdTag)
+            save.put(pageId.toString(), shipIdTag)
         }
 
         DLOG("FINISHING SAVING RENDERING DATA IN ${getNow_ms() - point} ms")
@@ -80,11 +84,11 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         DLOG("LOADING RENDERING DATA")
         val point = getNow_ms()
 
-        for (k in save.allKeys) {
-            val shipIdTag = save.get(k) as CompoundTag
-            val page = data.getOrPut(k.toLong()) { mutableMapOf() }
-            for (kk in shipIdTag.allKeys) {
-                val dataItemTag = shipIdTag[kk] as CompoundTag
+        for (shipId in save.allKeys) {
+            val shipIdTag = save.get(shipId) as CompoundTag
+            val page = data.getOrPut(shipId.toLong()) { mutableMapOf() }
+            for (id in shipIdTag.allKeys) {
+                val dataItemTag = shipIdTag[id] as CompoundTag
 
                 val typeIdx = dataItemTag.getInt("typeIdx")
                 val item = RenderingTypes.idxToSupplier(typeIdx).get()
@@ -95,7 +99,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
                     continue
                 }
 
-                page[kk.toInt()] = item
+                page[id.toInt()] = item
             }
         }
         DLOG("FINISHING LOADING RENDERING DATA in ${getNow_ms() - point} ms")
@@ -173,11 +177,10 @@ object SynchronisedRenderingData {
                     ServerLevelHolder.overworldServerLevel!!.server.playerList.players,
                     ServerChecksumsUpdatedPacket(shipData.id, true)
                 )
-            DLOG("SENT DELETED SHIPID")
         }
         VSEvents.shipLoadEvent.on {
             (shipData), handler ->
-            serverSynchronisedData.data[shipData.id] = mutableMapOf()
+            serverSynchronisedData.data.getOrPut(shipData.id) { mutableMapOf() }
         }
     }
 }

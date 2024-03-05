@@ -19,14 +19,14 @@ import net.spaceeye.vsource.toolgun.ToolgunItem
 
 class TestActivate: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
     override fun use(level: Level, player: Player, usedHand: InteractionHand): InteractionResultHolder<ItemStack> {
-        MessagingNetwork.notify("muscle", Activate())
+        MessagingNetwork.notify("hydraulics", Activate())
         return super.use(level, player, usedHand)
     }
 }
 
 class TestDeactivate: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
     override fun use(level: Level, player: Player, usedHand: InteractionHand): InteractionResultHolder<ItemStack> {
-        MessagingNetwork.notify("muscle", Deactivate())
+        MessagingNetwork.notify("hydraulics", Deactivate())
         return super.use(level, player, usedHand)
     }
 }

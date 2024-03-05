@@ -22,7 +22,7 @@ import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
 
 class AABBWeldMode : BaseMode {
-    var compliance = 1e-10
+    var compliance = 1e-20
     var maxForce = 1e10
 
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
@@ -55,8 +55,8 @@ class AABBWeldMode : BaseMode {
     override fun makeGUISettings(parentWindow: UIBlock) {
         val offset = 2.0f
 
-        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 0.0)
-        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 0.0)
+        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, 1e-307, 1.0)
+        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, 1.0)
     }
 
     val conn_primary = register { object : C2SConnection<AABBWeldMode>("aabb_weld_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AABBWeldMode>(context.player, buf, ::AABBWeldMode, ::activatePrimaryFunction) } }

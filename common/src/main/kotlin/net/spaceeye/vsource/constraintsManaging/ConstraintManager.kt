@@ -269,8 +269,8 @@ class ConstraintManager: SavedData() {
         // SavedData is saved after VSPhysicsPipelineStage is deleted, so getting allShips and
         // dimensionToGroundBodyIdImmutable from level.shipObjectWorld is impossible, unless you get it's reference
         // before it got deleted
-        private var dimensionToGroundBodyIdImmutable: Map<DimensionId, ShipId>? = null
-        private var allShips: QueryableShipData<Ship>? = null
+        var dimensionToGroundBodyIdImmutable: Map<DimensionId, ShipId>? = null
+        var allShips: QueryableShipData<Ship>? = null
 
         init {
             makeServerEvents()

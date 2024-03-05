@@ -11,6 +11,7 @@
   "vsource.gui.setting.segments": "Segments",
   "vsource.gui.setting.additional_distance": "Additional Distance",
   "vsource.gui.setting.extension_speed": "Extension Speed",
+  "vsource.gui.setting.extension_distance": "Extension Distance",
 
   "vsource.gui.setting.hitpos_modes": "HitPos Modes",
   "vsource.gui.setting.normal": "Normal",

@@ -26,8 +26,8 @@ import kotlin.math.min
 
 class HydraulicsMConstraint(): MConstraint, Tickable {
     lateinit var aconstraint1: VSAttachmentConstraint
-    lateinit var aconstraint2: VSAttachmentConstraint
-    lateinit var rconstraint1: VSConstraint
+    lateinit var aconstraint2: VSForceConstraint
+    lateinit var rconstraint1: VSTorqueConstraint
 
     val cIDs = mutableListOf<ConstraintId>()
 
@@ -90,7 +90,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             maxForce, minLength)
 
         val dist1 = rpoint1 - rpoint2
-        val dir = dist1.normalize()
+        val dir = dist1.normalize() * 20000
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -142,10 +142,10 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-        tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSSphericalTwistLimitsConstraint
+        tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSForceConstraint
+        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSTorqueConstraint
 
-        mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
+        mID = ManagedConstraintId(tag.getInt("managedID"))
 
         addDist = tag.getDouble("addDist")
         minLength = tag.getDouble("minDistance")
@@ -180,7 +180,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
     override fun tick(server: MinecraftServer, unregister: () -> Unit) {
         if (wasDeleted) {
-            unregister();
+            unregister()
             return
         }
         if (fnToUse != null) { if (!fnToUse!!()) {fnToUse = null} }
@@ -191,7 +191,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         val shipObjectWorld = server.shipObjectWorld
 
         if (!shipObjectWorld.removeConstraint(cIDs[0])) {return}
-        cIDs[0] = shipObjectWorld.createNewConstraint(VSAttachmentConstraint(
+        aconstraint1 = VSAttachmentConstraint(
             aconstraint1.shipId0,
             aconstraint1.shipId1,
             aconstraint1.compliance,
@@ -199,10 +199,11 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             aconstraint1.localPos1,
             aconstraint1.maxForce,
             minLength + extendedDist
-        )) ?: return
+        )
+        cIDs[0] = shipObjectWorld.createNewConstraint(aconstraint1) ?: return
 
         if (!shipObjectWorld.removeConstraint(cIDs[1])) {return}
-        cIDs[1] = shipObjectWorld.createNewConstraint(VSAttachmentConstraint(
+        aconstraint2 = VSAttachmentConstraint(
             aconstraint2.shipId0,
             aconstraint2.shipId1,
             aconstraint2.compliance,
@@ -210,7 +211,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             aconstraint2.localPos1,
             aconstraint2.maxForce,
             minLength + addDist + extendedDist
-        )) ?: return
+        )
+        cIDs[1] = shipObjectWorld.createNewConstraint(aconstraint2) ?: return
     }
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
@@ -218,10 +220,9 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint1) ?: return false)
 
-        MessagingNetwork.register("muscle") {
+        MessagingNetwork.register("hydraulics") {
             msg, unregister ->
             if (wasDeleted) {unregister(); return@register}
-            if (fnToUse != null) {return@register}
             when (msg) {
                 is Activate -> { fnToUse = ::activatingFn }
                 is Deactivate -> { fnToUse = ::deactivatingFn }

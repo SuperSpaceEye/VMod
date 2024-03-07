@@ -7,14 +7,14 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
-import net.spaceeye.vsource.gui.makeTextEntry
+import net.spaceeye.vsource.guiElements.makeTextEntry
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vsource.constraintsManaging.types.RopeMConstraint
-import net.spaceeye.vsource.gui.DItem
-import net.spaceeye.vsource.gui.makeDropDown
+import net.spaceeye.vsource.guiElements.DItem
+import net.spaceeye.vsource.guiElements.makeDropDown
 import net.spaceeye.vsource.limits.DoubleLimit
 import net.spaceeye.vsource.limits.IntLimit
 import net.spaceeye.vsource.limits.ServerLimits

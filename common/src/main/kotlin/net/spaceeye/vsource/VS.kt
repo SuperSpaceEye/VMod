@@ -5,6 +5,7 @@ import dev.architectury.event.events.common.LifecycleEvent
 import dev.architectury.platform.Platform
 import net.minecraft.client.Minecraft
 import net.spaceeye.vsource.constraintsManaging.ConstraintManager
+import net.spaceeye.vsource.gui.SimpleMessagerNetworking
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.toolgun.ToolgunItem
 import net.spaceeye.vsource.toolgun.modes.ToolgunModes
@@ -30,6 +31,7 @@ object VS {
             return
         }
         SynchronisedRenderingData
+        SimpleMessagerNetworking
         ToolgunModes
 
         VSBlocks.register()

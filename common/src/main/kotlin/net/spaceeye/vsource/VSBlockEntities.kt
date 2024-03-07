@@ -10,12 +10,12 @@ import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vsource.blockentities.MessagerBlockEntity
+import net.spaceeye.vsource.blockentities.SimpleMessagerBlockEntity
 
 object VSBlockEntities {
     private val BLOCKENTITIES = DeferredRegister.create(VS.MOD_ID, Registry.BLOCK_ENTITY_TYPE_REGISTRY)
 
-    var SIMPLE_MESSAGER = VSBlocks.SIMPLE_MESSAGER makePair ::MessagerBlockEntity byName "simple_messager"
+    var SIMPLE_MESSAGER = VSBlocks.SIMPLE_MESSAGER makePair ::SimpleMessagerBlockEntity byName "simple_messager"
 
     private infix fun <T: BlockEntity, TT: Block> RegistrySupplier<TT>.makePair(blockEntity: (BlockPos, BlockState) -> T) = Pair(this, { bp: BlockPos, bs: BlockState -> blockEntity(bp, bs)})
     private infix fun <T: BlockEntity, TT: Block> Pair<RegistrySupplier<TT>, (BlockPos, BlockState) -> T>.byName(name: String): RegistrySupplier<BlockEntityType<T>> =

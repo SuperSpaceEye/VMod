@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.gui
+package net.spaceeye.vsource.guiElements
 
 import gg.essential.elementa.UIComponent
 import gg.essential.elementa.components.*
@@ -22,7 +22,7 @@ class DropDown(
     var activatedStateOfButtons = mutableListOf<Boolean>()
     var buttons = mutableListOf<Button>()
 
-    private fun activateButtons(activate: Boolean = true) {
+    fun activateButtons(activate: Boolean = true) {
         buttons.zip(activatedStateOfButtons).forEach {
             (it, activated) ->
             when (activated) {
@@ -117,7 +117,7 @@ class DropDown(
 }
 
 fun makeDropDown(name: String,
-                 makeChildOf: UIBlock,
+                 makeChildOf: UIComponent,
                  xPadding: Float,
                  yPadding: Float,
                  dItems: List<DItem>): DropDown {

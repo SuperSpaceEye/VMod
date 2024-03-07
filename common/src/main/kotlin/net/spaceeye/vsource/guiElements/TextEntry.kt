@@ -1,5 +1,6 @@
-package net.spaceeye.vsource.gui
+package net.spaceeye.vsource.guiElements
 
+import gg.essential.elementa.UIComponent
 import gg.essential.elementa.components.UIBlock
 import gg.essential.elementa.components.UIText
 import gg.essential.elementa.components.input.UITextInput
@@ -7,6 +8,7 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vsource.limits.DoubleLimit
 import net.spaceeye.vsource.limits.IntLimit
+import net.spaceeye.vsource.limits.ServerLimits
 import java.awt.Color
 import kotlin.reflect.KMutableProperty0
 
@@ -61,7 +63,7 @@ fun makeTextEntry(name: String,
                   value: KMutableProperty0<Double>,
                   xPadding: Float,
                   yPadding: Float,
-                  makeChildOf: UIBlock,
+                  makeChildOf: UIComponent,
                   limits: DoubleLimit = DoubleLimit()): TextEntry {
     val entry = TextEntry(name) {
         str, entry ->
@@ -88,7 +90,7 @@ fun makeTextEntry(name: String,
                   value: KMutableProperty0<Int>,
                   xPadding: Float,
                   yPadding: Float,
-                  makeChildOf: UIBlock,
+                  makeChildOf: UIComponent,
                   limits: IntLimit = IntLimit()
 ): TextEntry {
     val entry = TextEntry(name) {
@@ -109,5 +111,28 @@ fun makeTextEntry(name: String,
         width = 100.percent() - (xPadding * 2).pixels()
     } childOf makeChildOf
     entry.textArea.setText(value.get().toString())
+    return entry
+}
+
+fun makeTextEntry(name: String,
+                  value: KMutableProperty0<String>,
+                  xPadding: Float,
+                  yPadding: Float,
+                  makeChildOf: UIComponent): TextEntry {
+    val entry = TextEntry(name) {
+            str, entry ->
+        if (ServerLimits.instance.channelLength.sizeLimit < str.length) {
+            entry.textHolder.setColor(Color(230, 0, 0))
+            return@TextEntry
+        }
+        entry.textHolder.setColor(Color(170, 170, 170))
+
+        value.set(str)
+    }.constrain {
+        x = xPadding.pixels()
+        y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
+        width = 100.percent() - (xPadding * 2).pixels()
+    } childOf makeChildOf
+    entry.textArea.setText(value.get())
     return entry
 }

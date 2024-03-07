@@ -1,4 +1,4 @@
-package net.spaceeye.vsource.gui
+package net.spaceeye.vsource.guiElements
 
 import gg.essential.elementa.components.UIBlock
 import gg.essential.elementa.components.UIText
@@ -30,6 +30,20 @@ class Button(var baseColor: Color, buttonName: String, text_scale: Float = 1f, v
         }
         onMouseClick {
             fnToActivate()
+            animate {
+                setColorAnimation(
+                    Animations.OUT_EXP,
+                    animationTime,
+                    activeColor.brighter().brighter().toConstraint()
+                )
+            }
+            animate {
+                setColorAnimation(
+                    Animations.OUT_EXP,
+                    animationTime,
+                    activeColor.brighter().toConstraint()
+                )
+            }
         }
 
          UIText(buttonName, shadow = false).constrain {

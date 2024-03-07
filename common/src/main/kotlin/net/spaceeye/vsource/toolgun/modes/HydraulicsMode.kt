@@ -23,6 +23,7 @@ import net.spaceeye.vsource.limits.ServerLimits
 import net.spaceeye.vsource.rendering.types.A2BRenderer
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_IN_BLOCK
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_ON_SIDE
+import net.spaceeye.vsource.translate.GUIComponents.CHANNEL
 import net.spaceeye.vsource.translate.GUIComponents.EXTENSION_DISTANCE
 import net.spaceeye.vsource.translate.GUIComponents.EXTENSION_SPEED
 import net.spaceeye.vsource.translate.GUIComponents.HITPOS_MODES
@@ -38,6 +39,8 @@ class HydraulicsMode : BaseMode {
 
     var extensionDistance: Double = 5.0
     var extensionSpeed: Double = 1.0
+
+    var channel: String = "hydraulics"
 
     var posMode = PositionModes.NORMAL
 
@@ -62,6 +65,7 @@ class HydraulicsMode : BaseMode {
         buf.writeDouble(width)
         buf.writeDouble(extensionDistance)
         buf.writeDouble(extensionSpeed)
+        buf.writeUtf(channel)
 
         return buf
     }
@@ -73,6 +77,7 @@ class HydraulicsMode : BaseMode {
         width = buf.readDouble()
         extensionDistance = buf.readDouble()
         extensionSpeed = buf.readDouble()
+        channel = buf.readUtf()
     }
 
     override fun serverSideVerifyLimits() {
@@ -80,6 +85,7 @@ class HydraulicsMode : BaseMode {
         maxForce = ServerLimits.instance.maxForce.get(maxForce)
         extensionDistance = ServerLimits.instance.extensionDistance.get(extensionDistance)
         extensionSpeed = ServerLimits.instance.extensionSpeed.get(extensionSpeed)
+        channel = ServerLimits.instance.channelLength.get(channel)
     }
 
     override val itemName = HYDRAULICS
@@ -93,6 +99,7 @@ class HydraulicsMode : BaseMode {
 
         makeTextEntry(EXTENSION_DISTANCE.get(), ::extensionDistance, offset, offset, parentWindow, DoubleLimit())
         makeTextEntry(EXTENSION_SPEED.get(), ::extensionSpeed, offset, offset, parentWindow, limits.extensionSpeed)
+        makeTextEntry(CHANNEL.get(), ::channel, offset, offset, parentWindow, limits.channelLength)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
@@ -115,6 +122,7 @@ class HydraulicsMode : BaseMode {
             dist,
             dist + extensionDistance,
             extensionSpeed,
+            channel,
             A2BRenderer(
                 ship1 != null,
                 ship2 != null,

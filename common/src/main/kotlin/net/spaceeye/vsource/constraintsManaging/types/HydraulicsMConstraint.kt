@@ -41,6 +41,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
     var addDist: Double = 0.0
 
+    var channel: String = ""
+
     var renderer: BaseRenderer? = null
 
     override lateinit var mID: ManagedConstraintId
@@ -83,6 +85,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         maxLength: Double,
         extensionSpeed: Double,
 
+        channel: String,
+
         renderer: BaseRenderer?,
     ): this() {
         aconstraint1 = VSAttachmentConstraint(
@@ -120,6 +124,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         this.maxLength = maxLength
         // extensionSpeed is in seconds. Constraint is being updated every mc tick
         this.extensionSpeed = extensionSpeed / 20.0
+
+        this.channel = channel
     }
 
     override fun nbtSerialize(): CompoundTag? {
@@ -138,6 +144,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         tag.putDouble("extendedDist", extendedDist)
         tag.putBoolean("isActivating", fnToUse == ::activatingFn)
         tag.putBoolean("isDeactivating", fnToUse == ::deactivatingFn)
+        tag.putString("channel", channel)
 
         return tag
     }
@@ -154,6 +161,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         maxLength = tag.getDouble("maxDistance")
         extensionSpeed = tag.getDouble("extensionSpeed")
         extendedDist = tag.getDouble("extendedDist")
+        channel = tag.getString("channel")
 
         fnToUse = when {
             tag.getBoolean("isActivating") -> ::activatingFn
@@ -237,7 +245,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint1) ?: clean(level) ?: return false)
 
-        MessagingNetwork.register("hydraulics") {
+        MessagingNetwork.register(channel) {
             msg, unregister ->
             if (wasDeleted) {unregister(); return@register}
 

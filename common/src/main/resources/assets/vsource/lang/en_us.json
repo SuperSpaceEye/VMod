@@ -12,6 +12,11 @@
   "vsource.gui.setting.additional_distance": "Additional Distance",
   "vsource.gui.setting.extension_speed": "Extension Speed",
   "vsource.gui.setting.extension_distance": "Extension Distance",
+  "vsource.gui.setting.channel": "Channel",
+  "vsource.gui.setting.function": "Function",
+  "vsource.gui.setting.activate": "Activate",
+  "vsource.gui.setting.deactivate": "Deactivate",
+  "vsource.gui.setting.apply_changes": "Apply Changes",
 
   "vsource.gui.setting.hitpos_modes": "HitPos Modes",
   "vsource.gui.setting.normal": "Normal",
@@ -22,5 +27,8 @@
   "vsourse.keymappings_name": "VSourse Toolgun",
 
   "item.vsource.toolgun": "Toolgun",
+
+  "block.vsource.simple_messager": "Simple Messager",
+
   "itemGroup.vsource.vsource_tab": "VSource"
 }

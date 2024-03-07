@@ -17,20 +17,6 @@ import net.spaceeye.vsource.network.Deactivate
 import net.spaceeye.vsource.network.MessagingNetwork
 import net.spaceeye.vsource.toolgun.ToolgunItem
 
-class TestActivate: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
-    override fun use(level: Level, player: Player, usedHand: InteractionHand): InteractionResultHolder<ItemStack> {
-        MessagingNetwork.notify("hydraulics", Activate())
-        return super.use(level, player, usedHand)
-    }
-}
-
-class TestDeactivate: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
-    override fun use(level: Level, player: Player, usedHand: InteractionHand): InteractionResultHolder<ItemStack> {
-        MessagingNetwork.notify("hydraulics", Deactivate())
-        return super.use(level, player, usedHand)
-    }
-}
-
 object VSItems {
     val ITEMS = DeferredRegister.create(VS.MOD_ID, Registry.ITEM_REGISTRY)
 
@@ -42,9 +28,6 @@ object VSItems {
     ) { ItemStack(LOGO.get()) }
 
     var LOGO: RegistrySupplier<Item> = ITEMS.register("vsource_logo") { Item(Item.Properties()) }
-
-    var ACTIVATE = ITEMS.register("activate") {TestActivate()}
-    var DEACTIVATE = ITEMS.register("deactivate") {TestDeactivate()}
 
 //    var AXIS_CREATOR: RegistrySupplier<Item> = ITEMS.register("axis_creator") { Item(Item.Properties()) }
 //    var BALL_SOCKET_CREATOR: RegistrySupplier<Item> = ITEMS.register("ball_socket_creator") {  }

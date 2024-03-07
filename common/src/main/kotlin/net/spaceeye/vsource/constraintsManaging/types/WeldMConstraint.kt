@@ -2,6 +2,7 @@ package net.spaceeye.vsource.constraintsManaging.types
 
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vsource.ELOG
 import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
@@ -118,10 +119,16 @@ class WeldMConstraint(): MConstraint {
         return this
     }
 
+    private fun <T> clean(level: ServerLevel): T? {
+        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
+        ELOG("WELD CONSTRAINT WASN'T CREATED")
+        return null
+    }
+
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
-        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: return false)
-        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: return false)
-        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint1) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint1) ?: clean(level) ?: return false)
 
         if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!) }
         return true

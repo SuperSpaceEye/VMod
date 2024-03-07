@@ -213,10 +213,19 @@ class ConstraintManager: SavedData() {
         createConstraints()
     }
 
+    // TODO redo this later
+    private fun tryMakeConstraint(mCon: MConstraint, level: ServerLevel): Boolean {
+        for (i in 0 until 1000) {
+            if (mCon.onMakeMConstraint(level)) {return true}
+            WLOG("RETRYING")
+        }
+        return false
+    }
+
     //TODO REMEMBER TO FUCKING CALL setDirty()
     fun makeConstraint(level: ServerLevel, mCon: MConstraint): ManagedConstraintId? {
         mCon.mID = constraintIdCounter.getID()
-        if (!mCon.onMakeMConstraint(level)) {constraintIdCounter.dec(); return null}
+        if (!tryMakeConstraint(mCon, level)) {constraintIdCounter.dec(); return null}
 
         mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
         idToConstraint[mCon.mID] = mCon
@@ -244,21 +253,21 @@ class ConstraintManager: SavedData() {
     }
 
     @Internal
-    fun makeConstraintWithId(level: ServerLevel, constraint: MConstraint, id: Int): ManagedConstraintId? {
-        if (id == -1) { ELOG("CREATING A CONSTRAINT WITH NO SPECIFIED ID WHEN A SPECIFIC ID IS EXPECTED AT ${constraintIdCounter.peekID()}"); return makeConstraint(level, constraint) }
+    fun makeConstraintWithId(level: ServerLevel, mCon: MConstraint, id: Int): ManagedConstraintId? {
+        if (id == -1) { ELOG("CREATING A CONSTRAINT WITH NO SPECIFIED ID WHEN A SPECIFIC ID IS EXPECTED AT ${constraintIdCounter.peekID()}"); return makeConstraint(level, mCon) }
 
-        constraint.mID = ManagedConstraintId(id)
-        if (!constraint.onMakeMConstraint(level)) {return null}
+        mCon.mID = ManagedConstraintId(id)
+        if (!tryMakeConstraint(mCon, level)) {return null}
 
-        constraint.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach {
-            shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(constraint)
+        mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach {
+            shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon)
         }
-        if (idToConstraint.contains(constraint.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING CONSTRAINT IN makeConstraintWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
-        idToConstraint[constraint.mID] = constraint
-        if (constraint is Tickable) { tickingConstraints.add(constraint) }
+        if (idToConstraint.contains(mCon.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING CONSTRAINT IN makeConstraintWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
+        idToConstraint[mCon.mID] = mCon
+        if (mCon is Tickable) { tickingConstraints.add(mCon) }
 
         setDirty()
-        return constraint.mID
+        return mCon.mID
     }
 
     companion object {

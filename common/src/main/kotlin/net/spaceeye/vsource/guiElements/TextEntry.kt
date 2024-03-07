@@ -8,7 +8,7 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vsource.limits.DoubleLimit
 import net.spaceeye.vsource.limits.IntLimit
-import net.spaceeye.vsource.limits.ServerLimits
+import net.spaceeye.vsource.limits.StrLimit
 import java.awt.Color
 import kotlin.reflect.KMutableProperty0
 
@@ -118,10 +118,11 @@ fun makeTextEntry(name: String,
                   value: KMutableProperty0<String>,
                   xPadding: Float,
                   yPadding: Float,
-                  makeChildOf: UIComponent): TextEntry {
+                  makeChildOf: UIComponent,
+                  limit: StrLimit): TextEntry {
     val entry = TextEntry(name) {
             str, entry ->
-        if (ServerLimits.instance.channelLength.sizeLimit < str.length) {
+        if (limit.sizeLimit < str.length) {
             entry.textHolder.setColor(Color(230, 0, 0))
             return@TextEntry
         }

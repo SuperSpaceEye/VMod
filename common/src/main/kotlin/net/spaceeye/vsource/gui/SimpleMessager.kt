@@ -24,6 +24,12 @@ import net.spaceeye.vsource.network.Deactivate
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.S2CConnection
 import net.spaceeye.vsource.networking.Serializable
+import net.spaceeye.vsource.translate.GUIComponents.ACTIVATE
+import net.spaceeye.vsource.translate.GUIComponents.APPLY_CHANGES
+import net.spaceeye.vsource.translate.GUIComponents.CHANNEL
+import net.spaceeye.vsource.translate.GUIComponents.DEACTIVATE
+import net.spaceeye.vsource.translate.GUIComponents.FUNCTION
+import net.spaceeye.vsource.translate.get
 import net.spaceeye.vsource.utils.ClientClosable
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.posShipToWorld
@@ -323,7 +329,7 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
         height = 98.percent()
     } childOf mainWindow
 
-    var applyBtn = Button(Color(120, 120, 120), "Apply Changes") {
+    var applyBtn = Button(Color(120, 120, 120), APPLY_CHANGES.get()) {
         SimpleMessagerNetworking.c2sSendStateUpdate.sendToServer(
             SimpleMessagerNetworking.C2SSendStateUpdate(
             activationState, channel, pos
@@ -336,14 +342,14 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
         y = 2.pixels()
     } childOf itemsHolder
 
-    lateinit var entry: TextEntry
-    lateinit var dmenu: DropDown
+    var entry: TextEntry
+    var dmenu: DropDown
 
     init {
-        entry = makeTextEntry("Channel Name", ::channel, 2f, 2f, itemsHolder)
-        dmenu = makeDropDown("Function", itemsHolder, 2f, 2f, listOf(
-            DItem("Activate",    this.activationState) { this.activationState = true  },
-            DItem("Deactivate", !this.activationState) { this.activationState = false }
+        entry = makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, itemsHolder, ServerLimits.instance.channelLength)
+        dmenu = makeDropDown(FUNCTION.get(), itemsHolder, 2f, 2f, listOf(
+            DItem(ACTIVATE.get(),    this.activationState) { this.activationState = true  },
+            DItem(DEACTIVATE.get(), !this.activationState) { this.activationState = false }
         ))
     }
 
@@ -356,17 +362,11 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
         itemsHolder.removeChild(entry)
         itemsHolder.removeChild(dmenu)
 
-        entry = makeTextEntry("Channel Name", ::channel, 2f, 2f, itemsHolder)
-        dmenu = makeDropDown("Function", itemsHolder, 2f, 2f, listOf(
-            DItem("Activate",    this.activationState) { this.activationState = true  },
-            DItem("Deactivate", !this.activationState) { this.activationState = false }
+        entry = makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, itemsHolder, ServerLimits.instance.channelLength)
+        dmenu = makeDropDown(FUNCTION.get(), itemsHolder, 2f, 2f, listOf(
+            DItem(ACTIVATE.get(),    this.activationState) { this.activationState = true  },
+            DItem(DEACTIVATE.get(), !this.activationState) { this.activationState = false }
         ))
-
-
-//        entry.textArea.setText(channel)
-//        dmenu.activatedStateOfButtons[0] = this.activationState
-//        dmenu.activatedStateOfButtons[1] = !this.activationState
-//        dmenu.activateButtons(false)
     }
 
     fun updateSuccess() {

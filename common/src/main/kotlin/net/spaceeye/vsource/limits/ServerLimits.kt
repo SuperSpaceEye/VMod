@@ -16,7 +16,7 @@ data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
 class ServerLimitsInstance {
     val compliance = DoubleLimit(1e-300, 1.0)
     val maxForce = DoubleLimit(1.0)
-    val fixedDistance = DoubleLimit(0.001)
+    val fixedDistance = DoubleLimit()
     val extensionDistance = DoubleLimit(0.001)
     val extensionSpeed = DoubleLimit(0.001)
 

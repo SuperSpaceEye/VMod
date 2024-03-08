@@ -54,6 +54,6 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
 
     fn(serverMode as T, level, player, result)
     } catch (e: Exception) {
-        ELOG("Failed to activate function ${fn.javaClass.name} of ${serverMode.javaClass.simpleName} called by player ${player.name.contents}")
+        ELOG("Failed to activate function ${fn.javaClass.name} of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
     }
 }

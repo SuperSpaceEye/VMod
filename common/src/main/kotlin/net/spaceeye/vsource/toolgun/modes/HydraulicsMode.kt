@@ -7,6 +7,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.ILOG
+import net.spaceeye.vsource.constraintsManaging.addFor
 import net.spaceeye.vsource.guiElements.makeTextEntry
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.utils.*
@@ -130,7 +131,7 @@ class HydraulicsMode : BaseMode {
                 Color(62, 62, 200),
                 width
             )
-        ))
+        )).addFor(player)
 
         resetState()
     }

@@ -58,5 +58,6 @@ private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera) {
         render.renderData(poseStack, camera)
     }
 
+    if (toDelete.isEmpty()) {return}
     SynchronisedRenderingData.clientSynchronisedData.pageIndicesToRemove.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { ConcurrentSkipListSet(toDelete) }
 }

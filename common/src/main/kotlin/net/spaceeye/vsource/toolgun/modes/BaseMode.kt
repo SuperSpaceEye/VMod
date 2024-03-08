@@ -11,6 +11,7 @@ import net.spaceeye.vsource.ELOG
 import net.spaceeye.vsource.networking.C2SConnection
 import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.rendering.Effects.sendToolgunRayEffect
+import net.spaceeye.vsource.toolgun.PlayerToolgunState
 import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.RaycastFunctions
 
@@ -40,19 +41,19 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
     noinline fn: (item: T, ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
     val level = player.level as ServerLevel
 
-    var serverMode = ServerToolGunState.playerStates.getOrPut(player, constructor)
-    if (serverMode !is T) { serverMode = constructor(); ServerToolGunState.playerStates[player] = serverMode }
+    var serverMode = ServerToolGunState.playerStates.getOrPut(player.uuid) { PlayerToolgunState(constructor()) }
+    if (serverMode.mode !is T) { serverMode = PlayerToolgunState(constructor()); ServerToolGunState.playerStates[player.uuid] = serverMode }
 
     try {
-    serverMode.deserialize(buf)
-    serverMode.serverSideVerifyLimits()
+    serverMode.mode.deserialize(buf)
+    serverMode.mode.serverSideVerifyLimits()
 
     //TODO add maxDistance to config
     val result = RaycastFunctions.raycast(level, player, 100.0)
 
     sendToolgunRayEffect(player, result, 100.0)
 
-    fn(serverMode as T, level, player, result)
+    fn(serverMode.mode as T, level, player, result)
     } catch (e: Exception) {
         ELOG("Failed to activate function ${fn.javaClass.name} of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
     }

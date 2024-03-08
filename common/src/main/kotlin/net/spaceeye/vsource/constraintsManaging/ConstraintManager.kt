@@ -339,7 +339,7 @@ class ConstraintManager: SavedData() {
                 if (level == null) { return@on }
                 val instance = getInstance()
                 instance.getAllConstraintsIdOfId(ship.id).forEach {
-                    (instance.idToConstraint[it] ?: return@forEach).onDeleteMConstraint(level!!)
+                    instance.removeConstraint(level!!, it)
                 }
                 instance.setDirty()
             }

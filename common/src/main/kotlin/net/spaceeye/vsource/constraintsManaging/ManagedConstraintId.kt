@@ -1,5 +1,8 @@
 package net.spaceeye.vsource.constraintsManaging
 
+import net.minecraft.world.entity.player.Player
+import net.spaceeye.vsource.toolgun.ServerToolGunState
+
 class ManagedConstraintId(@JvmField val id: Int) {
     override fun hashCode(): Int {
         return id
@@ -15,4 +18,9 @@ class ManagedConstraintId(@JvmField val id: Int) {
     }
 
     override fun toString() = id.toString()
+}
+
+fun ManagedConstraintId?.addFor(player: Player): ManagedConstraintId? {
+    ServerToolGunState.playerStates[player.uuid]?.constraintsStack?.add(this ?: return null)
+    return this
 }

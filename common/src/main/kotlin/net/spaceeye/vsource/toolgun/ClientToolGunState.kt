@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft
 import net.spaceeye.vsource.toolgun.modes.ToolgunModes.modes
 import net.spaceeye.vsource.toolgun.modes.BaseMode
 import net.spaceeye.vsource.utils.ClientClosable
+import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
     val GUI_MENU_OPEN_OR_CLOSE = register(
@@ -18,6 +19,15 @@ object ClientToolGunState : ClientClosable() {
         "vsourse.keymappings_name"
     ))
 
+    val TOOLGUN_REMOVE_TOP_CONSTRAINT = register(
+        KeyMapping(
+            "key.vsource.remove_top_constraint",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_Z,
+            "vsourse.keymappings_name"
+        )
+    )
+
     fun register(keyMapping: KeyMapping): KeyMapping {
         KeyMappingRegistry.register(keyMapping)
         return keyMapping
@@ -26,8 +36,14 @@ object ClientToolGunState : ClientClosable() {
     var currentMode: BaseMode? = null
 
     fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): EventResult {
-        if (currentMode == null) {return EventResult.pass()}
-        return currentMode!!.handleKeyEvent(keyCode, scanCode, action, modifiers)
+        val eventResult = if (currentMode == null) { EventResult.pass() } else { currentMode!!.handleKeyEvent(keyCode, scanCode, action, modifiers) }
+        if (eventResult != EventResult.pass()) { return eventResult }
+
+        if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_CONSTRAINT.matches(keyCode, scanCode)) {
+            ServerToolGunState.c2sRequestRemoveLastConstraint.sendToServer(ServerToolGunState.C2SRequestRemoveLastConstraintPacket())
+        }
+
+        return EventResult.interruptFalse()
     }
 
     fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {

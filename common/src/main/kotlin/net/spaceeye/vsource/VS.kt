@@ -7,6 +7,8 @@ import net.minecraft.client.Minecraft
 import net.spaceeye.vsource.constraintsManaging.ConstraintManager
 import net.spaceeye.vsource.gui.SimpleMessagerNetworking
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
+import net.spaceeye.vsource.toolgun.ClientToolGunState
+import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.toolgun.ToolgunItem
 import net.spaceeye.vsource.toolgun.modes.ToolgunModes
 import net.spaceeye.vsource.utils.ServerLevelHolder
@@ -33,6 +35,8 @@ object VS {
         SynchronisedRenderingData
         SimpleMessagerNetworking
         ToolgunModes
+        ServerToolGunState
+        ClientToolGunState
 
         VSBlocks.register()
         VSBlockEntities.register()

@@ -17,6 +17,7 @@
   "vsource.gui.setting.activate": "Activate",
   "vsource.gui.setting.deactivate": "Deactivate",
   "vsource.gui.setting.apply_changes": "Apply Changes",
+  "vsource.gui.setting.removed": "Removed",
 
   "vsource.gui.setting.hitpos_modes": "HitPos Modes",
   "vsource.gui.setting.normal": "Normal",
@@ -24,6 +25,7 @@
   "vsource.gui.setting.centered_in_block": "Centered In Block",
 
   "key.vsource.gui_open_or_close": "Open or Close Toolgun GUI",
+  "key.vsource.remove_top_constraint": "Remove Top Constraint",
   "vsourse.keymappings_name": "VSourse Toolgun",
 
   "item.vsource.toolgun": "Toolgun",

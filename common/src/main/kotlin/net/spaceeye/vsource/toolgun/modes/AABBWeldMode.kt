@@ -35,7 +35,7 @@ class AABBWeldMode : BaseMode {
             conn_primary.sendToServer(this)
         }
 
-        return EventResult.interruptTrue()
+        return EventResult.interruptFalse()
     }
 
     override fun serialize(): FriendlyByteBuf {

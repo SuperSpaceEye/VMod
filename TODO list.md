@@ -3,6 +3,7 @@ mconstraint = managed constraint
 ## Constraints
 1. ✅ Rework current constraints managing logic to support additional data
 2. Expand mconstraints and rendering system to allow for mconstraints to be tied to blocks instead to whole ships. I guess i can mixin into server levelChunk and inject additional data + inject into setState to track when smth becomes air, and check if chunk has constraints and then also check if the block has any constraint connected to it, and if it did, then remove constraint and renderer (if it exists). For saving/loading inject into ChunkMap.
+3. Add compat for ship splitting (VSGameEvents)
 
 ## Rendering
 1. ✅ Expand rendering system to include additional types of rendering like
@@ -12,6 +13,7 @@ mconstraint = managed constraint
 3. Add clientside validation 
 4. (kinda) ✅ Add effects for toolgun
 5. Group rendering objects by types to elevate common operations and add shared data between rendering types
+6. "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 
 ## HUD Rendering
 1. Make system for HUD rendering

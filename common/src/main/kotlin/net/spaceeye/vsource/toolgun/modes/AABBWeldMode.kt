@@ -76,7 +76,7 @@ class AABBWeldMode : BaseMode {
     }
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverTryActivateFunction(PositionModes.NORMAL, level, raycastResult, ::previousResult, ::resetState) {
-        level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2 ->
+        level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         val bpos = previousResult!!.blockPosition!!
         val ship1AttachmentPoints: MutableList<Vector3d> = mutableListOf()

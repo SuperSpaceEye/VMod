@@ -15,6 +15,7 @@ object GUIComponents {
     val ROPE = t("rope")
     val AABB_WELD = t("aabbweld")
     val HYDRAULICS = t("hydraulics")
+    val AXIS = t("axis")
 
     val COMPLIANCE = s("compliance")
     val MAX_FORCE = s("max_force")
@@ -30,6 +31,7 @@ object GUIComponents {
     val DEACTIVATE = s("deactivate")
     val APPLY_CHANGES = s("apply_changes")
     val REMOVED = s("removed")
+    val DISABLE_COLLISIONS = s("disable_collisions")
 
     val HITPOS_MODES = s("hitpos_modes")
     val NORMAL = s("normal")

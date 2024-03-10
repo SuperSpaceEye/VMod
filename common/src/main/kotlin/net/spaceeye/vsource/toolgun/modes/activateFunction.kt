@@ -41,7 +41,9 @@ fun BaseMode.serverTryActivateFunction(
         spoint1: Vector3d,
         spoint2: Vector3d,
         rpoint1: Vector3d,
-        rpoint2: Vector3d) -> Unit
+        rpoint2: Vector3d,
+        prresult: RaycastFunctions.RaycastResult,
+        rresult: RaycastFunctions.RaycastResult) -> Unit
 ) {
     if (level !is ServerLevel) {throw RuntimeException("Function intended for server use only was activated on client level. How.")}
     if (raycastResult.state.isAir) {return}
@@ -61,5 +63,5 @@ fun BaseMode.serverTryActivateFunction(
     val rpoint1 = if (ship1 == null) spoint1 else posShipToWorld(ship1, Vector3d(spoint1))
     val rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
-    fnToActivate(level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2)
+    fnToActivate(level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, previousResult.get()!!, raycastResult)
 }

@@ -3,6 +3,7 @@
   "vsource.gui.rope": "Rope",
   "vsource.gui.aabbweld": "AABB Weld",
   "vsource.gui.hydraulics": "Hydraulics",
+  "vsource.gui.axis": "Axis",
 
   "vsource.gui.setting.compliance": "Compliance",
   "vsource.gui.setting.max_force": "Max Force",
@@ -18,6 +19,7 @@
   "vsource.gui.setting.deactivate": "Deactivate",
   "vsource.gui.setting.apply_changes": "Apply Changes",
   "vsource.gui.setting.removed": "Removed",
+  "vsource.gui.setting.disable_collisions": "Disable Collisions",
 
   "vsource.gui.setting.hitpos_modes": "HitPos Modes",
   "vsource.gui.setting.normal": "Normal",

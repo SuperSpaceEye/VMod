@@ -14,6 +14,7 @@ object MConstraintTypes {
         register { RopeMConstraint() }
         register { WeldMConstraint() }
         register { HydraulicsMConstraint() }
+        register { AxisMConstraint() }
     }
 
     private fun register(supplier: Supplier<MConstraint>) {

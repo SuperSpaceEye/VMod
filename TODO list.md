@@ -4,6 +4,7 @@ mconstraint = managed constraint
 1. ✅ Rework current constraints managing logic to support additional data
 2. Expand mconstraints and rendering system to allow for mconstraints to be tied to blocks instead to whole ships. I guess i can mixin into server levelChunk and inject additional data + inject into setState to track when smth becomes air, and check if chunk has constraints and then also check if the block has any constraint connected to it, and if it did, then remove constraint and renderer (if it exists). For saving/loading inject into ChunkMap.
 3. Add compat for ship splitting (VSGameEvents)
+4. Add scale tool that would scale all ships connected to constraint
 
 ## Rendering
 1. ✅ Expand rendering system to include additional types of rendering like
@@ -14,6 +15,7 @@ mconstraint = managed constraint
 4. (kinda) ✅ Add effects for toolgun
 5. Group rendering objects by types to elevate common operations and add shared data between rendering types
 6. "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
+7. Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
 
 ## HUD Rendering
 1. Make system for HUD rendering
@@ -35,10 +37,6 @@ mconstraint = managed constraint
     * Set limit for total mconstraints of acc level.
     * Some other commands idk
 
-## Constraints
-1. Add more constraints
-2. ✅ Add Hit Position modes
-
 ## Weld Constraint
 1. ✅ Change welding to lclick and make it not break blocks on lclick
 2. Make normal weld on lclick and snapping welding on rclick
@@ -47,6 +45,9 @@ mconstraint = managed constraint
 ## Rope Constraint
 1. Add ability to change rendering modes
 2. Add more setting options
+
+## Axis Constraint
+1. When using primary, if it raycasts through the source ship it will not attach to another ship
 
 ## Forge
 1. Fix elementa dependency on forge

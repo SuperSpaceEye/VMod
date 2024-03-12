@@ -14,6 +14,7 @@ import net.spaceeye.vsource.rendering.Effects.sendToolgunRayEffect
 import net.spaceeye.vsource.toolgun.PlayerToolgunState
 import net.spaceeye.vsource.toolgun.ServerToolGunState
 import net.spaceeye.vsource.utils.RaycastFunctions
+import net.spaceeye.vsource.utils.Vector3d
 
 interface GUIItem {
     val itemName: TranslatableComponent
@@ -49,7 +50,7 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
     serverMode.mode.serverSideVerifyLimits()
 
     //TODO add maxDistance to config
-    val result = RaycastFunctions.raycast(level, player, 100.0)
+    val result = RaycastFunctions.raycast(level, RaycastFunctions.Source(Vector3d(player.lookAngle), Vector3d(player.eyePosition)), 100.0)
 
     sendToolgunRayEffect(player, result, 100.0)
 

@@ -1,10 +1,12 @@
 package net.spaceeye.vsource.toolgun.modes
 
+import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
 import net.spaceeye.vsource.utils.RaycastFunctions
 import net.spaceeye.vsource.utils.Vector3d
 import net.spaceeye.vsource.utils.posShipToWorld
+import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.dimensionId
@@ -45,7 +47,7 @@ fun BaseMode.serverTryActivateFunction(
         prresult: RaycastFunctions.RaycastResult,
         rresult: RaycastFunctions.RaycastResult) -> Unit
 ) {
-    if (level !is ServerLevel) {throw RuntimeException("Function intended for server use only was activated on client level. How.")}
+    if (level !is ServerLevel) {throw RuntimeException("Function intended for server use only was activated on client. How.")}
     if (raycastResult.state.isAir) {return}
     if (previousResult.get() == null) {previousResult.set(raycastResult); return}
 

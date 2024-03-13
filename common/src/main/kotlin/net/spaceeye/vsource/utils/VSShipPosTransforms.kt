@@ -38,3 +38,6 @@ fun posWorldToShipRender(ship: ClientShip, pos: Vector3d): Vector3d {
         ((pos - ship_wp) / scale).toJomlVector3d(), org.joml.Vector3d()))
     ) + ship_sp
 }
+
+inline fun transformDirectionShipToWorld(ship: Ship, dir: Vector3d): Vector3d = Vector3d(ship.transform.transformDirectionNoScalingFromShipToWorld(dir.toJomlVector3d(), org.joml.Vector3d()))
+inline fun transformDirectionWorldToShip(ship: Ship, dir: Vector3d): Vector3d = Vector3d(ship.transform.transformDirectionNoScalingFromWorldToShip(dir.toJomlVector3d(), org.joml.Vector3d()))

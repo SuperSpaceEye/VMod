@@ -42,8 +42,8 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
     noinline fn: (item: T, ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
     val level = player.level as ServerLevel
 
-    var serverMode = ServerToolGunState.playerStates.getOrPut(player.uuid) { PlayerToolgunState(constructor()) }
-    if (serverMode.mode !is T) { serverMode = PlayerToolgunState(constructor()); ServerToolGunState.playerStates[player.uuid] = serverMode }
+    var serverMode = ServerToolGunState.playersStates.getOrPut(player.uuid) { PlayerToolgunState(constructor()) }
+    if (serverMode.mode !is T) { serverMode = PlayerToolgunState(constructor()); ServerToolGunState.playersStates[player.uuid] = serverMode }
 
     try {
     serverMode.mode.deserialize(buf)

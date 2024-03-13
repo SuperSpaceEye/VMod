@@ -6,7 +6,10 @@ object ToolgunModes {
         RopeMode(),
         AABBWeldMode(),
         HydraulicsMode(),
-        AxisMode()
+        AxisMode(),
+
+
+        StripMode()
     )
     var initialized = false
     init {

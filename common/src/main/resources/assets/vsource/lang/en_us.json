@@ -4,6 +4,7 @@
   "vsource.gui.aabbweld": "AABB Weld",
   "vsource.gui.hydraulics": "Hydraulics",
   "vsource.gui.axis": "Axis",
+  "vsource.gui.strip": "Strip",
 
   "vsource.gui.setting.compliance": "Compliance",
   "vsource.gui.setting.max_force": "Max Force",

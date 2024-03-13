@@ -21,6 +21,6 @@ class ManagedConstraintId(@JvmField val id: Int) {
 }
 
 fun ManagedConstraintId?.addFor(player: Player): ManagedConstraintId? {
-    ServerToolGunState.playerStates[player.uuid]?.constraintsStack?.add(this ?: return null)
+    ServerToolGunState.playersConstraintsStack.getOrPut(player.uuid) { mutableListOf() }.add(this ?: return null)
     return this
 }

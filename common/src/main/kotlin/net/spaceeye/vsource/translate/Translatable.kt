@@ -16,6 +16,7 @@ object GUIComponents {
     val AABB_WELD = t("aabbweld")
     val HYDRAULICS = t("hydraulics")
     val AXIS = t("axis")
+    val STRIP = t("strip")
 
     val COMPLIANCE = s("compliance")
     val MAX_FORCE = s("max_force")

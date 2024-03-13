@@ -13,13 +13,15 @@ import net.spaceeye.vsource.utils.ServerClosable
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class PlayerToolgunState(var mode: BaseMode, var constraintsStack: MutableList<ManagedConstraintId> = mutableListOf())
+class PlayerToolgunState(var mode: BaseMode)
 
 object ServerToolGunState: ServerClosable() {
-    val playerStates = ConcurrentHashMap<UUID, PlayerToolgunState>()
+    val playersStates = ConcurrentHashMap<UUID, PlayerToolgunState>()
+    val playersConstraintsStack = ConcurrentHashMap<UUID, MutableList<ManagedConstraintId>>()
 
     override fun close() {
-        playerStates.clear()
+        playersStates.clear()
+        playersConstraintsStack.clear()
     }
 
     class C2SRequestRemoveLastConstraintPacket(): Serializable {
@@ -30,11 +32,19 @@ object ServerToolGunState: ServerClosable() {
     val c2sRequestRemoveLastConstraint = "request_remove_last_constraint" idWithConnc {
         object : C2SConnection<C2SRequestRemoveLastConstraintPacket>(it, "toolgun") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val state = playerStates[context.player.uuid] ?: return
-                val item = state.constraintsStack.removeLastOrNull() ?: return
+                val stack = playersConstraintsStack[context.player.uuid] ?: return
+                var item: ManagedConstraintId = stack.removeLastOrNull() ?: return
+
                 val level = context.player.level as ServerLevel
 
-                level.removeManagedConstraint(item)
+                // if constraint wasn't already removed, then remove it
+                while (true) {
+                    if (level.removeManagedConstraint(item)) {
+                        break
+                    } else {
+                        item = stack.removeLastOrNull() ?: return
+                    }
+                }
 
                 context.player.sendMessage(REMOVED, context.player.uuid)
             }

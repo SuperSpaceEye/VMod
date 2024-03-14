@@ -1,5 +1,6 @@
 package net.spaceeye.vsource.constraintsManaging.types
 
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vsource.ELOG
@@ -10,7 +11,9 @@ import net.spaceeye.vsource.constraintsManaging.VSConstraintSerializationUtil
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.BaseRenderer
 import net.spaceeye.vsource.utils.Vector3d
+import net.spaceeye.vsource.utils.deserializeBlockPositions
 import net.spaceeye.vsource.utils.posWorldToShip
+import net.spaceeye.vsource.utils.serializeBlockPositions
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -25,6 +28,7 @@ class AxisMConstraint(): MConstraint {
     lateinit var aconstraint2: VSForceConstraint
 
     val cIDs = mutableListOf<ConstraintId>()
+    var attachmentPoints_ = listOf<BlockPos>()
 
     var disableCollisions: Boolean = false
     var renderer: BaseRenderer? = null
@@ -45,6 +49,8 @@ class AxisMConstraint(): MConstraint {
         fixedLength: Double = -1.0,
 
         disableCollisions: Boolean = false,
+
+        attachmentPoints: List<BlockPos>,
 
         renderer: BaseRenderer? = null
     ): this() {
@@ -75,6 +81,7 @@ class AxisMConstraint(): MConstraint {
 
         this.renderer = renderer
         this.disableCollisions = disableCollisions
+        attachmentPoints_ = attachmentPoints
     }
 
     override lateinit var mID: ManagedConstraintId
@@ -99,6 +106,8 @@ class AxisMConstraint(): MConstraint {
         return toReturn
     }
 
+    override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+
     override fun nbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
 
@@ -106,6 +115,7 @@ class AxisMConstraint(): MConstraint {
         tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
         tag.putInt("managedID", mID.id)
         tag.putBoolean("disableCollisions", disableCollisions)
+        tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
 
         return tag
     }
@@ -116,6 +126,7 @@ class AxisMConstraint(): MConstraint {
 
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
         disableCollisions = tag.getBoolean("disableCollisions")
+        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
         return this
     }

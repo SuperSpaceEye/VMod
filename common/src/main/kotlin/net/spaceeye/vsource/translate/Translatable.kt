@@ -13,7 +13,6 @@ object GUIComponents {
 
     val WELD = t("weld")
     val ROPE = t("rope")
-    val AABB_WELD = t("aabbweld")
     val HYDRAULICS = t("hydraulics")
     val AXIS = t("axis")
     val STRIP = t("strip")
@@ -23,7 +22,6 @@ object GUIComponents {
     val FIXED_DISTANCE = s("fixed_distance")
     val WIDTH = s("width")
     val SEGMENTS = s("segments")
-    val ADDITIONAL_DISTANCE = s("additional_distance")
     val EXTENSION_SPEED = s("extension_speed")
     val EXTENSION_DISTANCE = s("extension_distance")
     val CHANNEL = s("channel")

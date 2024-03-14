@@ -1,10 +1,10 @@
 package net.spaceeye.vsource.constraintsManaging.types
 
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vsource.ELOG
-import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
@@ -15,7 +15,9 @@ import net.spaceeye.vsource.network.MessagingNetwork
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.BaseRenderer
 import net.spaceeye.vsource.utils.Vector3d
+import net.spaceeye.vsource.utils.deserializeBlockPositions
 import net.spaceeye.vsource.utils.posWorldToShip
+import net.spaceeye.vsource.utils.serializeBlockPositions
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -30,6 +32,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSForceConstraint
     lateinit var rconstraint1: VSTorqueConstraint
+
+    var attachmentPoints_ = listOf<BlockPos>()
 
     val cIDs = mutableListOf<ConstraintId>()
 
@@ -67,6 +71,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         return toReturn
     }
 
+    override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+
     constructor(
         // shipyard pos
         spoint1: Vector3d,
@@ -86,6 +92,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         extensionSpeed: Double,
 
         channel: String,
+
+        attachmentPoints: List<BlockPos>,
 
         renderer: BaseRenderer?,
     ): this() {
@@ -126,6 +134,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         this.extensionSpeed = extensionSpeed / 20.0
 
         this.channel = channel
+
+        attachmentPoints_ = attachmentPoints
     }
 
     override fun nbtSerialize(): CompoundTag? {
@@ -145,6 +155,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         tag.putBoolean("isActivating", fnToUse == ::activatingFn)
         tag.putBoolean("isDeactivating", fnToUse == ::deactivatingFn)
         tag.putString("channel", channel)
+        tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
 
         return tag
     }
@@ -162,6 +173,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         extensionSpeed = tag.getDouble("extensionSpeed")
         extendedDist = tag.getDouble("extendedDist")
         channel = tag.getString("channel")
+        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
         fnToUse = when {
             tag.getBoolean("isActivating") -> ::activatingFn

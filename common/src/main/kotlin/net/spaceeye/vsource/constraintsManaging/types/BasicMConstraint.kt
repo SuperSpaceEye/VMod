@@ -1,11 +1,14 @@
 package net.spaceeye.vsource.constraintsManaging.types
 
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vsource.constraintsManaging.VSConstraintSerializationUtil
+import net.spaceeye.vsource.utils.deserializeBlockPositions
+import net.spaceeye.vsource.utils.serializeBlockPositions
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -14,8 +17,9 @@ import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class BasicMConstraint(): MConstraint {
-    constructor(constraint_: VSConstraint) :this() {
+    constructor(constraint_: VSConstraint, attachmentPoints: List<BlockPos> = listOf()) :this() {
         constraint = constraint_
+        this.attachmentPoints_ = attachmentPoints
     }
     constructor(constraint_: VSConstraint,
                 mID_: ManagedConstraintId) : this() {
@@ -23,6 +27,7 @@ class BasicMConstraint(): MConstraint {
         mID = mID_
     }
 
+    var attachmentPoints_ = listOf<BlockPos>()
     lateinit var constraint: VSConstraint
     var vsID: VSConstraintId = 0
 
@@ -48,9 +53,13 @@ class BasicMConstraint(): MConstraint {
         return toReturn
     }
 
+    override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null
         tag.putInt("managedID", mID.id)
+        tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
+
         return tag
     }
 
@@ -58,6 +67,7 @@ class BasicMConstraint(): MConstraint {
         tryConvertDimensionId(tag, lastDimensionIds)
         constraint = VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
+        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
         return this
     }

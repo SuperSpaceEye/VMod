@@ -111,6 +111,7 @@ class RopeMode : BaseMode {
                 compliance,
                 spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
                 maxForce, dist,
+                listOf(prresult.blockPosition, rresult.blockPosition),
                 RopeRenderer(
                     ship1 != null,
                     ship2 != null,

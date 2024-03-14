@@ -124,6 +124,7 @@ class HydraulicsMode : BaseMode {
             dist + extensionDistance,
             extensionSpeed,
             channel,
+            listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,
                 ship2 != null,

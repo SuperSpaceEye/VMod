@@ -104,6 +104,7 @@ class WeldMode : BaseMode {
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
             fixedDistance,
+            listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,
                 ship2 != null,

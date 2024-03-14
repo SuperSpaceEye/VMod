@@ -4,7 +4,6 @@ object ToolgunModes {
     val modes = listOf<BaseMode>(
         WeldMode(),
         RopeMode(),
-        AABBWeldMode(),
         HydraulicsMode(),
         AxisMode(),
 

@@ -1,7 +1,6 @@
 {
   "vsource.gui.weld": "Weld",
   "vsource.gui.rope": "Rope",
-  "vsource.gui.aabbweld": "AABB Weld",
   "vsource.gui.hydraulics": "Hydraulics",
   "vsource.gui.axis": "Axis",
   "vsource.gui.strip": "Strip",
@@ -11,7 +10,6 @@
   "vsource.gui.setting.fixed_distance": "Fixed Distance",
   "vsource.gui.setting.width": "Width",
   "vsource.gui.setting.segments": "Segments",
-  "vsource.gui.setting.additional_distance": "Additional Distance",
   "vsource.gui.setting.extension_speed": "Extension Speed",
   "vsource.gui.setting.extension_distance": "Extension Distance",
   "vsource.gui.setting.channel": "Channel",

@@ -1,5 +1,6 @@
 package net.spaceeye.vsource.constraintsManaging.types
 
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vsource.ELOG
@@ -10,7 +11,9 @@ import net.spaceeye.vsource.constraintsManaging.VSConstraintSerializationUtil
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.BaseRenderer
 import net.spaceeye.vsource.utils.Vector3d
+import net.spaceeye.vsource.utils.deserializeBlockPositions
 import net.spaceeye.vsource.utils.posWorldToShip
+import net.spaceeye.vsource.utils.serializeBlockPositions
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -23,6 +26,8 @@ class WeldMConstraint(): MConstraint {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSForceConstraint
     lateinit var rconstraint1: VSTorqueConstraint
+
+    var attachmentPoints_ = listOf<BlockPos>()
 
     val cIDs = mutableListOf<ConstraintId>()
 
@@ -42,6 +47,7 @@ class WeldMConstraint(): MConstraint {
         compliance: Double,
         maxForce: Double,
         fixedLength: Double = -1.0,
+        attachmentPoints: List<BlockPos>,
         renderer: BaseRenderer?
     ): this() {
         aconstraint1 = VSAttachmentConstraint(
@@ -75,6 +81,7 @@ class WeldMConstraint(): MConstraint {
         rconstraint1 = VSFixedOrientationConstraint(shipId0, shipId1, 1e-20, rot2, rot1, 1e300)
 
         this.renderer = renderer
+        attachmentPoints_ = attachmentPoints
     }
 
     override lateinit var mID: ManagedConstraintId
@@ -99,13 +106,17 @@ class WeldMConstraint(): MConstraint {
         return toReturn
     }
 
+    override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+
     override fun nbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
 
         tag.put("c1", VSConstraintSerializationUtil.serializeConstraint(aconstraint1) ?: return null)
         tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
         tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint1) ?: return null)
+
         tag.putInt("managedID", mID.id)
+        tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
 
         return tag
     }
@@ -116,6 +127,7 @@ class WeldMConstraint(): MConstraint {
         tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSTorqueConstraint
 
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
+        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
         return this
     }
 

@@ -1,5 +1,6 @@
 package net.spaceeye.vsource.constraintsManaging.types
 
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
@@ -8,6 +9,8 @@ import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.
 import net.spaceeye.vsource.constraintsManaging.VSConstraintSerializationUtil
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.rendering.types.BaseRenderer
+import net.spaceeye.vsource.utils.deserializeBlockPositions
+import net.spaceeye.vsource.utils.serializeBlockPositions
 import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -18,7 +21,9 @@ import org.valkyrienskies.physics_api.ConstraintId
 
 class RopeMConstraint(): MConstraint {
     lateinit var constraint: VSRopeConstraint
-    private var renderer: BaseRenderer? = null // will not get saved
+    private var renderer: BaseRenderer? = null
+
+    var attachmentPoints_ = listOf<BlockPos>()
 
     var vsId: ConstraintId = -1
 
@@ -30,10 +35,12 @@ class RopeMConstraint(): MConstraint {
         localPos1: Vector3dc,
         maxForce: Double,
         ropeLength: Double,
+        attachmentPoints: List<BlockPos>,
         renderer: BaseRenderer?
     ): this() {
         constraint = VSRopeConstraint(shipId0, shipId1, compliance, localPos0, localPos1, maxForce, ropeLength)
         this.renderer = renderer
+        attachmentPoints_ = attachmentPoints
     }
 
     override lateinit var mID: ManagedConstraintId
@@ -58,9 +65,13 @@ class RopeMConstraint(): MConstraint {
         return toReturn
     }
 
+    override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null
         tag.putInt("managedID", mID.id)
+        tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
+
         return tag
     }
 
@@ -68,6 +79,7 @@ class RopeMConstraint(): MConstraint {
         tryConvertDimensionId(tag, lastDimensionIds)
         constraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
+        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
         return this
     }

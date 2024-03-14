@@ -1,5 +1,6 @@
 package net.spaceeye.vsource.constraintsManaging.types
 
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
@@ -23,6 +24,10 @@ interface MConstraint {
     fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
     // SHOULDN'T RETURN GROUND SHIPID
     fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId>
+
+    // positions to which constraint is "attached" to the ship/world
+    // is needed for future strip tool / removing constraints on blocks breaking
+    fun getAttachmentPoints(): List<BlockPos>
 
     fun nbtSerialize(): CompoundTag?
     fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint?

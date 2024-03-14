@@ -249,6 +249,7 @@ class AxisMode : BaseMode {
             compliance, maxForce,
             fixedDistance,
             disableCollisions,
+            listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,
                 ship2 != null,
@@ -326,7 +327,8 @@ class AxisMode : BaseMode {
 
         level.makeManagedConstraint(AxisMConstraint(
             spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
-            compliance, maxForce, fixedDistance, disableCollisions
+            compliance, maxForce, fixedDistance, disableCollisions,
+            listOf(firstResult.blockPosition, secondResult.blockPosition)
         )).addFor(player)
     }
 

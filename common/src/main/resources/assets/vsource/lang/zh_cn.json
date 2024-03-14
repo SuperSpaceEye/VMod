@@ -1,7 +1,6 @@
 {
   "vsource.gui.weld": "焊接",
   "vsource.gui.rope": "绳索",
-  "vsource.gui.aabbweld": "AABB焊接",
   "vsource.gui.hydraulics": "液压",
 
   "vsource.gui.setting.compliance": "力顺",
@@ -9,7 +8,6 @@
   "vsource.gui.setting.fixed_distance": "固定距离",
   "vsource.gui.setting.width": "宽度",
   "vsource.gui.setting.segments": "段数",
-  "vsource.gui.setting.additional_distance": "额外距离",
   "vsource.gui.setting.extension_speed": "延展速度",
   "vsource.gui.setting.extension_distance": "延展距离",
   "vsource.gui.setting.channel": "频道",

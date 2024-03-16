@@ -26,8 +26,8 @@
   "vsource.gui.setting.centered_in_block": "方块中心",
 
   "key.vsource.gui_open_or_close": "打开或关闭工具枪GUI",
-  "key.vsource.remove_top_constraint": "移除顶部约束",
-  "vsourse.keymappings_name": "VSourse 工具枪",
+  "key.vsource.remove_top_constraint": "解除顶部约束",
+  "vsourse.keymappings_name": "VSource 工具枪",
 
   "item.vsource.toolgun": "工具枪",
 

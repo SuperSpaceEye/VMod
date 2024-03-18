@@ -27,16 +27,24 @@ class ToolgunItem: Item(Properties().tab(VSItems.TAB).stacksTo(1)) {
                 val guiIsOpened = ClientToolGunState.guiIsOpened()
                 val isPressed = action == GLFW.GLFW_PRESS
 
-                if (!guiIsOpened && isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
-                    Minecraft.getInstance().setScreen(ClientToolGunState.gui)
-                    return@register EventResult.pass()
+                // we do it like this because we need for toolgun to handle keys first to prevent
+                // user from opening menu or smth in the middle of using some mode
+                if (!guiIsOpened) {
+                    val res = ClientToolGunState.handleKeyEvent(keyCode, scanCode, action, modifiers)
+                    if (res != EventResult.pass()) {return@register res}
+
+                    if (isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
+                        Minecraft.getInstance().setScreen(ClientToolGunState.gui)
+                        return@register EventResult.pass()
+                    }
                 }
-                if ( guiIsOpened && isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
+
+                if (guiIsOpened && isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
                     Minecraft.getInstance().setScreen(null)
                     return@register EventResult.pass()
                 }
 
-                return@register ClientToolGunState.handleKeyEvent(keyCode, scanCode, action, modifiers)
+                return@register EventResult.pass()
             }
 
             ClientRawInputEvent.MOUSE_CLICKED_PRE.register {

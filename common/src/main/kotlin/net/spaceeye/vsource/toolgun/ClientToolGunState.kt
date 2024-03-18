@@ -28,6 +28,15 @@ object ClientToolGunState : ClientClosable() {
         )
     )
 
+    val TOOLGUN_RESET_KEY = register(
+        KeyMapping(
+            "key.vsource.reset_constraint_mode",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_R,
+            "vsource.keymappings_name"
+        )
+    )
+
     fun register(keyMapping: KeyMapping): KeyMapping {
         KeyMappingRegistry.register(keyMapping)
         return keyMapping
@@ -41,9 +50,10 @@ object ClientToolGunState : ClientClosable() {
 
         if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_CONSTRAINT.matches(keyCode, scanCode)) {
             ServerToolGunState.c2sRequestRemoveLastConstraint.sendToServer(ServerToolGunState.C2SRequestRemoveLastConstraintPacket())
+            return EventResult.interruptFalse()
         }
 
-        return EventResult.interruptFalse()
+        return EventResult.pass()
     }
 
     fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {

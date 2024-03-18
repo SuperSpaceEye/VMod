@@ -17,8 +17,7 @@ import net.spaceeye.vsource.utils.serializeBlockPositions
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
-import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
+import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
 
@@ -26,6 +25,7 @@ import org.valkyrienskies.physics_api.ConstraintId
 class AxisMConstraint(): MConstraint {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSForceConstraint
+//    lateinit var rconstraint: VSConstraint
 
     val cIDs = mutableListOf<ConstraintId>()
     var attachmentPoints_ = listOf<BlockPos>()
@@ -61,7 +61,7 @@ class AxisMConstraint(): MConstraint {
             maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength)
 
         val dist1 = rpoint1 - rpoint2
-        val dir = dist1.normalize() * 20000
+        val dir = dist1.normalize() * 20
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -78,6 +78,25 @@ class AxisMConstraint(): MConstraint {
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength + addDist
         )
+
+        // TODO this doesn't work
+//        val rot1 = if (ship1 != null) ship1.transform.shipToWorldRotation else Quaterniond()
+//        val rot2 = if (ship2 != null) ship2.transform.shipToWorldRotation else Quaterniond()
+//
+//        val cdir = (rpoint1 - rpoint2).snormalize()
+//        val x = Vector3d(1.0, 0.0, 0.0)
+//        val xCross = Vector3d(cdir).scross(x)
+//        val hRot = if (xCross.sqrDist() < 1e-6) {
+//            Quaterniond()
+//        } else {
+//            Quaterniond(AxisAngle4d(cdir.toJomlVector3d().angle(x.toJomlVector3d()), xCross.snormalize().toJomlVector3d()))
+//        }
+//
+//        rconstraint = VSHingeOrientationConstraint(
+//            shipId0, shipId1, compliance,
+//            hRot.mul(rot1, Quaterniond()), hRot.mul(rot2, Quaterniond()),
+////            rot1.mul(hRot, Quaterniond()), rot2.mul(hRot, Quaterniond()),
+//            maxForce)
 
         this.renderer = renderer
         this.disableCollisions = disableCollisions
@@ -113,6 +132,7 @@ class AxisMConstraint(): MConstraint {
 
         tag.put("c1", VSConstraintSerializationUtil.serializeConstraint(aconstraint1) ?: return null)
         tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
+//        tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint ) ?: return null)
         tag.putInt("managedID", mID.id)
         tag.putBoolean("disableCollisions", disableCollisions)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
@@ -123,6 +143,7 @@ class AxisMConstraint(): MConstraint {
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSForceConstraint
+//        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint  = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null)
 
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
         disableCollisions = tag.getBoolean("disableCollisions")
@@ -140,6 +161,7 @@ class AxisMConstraint(): MConstraint {
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
+//        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
 
         if (disableCollisions) {
             level.shipObjectWorld.disableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)
@@ -150,6 +172,9 @@ class AxisMConstraint(): MConstraint {
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
+        if (disableCollisions) {
+            level.shipObjectWorld.enableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)
+        }
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
         SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID.id)
     }

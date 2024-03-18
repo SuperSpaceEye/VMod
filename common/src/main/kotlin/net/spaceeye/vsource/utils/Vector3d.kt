@@ -2,8 +2,10 @@ package net.spaceeye.vsource.utils
 
 import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
+import kotlin.math.acos
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 
 typealias MCVector3d = com.mojang.math.Vector3d
 typealias MCVector3f = com.mojang.math.Vector3f

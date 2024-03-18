@@ -47,7 +47,9 @@ mconstraint = managed constraint
 2. Add more setting options
 
 ## Axis Constraint
-1. When using primary, if it raycasts through the source ship it will not attach to another ship
+1. Figure out how VSHingeOrientationConstraint works and make it more stable
+2. When using primary, if it raycasts through the source ship it will not attach to another ship
+3. When using primary or secondary, prevent from using the other mode
 
 ## Forge
 1. Fix elementa dependency on forge

@@ -2,21 +2,24 @@ package net.spaceeye.vsource.utils
 
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
+import org.valkyrienskies.core.api.ships.properties.ShipTransform
 
-fun posShipToWorld(ship: Ship, pos: Vector3d): Vector3d {
-    val scale = Vector3d(ship.transform.shipToWorldScaling)
-    val ship_wp = Vector3d(ship.transform.positionInWorld)
-    val ship_sp = Vector3d(ship.transform.positionInShip)
-    return Vector3d((ship.transform.transformDirectionNoScalingFromShipToWorld(
+fun posShipToWorld(ship: Ship?, pos: Vector3d, transform: ShipTransform? = null): Vector3d {
+    val transform = transform ?: ship!!.transform
+    val scale = Vector3d(transform.shipToWorldScaling)
+    val ship_wp = Vector3d(transform.positionInWorld)
+    val ship_sp = Vector3d(transform.positionInShip)
+    return Vector3d((transform.transformDirectionNoScalingFromShipToWorld(
         ((pos - ship_sp)*scale).toJomlVector3d(), org.joml.Vector3d()))
     ) + ship_wp
 }
 
-fun posWorldToShip(ship: Ship, pos: Vector3d): Vector3d {
-    val scale = Vector3d(ship.transform.shipToWorldScaling)
-    val ship_wp = Vector3d(ship.transform.positionInWorld)
-    val ship_sp = Vector3d(ship.transform.positionInShip)
-    return Vector3d((ship.transform.transformDirectionNoScalingFromWorldToShip(
+fun posWorldToShip(ship: Ship?, pos: Vector3d, transform: ShipTransform? = null): Vector3d {
+    val transform = transform ?: ship!!.transform
+    val scale = Vector3d(transform.shipToWorldScaling)
+    val ship_wp = Vector3d(transform.positionInWorld)
+    val ship_sp = Vector3d(transform.positionInShip)
+    return Vector3d((transform.transformDirectionNoScalingFromWorldToShip(
             ((pos - ship_wp) / scale).toJomlVector3d(), org.joml.Vector3d()))
     ) + ship_sp
 }

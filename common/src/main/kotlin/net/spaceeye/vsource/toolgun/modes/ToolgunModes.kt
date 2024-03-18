@@ -1,5 +1,6 @@
 package net.spaceeye.vsource.toolgun.modes
 
+// SHOULD BE INITIALIZED BEFORE OTHER OBJECTS
 object ToolgunModes {
     val modes = listOf<BaseMode>(
         WeldMode(),

@@ -16,6 +16,7 @@ class CheckBox(
     baseColor: Color,
     activatedColor: Color,
     name: String,
+    //TODO activated doesn't actually work
     activated: Boolean = false,
     animationTime: Float = 0.5f,
     fnToActivate: (state: Boolean) -> Unit

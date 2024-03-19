@@ -31,6 +31,7 @@ object GUIComponents {
     val APPLY_CHANGES = s("apply_changes")
     val REMOVED = s("removed")
     val DISABLE_COLLISIONS = s("disable_collisions")
+    val DISTANCE_FROM_BLOCK = s("distance_from_block")
 
     val HITPOS_MODES = s("hitpos_modes")
     val NORMAL = s("normal")

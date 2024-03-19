@@ -19,6 +19,7 @@
   "vsource.gui.setting.apply_changes": "Apply Changes",
   "vsource.gui.setting.removed": "Removed",
   "vsource.gui.setting.disable_collisions": "Disable Collisions",
+  "vsource.gui.setting.distance_from_block": "Distance From Block",
 
   "vsource.gui.setting.hitpos_modes": "HitPos Modes",
   "vsource.gui.setting.normal": "Normal",
@@ -27,6 +28,7 @@
 
   "key.vsource.gui_open_or_close": "Open or Close Toolgun GUI",
   "key.vsource.remove_top_constraint": "Remove Top Constraint",
+  "key.vsource.reset_constraint_mode": "Reset Constraint Mode",
   "vsourse.keymappings_name": "VSource Toolgun",
 
   "item.vsource.toolgun": "Toolgun",

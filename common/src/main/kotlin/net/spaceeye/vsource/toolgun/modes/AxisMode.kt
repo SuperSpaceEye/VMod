@@ -26,117 +26,24 @@ import net.spaceeye.vsource.limits.ServerLimits
 import net.spaceeye.vsource.networking.S2CConnection
 import net.spaceeye.vsource.networking.Serializable
 import net.spaceeye.vsource.toolgun.ClientToolGunState
+import net.spaceeye.vsource.transformProviders.PlacementAssistTransformProvider
 import net.spaceeye.vsource.translate.GUIComponents.AXIS
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_IN_BLOCK
 import net.spaceeye.vsource.translate.GUIComponents.CENTERED_ON_SIDE
 import net.spaceeye.vsource.translate.GUIComponents.DISABLE_COLLISIONS
+import net.spaceeye.vsource.translate.GUIComponents.DISTANCE_FROM_BLOCK
 import net.spaceeye.vsource.translate.GUIComponents.FIXED_DISTANCE
 import net.spaceeye.vsource.translate.GUIComponents.HITPOS_MODES
 import net.spaceeye.vsource.translate.GUIComponents.NORMAL
 import net.spaceeye.vsource.translate.GUIComponents.WIDTH
-import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.ClientShip
-import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
-import kotlin.math.sqrt
-
-// https://gamedev.stackexchange.com/questions/61672/align-a-rotation-to-a-direction
-fun getRotation(dir: Vector3d): Quaterniond {
-    //i'm not sure why up just like this works, but it does
-    val up = Vector3d(0, 1, 0)
-    val left = Vector3d(1, 0, 0)
-
-    val a = up.cross(dir)
-    val d = up.dot(dir)
-
-    val q = if (d < 0.0 && a.sqrDist() <= 0.001) {
-        Quaterniond(left.x, left.y, left.z, 0.0)
-    } else {
-        Quaterniond(a.x, a.y, a.z, sqrt(up.sqrDist() * dir.sqrDist()) + d)
-    }
-    return q
-}
-
-class PlacementAssistTransformProvider(
-    var firstResult: RaycastFunctions.RaycastResult,
-    var mode: PositionModes,
-    var ship1: ClientShip
-): ClientShipTransformProvider {
-    val level = Minecraft.getInstance().level!!
-    val player = Minecraft.getInstance().cameraEntity!!
-
-    override fun provideNextRenderTransform(
-        prevShipTransform: ShipTransform,
-        shipTransform: ShipTransform,
-        partialTick: Double
-    ): ShipTransform {
-        var secondResult = RaycastFunctions.raycast(
-            level,
-            RaycastFunctions.Source(
-                Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
-                Vector3d(Minecraft.getInstance().player!!.eyePosition)
-            )
-        )
-
-        val ship = level.getShipManagingPos(secondResult.blockPosition!!)
-        if (ship != null && ship.id == ship1.id || secondResult.state.isAir) {
-            secondResult = RaycastFunctions.raycastNoShips(
-                level,
-                RaycastFunctions.Source(
-                    Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
-                    Vector3d(Minecraft.getInstance().player!!.eyePosition)
-                )
-            )
-        }
-
-        // not sure why i need to flip normal but it works
-        val dir1 = when {
-            firstResult.globalNormalDirection!!.y ==  1.0 -> -firstResult.globalNormalDirection!!
-            firstResult.globalNormalDirection!!.y == -1.0 -> -firstResult.globalNormalDirection!!
-            else -> firstResult.globalNormalDirection!!
-        }
-        val dir2 = secondResult.worldNormalDirection!!
-
-        var rotation = Quaterniond()
-        if (!secondResult.state.isAir) {
-            // this rotates ship so that it aligns with hit pos normal
-            rotation = getRotation(dir1).normalize()
-            // this rotates ship to align with world normal
-            rotation = getRotation(dir2).mul(rotation).normalize()
-        }
-
-        val spoint1 = if (mode == PositionModes.NORMAL) {firstResult.globalHitPos!!} else {firstResult.globalCenteredHitPos!!}
-        val rpoint2 = if (mode == PositionModes.NORMAL) {secondResult.worldHitPos!!} else {secondResult.worldCenteredHitPos!!}
-
-        // ship transform modifies both position in world AND rotation, but while we don't care about position in world,
-        // rotation is incredibly important
-        val point = rpoint2 - (
-            posShipToWorldRender(ship1, spoint1) - posShipToWorldRender(ship1, Vector3d(ship1.renderTransform.positionInShip))
-        )
-
-        return ShipTransformImpl(
-            point.toJomlVector3d(),
-            shipTransform.positionInShip,
-            rotation,
-            shipTransform.shipToWorldScaling
-        )
-    }
-
-    override fun provideNextTransform(
-        prevShipTransform: ShipTransform,
-        shipTransform: ShipTransform,
-        latestNetworkTransform: ShipTransform
-    ): ShipTransform {
-        return shipTransform
-    }
-}
 
 object AxisNetworking {
     private var obj: AxisMode? = null
@@ -146,12 +53,7 @@ object AxisNetworking {
         object : S2CConnection<S2CHandleFailurePacket>(it, "axis_networking") {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val obj = obj ?: return
-
-                obj.primaryStage = AxisMode.PrimaryStages.FIRST_RAYCAST
-                if (obj.caughtShip != null) {
-                    obj.caughtShip!!.transformProvider = null
-                    obj.caughtShip = null
-                }
+                obj.resetState()
             }
         }
     }
@@ -183,39 +85,60 @@ class AxisMode : BaseMode {
 
     var fixedDistance: Double = -1.0
     var disableCollisions: Boolean = false
+    var distanceFromBlock = 0.01
 
     var posMode = PositionModes.NORMAL
     var primaryStage = PrimaryStages.FIRST_RAYCAST
+    var secondaryFirstdRaycast = false
 
     init {
         AxisNetworking.init(this)
     }
 
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
-        if (primaryStage == PrimaryStages.FIRST_RAYCAST) { return EventResult.pass() }
+        if (primaryStage == PrimaryStages.FIRST_RAYCAST && !secondaryFirstdRaycast) { return EventResult.pass() }
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             primaryStage = PrimaryStages.FIRST_RAYCAST
+            resetState()
         }
 
         return EventResult.interruptFalse()
     }
 
+    override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
+            clientHandlePrimary()
+            conn_primary.sendToServer(this)
+        }
+
+        if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
+            clientHandleSecondary()
+            conn_secondary.sendToServer(this)
+        }
+
+        return EventResult.interruptFalse()
+    }
+
+    private fun clientHandleSecondary() {
+        secondaryFirstdRaycast = !secondaryFirstdRaycast
+    }
+
     var caughtShip: ClientShip? = null
 
-    private fun clientHandlePrimary(): Boolean {
-        return when (primaryStage) {
+    private fun clientHandlePrimary() {
+        when (primaryStage) {
             PrimaryStages.FIRST_RAYCAST  -> clientPrimaryFirst()
             PrimaryStages.SECOND_RAYCAST -> clientPrimarySecond()
             PrimaryStages.FINALIZATION   -> clientPrimaryThird()
         }
     }
 
-    private fun clientPrimaryFirst(): Boolean {
+    private fun clientPrimaryFirst() {
         if (caughtShip != null) {
             caughtShip!!.transformProvider = null
             caughtShip = null
-            return false
+            return
         }
 
         val raycastResult = RaycastFunctions.raycast(
@@ -228,42 +151,26 @@ class AxisMode : BaseMode {
 
         val level = Minecraft.getInstance().level!!
 
-        if (raycastResult.state.isAir) {return false}
+        if (raycastResult.state.isAir) {return}
         val mode = if (posMode != PositionModes.CENTERED_IN_BLOCK) {posMode} else {PositionModes.CENTERED_ON_SIDE}
 
-        caughtShip = (level.getShipManagingPos(raycastResult.blockPosition) ?: return false) as ClientShip
+        caughtShip = (level.getShipManagingPos(raycastResult.blockPosition) ?: return) as ClientShip
         caughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, caughtShip!!)
 
         primaryStage = PrimaryStages.SECOND_RAYCAST
-        return true
+        return
     }
 
-    private fun clientPrimarySecond(): Boolean {
+    private fun clientPrimarySecond() {
         primaryStage = PrimaryStages.FINALIZATION
-        return true
     }
 
-    private fun clientPrimaryThird(): Boolean {
+    private fun clientPrimaryThird() {
         primaryStage = PrimaryStages.FIRST_RAYCAST
         if (caughtShip != null) {
             caughtShip!!.transformProvider = null
             caughtShip = null
         }
-        return true
-    }
-
-    override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
-            if (clientHandlePrimary()) {
-                conn_primary.sendToServer(this)
-            }
-        }
-
-        if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
-            conn_secondary.sendToServer(this)
-        }
-
-        return EventResult.interruptFalse()
     }
 
     override fun serialize(): FriendlyByteBuf {
@@ -275,6 +182,8 @@ class AxisMode : BaseMode {
         buf.writeDouble(width)
         buf.writeBoolean(disableCollisions)
         buf.writeEnum(primaryStage)
+        buf.writeDouble(distanceFromBlock)
+        buf.writeBoolean(secondaryFirstdRaycast)
 
         return buf
     }
@@ -286,12 +195,16 @@ class AxisMode : BaseMode {
         width = buf.readDouble()
         disableCollisions = buf.readBoolean()
         primaryStage = buf.readEnum(primaryStage.javaClass)
+        distanceFromBlock = buf.readDouble()
+        secondaryFirstdRaycast = buf.readBoolean()
     }
 
     override fun serverSideVerifyLimits() {
-        compliance = ServerLimits.instance.compliance.get(compliance)
-        maxForce = ServerLimits.instance.maxForce.get(maxForce)
-        fixedDistance = ServerLimits.instance.fixedDistance.get(fixedDistance)
+        val limits = ServerLimits.instance
+        compliance = limits.compliance.get(compliance)
+        maxForce = limits.maxForce.get(maxForce)
+        fixedDistance = limits.fixedDistance.get(fixedDistance)
+        distanceFromBlock = limits.distanceFromBlock.get(distanceFromBlock)
     }
 
     override val itemName = AXIS
@@ -302,8 +215,9 @@ class AxisMode : BaseMode {
         makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, limits.compliance)
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
         makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, DoubleLimit(0.0, 1.0))
-        makeTextEntry(FIXED_DISTANCE.get(),    ::fixedDistance,     offset, offset, parentWindow)
-        makeCheckBox(DISABLE_COLLISIONS.get(), ::disableCollisions, offset, offset, parentWindow)
+        makeTextEntry(FIXED_DISTANCE.get(),     ::fixedDistance,     offset, offset, parentWindow)
+        makeCheckBox (DISABLE_COLLISIONS.get(), ::disableCollisions, offset, offset, parentWindow)
+        makeTextEntry(DISTANCE_FROM_BLOCK.get(),::distanceFromBlock, offset, offset, parentWindow, limits.distanceFromBlock)
         makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
@@ -319,7 +233,7 @@ class AxisMode : BaseMode {
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activateSecondaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverTryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
+    fun activateSecondaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || secondaryFirstdRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         level.makeManagedConstraint(AxisMConstraint(
@@ -394,8 +308,8 @@ class AxisMode : BaseMode {
             else -> firstResult.globalNormalDirection!!
         }
         var rotation: Quaterniondc
-        rotation = getRotation(dir1).normalize()
-        rotation = getRotation(dir2).mul(rotation).normalize()
+        rotation = getQuatFromDir(dir1).normalize()
+        rotation = getQuatFromDir(dir2).mul(rotation).normalize()
 
         val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {PositionModes.CENTERED_ON_SIDE}, firstResult, secondResult)
         var rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
@@ -421,7 +335,7 @@ class AxisMode : BaseMode {
         )
 
         rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
-        val rpoint1 = Vector3d(rpoint2) + dir2.normalize() * 0.01
+        val rpoint1 = Vector3d(rpoint2) + dir2.normalize() * distanceFromBlock
 
         val shipId1: ShipId = ship1.id
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
@@ -435,8 +349,14 @@ class AxisMode : BaseMode {
     }
 
     fun resetState() {
+        primaryStage = PrimaryStages.FIRST_RAYCAST
+        if (caughtShip != null) {
+            caughtShip!!.transformProvider = null
+            caughtShip = null
+        }
         previousResult = null
         firstResult = null
         secondResult = null
+        secondaryFirstdRaycast = false
     }
 }

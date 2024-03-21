@@ -30,7 +30,7 @@ mconstraint = managed constraint
 4. ✅ Use translatable components
 
 ## Custom Access Levels
-1. Allow op users to change server settings of VSource from toolgun menu.
+1. Allow op users to change server settings of VMod from toolgun menu.
 2. Add accessibility levels that op users can modify
 3. Make special commands for op users
     * Clean every mconstraint of acc level.

@@ -25,10 +25,10 @@ architectury {
 
 loom {
     forge {
-        mixinConfig "vsource-common.mixins.json"
+        mixinConfig "vmod-common.mixins.json"
     }
     mixin {
-//        defaultRefmapName "VSource-common-refmap.json"
+//        defaultRefmapName "VMod-common-refmap.json"
     }
 }
 

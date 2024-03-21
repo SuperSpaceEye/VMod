@@ -9,17 +9,15 @@ import net.spaceeye.vsource.WLOG
 import net.spaceeye.vsource.constraintsManaging.ConstraintManager
 import net.spaceeye.vsource.events.AVSEvents
 import net.spaceeye.vsource.networking.dataSynchronization.ClientSynchronisedData
-import net.spaceeye.vsource.rendering.types.A2BRenderer
-import net.spaceeye.vsource.rendering.types.RopeRenderer
 import net.spaceeye.vsource.utils.*
 import net.spaceeye.vsource.networking.dataSynchronization.ServerChecksumsUpdatedPacket
 import net.spaceeye.vsource.networking.dataSynchronization.ServerSynchronisedData
 import net.spaceeye.vsource.rendering.ReservedRenderingPages.reservedPagesList
-import net.spaceeye.vsource.rendering.types.BaseRenderer
-import net.spaceeye.vsource.rendering.types.TimedA2BRenderer
+import net.spaceeye.vsource.rendering.types.*
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.security.MessageDigest
+import java.util.ConcurrentModificationException
 
 object RenderingTypes {
     private val strToIdx = mutableMapOf<String, Int>()
@@ -145,8 +143,25 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
 
     var idCounter = 0
 
+    private fun trimTimedRenderers() {
+        val page = data[ReservedRenderingPages.TimedRenderingObjects] ?: return
+        if (page.isEmpty()) { return }
+        val toRemove = mutableListOf<Int>()
+        val current = getNow_ms()
+        try {
+            for ((k, item) in page) {
+                if (item !is TimedRenderer) {toRemove.add(k); continue}
+                if (item.timestampOfBeginning + item.activeFor_ms < current ) {
+                    toRemove.add(k)
+                }
+            }
+            toRemove.forEach { page.remove(it) }
+        } catch (e: ConcurrentModificationException) {return}
+    }
+
     //TODO trim timed objects
     fun addTimedRenderer(renderer: BaseRenderer) {
+        trimTimedRenderers()
         val page = data.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { mutableMapOf() }
         page[idCounter] = renderer
 

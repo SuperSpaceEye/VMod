@@ -58,17 +58,10 @@ class StripMode : BaseMode {
 
     val conn_primary = register { object : C2SConnection<StripMode>("strip_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<StripMode>(context.player, buf, ::StripMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
-    var previousResult: RaycastFunctions.RaycastResult? = null
-
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {return}
         level as ServerLevel
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return
         level.getAllManagedConstraintIdsOfShipId(ship.id).forEach { level.removeManagedConstraint(it) }
-    }
-
-    fun resetState() {
-        ILOG("RESETTING")
-        previousResult = null
     }
 }

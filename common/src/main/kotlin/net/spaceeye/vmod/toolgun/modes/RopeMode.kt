@@ -125,7 +125,6 @@ class RopeMode : BaseMode {
     }
 
     fun resetState() {
-        ILOG("RESETTING STATE")
         previousResult = null
     }
 }

@@ -138,7 +138,6 @@ class HydraulicsMode : BaseMode {
     }
 
     fun resetState() {
-        ILOG("RESETTING")
         previousResult = null
     }
 }

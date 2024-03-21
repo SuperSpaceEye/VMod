@@ -118,7 +118,6 @@ class WeldMode : BaseMode {
     }
 
     fun resetState() {
-        ILOG("RESETTING")
         previousResult = null
     }
 }

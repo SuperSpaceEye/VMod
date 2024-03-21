@@ -5,7 +5,7 @@
 
   "name": "VMod",
   "description": "",
-  "authors": [],
+  "authors": ["SpaceEye", "getItemFromBlock"],
   "contact": {},
 
   "license": "MIT",

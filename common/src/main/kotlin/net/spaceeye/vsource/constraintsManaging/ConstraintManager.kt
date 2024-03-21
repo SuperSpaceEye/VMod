@@ -1,6 +1,7 @@
 package net.spaceeye.vsource.constraintsManaging
 
 import dev.architectury.event.events.common.TickEvent
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
@@ -13,6 +14,7 @@ import net.spaceeye.vsource.constraintsManaging.types.MConstraintTypes
 import net.spaceeye.vsource.constraintsManaging.types.Tickable
 import net.spaceeye.vsource.rendering.SynchronisedRenderingData
 import net.spaceeye.vsource.events.AVSEvents
+import net.spaceeye.vsource.utils.PosMap
 import net.spaceeye.vsource.utils.ServerClosable
 import net.spaceeye.vsource.utils.ServerLevelHolder
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -22,6 +24,7 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.hooks.VSEvents
+import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
 import org.valkyrienskies.mod.common.shipObjectWorld
 import kotlin.math.max
 
@@ -41,6 +44,8 @@ class ConstraintManager: SavedData() {
     private val toLoadConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
     private val groupedToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
     private val shipIsStaticStatus = mutableMapOf<ShipId, Boolean>()
+
+    private val posToMId = PosMap<ManagedConstraintId>()
 
     private var saveCounter = 0
 
@@ -230,10 +235,13 @@ class ConstraintManager: SavedData() {
         mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
         idToConstraint[mCon.mID] = mCon
         if (mCon is Tickable) { tickingConstraints.add(mCon) }
+        mCon.getAttachmentPoints().forEach { posToMId.addItemTo(mCon.mID, it) }
 
         setDirty()
         return mCon.mID
     }
+
+    fun getManagedConstraint(id: ManagedConstraintId): MConstraint? = idToConstraint[id]
 
     fun removeConstraint(level: ServerLevel, id: ManagedConstraintId): Boolean {
         val mCon = idToConstraint[id] ?: return false
@@ -242,6 +250,7 @@ class ConstraintManager: SavedData() {
         mCon.onDeleteMConstraint(level)
         idToConstraint.remove(id)
         if (mCon is Tickable) { tickingConstraints.remove(mCon) }
+        mCon.getAttachmentPoints().forEach { posToMId.removeItemFromPos(mCon.mID, it) }
 
         setDirty()
         return true
@@ -259,15 +268,54 @@ class ConstraintManager: SavedData() {
         mCon.mID = ManagedConstraintId(id)
         if (!tryMakeConstraint(mCon, level)) {return null}
 
-        mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach {
-            shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon)
-        }
+        mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
         if (idToConstraint.contains(mCon.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING CONSTRAINT IN makeConstraintWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
         idToConstraint[mCon.mID] = mCon
         if (mCon is Tickable) { tickingConstraints.add(mCon) }
+        mCon.getAttachmentPoints().forEach { posToMId.addItemTo(mCon.mID, it) }
 
         setDirty()
         return mCon.mID
+    }
+
+    private fun shipWasSplitEvent(
+        originalShip: ServerShip,
+        newShip: ServerShip,
+        centerBlock: BlockPos,
+        blocks: DenseBlockPosSet) {
+        val constraints = getAllConstraintsIdOfId(originalShip.id)
+        if (constraints.isEmpty()) { return }
+
+        val shipChunkX = newShip.chunkClaim.xMiddle
+        val shipChunkZ = newShip.chunkClaim.zMiddle
+
+        val worldChunkX = centerBlock.x shr 4
+        val worldChunkZ = centerBlock.z shr 4
+
+        val deltaX = worldChunkX - shipChunkX
+        val deltaZ = worldChunkZ - shipChunkZ
+
+        val dimensionIds = level.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
+
+        blocks.forEachChunk { chunkX, chunkY, chunkZ, chunk ->
+            val sourceChunk = level!!.getChunk(chunkX, chunkZ)
+            val destChunk = level!!.getChunk(chunkX - deltaX, chunkZ - deltaZ)
+
+            chunk.forEach { x, y, z ->
+                val fromPos = BlockPos((sourceChunk.pos.x shl 4) + x, (chunkY shl 4) + y, (sourceChunk.pos.z shl 4) + z)
+                val toPos = BlockPos((destChunk.pos.x shl 4) + x, (chunkY shl 4) + y, (destChunk.pos.z shl 4) + z)
+
+                for (id in posToMId.getItemsAt(fromPos) ?: return@forEach) {
+                    val constraint = getManagedConstraint(id) ?: continue
+
+                    constraint.attachedToShips(dimensionIds).forEach { shipsConstraints[it]?.remove(constraint) }
+                    constraint.moveShipyardPosition(level!!, fromPos, toPos, newShip.id)
+                    constraint.attachedToShips(dimensionIds).forEach { shipsConstraints.getOrPut(it) { mutableListOf() }.add(constraint) }
+
+                    setDirty()
+                }
+            }
+        }
     }
 
     companion object {
@@ -325,10 +373,10 @@ class ConstraintManager: SavedData() {
         fun load(tag: CompoundTag): ConstraintManager {
             val data = create()
 
+            SynchronisedRenderingData.serverSynchronisedData.nbtLoad(tag)
             if (tag.contains(SAVE_TAG_NAME_STRING) && tag[SAVE_TAG_NAME_STRING] is CompoundTag) {
                 data.load(tag[SAVE_TAG_NAME_STRING]!! as CompoundTag)
             }
-            SynchronisedRenderingData.serverSynchronisedData.nbtLoad(tag)
 
             return data
         }
@@ -355,6 +403,11 @@ class ConstraintManager: SavedData() {
                 }
                 instance!!.tickingConstraints.removeAll(toRemove)
                 setDirty()
+            }
+
+            AVSEvents.splitShip.on {
+                it, handler ->
+                instance?.shipWasSplitEvent(it.originalShip, it.newShip, it.centerBlock, it.blocks)
             }
         }
     }

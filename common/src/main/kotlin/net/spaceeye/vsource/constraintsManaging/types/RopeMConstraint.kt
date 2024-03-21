@@ -66,6 +66,23 @@ class RopeMConstraint(): MConstraint {
     }
 
     override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+    override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
+        level.shipObjectWorld.removeConstraint(vsId)
+
+        val shipIds = mutableListOf(constraint.shipId0, constraint.shipId1)
+        val localPoints = mutableListOf(
+            listOf(constraint.localPos0),
+            listOf(constraint.localPos1)
+        )
+        updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
+
+        constraint = VSRopeConstraint(shipIds[0], shipIds[1], constraint.compliance, localPoints[0][0], localPoints[1][0], constraint.maxForce, constraint.ropeLength)
+
+        vsId = level.shipObjectWorld.createNewConstraint(constraint)!!
+
+        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
+    }
 
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null
@@ -86,7 +103,8 @@ class RopeMConstraint(): MConstraint {
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         vsId = level.shipObjectWorld.createNewConstraint(constraint) ?: return false
-        if (renderer != null) {SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, mID.id, renderer!!)}
+        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, mID.id, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id) }
         return true
     }
 

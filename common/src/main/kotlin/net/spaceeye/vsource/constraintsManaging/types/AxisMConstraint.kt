@@ -24,7 +24,7 @@ import org.valkyrienskies.physics_api.ConstraintId
 //TODO do i need it? maybe just have WeldMConstraint with option to not make fixed orientation constraint
 class AxisMConstraint(): MConstraint {
     lateinit var aconstraint1: VSAttachmentConstraint
-    lateinit var aconstraint2: VSForceConstraint
+    lateinit var aconstraint2: VSAttachmentConstraint
 //    lateinit var rconstraint: VSConstraint
 
     val cIDs = mutableListOf<ConstraintId>()
@@ -126,6 +126,28 @@ class AxisMConstraint(): MConstraint {
     }
 
     override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+    override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
+        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
+        cIDs.clear()
+
+        val shipIds = mutableListOf(aconstraint1.shipId0, aconstraint1.shipId1)
+        val localPoints = mutableListOf(
+            listOf(aconstraint1.localPos0, aconstraint2.localPos0),
+            listOf(aconstraint1.localPos1, aconstraint2.localPos1)
+        )
+        updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
+
+        aconstraint1 = VSAttachmentConstraint(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0], aconstraint1.maxForce, aconstraint1.fixedDistance)
+        aconstraint2 = VSAttachmentConstraint(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1], aconstraint2.maxForce, aconstraint2.fixedDistance)
+
+        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2)!!)
+
+        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
+
+        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id)
+    }
 
     override fun nbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
@@ -142,7 +164,7 @@ class AxisMConstraint(): MConstraint {
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-        tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSForceConstraint
+        tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
 //        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint  = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null)
 
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
@@ -167,7 +189,8 @@ class AxisMConstraint(): MConstraint {
             level.shipObjectWorld.disableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)
         }
 
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!) }
+        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id) }
         return true
     }
 

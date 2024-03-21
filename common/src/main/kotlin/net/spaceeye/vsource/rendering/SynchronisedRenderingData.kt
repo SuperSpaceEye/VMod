@@ -100,6 +100,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
                 }
 
                 page[id.toInt()] = item
+                idToPage[id.toInt()] = shipId.toLong()
             }
         }
         DLOG("FINISHING LOADING RENDERING DATA in ${getNow_ms() - point} ms")
@@ -136,8 +137,15 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         return true
     }
 
+    fun getRenderer(id: Int): BaseRenderer? {
+        val pageId = idToPage[id] ?: return null
+        val page = data[pageId] ?: return null
+        return page[id]
+    }
+
     var idCounter = 0
 
+    //TODO trim timed objects
     fun addTimedRenderer(renderer: BaseRenderer) {
         val page = data.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { mutableMapOf() }
         page[idCounter] = renderer

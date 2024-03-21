@@ -3,6 +3,7 @@ package net.spaceeye.vsource.constraintsManaging.types
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vsource.ELOG
 import net.spaceeye.vsource.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil
 import net.spaceeye.vsource.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
@@ -54,6 +55,9 @@ class BasicMConstraint(): MConstraint {
     }
 
     override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+    override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        ELOG("MOVING SHIPYARD POSITIONS IS NOT IMPLEMENTED FOR BasicMConstraint")
+    }
 
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null

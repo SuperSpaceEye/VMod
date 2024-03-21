@@ -30,7 +30,7 @@ import kotlin.math.min
 
 class HydraulicsMConstraint(): MConstraint, Tickable {
     lateinit var aconstraint1: VSAttachmentConstraint
-    lateinit var aconstraint2: VSForceConstraint
+    lateinit var aconstraint2: VSAttachmentConstraint
     lateinit var rconstraint1: VSTorqueConstraint
 
     var attachmentPoints_ = listOf<BlockPos>()
@@ -72,6 +72,30 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
     }
 
     override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+    override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
+        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
+        cIDs.clear()
+
+        val shipIds = mutableListOf(aconstraint1.shipId0, aconstraint1.shipId1)
+        val localPoints = mutableListOf(
+            listOf(aconstraint1.localPos0, aconstraint2.localPos0),
+            listOf(aconstraint1.localPos1, aconstraint2.localPos1)
+        )
+        updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
+
+        aconstraint1 = VSAttachmentConstraint(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0], aconstraint1.maxForce, aconstraint1.fixedDistance)
+        aconstraint2 = VSAttachmentConstraint(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1], aconstraint2.maxForce, aconstraint2.fixedDistance)
+        rconstraint1 = VSFixedOrientationConstraint(shipIds[0], shipIds[1], rconstraint1.compliance, rconstraint1.localRot0, rconstraint1.localRot1, rconstraint1.maxTorque)
+
+        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2)!!)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint1)!!)
+
+        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
+
+        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id)
+    }
 
     constructor(
         // shipyard pos
@@ -162,7 +186,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-        tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSForceConstraint
+        tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSTorqueConstraint
 
         mID = ManagedConstraintId(tag.getInt("managedID"))
@@ -272,7 +296,8 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             }
         }
 
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!) }
+        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id) }
         return true
     }
 

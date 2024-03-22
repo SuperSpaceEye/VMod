@@ -27,6 +27,8 @@ import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.transformProviders.PlacementAssistTransformProvider
+import net.spaceeye.vmod.utils.Ref
+import net.spaceeye.vmod.transformProviders.RotationAssistTransformProvider
 import net.spaceeye.vmod.translate.GUIComponents.AXIS
 import net.spaceeye.vmod.translate.GUIComponents.CENTERED_IN_BLOCK
 import net.spaceeye.vmod.translate.GUIComponents.CENTERED_ON_SIDE
@@ -36,7 +38,8 @@ import net.spaceeye.vmod.translate.GUIComponents.FIXED_DISTANCE
 import net.spaceeye.vmod.translate.GUIComponents.HITPOS_MODES
 import net.spaceeye.vmod.translate.GUIComponents.NORMAL
 import net.spaceeye.vmod.translate.GUIComponents.WIDTH
-import org.joml.Quaterniondc
+import org.joml.AxisAngle4d
+import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
@@ -91,6 +94,8 @@ class AxisMode : BaseMode {
     var primaryStage = PrimaryStages.FIRST_RAYCAST
     var secondaryFirstdRaycast = false
 
+    var primaryAngle = Ref(0.0)
+
     init {
         AxisNetworking.init(this)
     }
@@ -116,6 +121,14 @@ class AxisMode : BaseMode {
             clientHandleSecondary()
             conn_secondary.sendToServer(this)
         }
+
+        return EventResult.interruptFalse()
+    }
+
+    override fun handleMouseScrollEvent(amount: Double): EventResult {
+        if (primaryStage != PrimaryStages.FINALIZATION) { return EventResult.pass() }
+
+        primaryAngle.it = primaryAngle.it + amount * 0.2
 
         return EventResult.interruptFalse()
     }
@@ -163,6 +176,13 @@ class AxisMode : BaseMode {
 
     private fun clientPrimarySecond() {
         primaryStage = PrimaryStages.FINALIZATION
+        if (caughtShip == null) { return }
+
+        val placementTransform = caughtShip!!.transformProvider
+        if (placementTransform !is PlacementAssistTransformProvider) {return}
+
+        primaryAngle.it = 0.0
+        caughtShip!!.transformProvider = RotationAssistTransformProvider(placementTransform, primaryAngle)
     }
 
     private fun clientPrimaryThird() {
@@ -184,6 +204,7 @@ class AxisMode : BaseMode {
         buf.writeEnum(primaryStage)
         buf.writeDouble(distanceFromBlock)
         buf.writeBoolean(secondaryFirstdRaycast)
+        buf.writeDouble(primaryAngle.it)
 
         return buf
     }
@@ -197,6 +218,7 @@ class AxisMode : BaseMode {
         primaryStage = buf.readEnum(primaryStage.javaClass)
         distanceFromBlock = buf.readDouble()
         secondaryFirstdRaycast = buf.readBoolean()
+        primaryAngle.it = buf.readDouble()
     }
 
     override fun serverSideVerifyLimits() {
@@ -307,20 +329,23 @@ class AxisMode : BaseMode {
             firstResult.globalNormalDirection!!.y == -1.0 -> -firstResult.globalNormalDirection!!
             else -> firstResult.globalNormalDirection!!
         }
-        var rotation: Quaterniondc
-        rotation = getQuatFromDir(dir1).normalize()
-        rotation = getQuatFromDir(dir2).mul(rotation).normalize()
+
+        val angle = Quaterniond(AxisAngle4d(primaryAngle.it, dir2.toJomlVector3d()))
+        val rotation1 = getQuatFromDir(dir1).normalize()
+        val rotation2 = getQuatFromDir(dir2).normalize()
+
+        val rotation = Quaterniond()
+            .mul(angle)
+            .mul(rotation2)
+            .mul(rotation1)
+            .normalize()
+
 
         val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {PositionModes.CENTERED_ON_SIDE}, firstResult, secondResult)
         var rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
         // rotation IS IMPORTANT, so make a new transform with new rotation to translate points
-        val newTransform = ShipTransformImpl(
-            ship1.transform.positionInWorld,
-            ship1.transform.positionInShip,
-            rotation,
-            ship1.transform.shipToWorldScaling
-        )
+        val newTransform = (ship1.transform as ShipTransformImpl).copy(shipToWorldRotation = rotation)
 
         // we cannot modify position in ship, we can, however, modify position in world
         // this translates ship so that after teleportation its spoint1 will be at rpoint2

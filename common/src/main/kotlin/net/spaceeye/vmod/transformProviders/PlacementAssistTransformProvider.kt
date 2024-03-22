@@ -21,6 +21,13 @@ class PlacementAssistTransformProvider(
     val level = Minecraft.getInstance().level!!
     val player = Minecraft.getInstance().cameraEntity!!
 
+    lateinit var spoint1: Vector3d
+    lateinit var rpoint2: Vector3d
+    lateinit var rotation1: Quaterniond
+    lateinit var rotation2: Quaterniond
+    lateinit var rotation: Quaterniond
+    lateinit var dir2: Vector3d
+
     override fun provideNextRenderTransform(
         prevShipTransform: ShipTransform,
         shipTransform: ShipTransform,
@@ -51,26 +58,25 @@ class PlacementAssistTransformProvider(
             firstResult.globalNormalDirection!!.y == -1.0 -> -firstResult.globalNormalDirection!!
             else -> firstResult.globalNormalDirection!!
         }
-        val dir2 = secondResult.worldNormalDirection!!
+        dir2 = secondResult.worldNormalDirection!!
 
-        var rotation = Quaterniond()
+        rotation1 = Quaterniond()
+        rotation = Quaterniond()
         if (!secondResult.state.isAir) {
             // this rotates ship so that it aligns with hit pos normal
-            rotation = getQuatFromDir(dir1).normalize()
+            rotation1 = getQuatFromDir(dir1).normalize()
             // this rotates ship to align with world normal
-            rotation = getQuatFromDir(dir2).mul(rotation).normalize()
+            rotation2 = getQuatFromDir(dir2)
+            rotation = rotation2.mul(rotation1, Quaterniond()).normalize()
         }
 
-        val spoint1 = if (mode == PositionModes.NORMAL) {firstResult.globalHitPos!!} else {firstResult.globalCenteredHitPos!!}
-        val rpoint2 = if (mode == PositionModes.NORMAL) {secondResult.worldHitPos!!} else {secondResult.worldCenteredHitPos!!}
+        spoint1 = if (mode == PositionModes.NORMAL) {firstResult.globalHitPos!!} else {firstResult.globalCenteredHitPos!!}
+        rpoint2 = if (mode == PositionModes.NORMAL) {secondResult.worldHitPos!!} else {secondResult.worldCenteredHitPos!!}
 
         // ship transform modifies both position in world AND rotation, but while we don't care about position in world,
         // rotation is incredibly important
         val point = rpoint2 - (
-            posShipToWorldRender(ship1, spoint1) - posShipToWorldRender(
-                ship1,
-                Vector3d(ship1.renderTransform.positionInShip)
-            )
+            posShipToWorldRender(ship1, spoint1) - posShipToWorldRender(ship1, Vector3d(ship1.renderTransform.positionInShip))
         )
 
         return ShipTransformImpl(

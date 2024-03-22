@@ -61,6 +61,11 @@ object ClientToolGunState : ClientClosable() {
         return currentMode!!.handleMouseButtonEvent(button, action, modifiers)
     }
 
+    fun handleMouseScrollEvent(amount: Double): EventResult {
+        if (currentMode == null) { return EventResult.pass() }
+        return currentMode!!.handleMouseScrollEvent(amount)
+    }
+
     lateinit var gui: ToolgunGUI
 
     fun guiIsOpened() = Minecraft.getInstance().screen == gui

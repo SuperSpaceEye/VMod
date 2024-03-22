@@ -55,6 +55,14 @@ class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
                 return@register ClientToolGunState.handleMouseButtonEvent(button, action, mods)
             }
 
+            ClientRawInputEvent.MOUSE_SCROLLED.register {
+                client, amount ->
+                if (!playerIsUsingToolgun()) {return@register EventResult.pass()}
+                if (client.screen != null) {return@register EventResult.pass()}
+
+                return@register ClientToolGunState.handleMouseScrollEvent(amount)
+            }
+
             var inited = false
             ClientLifecycleEvent.CLIENT_LEVEL_LOAD.register {
                 if (inited) { return@register }

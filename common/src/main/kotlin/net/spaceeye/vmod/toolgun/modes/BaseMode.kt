@@ -22,8 +22,9 @@ interface GUIItem {
 }
 
 interface BaseMode : Serializable, GUIItem {
-    fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int) : EventResult
-    fun handleMouseButtonEvent(button: Int, action: Int, mods: Int) : EventResult
+    fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int) : EventResult { return EventResult.pass() }
+    fun handleMouseButtonEvent(button: Int, action: Int, mods: Int) : EventResult { return EventResult.pass() }
+    fun handleMouseScrollEvent(amount: Double): EventResult { return EventResult.pass() }
     fun serverSideVerifyLimits()
 
      fun <T: Serializable> register(constructor: () -> C2SConnection<T>): C2SConnection<T> {

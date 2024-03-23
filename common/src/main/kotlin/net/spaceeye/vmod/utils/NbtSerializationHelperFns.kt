@@ -17,7 +17,7 @@ fun serializeBlockPositions(items: List<BlockPos>): ListTag {
     return listTag
 }
 
-fun deserializeBlockPositions(tag: Tag): List<BlockPos> {
+fun deserializeBlockPositions(tag: Tag): MutableList<BlockPos> {
     val points = mutableListOf<BlockPos>()
     (tag as ListTag).forEach {
         it as CompoundTag

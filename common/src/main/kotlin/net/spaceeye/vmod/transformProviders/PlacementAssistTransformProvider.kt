@@ -66,7 +66,7 @@ class PlacementAssistTransformProvider(
             // this rotates ship so that it aligns with hit pos normal
             rotation1 = getQuatFromDir(dir1).normalize()
             // this rotates ship to align with world normal
-            rotation2 = getQuatFromDir(dir2)
+            rotation2 = getQuatFromDir(dir2).normalize()
             rotation = rotation2.mul(rotation1, Quaterniond()).normalize()
         }
 
@@ -75,8 +75,10 @@ class PlacementAssistTransformProvider(
 
         // ship transform modifies both position in world AND rotation, but while we don't care about position in world,
         // rotation is incredibly important
+
         val point = rpoint2 - (
-            posShipToWorldRender(ship1, spoint1) - posShipToWorldRender(ship1, Vector3d(ship1.renderTransform.positionInShip))
+            posShipToWorldRender(ship1, spoint1, (ship1.renderTransform as ShipTransformImpl).copy(shipToWorldRotation = rotation)) -
+            posShipToWorldRender(ship1, Vector3d(ship1.renderTransform.positionInShip), (ship1.renderTransform as ShipTransformImpl).copy(shipToWorldRotation = rotation))
         )
 
         return ShipTransformImpl(
@@ -91,7 +93,7 @@ class PlacementAssistTransformProvider(
         prevShipTransform: ShipTransform,
         shipTransform: ShipTransform,
         latestNetworkTransform: ShipTransform
-    ): ShipTransform {
-        return shipTransform
+    ): ShipTransform? {
+        return null
     }
 }

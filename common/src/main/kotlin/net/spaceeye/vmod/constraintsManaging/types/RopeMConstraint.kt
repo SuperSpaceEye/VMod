@@ -23,7 +23,7 @@ class RopeMConstraint(): MConstraint {
     lateinit var constraint: VSRopeConstraint
     private var renderer: BaseRenderer? = null
 
-    var attachmentPoints_ = listOf<BlockPos>()
+    var attachmentPoints_ = mutableListOf<BlockPos>()
 
     var vsId: ConstraintId = -1
 
@@ -40,7 +40,7 @@ class RopeMConstraint(): MConstraint {
     ): this() {
         constraint = VSRopeConstraint(shipId0, shipId1, compliance, localPos0, localPos1, maxForce, ropeLength)
         this.renderer = renderer
-        attachmentPoints_ = attachmentPoints
+        attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
     override lateinit var mID: ManagedConstraintId

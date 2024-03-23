@@ -33,7 +33,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
     lateinit var aconstraint2: VSAttachmentConstraint
     lateinit var rconstraint1: VSTorqueConstraint
 
-    var attachmentPoints_ = listOf<BlockPos>()
+    var attachmentPoints_ = mutableListOf<BlockPos>()
 
     val cIDs = mutableListOf<ConstraintId>()
 
@@ -159,7 +159,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
         this.channel = channel
 
-        attachmentPoints_ = attachmentPoints
+        attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
     override fun nbtSerialize(): CompoundTag? {

@@ -76,11 +76,6 @@ object AxisNetworking {
 }
 
 class AxisMode : BaseMode {
-    enum class PrimaryStages {
-        FIRST_RAYCAST,
-        SECOND_RAYCAST,
-        FINALIZATION
-    }
 
     var compliance: Double = 1e-20
     var maxForce: Double = 1e10
@@ -91,7 +86,7 @@ class AxisMode : BaseMode {
     var distanceFromBlock = 0.01
 
     var posMode = PositionModes.NORMAL
-    var primaryStage = PrimaryStages.FIRST_RAYCAST
+    var primaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
     var secondaryFirstdRaycast = false
 
     var primaryAngle = Ref(0.0)
@@ -101,10 +96,10 @@ class AxisMode : BaseMode {
     }
 
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
-        if (primaryStage == PrimaryStages.FIRST_RAYCAST && !secondaryFirstdRaycast) { return EventResult.pass() }
+        if (primaryStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !secondaryFirstdRaycast) { return EventResult.pass() }
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
-            primaryStage = PrimaryStages.FIRST_RAYCAST
+            primaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
             resetState()
         }
 
@@ -126,7 +121,7 @@ class AxisMode : BaseMode {
     }
 
     override fun handleMouseScrollEvent(amount: Double): EventResult {
-        if (primaryStage != PrimaryStages.FINALIZATION) { return EventResult.pass() }
+        if (primaryStage != ThreeClicksActivationSteps.FINALIZATION) { return EventResult.pass() }
 
         primaryAngle.it = primaryAngle.it + amount * 0.2
 
@@ -141,9 +136,9 @@ class AxisMode : BaseMode {
 
     private fun clientHandlePrimary() {
         when (primaryStage) {
-            PrimaryStages.FIRST_RAYCAST  -> clientPrimaryFirst()
-            PrimaryStages.SECOND_RAYCAST -> clientPrimarySecond()
-            PrimaryStages.FINALIZATION   -> clientPrimaryThird()
+            ThreeClicksActivationSteps.FIRST_RAYCAST  -> clientPrimaryFirst()
+            ThreeClicksActivationSteps.SECOND_RAYCAST -> clientPrimarySecond()
+            ThreeClicksActivationSteps.FINALIZATION   -> clientPrimaryThird()
         }
     }
 
@@ -170,12 +165,12 @@ class AxisMode : BaseMode {
         caughtShip = (level.getShipManagingPos(raycastResult.blockPosition) ?: return) as ClientShip
         caughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, caughtShip!!)
 
-        primaryStage = PrimaryStages.SECOND_RAYCAST
+        primaryStage = ThreeClicksActivationSteps.SECOND_RAYCAST
         return
     }
 
     private fun clientPrimarySecond() {
-        primaryStage = PrimaryStages.FINALIZATION
+        primaryStage = ThreeClicksActivationSteps.FINALIZATION
         if (caughtShip == null) { return }
 
         val placementTransform = caughtShip!!.transformProvider
@@ -186,7 +181,7 @@ class AxisMode : BaseMode {
     }
 
     private fun clientPrimaryThird() {
-        primaryStage = PrimaryStages.FIRST_RAYCAST
+        primaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
         if (caughtShip != null) {
             caughtShip!!.transformProvider = null
             caughtShip = null
@@ -201,9 +196,11 @@ class AxisMode : BaseMode {
         buf.writeEnum(posMode)
         buf.writeDouble(width)
         buf.writeBoolean(disableCollisions)
-        buf.writeEnum(primaryStage)
         buf.writeDouble(distanceFromBlock)
+
         buf.writeBoolean(secondaryFirstdRaycast)
+
+        buf.writeEnum(primaryStage)
         buf.writeDouble(primaryAngle.it)
 
         return buf
@@ -215,9 +212,11 @@ class AxisMode : BaseMode {
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
         disableCollisions = buf.readBoolean()
-        primaryStage = buf.readEnum(primaryStage.javaClass)
         distanceFromBlock = buf.readDouble()
+
         secondaryFirstdRaycast = buf.readBoolean()
+
+        primaryStage = buf.readEnum(primaryStage.javaClass)
         primaryAngle.it = buf.readDouble()
     }
 
@@ -283,9 +282,9 @@ class AxisMode : BaseMode {
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (level !is ServerLevel) {throw RuntimeException("Function intended for server use only was activated on client. How.")}
         when (primaryStage) {
-            PrimaryStages.SECOND_RAYCAST  -> primaryFunctionFirst (level, player, raycastResult)
-            PrimaryStages.FINALIZATION -> primaryFunctionSecond(level, player, raycastResult)
-            PrimaryStages.FIRST_RAYCAST   -> primaryFunctionThird (level, player, raycastResult)
+            ThreeClicksActivationSteps.SECOND_RAYCAST -> primaryFunctionFirst (level, player, raycastResult)
+            ThreeClicksActivationSteps.FINALIZATION   -> primaryFunctionSecond(level, player, raycastResult)
+            ThreeClicksActivationSteps.FIRST_RAYCAST  -> primaryFunctionThird (level, player, raycastResult)
         }
     }
 
@@ -365,16 +364,45 @@ class AxisMode : BaseMode {
         val shipId1: ShipId = ship1.id
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
-        level.makeManagedConstraint(AxisMConstraint(
+        val constraint = AxisMConstraint(
             spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
             compliance, maxForce, fixedDistance, disableCollisions,
             listOf(firstResult.blockPosition, secondResult.blockPosition)
-        )).addFor(player)
+        )
+
+//        val cdir = -secondResult.globalNormalDirection!!
+//        val x = Vector3d(1.0, 0.0, 0.0)
+//        val xCross = Vector3d(cdir).scross(x)
+//        var hRot = if (xCross.sqrDist() < 1e-6) {
+//            Quaterniond()
+//        } else {
+//            Quaterniond(AxisAngle4d(cdir.toJomlVector3d().angle(x.toJomlVector3d()), xCross.snormalize().toJomlVector3d()))
+//        }
+//
+//        val difference = rotation.invert(Quaterniond())
+////        hRot.mul(difference)
+//
+//        hRot = difference.mul(hRot)
+//
+//        constraint.rconstraint = VSHingeOrientationConstraint(
+//            shipId2, shipId1, compliance,
+//            hRot, hRot,
+//            maxForce)
+
+//
+//        var rot = getQuatFromDir(secondResult.globalNormalDirection!!).normalize()
+//        rot = rot.mul(Quaterniond(AxisAngle4d(Math.toRadians(90.0), 0.0, 0.0, 1.0)))
+//
+//        constraint.rconstraint = VSHingeOrientationConstraint(
+//            shipId1, shipId2, compliance, rot, rot, 1e300
+//        )
+
+        level.makeManagedConstraint(constraint).addFor(player)
         resetState()
     }
 
     fun resetState() {
-        primaryStage = PrimaryStages.FIRST_RAYCAST
+        primaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
         if (caughtShip != null) {
             caughtShip!!.transformProvider = null
             caughtShip = null

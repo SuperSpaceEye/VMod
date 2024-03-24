@@ -50,7 +50,7 @@ fun updatePositions(
     previous: BlockPos,
     new: BlockPos,
 
-    attachmentPoints: List<BlockPos>,
+    attachmentPoints: MutableList<BlockPos>,
 
     shipIds: MutableList<ShipId>,
     localPoints: MutableList<List<Vector3dc>>
@@ -63,6 +63,7 @@ fun updatePositions(
             i, it ->
             (Vector3d(it) - Vector3d(apoint) + Vector3d(new)).toJomlVector3d()
         }
+        attachmentPoints[i] = new
     }
 }
 

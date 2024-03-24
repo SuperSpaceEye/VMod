@@ -10,11 +10,12 @@ import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.try
 import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.deserializeBlockPositions
-import net.spaceeye.vmod.utils.posWorldToShip
-import net.spaceeye.vmod.utils.serializeBlockPositions
+import net.spaceeye.vmod.transformProviders.PeekerTransformProvider
+import net.spaceeye.vmod.utils.*
+import org.joml.AxisAngle4d
+import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
+import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
@@ -25,10 +26,10 @@ import org.valkyrienskies.physics_api.ConstraintId
 class AxisMConstraint(): MConstraint {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
-//    lateinit var rconstraint: VSConstraint
+    lateinit var rconstraint: VSConstraint
 
     val cIDs = mutableListOf<ConstraintId>()
-    var attachmentPoints_ = listOf<BlockPos>()
+    var attachmentPoints_ = mutableListOf<BlockPos>()
 
     var disableCollisions: Boolean = false
     var renderer: BaseRenderer? = null
@@ -79,9 +80,9 @@ class AxisMConstraint(): MConstraint {
             maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength + addDist
         )
 
-        // TODO this doesn't work
-//        val rot1 = if (ship1 != null) ship1.transform.shipToWorldRotation else Quaterniond()
-//        val rot2 = if (ship2 != null) ship2.transform.shipToWorldRotation else Quaterniond()
+//         TODO this doesn't work
+        val rot1 = if (ship1 != null) ship1.transform.shipToWorldRotation else Quaterniond()
+        val rot2 = if (ship2 != null) ship2.transform.shipToWorldRotation else Quaterniond()
 //
 //        val cdir = (rpoint1 - rpoint2).snormalize()
 //        val x = Vector3d(1.0, 0.0, 0.0)
@@ -92,15 +93,17 @@ class AxisMConstraint(): MConstraint {
 //            Quaterniond(AxisAngle4d(cdir.toJomlVector3d().angle(x.toJomlVector3d()), xCross.snormalize().toJomlVector3d()))
 //        }
 //
-//        rconstraint = VSHingeOrientationConstraint(
+//        rconstraint = VSFixedOrientationConstraint(
 //            shipId0, shipId1, compliance,
-//            hRot.mul(rot1, Quaterniond()), hRot.mul(rot2, Quaterniond()),
-////            rot1.mul(hRot, Quaterniond()), rot2.mul(hRot, Quaterniond()),
+//            rot1.invert(Quaterniond()), rot2.invert(Quaterniond()),
 //            maxForce)
+
+        if (ship1 != null) (ship1 as ServerShip).transformProvider = PeekerTransformProvider("ship1")
+        if (ship2 != null) (ship2 as ServerShip).transformProvider = PeekerTransformProvider("ship2")
 
         this.renderer = renderer
         this.disableCollisions = disableCollisions
-        attachmentPoints_ = attachmentPoints
+        attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
     override lateinit var mID: ManagedConstraintId
@@ -182,8 +185,8 @@ class AxisMConstraint(): MConstraint {
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
-        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
-//        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
+//        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
 
         if (disableCollisions) {
             level.shipObjectWorld.disableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)
@@ -195,6 +198,8 @@ class AxisMConstraint(): MConstraint {
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
+        level.shipObjectWorld.loadedShips.getById(aconstraint1.shipId0)?.transformProvider = null
+        level.shipObjectWorld.loadedShips.getById(aconstraint1.shipId1)?.transformProvider = null
         if (disableCollisions) {
             level.shipObjectWorld.enableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)
         }

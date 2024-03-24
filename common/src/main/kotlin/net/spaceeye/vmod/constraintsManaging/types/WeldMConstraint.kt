@@ -25,9 +25,9 @@ import org.valkyrienskies.physics_api.ConstraintId
 class WeldMConstraint(): MConstraint {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
-    lateinit var rconstraint1: VSFixedOrientationConstraint
+    lateinit var rconstraint1: VSTorqueConstraint
 
-    var attachmentPoints_ = listOf<BlockPos>()
+    var attachmentPoints_ = mutableListOf<BlockPos>()
 
     val cIDs = mutableListOf<ConstraintId>()
 
@@ -57,7 +57,7 @@ class WeldMConstraint(): MConstraint {
             maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength)
 
         val dist1 = rpoint1 - rpoint2
-        val dir = dist1.normalize() * 20000
+        val dir = dist1.normalize() * 20
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -78,10 +78,10 @@ class WeldMConstraint(): MConstraint {
         val rot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
         val rot2 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
 
-        rconstraint1 = VSFixedOrientationConstraint(shipId0, shipId1, 1e-20, rot2, rot1, 1e300)
+        rconstraint1 = VSFixedOrientationConstraint(shipId0, shipId1, compliance, rot1.invert(Quaterniond()), rot2.invert(Quaterniond()), 1e300)
 
         this.renderer = renderer
-        attachmentPoints_ = attachmentPoints
+        attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
     override lateinit var mID: ManagedConstraintId
@@ -148,7 +148,7 @@ class WeldMConstraint(): MConstraint {
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSFixedOrientationConstraint
+        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSTorqueConstraint
 
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)

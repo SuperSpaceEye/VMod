@@ -53,7 +53,7 @@ class RotationAssistTransformProvider(
 
         val position = rpoint2 - (
             posShipToWorldRender(ship, spoint1, transform) -
-            posShipToWorldRender(ship, Vector3d(ship.renderTransform.positionInShip), transform)
+            posShipToWorldRender(ship, Vector3d(shipTransform.positionInShip), transform)
         )
 
         return ShipTransformImpl(
@@ -69,6 +69,6 @@ class RotationAssistTransformProvider(
         shipTransform: ShipTransform,
         latestNetworkTransform: ShipTransform
     ): ShipTransform? {
-        return shipTransform
+        return null
     }
 }

@@ -10,12 +10,8 @@ import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.try
 import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.transformProviders.PeekerTransformProvider
 import net.spaceeye.vmod.utils.*
-import org.joml.AxisAngle4d
-import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
-import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
@@ -93,10 +89,14 @@ class AxisMConstraint(): MConstraint {
 //            Quaterniond(AxisAngle4d(cdir.toJomlVector3d().angle(x.toJomlVector3d()), xCross.snormalize().toJomlVector3d()))
 //        }
 //
-//        rconstraint = VSFixedOrientationConstraint(
-//            shipId0, shipId1, compliance,
-//            rot1.invert(Quaterniond()), rot2.invert(Quaterniond()),
+//        rconstraint = VSHingeOrientationConstraint(
+//            shipId0, shipId1, compliance, hRot, hRot,
 //            maxForce)
+//
+//      TODO https://stackoverflow.com/questions/59438501/how-to-get-a-vector3-rotation-between-two-quaternions
+//      I'm pretty sure that this is how krunch calculates around what axis shit will rotate with VSHingeOrientationConstraint
+//        val qw = rot2.mul(rot1.invert(Quaterniond()), Quaterniond())
+//        val rAngle = AxisAngle4d(qw)
 
         this.renderer = renderer
         this.disableCollisions = disableCollisions

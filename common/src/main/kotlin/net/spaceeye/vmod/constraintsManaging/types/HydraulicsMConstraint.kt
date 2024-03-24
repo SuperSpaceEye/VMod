@@ -146,10 +146,10 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             maxForce, minLength + addDist
         )
 
-        val rot2 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
-        val rot1 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
+        val rot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
+        val rot2 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
 
-        rconstraint1 = VSFixedOrientationConstraint(shipId0, shipId1, compliance, rot1, rot2, 1e300)
+        rconstraint1 = VSFixedOrientationConstraint(shipId0, shipId1, compliance, rot1.invert(Quaterniond()), rot2.invert(Quaterniond()), 1e300)
 
         this.renderer = renderer
         this.minLength = minLength

@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
@@ -42,6 +43,7 @@ import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.apigame.constraints.VSHingeOrientationConstraint
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
@@ -369,33 +371,6 @@ class AxisMode : BaseMode {
             compliance, maxForce, fixedDistance, disableCollisions,
             listOf(firstResult.blockPosition, secondResult.blockPosition)
         )
-
-//        val cdir = -secondResult.globalNormalDirection!!
-//        val x = Vector3d(1.0, 0.0, 0.0)
-//        val xCross = Vector3d(cdir).scross(x)
-//        var hRot = if (xCross.sqrDist() < 1e-6) {
-//            Quaterniond()
-//        } else {
-//            Quaterniond(AxisAngle4d(cdir.toJomlVector3d().angle(x.toJomlVector3d()), xCross.snormalize().toJomlVector3d()))
-//        }
-//
-//        val difference = rotation.invert(Quaterniond())
-////        hRot.mul(difference)
-//
-//        hRot = difference.mul(hRot)
-//
-//        constraint.rconstraint = VSHingeOrientationConstraint(
-//            shipId2, shipId1, compliance,
-//            hRot, hRot,
-//            maxForce)
-
-//
-//        var rot = getQuatFromDir(secondResult.globalNormalDirection!!).normalize()
-//        rot = rot.mul(Quaterniond(AxisAngle4d(Math.toRadians(90.0), 0.0, 0.0, 1.0)))
-//
-//        constraint.rconstraint = VSHingeOrientationConstraint(
-//            shipId1, shipId2, compliance, rot, rot, 1e300
-//        )
 
         level.makeManagedConstraint(constraint).addFor(player)
         resetState()

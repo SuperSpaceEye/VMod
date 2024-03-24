@@ -2,8 +2,8 @@ mconstraint = managed constraint
 
 ## Constraints
 1. ✅ Rework current constraints managing logic to support additional data
-2. Expand mconstraints and rendering system to allow for mconstraints to be tied to blocks instead to whole ships. I guess i can mixin into server levelChunk and inject additional data + inject into setState to track when smth becomes air, and check if chunk has constraints and then also check if the block has any constraint connected to it, and if it did, then remove constraint and renderer (if it exists). For saving/loading inject into ChunkMap.
-3. Add compat for ship splitting (VSGameEvents)
+2. ✅ Expand mconstraints and rendering system to allow for mconstraints to be tied to blocks instead to whole ships.
+3. ✅ Add compat for ship splitting
 4. Add scale tool that would scale all ships connected to constraint
 
 ## Rendering
@@ -39,7 +39,7 @@ mconstraint = managed constraint
 
 ## Weld Constraint
 1. ✅ Change welding to lclick and make it not break blocks on lclick
-2. Make normal weld on lclick and snapping welding on rclick
+2. ✅ Make normal weld on lclick and snapping welding on rclick
 3. Add texture for weld rendering
 
 ## Rope Constraint
@@ -49,10 +49,11 @@ mconstraint = managed constraint
 ## Axis Constraint
 1. Figure out how VSHingeOrientationConstraint works and make it more stable
 2. When using primary, if it raycasts through the source ship it will not attach to another ship
-3. When using primary or secondary, prevent from using the other mode
+3. ✅ When using primary or secondary, prevent from using the other mode
 
 ## Forge
-1. Fix elementa dependency on forge
+1. (kinda ✅ but it's now incompatible with essential lmao) Fix elementa dependency on forge
+2. Fix incompatibility with essential
 
 ## Config
 1. Make config

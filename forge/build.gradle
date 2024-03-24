@@ -75,12 +75,9 @@ dependencies {
     implementation("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
 
     implementation 'thedarkcolour:kotlinforforge:3.12.0'
-    shadow("gg.essential:elementa-1.18.1-forge:636") {
-        transitive = false
-    }
-    shadow("gg.essential:universalcraft-1.18.1-forge:323") {
-        transitive = false
-    }
+
+    shadow("gg.essential:elementa-1.18.1-forge:636") {transitive = false}
+    shadow("gg.essential:universalcraft-1.18.1-forge:323") {transitive = false}
 }
 
 processResources {
@@ -91,14 +88,15 @@ processResources {
     }
 }
 
-tasks.shadowJar {
+shadowJar {
     exclude "fabric.mod.json"
+    mergeServiceFiles()
 
     configurations = [project.configurations.shadow, project.configurations.shadowCommon]
     archiveClassifier.set("dev-shadow")
 
-//    relocate("gg.essential.elementa", "net.spaceeye.elementa")
-//    relocate("gg.essential.universal", "net.spaceeye.universal")
+    relocate("gg.essential.elementa", "net.spaceeye.elementa")
+    relocate("gg.essential.universal", "net.spaceeye.universal")
 }
 
 remapJar {

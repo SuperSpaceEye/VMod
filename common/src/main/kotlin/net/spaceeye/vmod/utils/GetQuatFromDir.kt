@@ -17,5 +17,5 @@ fun getQuatFromDir(dir: Vector3d): Quaterniond {
     } else {
         Quaterniond(a.x, a.y, a.z, sqrt(up.sqrDist() * dir.sqrDist()) + d)
     }
-    return q
+    return q.normalize()
 }

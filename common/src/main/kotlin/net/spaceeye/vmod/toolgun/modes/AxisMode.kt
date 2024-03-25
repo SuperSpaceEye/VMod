@@ -9,7 +9,6 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
@@ -78,7 +77,6 @@ object AxisNetworking {
 }
 
 class AxisMode : BaseMode {
-
     var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2
@@ -123,7 +121,7 @@ class AxisMode : BaseMode {
     }
 
     override fun handleMouseScrollEvent(amount: Double): EventResult {
-        if (primaryStage != ThreeClicksActivationSteps.FINALIZATION) { return EventResult.pass() }
+        if (!(primaryStage == ThreeClicksActivationSteps.SECOND_RAYCAST || primaryStage == ThreeClicksActivationSteps.FINALIZATION)) { return EventResult.pass() }
 
         primaryAngle.it = primaryAngle.it + amount * 0.2
 
@@ -320,25 +318,20 @@ class AxisMode : BaseMode {
         if (ship1 == null) {return handleFailure(player)}
         if (ship1 == ship2) {return handleFailure(player)}
 
-//        var dir1 = firstResult.globalNormalDirection!!
-//        var dir2 = if (ship2 != null) { transformDirectionShipToWorld(ship2, secondResult.globalNormalDirection!!) } else secondResult.globalNormalDirection!!
-        var dir2 = secondResult.worldNormalDirection!!
-
         // not sure why i need to flip normal but it works
         val dir1 =  when {
             firstResult.globalNormalDirection!!.y ==  1.0 -> -firstResult.globalNormalDirection!!
             firstResult.globalNormalDirection!!.y == -1.0 -> -firstResult.globalNormalDirection!!
             else -> firstResult.globalNormalDirection!!
         }
+        val dir2 = if (ship2 != null) { transformDirectionShipToWorld(ship2, secondResult.globalNormalDirection!!) } else secondResult.globalNormalDirection!!
 
         val angle = Quaterniond(AxisAngle4d(primaryAngle.it, dir2.toJomlVector3d()))
-        val rotation1 = getQuatFromDir(dir1).normalize()
-        val rotation2 = getQuatFromDir(dir2).normalize()
 
         val rotation = Quaterniond()
             .mul(angle)
-            .mul(rotation2)
-            .mul(rotation1)
+            .mul(getQuatFromDir(dir2))
+            .mul(getQuatFromDir(dir1))
             .normalize()
 
 

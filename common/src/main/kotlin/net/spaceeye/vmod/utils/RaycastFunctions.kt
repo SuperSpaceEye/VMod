@@ -6,7 +6,11 @@ import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.AABB
+import org.valkyrienskies.core.api.ships.Ship
+import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.mod.common.getShipManagingPos
+import org.valkyrienskies.mod.common.world.clipIncludeShips
 import org.valkyrienskies.mod.common.world.vanillaClip
 import kotlin.math.abs
 import kotlin.math.max
@@ -58,17 +62,21 @@ object RaycastFunctions {
         return normal
     }
 
-    fun raycast(level: Level, source: Source, maxDistance: Double = 100.0): RaycastResult {
+    fun raycast(level: Level, source: Source, maxDistance: Double = 100.0, skipShipId: ShipId? = null,
+                transformShipToWorld: (ship: Ship, dir: Vector3d) -> Vector3d = ::transformDirectionShipToWorld,
+                transformWorldToShip: (ship: Ship, dir: Vector3d) -> Vector3d = ::transformDirectionWorldToShip,
+                posShipToWorld: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posShipToWorld,
+                posWorldToShip: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posWorldToShip
+    ): RaycastResult {
         var unitLookVec = Vector3d(source.dir).snormalize()
-
-        val clipResult = level.clip(
+        val clipResult = level.clipIncludeShips(
             ClipContext(
                 source.origin.toMCVec3(),
                 (source.origin + unitLookVec * maxDistance).toMCVec3(),
                 ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE,
                 null
-            )
+            ), false, skipShipId
         )
 
         val state = level.getBlockState(clipResult.blockPos)
@@ -79,8 +87,8 @@ object RaycastFunctions {
         val bpos = Vector3d(clipResult.blockPos)
 
         if (ship != null) {
-            source.origin = posWorldToShip(ship, source.origin)
-            unitLookVec = Vector3d(ship.transform.transformDirectionNoScalingFromWorldToShip(unitLookVec.toJomlVector3d(), JVector3d()))
+            source.origin = posWorldToShip(ship, source.origin, null)
+            unitLookVec = transformWorldToShip(ship, unitLookVec)
         }
 
         val result = rayIntersectsBox(AABB(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1), source.origin, (unitLookVec + eps).srdiv(1.0))
@@ -103,11 +111,11 @@ object RaycastFunctions {
         val globalNormalDirection = Vector3d(normalDirection)
 
         if (ship != null) {
-            normalDirection = Vector3d(ship.transform.transformDirectionNoScalingFromShipToWorld(normalDirection.toJomlVector3d(), JVector3d()))
-            unitLookVec = Vector3d(ship.transform.transformDirectionNoScalingFromShipToWorld(unitLookVec.toJomlVector3d(), JVector3d()))
-            source.origin = posShipToWorld(ship, source.origin)
-            worldHitPos = posShipToWorld(ship, globalHitPos)
-            worldCenteredHitPos = posShipToWorld(ship, globalCenteredHitPos)
+            normalDirection = transformShipToWorld(ship, normalDirection)
+            unitLookVec = transformShipToWorld(ship, unitLookVec)
+            source.origin = posShipToWorld(ship, source.origin, null)
+            worldHitPos = posShipToWorld(ship, globalHitPos, null)
+            worldCenteredHitPos = posShipToWorld(ship, globalCenteredHitPos, null)
         }
 
         return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection)

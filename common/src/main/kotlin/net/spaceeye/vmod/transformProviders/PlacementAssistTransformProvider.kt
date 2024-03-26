@@ -2,7 +2,7 @@ package net.spaceeye.vmod.transformProviders
 
 import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.toolgun.ToolgunItem
-import net.spaceeye.vmod.toolgun.modes.PositionModes
+import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.utils.*
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip

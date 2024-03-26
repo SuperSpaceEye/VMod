@@ -26,6 +26,7 @@ import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.transformProviders.PlacementAssistTransformProvider
 import net.spaceeye.vmod.utils.Ref
 import net.spaceeye.vmod.transformProviders.RotationAssistTransformProvider
@@ -42,7 +43,6 @@ import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSHingeOrientationConstraint
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
@@ -335,7 +335,8 @@ class AxisMode : BaseMode {
             .normalize()
 
 
-        val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {PositionModes.CENTERED_ON_SIDE}, firstResult, secondResult)
+        val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {
+            PositionModes.CENTERED_ON_SIDE}, firstResult, secondResult)
         var rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
         // rotation IS IMPORTANT, so make a new transform with new rotation to translate points

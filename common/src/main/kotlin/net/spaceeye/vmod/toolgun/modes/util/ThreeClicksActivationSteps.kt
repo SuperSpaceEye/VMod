@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.toolgun.modes
+package net.spaceeye.vmod.toolgun.modes.util
 
 enum class ThreeClicksActivationSteps {
     FIRST_RAYCAST,

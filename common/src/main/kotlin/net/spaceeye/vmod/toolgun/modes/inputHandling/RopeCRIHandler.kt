@@ -6,7 +6,7 @@ import net.spaceeye.vmod.toolgun.modes.ClientRawInputsHandler
 import net.spaceeye.vmod.toolgun.modes.state.RopeMode
 import org.lwjgl.glfw.GLFW
 
-interface RopeIHandler: ClientRawInputsHandler {
+interface RopeCRIHandler: ClientRawInputsHandler {
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
         this as RopeMode
         if (!primaryFirstRaycast) { return EventResult.pass() }

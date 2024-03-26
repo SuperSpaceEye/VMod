@@ -19,13 +19,11 @@ interface ClientRawInputsHandler {
     fun handleMouseScrollEvent(amount: Double): EventResult { return EventResult.pass() }
 }
 
-interface ServerHandler {}
-
-interface ModeSerializable: Serializable {
+interface MSerializable: Serializable {
     fun serverSideVerifyLimits()
 }
 
-interface BaseMode : ModeSerializable, GUIBuilder, ClientRawInputsHandler {
+interface BaseMode : MSerializable, GUIBuilder, ClientRawInputsHandler {
      fun <T: Serializable> register(constructor: () -> C2SConnection<T>): C2SConnection<T> {
         val instance = constructor()
         if (!ToolgunModes.initialized) {

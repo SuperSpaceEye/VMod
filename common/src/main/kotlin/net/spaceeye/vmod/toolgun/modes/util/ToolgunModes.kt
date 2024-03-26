@@ -1,11 +1,10 @@
 package net.spaceeye.vmod.toolgun.modes.util
 
-import net.spaceeye.vmod.toolgun.modes.*
 import net.spaceeye.vmod.toolgun.modes.state.*
 
 // SHOULD BE INITIALIZED BEFORE OTHER OBJECTS
 object ToolgunModes {
-    val modes = listOf<BaseMode>(
+    val modes = listOf(
         WeldMode(),
         RopeMode(),
         HydraulicsMode(),

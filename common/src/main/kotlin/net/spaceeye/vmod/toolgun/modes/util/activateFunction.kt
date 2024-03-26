@@ -23,7 +23,7 @@ inline fun getModePositions(mode: PositionModes, prevPos: RaycastFunctions.Rayca
     return when(mode) {
         PositionModes.NORMAL -> Pair(prevPos.globalHitPos!!, pos.globalHitPos!!)
         PositionModes.CENTERED_ON_SIDE -> Pair(prevPos.globalCenteredHitPos!!, pos.globalCenteredHitPos!!)
-        PositionModes.CENTERED_IN_BLOCK -> Pair(Vector3d(prevPos.blockPosition!!) + 0.5, Vector3d(pos.blockPosition!!) + 0.5)
+        PositionModes.CENTERED_IN_BLOCK -> Pair(Vector3d(prevPos.blockPosition) + 0.5, Vector3d(pos.blockPosition) + 0.5)
     }
 }
 

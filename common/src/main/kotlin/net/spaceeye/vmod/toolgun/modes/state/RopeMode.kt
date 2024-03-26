@@ -11,14 +11,14 @@ import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.RopeRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.RopeGUIBuilder
-import net.spaceeye.vmod.toolgun.modes.inputHandling.RopeIHandler
+import net.spaceeye.vmod.toolgun.modes.inputHandling.RopeCRIHandler
 import net.spaceeye.vmod.toolgun.modes.serializing.RopeSerializable
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 
-class RopeMode: BaseMode, RopeSerializable, RopeIHandler, RopeGUIBuilder {
+class RopeMode: BaseMode, RopeSerializable, RopeCRIHandler, RopeGUIBuilder {
     var compliance = 1e-20
     var maxForce = 1e10
     var fixedDistance = -1.0

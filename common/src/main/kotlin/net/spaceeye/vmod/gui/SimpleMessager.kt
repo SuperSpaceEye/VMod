@@ -1,5 +1,7 @@
 package net.spaceeye.vmod.gui
 
+import dev.architectury.event.EventResult
+import dev.architectury.event.events.client.ClientRawInputEvent
 import dev.architectury.event.events.common.TickEvent
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.ElementaVersion
@@ -24,6 +26,7 @@ import net.spaceeye.vmod.network.Deactivate
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.translate.GUIComponents.ACTIVATE
 import net.spaceeye.vmod.translate.GUIComponents.APPLY_CHANGES
 import net.spaceeye.vmod.translate.GUIComponents.CHANNEL
@@ -33,6 +36,7 @@ import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.posShipToWorld
+import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color
 import java.util.*
@@ -277,7 +281,6 @@ object SimpleMessagerGUI: ClientClosable() {
     }
 
     fun get(level: ClientLevel, pos: BlockPos): SimpleMessagerGUIInstance {
-//        if (gui == null) {gui = SimpleMessagerGUIInstance(level, pos)}
         gui = SimpleMessagerGUIInstance(level, pos)
         SimpleMessagerNetworking.c2sRequestState.sendToServer(SimpleMessagerNetworking.C2SRequestStatePacket(pos))
         return gui!!
@@ -305,6 +308,16 @@ object SimpleMessagerGUI: ClientClosable() {
             Minecraft.getInstance().setScreen(gui)
             gui?.updateGui()
             open = false
+        }
+
+        ClientRawInputEvent.KEY_PRESSED.register {
+            client, keyCode, scanCode, action, modifiers ->
+            if (gui != null && Minecraft.getInstance().screen == gui) {
+                if (action == GLFW.GLFW_PRESS && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
+                    Minecraft.getInstance().setScreen(null)
+                }
+            }
+            return@register EventResult.pass()
         }
     }
 }

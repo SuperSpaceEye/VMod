@@ -19,6 +19,7 @@ import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.IntLimit
 import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.translate.GUIComponents
 import net.spaceeye.vmod.translate.GUIComponents.COMPLIANCE
 import net.spaceeye.vmod.translate.GUIComponents.FIXED_DISTANCE
@@ -39,16 +40,29 @@ class RopeMode : BaseMode {
     var width: Double = .2
     var segments: Int = 16
 
+    var primaryFirstRaycast = false
+
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
-        return EventResult.pass()
+        if (!primaryFirstRaycast) { return EventResult.pass() }
+
+        if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
+            resetState()
+        }
+
+        return EventResult.interruptFalse()
     }
 
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
+            clientHandlPrimary()
             conn_primary.sendToServer(this)
         }
 
         return EventResult.interruptFalse()
+    }
+
+    private fun clientHandlPrimary() {
+        primaryFirstRaycast = !primaryFirstRaycast
     }
 
     override fun serialize(): FriendlyByteBuf {
@@ -61,6 +75,8 @@ class RopeMode : BaseMode {
         buf.writeDouble(width)
         buf.writeInt(segments)
 
+        buf.writeBoolean(primaryFirstRaycast)
+
         return buf
     }
 
@@ -71,6 +87,8 @@ class RopeMode : BaseMode {
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
         segments = buf.readInt()
+
+        primaryFirstRaycast = buf.readBoolean()
     }
 
     override fun serverSideVerifyLimits() {
@@ -100,7 +118,7 @@ class RopeMode : BaseMode {
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverTryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist()}
@@ -126,5 +144,6 @@ class RopeMode : BaseMode {
 
     fun resetState() {
         previousResult = null
+        primaryFirstRaycast = false
     }
 }

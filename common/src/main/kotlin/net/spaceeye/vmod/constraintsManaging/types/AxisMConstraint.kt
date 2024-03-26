@@ -10,12 +10,8 @@ import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.try
 import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.transformProviders.PeekerTransformProvider
 import net.spaceeye.vmod.utils.*
-import org.joml.AxisAngle4d
-import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
-import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
@@ -26,7 +22,7 @@ import org.valkyrienskies.physics_api.ConstraintId
 class AxisMConstraint(): MConstraint {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
-    lateinit var rconstraint: VSConstraint
+//    lateinit var rconstraint: VSConstraint
 
     val cIDs = mutableListOf<ConstraintId>()
     var attachmentPoints_ = mutableListOf<BlockPos>()
@@ -81,8 +77,8 @@ class AxisMConstraint(): MConstraint {
         )
 
 //         TODO this doesn't work
-        val rot1 = if (ship1 != null) ship1.transform.shipToWorldRotation else Quaterniond()
-        val rot2 = if (ship2 != null) ship2.transform.shipToWorldRotation else Quaterniond()
+//        val rot1 = if (ship1 != null) ship1.transform.shipToWorldRotation else Quaterniond()
+//        val rot2 = if (ship2 != null) ship2.transform.shipToWorldRotation else Quaterniond()
 //
 //        val cdir = (rpoint1 - rpoint2).snormalize()
 //        val x = Vector3d(1.0, 0.0, 0.0)
@@ -93,13 +89,14 @@ class AxisMConstraint(): MConstraint {
 //            Quaterniond(AxisAngle4d(cdir.toJomlVector3d().angle(x.toJomlVector3d()), xCross.snormalize().toJomlVector3d()))
 //        }
 //
-//        rconstraint = VSFixedOrientationConstraint(
-//            shipId0, shipId1, compliance,
-//            rot1.invert(Quaterniond()), rot2.invert(Quaterniond()),
+//        rconstraint = VSHingeOrientationConstraint(
+//            shipId0, shipId1, compliance, hRot, hRot,
 //            maxForce)
-
-        if (ship1 != null) (ship1 as ServerShip).transformProvider = PeekerTransformProvider("ship1")
-        if (ship2 != null) (ship2 as ServerShip).transformProvider = PeekerTransformProvider("ship2")
+//
+//      TODO https://stackoverflow.com/questions/59438501/how-to-get-a-vector3-rotation-between-two-quaternions
+//      I'm pretty sure that this is how krunch calculates around what axis shit will rotate with VSHingeOrientationConstraint
+//        val qw = rot2.mul(rot1.invert(Quaterniond()), Quaterniond())
+//        val rAngle = AxisAngle4d(qw)
 
         this.renderer = renderer
         this.disableCollisions = disableCollisions
@@ -185,8 +182,8 @@ class AxisMConstraint(): MConstraint {
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
-//        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
-        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
+//        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
 
         if (disableCollisions) {
             level.shipObjectWorld.disableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)

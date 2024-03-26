@@ -1,17 +1,14 @@
 package net.spaceeye.vmod.transformProviders
 
 import net.minecraft.client.Minecraft
+import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.PositionModes
-import net.spaceeye.vmod.utils.RaycastFunctions
-import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.getQuatFromDir
-import net.spaceeye.vmod.utils.posShipToWorldRender
+import net.spaceeye.vmod.utils.*
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
-import org.valkyrienskies.mod.common.getShipManagingPos
 
 class PlacementAssistTransformProvider(
     var firstResult: RaycastFunctions.RaycastResult,
@@ -21,57 +18,58 @@ class PlacementAssistTransformProvider(
     val level = Minecraft.getInstance().level!!
     val player = Minecraft.getInstance().cameraEntity!!
 
+    lateinit var rresult2: RaycastFunctions.RaycastResult
     lateinit var spoint1: Vector3d
-    lateinit var rpoint2: Vector3d
-    lateinit var rotation1: Quaterniond
-    lateinit var rotation2: Quaterniond
-    lateinit var rotation: Quaterniond
-    lateinit var dir2: Vector3d
+    lateinit var spoint2: Vector3d
+
+    lateinit var gdir1: Vector3d
+    lateinit var gdir2: Vector3d
 
     override fun provideNextRenderTransform(
         prevShipTransform: ShipTransform,
         shipTransform: ShipTransform,
         partialTick: Double
-    ): ShipTransform {
-        var secondResult = RaycastFunctions.raycast(
+    ): ShipTransform? {
+        //TODO think of a better way
+        if (!ToolgunItem.playerIsUsingToolgun()) {return null}
+        val secondResult = RaycastFunctions.raycast(
             level,
             RaycastFunctions.Source(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
                 Vector3d(Minecraft.getInstance().player!!.eyePosition)
-            )
+            ),
+            100.0,
+            ship1.id,
+            {ship, dir -> transformDirectionShipToWorldRender(ship as ClientShip, dir) },
+            {ship, dir -> transformDirectionWorldToShipRender(ship as ClientShip, dir) },
+            {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },
+            {ship, pos, transform -> posWorldToShipRender(ship as ClientShip, pos, transform) }
         )
+        rresult2 = secondResult
 
-        val ship = level.getShipManagingPos(secondResult.blockPosition!!)
-        if (ship != null && ship.id == ship1.id || secondResult.state.isAir) {
-            secondResult = RaycastFunctions.raycastNoShips(
-                level,
-                RaycastFunctions.Source(
-                    Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
-                    Vector3d(Minecraft.getInstance().player!!.eyePosition)
-                )
-            )
-        }
-
+        if (firstResult.globalNormalDirection == null || secondResult.worldNormalDirection == null) { return null }
         // not sure why i need to flip normal but it works
         val dir1 = when {
             firstResult.globalNormalDirection!!.y ==  1.0 -> -firstResult.globalNormalDirection!!
             firstResult.globalNormalDirection!!.y == -1.0 -> -firstResult.globalNormalDirection!!
             else -> firstResult.globalNormalDirection!!
         }
-        dir2 = secondResult.worldNormalDirection!!
+        val dir2 = secondResult.worldNormalDirection!!
 
-        rotation1 = Quaterniond()
-        rotation = Quaterniond()
+        gdir1 = dir1
+        gdir2 = secondResult.globalNormalDirection!!
+
+        var rotation = Quaterniond()
         if (!secondResult.state.isAir) {
-            // this rotates ship so that it aligns with hit pos normal
-            rotation1 = getQuatFromDir(dir1).normalize()
-            // this rotates ship to align with world normal
-            rotation2 = getQuatFromDir(dir2).normalize()
-            rotation = rotation2.mul(rotation1, Quaterniond()).normalize()
+            rotation = Quaterniond()
+                .mul(getQuatFromDir(dir2)) // this rotates ship to align with world normal
+                .mul(getQuatFromDir(dir1)) // this rotates ship so that it aligns with hit pos normal
+                .normalize()
         }
 
         spoint1 = if (mode == PositionModes.NORMAL) {firstResult.globalHitPos!!} else {firstResult.globalCenteredHitPos!!}
-        rpoint2 = if (mode == PositionModes.NORMAL) {secondResult.worldHitPos!!} else {secondResult.worldCenteredHitPos!!}
+        spoint2 = if (mode == PositionModes.NORMAL) {secondResult.globalHitPos!!} else {secondResult.globalCenteredHitPos!!}
+        val rpoint2 = if (mode == PositionModes.NORMAL) {secondResult.worldHitPos!!} else {secondResult.worldCenteredHitPos!!}
 
         // ship transform modifies both position in world AND rotation, but while we don't care about position in world,
         // rotation is incredibly important

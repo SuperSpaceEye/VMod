@@ -74,9 +74,3 @@ description='''
    versionRange="[4,)"
    ordering="AFTER"
    side="BOTH"
-[[dependencies.valkyrien_mod]]
-   modId="essential"
-   mandatory=true
-   versionRange="[1,)"
-   ordering="AFTER"
-   side="BOTH"

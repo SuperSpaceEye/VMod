@@ -85,13 +85,13 @@ class WeldMode : BaseMode {
     var posMode = PositionModes.NORMAL
     var secondaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
 
-    var primaryFirstdRaycast = false
+    var primaryFirstRaycast = false
     var secondaryAngle = Ref(0.0)
 
     var caughtShip: ClientShip? = null
 
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
-        if (secondaryStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !primaryFirstdRaycast) { return EventResult.pass() }
+        if (secondaryStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !primaryFirstRaycast) { return EventResult.pass() }
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             secondaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
@@ -116,7 +116,7 @@ class WeldMode : BaseMode {
     }
 
     override fun handleMouseScrollEvent(amount: Double): EventResult {
-        if (secondaryStage != ThreeClicksActivationSteps.FINALIZATION) { return EventResult.pass() }
+        if (!(secondaryStage == ThreeClicksActivationSteps.SECOND_RAYCAST || secondaryStage == ThreeClicksActivationSteps.FINALIZATION)) { return EventResult.pass() }
 
         secondaryAngle.it = secondaryAngle.it + amount * 0.2
 
@@ -124,7 +124,7 @@ class WeldMode : BaseMode {
     }
 
     private fun clientHandlPrimary() {
-        primaryFirstdRaycast = !primaryFirstdRaycast
+        primaryFirstRaycast = !primaryFirstRaycast
     }
 
     private fun clientHandleSecondary() {
@@ -190,7 +190,7 @@ class WeldMode : BaseMode {
         buf.writeDouble(width)
 
         buf.writeEnum(secondaryStage)
-        buf.writeBoolean(primaryFirstdRaycast)
+        buf.writeBoolean(primaryFirstRaycast)
         buf.writeDouble(secondaryAngle.it)
 
         return buf
@@ -202,7 +202,7 @@ class WeldMode : BaseMode {
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
 
-        primaryFirstdRaycast = buf.readBoolean()
+        primaryFirstRaycast = buf.readBoolean()
 
         secondaryStage = buf.readEnum(secondaryStage.javaClass)
         secondaryAngle.it = buf.readDouble()
@@ -238,7 +238,7 @@ class WeldMode : BaseMode {
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstdRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         level.makeManagedConstraint(WeldMConstraint(
@@ -310,13 +310,11 @@ class WeldMode : BaseMode {
         val dir2 = if (ship2 != null) { transformDirectionShipToWorld(ship2, secondResult.globalNormalDirection!!) } else secondResult.globalNormalDirection!!
 
         val angle = Quaterniond(AxisAngle4d(secondaryAngle.it, dir2.toJomlVector3d()))
-        val rotation1 = getQuatFromDir(dir1).normalize()
-        val rotation2 = getQuatFromDir(dir2).normalize()
 
         val rotation = Quaterniond()
             .mul(angle)
-            .mul(rotation2)
-            .mul(rotation1)
+            .mul(getQuatFromDir(dir2))
+            .mul(getQuatFromDir(dir1))
             .normalize()
 
         val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {PositionModes.CENTERED_ON_SIDE}, firstResult, secondResult)
@@ -365,6 +363,6 @@ class WeldMode : BaseMode {
         previousResult = null
         firstResult = null
         secondResult = null
-        primaryFirstdRaycast = false
+        primaryFirstRaycast = false
     }
 }

@@ -6,7 +6,6 @@ import gg.essential.elementa.components.UIBlock
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.ILOG
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.networking.C2SConnection
@@ -22,6 +21,7 @@ import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.A2BRenderer
+import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.translate.GUIComponents.CENTERED_IN_BLOCK
 import net.spaceeye.vmod.translate.GUIComponents.CENTERED_ON_SIDE
 import net.spaceeye.vmod.translate.GUIComponents.CHANNEL
@@ -45,16 +45,29 @@ class HydraulicsMode : BaseMode {
 
     var posMode = PositionModes.NORMAL
 
+    var primaryFirstRaycast = false
+
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
-        return EventResult.pass()
+        if (!primaryFirstRaycast) { return EventResult.pass() }
+
+        if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
+            resetState()
+        }
+
+        return EventResult.interruptFalse()
     }
 
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
+            clientHandlPrimary()
             conn_primary.sendToServer(this)
         }
 
         return EventResult.interruptFalse()
+    }
+
+    private fun clientHandlPrimary() {
+        primaryFirstRaycast = !primaryFirstRaycast
     }
 
     override fun serialize(): FriendlyByteBuf {
@@ -68,6 +81,8 @@ class HydraulicsMode : BaseMode {
         buf.writeDouble(extensionSpeed)
         buf.writeUtf(channel)
 
+        buf.writeBoolean(primaryFirstRaycast)
+
         return buf
     }
 
@@ -79,6 +94,8 @@ class HydraulicsMode : BaseMode {
         extensionDistance = buf.readDouble()
         extensionSpeed = buf.readDouble()
         channel = buf.readUtf()
+
+        primaryFirstRaycast = buf.readBoolean()
     }
 
     override fun serverSideVerifyLimits() {
@@ -112,7 +129,7 @@ class HydraulicsMode : BaseMode {
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverTryActivateFunction(posMode, level, raycastResult, ::previousResult, ::resetState) {
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
         level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         val dist = (rpoint1 - rpoint2).dist()
@@ -139,5 +156,6 @@ class HydraulicsMode : BaseMode {
 
     fun resetState() {
         previousResult = null
+        primaryFirstRaycast = false
     }
 }

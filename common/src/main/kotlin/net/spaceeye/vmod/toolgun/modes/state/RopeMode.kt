@@ -41,21 +41,19 @@ class RopeMode: BaseMode, RopeSerializable, RopeCRIHandler, RopeGUIBuilder {
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist()}
 
-        level.makeManagedConstraint(
-            RopeMConstraint(
-                shipId1, shipId2,
-                compliance,
-                spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-                maxForce, dist,
-                listOf(prresult.blockPosition, rresult.blockPosition),
-                RopeRenderer(
-                    ship1 != null,
-                    ship2 != null,
-                    spoint1, spoint2,
-                    dist, width, segments
-                )
+        level.makeManagedConstraint(RopeMConstraint(
+            shipId1, shipId2,
+            compliance,
+            spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
+            maxForce, dist,
+            listOf(prresult.blockPosition, rresult.blockPosition),
+            RopeRenderer(
+                ship1 != null,
+                ship2 != null,
+                spoint1, spoint2,
+                dist, width, segments
             )
-        ).addFor(player)
+        )).addFor(player)
 
         resetState()
     }

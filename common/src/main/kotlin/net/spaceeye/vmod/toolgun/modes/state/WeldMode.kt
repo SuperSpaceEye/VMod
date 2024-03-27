@@ -90,8 +90,7 @@ class WeldMode: BaseMode, WeldSerializable, WeldCRIHandler, WeldGUIBuilder {
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        level.makeManagedConstraint(
-            WeldMConstraint(
+        level.makeManagedConstraint(WeldMConstraint(
             spoint1, spoint2, rpoint1, rpoint2,
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
@@ -104,8 +103,7 @@ class WeldMode: BaseMode, WeldSerializable, WeldCRIHandler, WeldGUIBuilder {
                 Color(62, 62, 62),
                 width
             )
-        )
-        ).addFor(player)
+        )).addFor(player)
 
         resetState()
     }
@@ -174,9 +172,8 @@ class WeldMode: BaseMode, WeldSerializable, WeldCRIHandler, WeldGUIBuilder {
         // we cannot modify position in ship, we can, however, modify position in world
         // this translates ship so that after teleportation its spoint1 will be at rpoint2
         val point = rpoint2 - (
-                posShipToWorld(ship1, spoint1, newTransform) -
-                        posShipToWorld(ship1, net.spaceeye.vmod.utils.Vector3d(newTransform.positionInShip), newTransform)
-                )
+            posShipToWorld(ship1, spoint1, newTransform) - posShipToWorld(ship1, net.spaceeye.vmod.utils.Vector3d(newTransform.positionInShip), newTransform)
+        )
 
         level.shipObjectWorld.teleportShip(
             ship1, ShipTeleportDataImpl(
@@ -189,14 +186,12 @@ class WeldMode: BaseMode, WeldSerializable, WeldCRIHandler, WeldGUIBuilder {
         val shipId1: ShipId = ship1.id
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
-        level.makeManagedConstraint(
-            WeldMConstraint(
-                spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
-                compliance, maxForce, fixedDistance,
-                listOf(firstResult.blockPosition, secondResult.blockPosition),
-                null
-            )
-        ).addFor(player)
+        level.makeManagedConstraint(WeldMConstraint(
+            spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
+            compliance, maxForce, fixedDistance,
+            listOf(firstResult.blockPosition, secondResult.blockPosition),
+            null
+        )).addFor(player)
         resetState()
     }
 

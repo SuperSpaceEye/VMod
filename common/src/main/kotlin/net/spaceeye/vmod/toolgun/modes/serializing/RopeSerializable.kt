@@ -6,13 +6,6 @@ import net.spaceeye.vmod.toolgun.modes.MSerializable
 import net.spaceeye.vmod.toolgun.modes.state.RopeMode
 
 interface RopeSerializable: MSerializable {
-    override fun serverSideVerifyLimits() {
-        this as RopeMode
-        compliance = ServerLimits.instance.compliance.get(compliance)
-        maxForce = ServerLimits.instance.maxForce.get(maxForce)
-        fixedDistance = ServerLimits.instance.fixedDistance.get(fixedDistance)
-    }
-
     override fun serialize(): FriendlyByteBuf {
         this as RopeMode
 
@@ -41,5 +34,12 @@ interface RopeSerializable: MSerializable {
         segments = buf.readInt()
 
         primaryFirstRaycast = buf.readBoolean()
+    }
+
+    override fun serverSideVerifyLimits() {
+        this as RopeMode
+        compliance = ServerLimits.instance.compliance.get(compliance)
+        maxForce = ServerLimits.instance.maxForce.get(maxForce)
+        fixedDistance = ServerLimits.instance.fixedDistance.get(fixedDistance)
     }
 }

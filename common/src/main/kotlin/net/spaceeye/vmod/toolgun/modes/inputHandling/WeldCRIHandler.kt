@@ -85,8 +85,7 @@ interface WeldCRIHandler: ClientRawInputsHandler {
         val level = Minecraft.getInstance().level!!
 
         if (raycastResult.state.isAir) {return}
-        val mode = if (posMode != PositionModes.CENTERED_IN_BLOCK) {posMode} else {
-            PositionModes.CENTERED_ON_SIDE}
+        val mode = if (posMode != PositionModes.CENTERED_IN_BLOCK) {posMode} else {PositionModes.CENTERED_ON_SIDE}
 
         caughtShip = (level.getShipManagingPos(raycastResult.blockPosition) ?: return) as ClientShip
         caughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, caughtShip!!)

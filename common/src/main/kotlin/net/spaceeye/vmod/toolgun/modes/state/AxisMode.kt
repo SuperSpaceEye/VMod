@@ -21,7 +21,6 @@ import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
-import org.joml.Vector3d
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
@@ -90,8 +89,7 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
     fun activateSecondaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || secondaryFirstdRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        level.makeManagedConstraint(
-            AxisMConstraint(
+        level.makeManagedConstraint(AxisMConstraint(
             spoint1, spoint2, rpoint1, rpoint2,
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
@@ -169,8 +167,7 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
             .normalize()
 
 
-        val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {
-            PositionModes.CENTERED_ON_SIDE}, firstResult, secondResult)
+        val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {PositionModes.CENTERED_ON_SIDE}, firstResult, secondResult)
         var rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
         // rotation IS IMPORTANT, so make a new transform with new rotation to translate points
@@ -179,12 +176,12 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
         // we cannot modify position in ship, we can, however, modify position in world
         // this translates ship so that after teleportation its spoint1 will be at rpoint2
         val point = rpoint2 - (
-                posShipToWorld(ship1, spoint1, newTransform) - net.spaceeye.vmod.utils.Vector3d(ship1.transform.positionInWorld)
-                )
+            posShipToWorld(ship1, spoint1, newTransform) - Vector3d(ship1.transform.positionInWorld)
+        )
 
         level.shipObjectWorld.teleportShip(
             ship1, ShipTeleportDataImpl(
-                point.toJomlVector3d(), rotation, Vector3d()
+                point.toJomlVector3d(), rotation, org.joml.Vector3d()
             )
         )
 

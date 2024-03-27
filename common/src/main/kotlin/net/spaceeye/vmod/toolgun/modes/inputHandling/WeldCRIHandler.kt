@@ -2,6 +2,7 @@ package net.spaceeye.vmod.toolgun.modes.inputHandling
 
 import dev.architectury.event.EventResult
 import net.minecraft.client.Minecraft
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.ClientRawInputsHandler
 import net.spaceeye.vmod.toolgun.modes.state.WeldMode
@@ -79,7 +80,8 @@ interface WeldCRIHandler: ClientRawInputsHandler {
             RaycastFunctions.Source(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
                 Vector3d(Minecraft.getInstance().player!!.eyePosition)
-            )
+            ),
+            VMConfig.CLIENT.TOOLGUN.MAX_RAYCAST_DISTANCE
         )
 
         val level = Minecraft.getInstance().level!!

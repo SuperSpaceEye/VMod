@@ -1,6 +1,7 @@
 package net.spaceeye.vmod
 
 import net.spaceeye.vmod.config.AbstractConfigBuilder
+import net.spaceeye.vmod.config.CDouble
 import net.spaceeye.vmod.config.ConfigSubDirectory
 
 object VMConfig {
@@ -12,7 +13,19 @@ object VMConfig {
     val CLIENT = Client()
     val COMMON = Common()
 
-    class Client: ConfigSubDirectory()
+    class Client: ConfigSubDirectory() {
+        val TOOLGUN = ClientToolgunSettings()
+
+        class ClientToolgunSettings: ConfigSubDirectory() {
+            var MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
+        }
+    }
     class Common: ConfigSubDirectory()
-    class Server: ConfigSubDirectory()
+    class Server: ConfigSubDirectory() {
+        val TOOLGUN = ServerToolgunSettings()
+
+        class ServerToolgunSettings: ConfigSubDirectory() {
+            val MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
+        }
+    }
 }

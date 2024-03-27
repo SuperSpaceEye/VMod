@@ -17,7 +17,7 @@ interface AxisSerializable: MSerializable {
         buf.writeBoolean(disableCollisions)
         buf.writeDouble(distanceFromBlock)
 
-        buf.writeBoolean(secondaryFirstdRaycast)
+        buf.writeBoolean(secondaryFirstRaycast)
 
         buf.writeEnum(primaryStage)
         buf.writeDouble(primaryAngle.it)
@@ -34,7 +34,7 @@ interface AxisSerializable: MSerializable {
         disableCollisions = buf.readBoolean()
         distanceFromBlock = buf.readDouble()
 
-        secondaryFirstdRaycast = buf.readBoolean()
+        secondaryFirstRaycast = buf.readBoolean()
 
         primaryStage = buf.readEnum(primaryStage.javaClass)
         primaryAngle.it = buf.readDouble()

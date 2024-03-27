@@ -86,6 +86,7 @@ class RopeMConstraint(): MConstraint {
 
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null
+
         tag.putInt("managedID", mID.id)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
 
@@ -93,10 +94,10 @@ class RopeMConstraint(): MConstraint {
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        tryConvertDimensionId(tag, lastDimensionIds)
-        constraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
+
+        tryConvertDimensionId(tag, lastDimensionIds); constraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
 
         return this
     }

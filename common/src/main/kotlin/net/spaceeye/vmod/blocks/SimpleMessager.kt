@@ -20,10 +20,6 @@ import net.spaceeye.vmod.gui.SimpleMessagerGUI
 import net.spaceeye.vmod.network.MessagingNetwork
 
 class SimpleMessager(properties: Properties): BaseEntityBlock(properties) {
-    init {
-//        registerDefaultState(defaultBlockState().setValue(BlockStateProperties.POWERED, false))
-    }
-
     override fun use(
         state: BlockState,
         level: Level,

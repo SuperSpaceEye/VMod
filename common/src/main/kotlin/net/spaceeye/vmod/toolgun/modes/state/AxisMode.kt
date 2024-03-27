@@ -68,7 +68,7 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
 
     var posMode = PositionModes.NORMAL
     var primaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
-    var secondaryFirstdRaycast = false
+    var secondaryFirstRaycast = false
 
     var primaryAngle = Ref(0.0)
 
@@ -86,7 +86,7 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activateSecondaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || secondaryFirstdRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
+    fun activateSecondaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || secondaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         level.makeManagedConstraint(AxisMConstraint(
@@ -210,6 +210,6 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
         previousResult = null
         firstResult = null
         secondResult = null
-        secondaryFirstdRaycast = false
+        secondaryFirstRaycast = false
     }
 }

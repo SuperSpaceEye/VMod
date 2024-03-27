@@ -41,6 +41,7 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color
 import java.util.*
 
+//TODO this is horrible
 object SimpleMessagerNetworking {
     class C2SRequestStatePacket(): Serializable {
         lateinit var pos: BlockPos

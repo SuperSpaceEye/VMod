@@ -163,20 +163,19 @@ class AxisMConstraint(): MConstraint {
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-        tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-//        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint  = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null)
-
         mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
         disableCollisions = tag.getBoolean("disableCollisions")
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
+
+        tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
+        tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
+//        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint  = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null)
 
         return this
     }
 
     private fun <T> clean(level: ServerLevel): T? {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        ELOG("AXIS CONSTRAINT WASN'T CREATED")
         return null
     }
 

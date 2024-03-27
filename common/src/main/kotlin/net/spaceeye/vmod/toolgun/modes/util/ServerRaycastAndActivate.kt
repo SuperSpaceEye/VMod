@@ -4,6 +4,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.rendering.Effects
 import net.spaceeye.vmod.toolgun.PlayerToolgunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
@@ -25,14 +26,13 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
     serverMode.mode.deserialize(buf)
     serverMode.mode.serverSideVerifyLimits()
 
-    //TODO add maxDistance to config
     val result = RaycastFunctions.raycast(
         level,
         RaycastFunctions.Source(Vector3d(player.lookAngle), Vector3d(player.eyePosition)),
-        100.0
+        VMConfig.SERVER.TOOLGUN.MAX_RAYCAST_DISTANCE
     )
 
-    Effects.sendToolgunRayEffect(player, result, 100.0)
+    Effects.sendToolgunRayEffect(player, result, VMConfig.SERVER.TOOLGUN.MAX_RAYCAST_DISTANCE)
 
     fn(serverMode.mode as T, level, player, result)
     } catch (e: Exception) {

@@ -24,7 +24,7 @@ interface WeldGUIBuilder: GUIBuilder {
 
         makeTextEntry(GUIComponents.COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, limits.compliance)
         makeTextEntry(GUIComponents.MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
-        makeTextEntry(GUIComponents.WIDTH.get(),      ::width,      offset, offset, parentWindow, DoubleLimit(0.0, 1.0))
+        makeTextEntry(GUIComponents.WIDTH.get(),      ::width,      offset, offset, parentWindow, DoubleLimit(0.0, 1.0)) //TODO this
         makeTextEntry(GUIComponents.FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow)
         makeDropDown(
             GUIComponents.HITPOS_MODES.get(), parentWindow, offset, offset, listOf(

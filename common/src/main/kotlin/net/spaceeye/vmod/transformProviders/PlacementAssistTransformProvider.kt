@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.transformProviders
 
 import net.minecraft.client.Minecraft
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.utils.*
@@ -25,6 +26,8 @@ class PlacementAssistTransformProvider(
     lateinit var gdir1: Vector3d
     lateinit var gdir2: Vector3d
 
+    val raycastDistance = VMConfig.CLIENT.TOOLGUN.MAX_RAYCAST_DISTANCE
+
     override fun provideNextRenderTransform(
         prevShipTransform: ShipTransform,
         shipTransform: ShipTransform,
@@ -38,7 +41,7 @@ class PlacementAssistTransformProvider(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
                 Vector3d(Minecraft.getInstance().player!!.eyePosition)
             ),
-            100.0,
+            raycastDistance,
             ship1.id,
             {ship, dir -> transformDirectionShipToWorldRender(ship as ClientShip, dir) },
             {ship, dir -> transformDirectionWorldToShipRender(ship as ClientShip, dir) },

@@ -2,6 +2,7 @@ package net.spaceeye.vmod.toolgun.modes.inputHandling
 
 import dev.architectury.event.EventResult
 import net.minecraft.client.Minecraft
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.ClientRawInputsHandler
 import net.spaceeye.vmod.toolgun.modes.state.AxisMode
@@ -18,7 +19,7 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 interface AxisCRIHandler: ClientRawInputsHandler {
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
         this as AxisMode
-        if (primaryStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !secondaryFirstdRaycast) { return EventResult.pass() }
+        if (primaryStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !secondaryFirstRaycast) { return EventResult.pass() }
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             primaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
@@ -54,7 +55,7 @@ interface AxisCRIHandler: ClientRawInputsHandler {
 
     private fun clientHandleSecondary() {
         this as AxisMode
-        secondaryFirstdRaycast = !secondaryFirstdRaycast
+        secondaryFirstRaycast = !secondaryFirstRaycast
     }
 
     private fun clientHandlePrimary() {
@@ -79,7 +80,8 @@ interface AxisCRIHandler: ClientRawInputsHandler {
             RaycastFunctions.Source(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
                 Vector3d(Minecraft.getInstance().player!!.eyePosition)
-            )
+            ),
+            VMConfig.CLIENT.TOOLGUN.MAX_RAYCAST_DISTANCE
         )
 
         val level = Minecraft.getInstance().level!!

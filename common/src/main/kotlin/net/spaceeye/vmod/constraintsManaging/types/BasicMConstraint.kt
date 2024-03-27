@@ -68,10 +68,11 @@ class BasicMConstraint(): MConstraint {
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
+        mID = ManagedConstraintId(tag.getInt("managedID"))
+        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
+
         tryConvertDimensionId(tag, lastDimensionIds)
         constraint = VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null
-        mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
-        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
         return this
     }

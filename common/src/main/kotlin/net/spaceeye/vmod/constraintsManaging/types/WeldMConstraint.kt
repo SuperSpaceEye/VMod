@@ -146,12 +146,12 @@ class WeldMConstraint(): MConstraint {
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
+        mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
+        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
+
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSTorqueConstraint
-
-        mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
-        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
         return this
     }
 

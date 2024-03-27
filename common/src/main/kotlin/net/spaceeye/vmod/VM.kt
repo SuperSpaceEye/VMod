@@ -4,6 +4,7 @@ import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.event.events.common.LifecycleEvent
 import dev.architectury.platform.Platform
 import net.minecraft.client.Minecraft
+import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
@@ -32,6 +33,8 @@ object VM {
             WLOG("VALKYRIEN SKIES IS NOT INSTALLED. NOT INITIALIZING THE MOD.")
             return
         }
+        ConfigDelegateRegister.initConfig()
+
         SynchronisedRenderingData
         SimpleMessagerNetworking
         ToolgunModes

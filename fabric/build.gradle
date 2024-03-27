@@ -50,6 +50,10 @@ dependencies {
 
     include (modImplementation("gg.essential:universalcraft-1.18.1-fabric:323"))
     include (modImplementation("gg.essential:elementa-1.18.1-fabric:622"))
+
+    implementation 'com.electronwill.night-config:core:3.6.3'
+    implementation 'com.electronwill.night-config:toml:3.6.3'
+    modCompileOnlyApi "curse.maven:forge-config-api-port-fabric-547434:3943250"
 }
 
 processResources {

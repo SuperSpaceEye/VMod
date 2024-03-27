@@ -1,7 +1,8 @@
-package net.spaceeye.vmod.toolgun.modes
+package net.spaceeye.vmod.toolgun.modes.util
 
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
+import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.posShipToWorld
@@ -20,9 +21,9 @@ enum class PositionModes {
 
 inline fun getModePositions(mode: PositionModes, prevPos: RaycastFunctions.RaycastResult, pos: RaycastFunctions.RaycastResult): Pair<Vector3d, Vector3d> {
     return when(mode) {
-        PositionModes.NORMAL            -> Pair(prevPos.globalHitPos!!, pos.globalHitPos!!)
-        PositionModes.CENTERED_ON_SIDE  -> Pair(prevPos.globalCenteredHitPos!!, pos.globalCenteredHitPos!!)
-        PositionModes.CENTERED_IN_BLOCK -> Pair(Vector3d(prevPos.blockPosition!!) + 0.5, Vector3d(pos.blockPosition!!) + 0.5)
+        PositionModes.NORMAL -> Pair(prevPos.globalHitPos!!, pos.globalHitPos!!)
+        PositionModes.CENTERED_ON_SIDE -> Pair(prevPos.globalCenteredHitPos!!, pos.globalCenteredHitPos!!)
+        PositionModes.CENTERED_IN_BLOCK -> Pair(Vector3d(prevPos.blockPosition) + 0.5, Vector3d(pos.blockPosition) + 0.5)
     }
 }
 
@@ -49,8 +50,8 @@ fun BaseMode.serverTryActivateFunction(
     if (raycastResult.state.isAir) {return}
     if (previousResult.get() == null) {previousResult.set(raycastResult); return}
 
-    val ship1 = level.getShipManagingPos(previousResult.get()!!.blockPosition!!)
-    val ship2 = level.getShipManagingPos(raycastResult.blockPosition!!)
+    val ship1 = level.getShipManagingPos(previousResult.get()!!.blockPosition)
+    val ship2 = level.getShipManagingPos(raycastResult.blockPosition)
 
     if (ship1 == null && ship2 == null) { resetFn(); return }
     if (ship1 == ship2) { resetFn(); return }
@@ -90,8 +91,8 @@ fun BaseMode.serverRaycast2PointsFnActivation(
     val (res, previousResult) = processNewResult(raycastResult)
     if (!res) {return}
 
-    val ship1 = level.getShipManagingPos(previousResult!!.blockPosition!!)
-    val ship2 = level.getShipManagingPos(raycastResult.blockPosition!!)
+    val ship1 = level.getShipManagingPos(previousResult!!.blockPosition)
+    val ship2 = level.getShipManagingPos(raycastResult.blockPosition)
 
     if (ship1 == null && ship2 == null) { resetFn(); return }
     if (ship1 == ship2) { resetFn(); return }

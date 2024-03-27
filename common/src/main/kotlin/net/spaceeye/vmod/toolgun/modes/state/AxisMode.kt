@@ -1,53 +1,35 @@
-package net.spaceeye.vmod.toolgun.modes
+package net.spaceeye.vmod.toolgun.modes.state
 
-import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
-import gg.essential.elementa.components.UIBlock
-import net.minecraft.client.Minecraft
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
-import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.rendering.types.A2BRenderer
-import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.AxisMConstraint
-import net.spaceeye.vmod.guiElements.*
-import net.spaceeye.vmod.translate.GUIComponents.COMPLIANCE
-import net.spaceeye.vmod.translate.GUIComponents.MAX_FORCE
-import net.spaceeye.vmod.translate.get
-import org.lwjgl.glfw.GLFW
-import java.awt.Color
-import net.spaceeye.vmod.limits.DoubleLimit
-import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.transformProviders.PlacementAssistTransformProvider
-import net.spaceeye.vmod.utils.Ref
-import net.spaceeye.vmod.transformProviders.RotationAssistTransformProvider
-import net.spaceeye.vmod.translate.GUIComponents.AXIS
-import net.spaceeye.vmod.translate.GUIComponents.CENTERED_IN_BLOCK
-import net.spaceeye.vmod.translate.GUIComponents.CENTERED_ON_SIDE
-import net.spaceeye.vmod.translate.GUIComponents.DISABLE_COLLISIONS
-import net.spaceeye.vmod.translate.GUIComponents.DISTANCE_FROM_BLOCK
-import net.spaceeye.vmod.translate.GUIComponents.FIXED_DISTANCE
-import net.spaceeye.vmod.translate.GUIComponents.HITPOS_MODES
-import net.spaceeye.vmod.translate.GUIComponents.NORMAL
-import net.spaceeye.vmod.translate.GUIComponents.WIDTH
+import net.spaceeye.vmod.rendering.types.A2BRenderer
+import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.gui.AxisGUIBuilder
+import net.spaceeye.vmod.toolgun.modes.inputHandling.AxisCRIHandler
+import net.spaceeye.vmod.toolgun.modes.serializing.AxisSerializable
+import net.spaceeye.vmod.toolgun.modes.util.*
+import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
+import org.joml.Vector3d
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSHingeOrientationConstraint
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.awt.Color
 
 object AxisNetworking {
     private var obj: AxisMode? = null
@@ -76,7 +58,7 @@ object AxisNetworking {
     }
 }
 
-class AxisMode : BaseMode {
+class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
     var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2
@@ -95,156 +77,7 @@ class AxisMode : BaseMode {
         AxisNetworking.init(this)
     }
 
-    override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
-        if (primaryStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !secondaryFirstdRaycast) { return EventResult.pass() }
-
-        if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
-            primaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
-            resetState()
-        }
-
-        return EventResult.interruptFalse()
-    }
-
-    override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
-            clientHandlePrimary()
-            conn_primary.sendToServer(this)
-        }
-
-        if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
-            clientHandleSecondary()
-            conn_secondary.sendToServer(this)
-        }
-
-        return EventResult.interruptFalse()
-    }
-
-    override fun handleMouseScrollEvent(amount: Double): EventResult {
-        if (!(primaryStage == ThreeClicksActivationSteps.SECOND_RAYCAST || primaryStage == ThreeClicksActivationSteps.FINALIZATION)) { return EventResult.pass() }
-
-        primaryAngle.it = primaryAngle.it + amount * 0.2
-
-        return EventResult.interruptFalse()
-    }
-
-    private fun clientHandleSecondary() {
-        secondaryFirstdRaycast = !secondaryFirstdRaycast
-    }
-
-    var caughtShip: ClientShip? = null
-
-    private fun clientHandlePrimary() {
-        when (primaryStage) {
-            ThreeClicksActivationSteps.FIRST_RAYCAST  -> clientPrimaryFirst()
-            ThreeClicksActivationSteps.SECOND_RAYCAST -> clientPrimarySecond()
-            ThreeClicksActivationSteps.FINALIZATION   -> clientPrimaryThird()
-        }
-    }
-
-    private fun clientPrimaryFirst() {
-        if (caughtShip != null) {
-            caughtShip!!.transformProvider = null
-            caughtShip = null
-            return
-        }
-
-        val raycastResult = RaycastFunctions.raycast(
-            Minecraft.getInstance().level!!,
-            RaycastFunctions.Source(
-                Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
-                Vector3d(Minecraft.getInstance().player!!.eyePosition)
-            )
-        )
-
-        val level = Minecraft.getInstance().level!!
-
-        if (raycastResult.state.isAir) {return}
-        val mode = if (posMode != PositionModes.CENTERED_IN_BLOCK) {posMode} else {PositionModes.CENTERED_ON_SIDE}
-
-        caughtShip = (level.getShipManagingPos(raycastResult.blockPosition) ?: return) as ClientShip
-        caughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, caughtShip!!)
-
-        primaryStage = ThreeClicksActivationSteps.SECOND_RAYCAST
-        return
-    }
-
-    private fun clientPrimarySecond() {
-        primaryStage = ThreeClicksActivationSteps.FINALIZATION
-        if (caughtShip == null) { return }
-
-        val placementTransform = caughtShip!!.transformProvider
-        if (placementTransform !is PlacementAssistTransformProvider) {return}
-
-        primaryAngle.it = 0.0
-        caughtShip!!.transformProvider = RotationAssistTransformProvider(placementTransform, primaryAngle)
-    }
-
-    private fun clientPrimaryThird() {
-        primaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
-        if (caughtShip != null) {
-            caughtShip!!.transformProvider = null
-            caughtShip = null
-        }
-    }
-
-    override fun serialize(): FriendlyByteBuf {
-        val buf = getBuffer()
-
-        buf.writeDouble(compliance)
-        buf.writeDouble(maxForce)
-        buf.writeEnum(posMode)
-        buf.writeDouble(width)
-        buf.writeBoolean(disableCollisions)
-        buf.writeDouble(distanceFromBlock)
-
-        buf.writeBoolean(secondaryFirstdRaycast)
-
-        buf.writeEnum(primaryStage)
-        buf.writeDouble(primaryAngle.it)
-
-        return buf
-    }
-
-    override fun deserialize(buf: FriendlyByteBuf) {
-        compliance = buf.readDouble()
-        maxForce = buf.readDouble()
-        posMode = buf.readEnum(posMode.javaClass)
-        width = buf.readDouble()
-        disableCollisions = buf.readBoolean()
-        distanceFromBlock = buf.readDouble()
-
-        secondaryFirstdRaycast = buf.readBoolean()
-
-        primaryStage = buf.readEnum(primaryStage.javaClass)
-        primaryAngle.it = buf.readDouble()
-    }
-
-    override fun serverSideVerifyLimits() {
-        val limits = ServerLimits.instance
-        compliance = limits.compliance.get(compliance)
-        maxForce = limits.maxForce.get(maxForce)
-        fixedDistance = limits.fixedDistance.get(fixedDistance)
-        distanceFromBlock = limits.distanceFromBlock.get(distanceFromBlock)
-    }
-
-    override val itemName = AXIS
-    override fun makeGUISettings(parentWindow: UIBlock) {
-        val offset = 2.0f
-        val limits = ServerLimits.instance
-
-        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, limits.compliance)
-        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
-        makeTextEntry(WIDTH.get(),      ::width,      offset, offset, parentWindow, DoubleLimit(0.0, 1.0))
-        makeTextEntry(FIXED_DISTANCE.get(),     ::fixedDistance,     offset, offset, parentWindow)
-        makeCheckBox (DISABLE_COLLISIONS.get(), ::disableCollisions, offset, offset, parentWindow)
-        makeTextEntry(DISTANCE_FROM_BLOCK.get(),::distanceFromBlock, offset, offset, parentWindow, limits.distanceFromBlock)
-        makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
-            DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
-            DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK },
-        ))
-    }
+    var clientCaughtShip: ClientShip? = null
 
     val conn_secondary = register { object : C2SConnection<AxisMode>("axis_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AxisMode>(context.player, buf, ::AxisMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
     val conn_primary   = register { object : C2SConnection<AxisMode>("axis_mode_primary",   "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AxisMode>(context.player, buf, ::AxisMode) {
@@ -255,9 +88,10 @@ class AxisMode : BaseMode {
     var previousResult: RaycastFunctions.RaycastResult? = null
 
     fun activateSecondaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || secondaryFirstdRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
-        level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
+            level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        level.makeManagedConstraint(AxisMConstraint(
+        level.makeManagedConstraint(
+            AxisMConstraint(
             spoint1, spoint2, rpoint1, rpoint2,
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
@@ -335,7 +169,8 @@ class AxisMode : BaseMode {
             .normalize()
 
 
-        val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {PositionModes.CENTERED_ON_SIDE}, firstResult, secondResult)
+        val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {
+            PositionModes.CENTERED_ON_SIDE}, firstResult, secondResult)
         var rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
         // rotation IS IMPORTANT, so make a new transform with new rotation to translate points
@@ -344,12 +179,12 @@ class AxisMode : BaseMode {
         // we cannot modify position in ship, we can, however, modify position in world
         // this translates ship so that after teleportation its spoint1 will be at rpoint2
         val point = rpoint2 - (
-            posShipToWorld(ship1, spoint1, newTransform) - Vector3d(ship1.transform.positionInWorld)
-        )
+                posShipToWorld(ship1, spoint1, newTransform) - net.spaceeye.vmod.utils.Vector3d(ship1.transform.positionInWorld)
+                )
 
         level.shipObjectWorld.teleportShip(
             ship1, ShipTeleportDataImpl(
-                point.toJomlVector3d(), rotation, org.joml.Vector3d()
+                point.toJomlVector3d(), rotation, Vector3d()
             )
         )
 
@@ -371,9 +206,9 @@ class AxisMode : BaseMode {
 
     fun resetState() {
         primaryStage = ThreeClicksActivationSteps.FIRST_RAYCAST
-        if (caughtShip != null) {
-            caughtShip!!.transformProvider = null
-            caughtShip = null
+        if (clientCaughtShip != null) {
+            clientCaughtShip!!.transformProvider = null
+            clientCaughtShip = null
         }
         previousResult = null
         firstResult = null

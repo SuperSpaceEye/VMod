@@ -157,7 +157,6 @@ class WeldMConstraint(): MConstraint {
 
     private fun <T> clean(level: ServerLevel): T? {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        ELOG("WELD CONSTRAINT WASN'T CREATED")
         return null
     }
 

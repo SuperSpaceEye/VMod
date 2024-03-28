@@ -1,11 +1,13 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
 import dev.architectury.networking.NetworkManager
+import net.minecraft.client.Minecraft
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.AxisMConstraint
@@ -18,12 +20,13 @@ import net.spaceeye.vmod.toolgun.modes.gui.AxisGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.inputHandling.AxisCRIHandler
 import net.spaceeye.vmod.toolgun.modes.serializing.AxisSerializable
 import net.spaceeye.vmod.toolgun.modes.util.*
+import net.spaceeye.vmod.transformProviders.CenteredAroundPlacementAssistTransformProvider
+import net.spaceeye.vmod.transformProviders.PlacementAssistTransformProvider
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
@@ -43,9 +46,48 @@ object AxisNetworking {
         }
     }
 
+    // Client has no information about constraints, so server should send it to the client
+    val s2cSendTraversalInfo = "send_traversal_info" idWithConns {
+        object : S2CConnection<S2CSendTraversalInfo>(it, "axis_networking") {
+            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val pkt = S2CSendTraversalInfo(buf)
+                if (obj!!.clientCaughtShip == null) {return}
+
+                val primaryTransform = obj!!.clientCaughtShip!!.transformProvider
+                if (primaryTransform !is PlacementAssistTransformProvider) { return }
+
+                obj!!.clientCaughtShips = pkt.data.filter { it != obj!!.clientCaughtShip!!.id }.toLongArray()
+                val clientShipObjectWorld = Minecraft.getInstance().shipObjectWorld
+
+                obj!!.clientCaughtShips!!.forEach {
+                    val ship = clientShipObjectWorld.allShips.getById(it)
+                    ship?.transformProvider = CenteredAroundPlacementAssistTransformProvider(primaryTransform, ship!!)
+                }
+            }
+        }
+    }
+
     class S2CHandleFailurePacket(): Serializable {
         override fun serialize(): FriendlyByteBuf { return getBuffer() }
         override fun deserialize(buf: FriendlyByteBuf) {}
+    }
+
+    class S2CSendTraversalInfo(): Serializable {
+        var data: LongArray = longArrayOf()
+
+        constructor(buf: FriendlyByteBuf): this() { deserialize(buf) }
+        constructor(data: MutableSet<ShipId>): this() { this.data = data.toLongArray() }
+        override fun serialize(): FriendlyByteBuf {
+            val buf = getBuffer()
+
+            buf.writeLongArray(data)
+
+            return buf
+        }
+
+        override fun deserialize(buf: FriendlyByteBuf) {
+            data = buf.readLongArray()
+        }
     }
 
     private infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
@@ -77,6 +119,7 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
     }
 
     var clientCaughtShip: ClientShip? = null
+    var clientCaughtShips: LongArray? = null
 
     val conn_secondary = register { object : C2SConnection<AxisMode>("axis_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AxisMode>(context.player, buf, ::AxisMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
     val conn_primary   = register { object : C2SConnection<AxisMode>("axis_mode_primary",   "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AxisMode>(context.player, buf, ::AxisMode) {
@@ -127,8 +170,10 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
 
     private fun primaryFunctionFirst(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (raycastResult.state.isAir) {return handleFailure(player)}
-        if (level.getShipManagingPos(raycastResult.blockPosition) == null) {return handleFailure(player)}
+        val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return handleFailure(player)
         firstResult = raycastResult
+        val traversed = VSConstraintsKeeper.traverseGetConnectedShips(ship.id)
+        AxisNetworking.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, AxisNetworking.S2CSendTraversalInfo(traversed))
     }
 
     private fun primaryFunctionSecond(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
@@ -179,11 +224,7 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
             posShipToWorld(ship1, spoint1, newTransform) - Vector3d(ship1.transform.positionInWorld)
         )
 
-        level.shipObjectWorld.teleportShip(
-            ship1, ShipTeleportDataImpl(
-                point.toJomlVector3d(), rotation, org.joml.Vector3d()
-            )
-        )
+        teleportShipWithConnected(level, ship1, point, rotation)
 
         rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
         val rpoint1 = Vector3d(rpoint2) + dir2.normalize() * distanceFromBlock
@@ -211,5 +252,9 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder {
         firstResult = null
         secondResult = null
         secondaryFirstRaycast = false
+        clientCaughtShips?.forEach {
+            Minecraft.getInstance().shipObjectWorld.allShips.getById(it)?.transformProvider = null
+        }
+        clientCaughtShips = null
     }
 }

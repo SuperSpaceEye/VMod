@@ -1,19 +1,32 @@
 package net.spaceeye.vmod.utils
 
-import net.minecraft.client.Minecraft
-import net.minecraft.core.BlockPos
-import net.minecraft.world.level.ClipContext
-import net.minecraft.world.level.Level
-import net.minecraft.world.level.block.state.BlockState
-import net.minecraft.world.phys.AABB
 import org.valkyrienskies.core.api.ships.Ship
-import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.mod.common.getShipManagingPos
-import org.valkyrienskies.mod.common.world.clipIncludeShips
+import org.valkyrienskies.mod.common.shipObjectWorld
+import org.valkyrienskies.mod.common.util.toJOML
+import org.valkyrienskies.mod.common.util.toMinecraft
 import org.valkyrienskies.mod.common.world.vanillaClip
 import kotlin.math.abs
 import kotlin.math.max
+
+import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
+import net.minecraft.util.Mth
+import net.minecraft.world.level.ClipContext
+import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.level.material.FluidState
+import net.minecraft.world.phys.AABB
+import net.minecraft.world.phys.BlockHitResult
+import net.minecraft.world.phys.HitResult
+import net.minecraft.world.phys.Vec3
+import org.joml.primitives.AABBd
+import org.joml.primitives.AABBdc
+import org.valkyrienskies.core.api.ships.ClientShip
+import org.valkyrienskies.core.api.ships.properties.ShipId
+import java.util.function.BiFunction
+import java.util.function.Function
 
 object RaycastFunctions {
     const val eps = 1e-200
@@ -68,6 +81,15 @@ object RaycastFunctions {
                 posShipToWorld: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posShipToWorld,
                 posWorldToShip: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posWorldToShip
     ): RaycastResult {
+        return raycast(level, source, maxDistance, if (skipShipId != null) setOf(skipShipId) else null, transformShipToWorld, transformWorldToShip, posShipToWorld, posWorldToShip)
+    }
+
+    fun raycast(level: Level, source: Source, maxDistance: Double = 100.0, skipShipId: Set<ShipId>?,
+                transformShipToWorld: (ship: Ship, dir: Vector3d) -> Vector3d = ::transformDirectionShipToWorld,
+                transformWorldToShip: (ship: Ship, dir: Vector3d) -> Vector3d = ::transformDirectionWorldToShip,
+                posShipToWorld: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posShipToWorld,
+                posWorldToShip: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posWorldToShip
+    ): RaycastResult {
         var unitLookVec = Vector3d(source.dir).snormalize()
         val clipResult = level.clipIncludeShips(
             ClipContext(
@@ -76,7 +98,7 @@ object RaycastFunctions {
                 ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE,
                 null
-            ), false, skipShipId
+            ), skipShipId
         )
 
         val state = level.getBlockState(clipResult.blockPos)
@@ -121,40 +143,126 @@ object RaycastFunctions {
         return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection)
     }
 
-    fun raycastNoShips(level: Level, source: Source, maxDistance: Double = 100.0): RaycastResult {
-        val unitLookVec = Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize()
-        val origin = Vector3d(Minecraft.getInstance().player!!.eyePosition)
+    fun Level.clipIncludeShips(
+        ctx: ClipContext, skipShips: Set<ShipId>? = null
+    ): BlockHitResult {
+        val vanillaHit = vanillaClip(ctx)
 
-        val clipResult = level.vanillaClip(
-            ClipContext(
-                source.origin.toMCVec3(),
-                (origin + unitLookVec * maxDistance).toMCVec3(),
-                ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE,
-                null
-            )
-        )
+        var closestHit = vanillaHit
+        val closestHitPos = vanillaHit.location
+        var closestHitDist = closestHitPos.distanceToSqr(ctx.from)
 
-        val state = level.getBlockState(clipResult.blockPos)
-        val bpos = Vector3d(clipResult.blockPos)
+        val clipAABB: AABBdc = AABBd(ctx.from.toJOML(), ctx.to.toJOML()).correctBounds()
 
-        val result = rayIntersectsBox(AABB(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1), origin, (unitLookVec + eps).srdiv(1.0))
-        val normal = calculateNormal(origin, unitLookVec, result, unitLookVec.dist())
+        // Iterate every ship, find do the raycast in ship space,
+        // choose the raycast with the lowest distance to the start position.
+        for (ship in shipObjectWorld.loadedShips.getIntersecting(clipAABB)) {
+            // Skip skipShips
+            if (skipShips != null && skipShips.contains(ship.id)) { continue }
+            val worldToShip = (ship as? ClientShip)?.renderTransform?.worldToShip ?: ship.worldToShip
+            val shipToWorld = (ship as? ClientShip)?.renderTransform?.shipToWorld ?: ship.shipToWorld
+            val shipStart = worldToShip.transformPosition(ctx.from.toJOML()).toMinecraft()
+            val shipEnd = worldToShip.transformPosition(ctx.to.toJOML()).toMinecraft()
 
-        val globalHitPos: Vector3d = origin + unitLookVec * (unitLookVec.dist() * result.tToIn)
+            val shipHit = clip(ctx, shipStart, shipEnd)
+            val shipHitPos = shipToWorld.transformPosition(shipHit.location.toJOML()).toMinecraft()
+            val shipHitDist = shipHitPos.distanceToSqr(ctx.from)
 
-        val diff = globalHitPos - globalHitPos.floor()
-        val offset = Vector3d(0, 0, 0)
-        when {
-            normal.x > 0.5 -> offset.sadd(if (diff.x >= 0.5) {1.0} else {0.0}, 0.5, 0.5)
-            normal.y > 0.5 -> offset.sadd(0.5, if (diff.y >= 0.5) {1.0} else {0.0}, 0.5)
-            normal.z > 0.5 -> offset.sadd(0.5, 0.5, if (diff.z >= 0.5) {1.0} else {0.0})
+            if (shipHitDist < closestHitDist && shipHit.type != HitResult.Type.MISS) {
+                closestHit = shipHit
+                closestHitDist = shipHitDist
+            }
         }
-        val globalCenteredHitPos = globalHitPos.floor().sadd(offset.x, offset.y, offset.z)
 
-        val normalDirection = (globalCenteredHitPos - bpos - 0.5) * 2
-        val globalNormalDirection = Vector3d(normalDirection)
+        return closestHit
+    }
 
-        return RaycastResult(state, origin, unitLookVec, clipResult.blockPos, globalHitPos, globalHitPos, globalCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection)
+
+    private fun Level.clip(context: ClipContext, realStart: Vec3, realEnd: Vec3): BlockHitResult {
+        return clip(
+            realStart, realEnd, context,
+            { raycastContext: ClipContext, blockPos: BlockPos? ->
+                val blockState: BlockState = getBlockState(blockPos!!)
+                val fluidState: FluidState = getFluidState(blockPos)
+                val vec3d = realStart
+                val vec3d2 = realEnd
+                val voxelShape = raycastContext.getBlockShape(blockState, this, blockPos)
+                val blockHitResult: BlockHitResult? =
+                    clipWithInteractionOverride(vec3d, vec3d2, blockPos, voxelShape, blockState)
+                val voxelShape2 = raycastContext.getFluidShape(fluidState, this, blockPos)
+                val blockHitResult2 = voxelShape2.clip(vec3d, vec3d2, blockPos)
+                val d = if (blockHitResult == null) Double.MAX_VALUE else realStart.distanceToSqr(blockHitResult.location)
+                val e = if (blockHitResult2 == null) Double.MAX_VALUE else realEnd.distanceToSqr(blockHitResult2.location)
+                if (d <= e) blockHitResult else blockHitResult2
+            }
+        ) { raycastContext: ClipContext ->
+            val vec3d = realStart.subtract(realEnd)
+            BlockHitResult.miss(realEnd, Direction.getNearest(vec3d.x, vec3d.y, vec3d.z), BlockPos(realEnd))
+        } as BlockHitResult
+    }
+
+    private fun <T> clip(
+        realStart: Vec3,
+        realEnd: Vec3,
+        raycastContext: ClipContext,
+        context: BiFunction<ClipContext, BlockPos?, T>,
+        blockRaycaster: Function<ClipContext, T>
+    ): T {
+        val vec3d = realStart
+        val vec3d2 = realEnd
+        return if (vec3d == vec3d2) {
+            blockRaycaster.apply(raycastContext)
+        } else {
+            val d = Mth.lerp(-1.0E-7, vec3d2.x, vec3d.x)
+            val e = Mth.lerp(-1.0E-7, vec3d2.y, vec3d.y)
+            val f = Mth.lerp(-1.0E-7, vec3d2.z, vec3d.z)
+            val g = Mth.lerp(-1.0E-7, vec3d.x, vec3d2.x)
+            val h = Mth.lerp(-1.0E-7, vec3d.y, vec3d2.y)
+            val i = Mth.lerp(-1.0E-7, vec3d.z, vec3d2.z)
+            var j = Mth.floor(g)
+            var k = Mth.floor(h)
+            var l = Mth.floor(i)
+            val mutable = BlockPos.MutableBlockPos(j, k, l)
+            val `object`: T? = context.apply(raycastContext, mutable)
+            if (`object` != null) {
+                `object`
+            } else {
+                val m = d - g
+                val n = e - h
+                val o = f - i
+                val p = Mth.sign(m)
+                val q = Mth.sign(n)
+                val r = Mth.sign(o)
+                val s = if (p == 0) Double.MAX_VALUE else p.toDouble() / m
+                val t = if (q == 0) Double.MAX_VALUE else q.toDouble() / n
+                val u = if (r == 0) Double.MAX_VALUE else r.toDouble() / o
+                var v = s * if (p > 0) 1.0 - Mth.frac(g) else Mth.frac(g)
+                var w = t * if (q > 0) 1.0 - Mth.frac(h) else Mth.frac(h)
+                var x = u * if (r > 0) 1.0 - Mth.frac(i) else Mth.frac(i)
+                var object2: T?
+                do {
+                    if (v > 1.0 && w > 1.0 && x > 1.0) {
+                        return blockRaycaster.apply(raycastContext)
+                    }
+                    if (v < w) {
+                        if (v < x) {
+                            j += p
+                            v += s
+                        } else {
+                            l += r
+                            x += u
+                        }
+                    } else if (w < x) {
+                        k += q
+                        w += t
+                    } else {
+                        l += r
+                        x += u
+                    }
+                    object2 = context.apply(raycastContext, mutable.set(j, k, l))
+                } while (object2 == null)
+                object2
+            }
+        }
     }
 }

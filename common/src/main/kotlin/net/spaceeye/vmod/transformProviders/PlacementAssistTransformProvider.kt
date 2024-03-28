@@ -28,6 +28,8 @@ class PlacementAssistTransformProvider(
 
     val raycastDistance = VMConfig.CLIENT.TOOLGUN.MAX_RAYCAST_DISTANCE
 
+    val ignoreShipIds = mutableSetOf(ship1.id)
+
     override fun provideNextRenderTransform(
         prevShipTransform: ShipTransform,
         shipTransform: ShipTransform,
@@ -42,7 +44,7 @@ class PlacementAssistTransformProvider(
                 Vector3d(Minecraft.getInstance().player!!.eyePosition)
             ),
             raycastDistance,
-            ship1.id,
+            ignoreShipIds,
             {ship, dir -> transformDirectionShipToWorldRender(ship as ClientShip, dir) },
             {ship, dir -> transformDirectionWorldToShipRender(ship as ClientShip, dir) },
             {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },

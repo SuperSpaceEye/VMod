@@ -8,6 +8,8 @@ import net.spaceeye.vmod.toolgun.modes.ClientRawInputsHandler
 import net.spaceeye.vmod.toolgun.modes.state.AxisMode
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.ThreeClicksActivationSteps
+import net.spaceeye.vmod.transformProviders.CenteredAroundPlacementAssistTransformProvider
+import net.spaceeye.vmod.transformProviders.CenteredAroundRotationAssistTransformProvider
 import net.spaceeye.vmod.transformProviders.PlacementAssistTransformProvider
 import net.spaceeye.vmod.transformProviders.RotationAssistTransformProvider
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -15,6 +17,7 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.mod.common.getShipManagingPos
+import org.valkyrienskies.mod.common.shipObjectWorld
 
 interface AxisCRIHandler: ClientRawInputsHandler {
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
@@ -106,6 +109,12 @@ interface AxisCRIHandler: ClientRawInputsHandler {
 
         primaryAngle.it = 0.0
         clientCaughtShip!!.transformProvider = RotationAssistTransformProvider(placementTransform, primaryAngle)
+
+        val shipObjectWorld = Minecraft.getInstance().shipObjectWorld
+        clientCaughtShips!!.forEach {
+            val ship = shipObjectWorld.allShips.getById(it)
+            ship?.transformProvider = CenteredAroundRotationAssistTransformProvider(ship!!.transformProvider as CenteredAroundPlacementAssistTransformProvider)
+        }
     }
 
     private fun clientPrimaryThird() {

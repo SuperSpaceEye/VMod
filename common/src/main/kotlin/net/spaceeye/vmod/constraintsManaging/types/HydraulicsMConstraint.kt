@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
@@ -272,7 +271,6 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
     // TODO sometimes VS2 can't create new constraints. Do something about it in the future
     private fun <T> clean(level: ServerLevel): T? {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        ELOG("HYDRAULICS CONSTRAINT WASN'T CREATED")
         return null
     }
 

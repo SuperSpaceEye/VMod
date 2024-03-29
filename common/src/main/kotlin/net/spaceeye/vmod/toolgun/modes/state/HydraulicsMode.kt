@@ -62,7 +62,7 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
         resetState()
     }
 
-    fun resetState() {
+    override fun resetState() {
         previousResult = null
         primaryFirstRaycast = false
     }

@@ -24,7 +24,9 @@ interface MSerializable: Serializable {
 }
 
 interface BaseMode : MSerializable, GUIBuilder, ClientRawInputsHandler {
-     fun <T: Serializable> register(constructor: () -> C2SConnection<T>): C2SConnection<T> {
+    fun resetState() {}
+
+    fun <T: Serializable> register(constructor: () -> C2SConnection<T>): C2SConnection<T> {
         val instance = constructor()
         if (!ToolgunModes.initialized) {
             try { NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler()) } catch (e: NoSuchMethodError) { }

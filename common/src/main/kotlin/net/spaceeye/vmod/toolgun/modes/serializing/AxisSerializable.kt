@@ -4,8 +4,9 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
 import net.spaceeye.vmod.toolgun.modes.state.AxisMode
+import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistSerialize
 
-interface AxisSerializable: MSerializable {
+interface AxisSerializable: MSerializable, PlacementAssistSerialize {
     override fun serialize(): FriendlyByteBuf {
         this as AxisMode
         val buf = getBuffer()
@@ -15,12 +16,10 @@ interface AxisSerializable: MSerializable {
         buf.writeEnum(posMode)
         buf.writeDouble(width)
         buf.writeBoolean(disableCollisions)
-        buf.writeDouble(distanceFromBlock)
 
         buf.writeBoolean(secondaryFirstRaycast)
 
-        buf.writeEnum(primaryStage)
-        buf.writeDouble(primaryAngle.it)
+        paSerialize(buf)
 
         return buf
     }
@@ -32,12 +31,10 @@ interface AxisSerializable: MSerializable {
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
         disableCollisions = buf.readBoolean()
-        distanceFromBlock = buf.readDouble()
 
         secondaryFirstRaycast = buf.readBoolean()
 
-        primaryStage = buf.readEnum(primaryStage.javaClass)
-        primaryAngle.it = buf.readDouble()
+        paDeserialize(buf)
     }
 
     override fun serverSideVerifyLimits() {
@@ -46,6 +43,6 @@ interface AxisSerializable: MSerializable {
         compliance = limits.compliance.get(compliance)
         maxForce = limits.maxForce.get(maxForce)
         fixedDistance = limits.fixedDistance.get(fixedDistance)
-        distanceFromBlock = limits.distanceFromBlock.get(distanceFromBlock)
+        paServerSideVerifyLimits()
     }
 }

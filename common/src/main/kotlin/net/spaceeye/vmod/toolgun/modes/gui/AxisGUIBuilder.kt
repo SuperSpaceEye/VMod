@@ -28,7 +28,7 @@ interface AxisGUIBuilder: GUIBuilder {
         makeTextEntry(GUIComponents.WIDTH.get(),      ::width,      offset, offset, parentWindow, DoubleLimit(0.0, 1.0)) //TODO this
         makeTextEntry(GUIComponents.FIXED_DISTANCE.get(),     ::fixedDistance,     offset, offset, parentWindow)
         makeCheckBox (GUIComponents.DISABLE_COLLISIONS.get(), ::disableCollisions, offset, offset, parentWindow)
-        makeTextEntry(GUIComponents.DISTANCE_FROM_BLOCK.get(),::distanceFromBlock, offset, offset, parentWindow, limits.distanceFromBlock)
+        makeTextEntry(GUIComponents.DISTANCE_FROM_BLOCK.get(),::paDistanceFromBlock,offset,offset, parentWindow, limits.distanceFromBlock)
         makeDropDown(
             GUIComponents.HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(GUIComponents.NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },

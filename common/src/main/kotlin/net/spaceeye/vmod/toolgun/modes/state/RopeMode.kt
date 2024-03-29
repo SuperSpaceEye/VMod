@@ -58,7 +58,7 @@ class RopeMode: BaseMode, RopeSerializable, RopeCRIHandler, RopeGUIBuilder {
         resetState()
     }
 
-    fun resetState() {
+    override fun resetState() {
         previousResult = null
         primaryFirstRaycast = false
     }

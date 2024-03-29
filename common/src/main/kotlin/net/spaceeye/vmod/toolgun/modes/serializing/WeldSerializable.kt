@@ -4,8 +4,9 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
 import net.spaceeye.vmod.toolgun.modes.state.WeldMode
+import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistSerialize
 
-interface WeldSerializable: MSerializable {
+interface WeldSerializable: MSerializable, PlacementAssistSerialize {
     override fun serialize(): FriendlyByteBuf {
         this as WeldMode
         val buf = getBuffer()
@@ -15,9 +16,9 @@ interface WeldSerializable: MSerializable {
         buf.writeEnum(posMode)
         buf.writeDouble(width)
 
-        buf.writeEnum(secondaryStage)
         buf.writeBoolean(primaryFirstRaycast)
-        buf.writeDouble(secondaryAngle.it)
+
+        paSerialize(buf)
 
         return buf
     }
@@ -31,8 +32,7 @@ interface WeldSerializable: MSerializable {
 
         primaryFirstRaycast = buf.readBoolean()
 
-        secondaryStage = buf.readEnum(secondaryStage.javaClass)
-        secondaryAngle.it = buf.readDouble()
+        paDeserialize(buf)
     }
 
     override fun serverSideVerifyLimits() {
@@ -40,5 +40,6 @@ interface WeldSerializable: MSerializable {
         compliance = ServerLimits.instance.compliance.get(compliance)
         maxForce = ServerLimits.instance.maxForce.get(maxForce)
         fixedDistance = ServerLimits.instance.fixedDistance.get(fixedDistance)
+        paServerSideVerifyLimits()
     }
 }

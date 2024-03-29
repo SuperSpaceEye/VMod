@@ -1,64 +1,67 @@
-mconstraint = managed constraint
-
 ## Constraints
-1. ✅ Rework current constraints managing logic to support additional data
-2. ✅ Expand mconstraints and rendering system to allow for mconstraints to be tied to blocks instead to whole ships.
-3. ✅ Add compat for ship splitting
-4. Add scale tool that would scale all ships connected to constraint
+* Add scale tool that would scale all ships connected to constraint
 
 ## Rendering
-1. ✅ Expand rendering system to include additional types of rendering like
-   * ✅ Timed - After time passes stop rendering
-   * ✅ Simple Arbitrary - rendering not tied to ships. Have a dedicated channel that will just always render things, or render depending on the position. Of course, it can only be used for effects (ray from toolgun), and not more "permanent" (like ropes placed on the ground only)  
-2. Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
-3. Add clientside validation 
-4. (kinda) ✅ Add effects for toolgun
-5. Group rendering objects by types to elevate common operations and add shared data between rendering types
-6. "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
-7. Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
+* Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
+* Add clientside validation 
+* (kinda) ✅ Add effects for toolgun
+* Group rendering objects by types to elevate common operations and add shared data between rendering types
+* "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
+* Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
 
 ## HUD Rendering
-1. Make system for HUD rendering
+* Make system for HUD rendering
 
 ## Sounds
-1. Add sounds and shit
+* Add sounds and shit
 
 ## Toolgun Menu
-1. ✅ Make keybinds changeable
-2. Expand menu with more GUI components (sliders, drop down options, etc)
-3. Make menu look better
-4. ✅ Use translatable components
+* Expand menu with more GUI components (sliders, drop down options, etc)
+* Make menu look better
 
 ## Custom Access Levels
-1. Allow op users to change server settings of VMod from toolgun menu.
-2. Add accessibility levels that op users can modify
-3. Make special commands for op users
+* Allow op users to change server settings of VMod from toolgun menu.
+* Add accessibility levels that op users can modify
+* Make special commands for op users
     * Clean every mconstraint of acc level.
     * Set limit for total mconstraints of acc level.
     * Some other commands idk
 
-## Weld Constraint
-1. ✅ Change welding to lclick and make it not break blocks on lclick
-2. ✅ Make normal weld on lclick and snapping welding on rclick
-3. Add texture for weld rendering
-
-## Rope Constraint
-1. Add ability to change rendering modes
-2. Add more setting options
-
-## Axis Constraint
-1. Figure out how VSHingeOrientationConstraint works and use it to make axis constraint more stable
-2. ✅ When using primary, if it raycasts through the source ship it will not attach to another ship
-3. ✅ When using primary or secondary, prevent from using the other mode
-
-## Forge
-1. ✅ Fix elementa dependency on forge
-2. ✅ Fix incompatibility with essential
-
-## Config
-1. Make config
+## Commands
+* Add custom command for teleporting of the whole structure
+* Add custom command for scaling of the whole structure
 
 ## Server side things
-1. Add server side validation for (kinda ✅) constraints and rendering
-2. Add the ability for server to change limits
-3. Add the ability for server and clients to synchronise limits
+* Add server side validation for (kinda ✅) constraints and rendering
+* Add the ability for server to change limits
+* Add the ability for server and clients to synchronise limits
+
+## Weld Constraint
+* Add texture for weld rendering
+
+## Rope Constraint
+* Add ability to change rendering modes
+* Add more setting options
+
+## Axis Constraint
+* Figure out how VSHingeOrientationConstraint works and use it to make axis constraint more stable
+
+## Hydraulics
+* Add more options, like one to disable fixed orientation
+
+## Ball Socket Constraint
+Basically just one attachment constraint
+
+## Elastic
+A rope that can stretch or push (if option is chosen)
+
+## Motor Constraint
+
+## Pulley
+A rope with connections to the ground through which it like moves. No idea on how to make it.
+Ig i can use attachments to do something, but i'm really not sure.
+
+## Slider
+
+## Winch
+A rope that can be made longer or shorter

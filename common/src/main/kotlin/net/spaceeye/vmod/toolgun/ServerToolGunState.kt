@@ -35,7 +35,7 @@ object ServerToolGunState: ServerClosable() {
                 val stack = playersConstraintsStack[context.player.uuid] ?: return
                 var item: ManagedConstraintId = stack.removeLastOrNull() ?: return
 
-                val level = context.player.level as ServerLevel
+                val level = context.player.level() as ServerLevel
 
                 // if constraint wasn't already removed, then remove it
                 while (true) {
@@ -46,7 +46,7 @@ object ServerToolGunState: ServerClosable() {
                     }
                 }
 
-                context.player.sendMessage(REMOVED, context.player.uuid)
+                context.player.sendSystemMessage(REMOVED)
             }
         }
     };

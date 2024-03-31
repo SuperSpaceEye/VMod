@@ -9,7 +9,7 @@ import net.minecraft.world.item.Item
 import net.spaceeye.vmod.VMItems
 import org.lwjgl.glfw.GLFW
 
-class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
+class ToolgunItem: Item(Properties().stacksTo(1)) {
     companion object {
         @JvmStatic
         fun playerIsUsingToolgun(): Boolean {

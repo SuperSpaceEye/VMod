@@ -3,7 +3,6 @@ package net.spaceeye.vmod.constraintsManaging.types
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId

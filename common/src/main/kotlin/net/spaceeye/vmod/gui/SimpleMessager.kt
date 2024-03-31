@@ -151,7 +151,7 @@ object SimpleMessagerNetworking {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val req = C2SRequestStatePacket(buf)
                 val player = context.player as ServerPlayer
-                val level = player.level as ServerLevel
+                val level = player.serverLevel() as ServerLevel
 
                 var succeeded = (Vector3d(player.position()) - Vector3d(req.pos) + 0.5).sqrDist() <= 64
                 if (!succeeded) {
@@ -199,7 +199,7 @@ object SimpleMessagerNetworking {
                 val req = C2SSendStateUpdate(buf)
 
                 val player = context.player as ServerPlayer
-                val level = player.getLevel()
+                val level = player.serverLevel()
 
                 var succeeded = (Vector3d(player.position()) - Vector3d(req.pos) + 0.5).sqrDist() <= 64
                 if (!succeeded) {

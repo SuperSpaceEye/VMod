@@ -1,10 +1,10 @@
 package net.spaceeye.vmod.translate
 
 import net.minecraft.client.resources.language.I18n
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 
-private inline fun makeComponent(s: String) = TranslatableComponent(s)
-inline fun TranslatableComponent.get(): String = I18n.get(this.key)
+private inline fun makeComponent(s: String) = Component.translatable(s)
+inline fun Component.get(): String = I18n.get(this.string)
 
 object GUIComponents {
     private const val path = "vmod.gui."

@@ -197,7 +197,7 @@ object RaycastFunctions {
             }
         ) { raycastContext: ClipContext ->
             val vec3d = realStart.subtract(realEnd)
-            BlockHitResult.miss(realEnd, Direction.getNearest(vec3d.x, vec3d.y, vec3d.z), BlockPos(realEnd))
+            BlockHitResult.miss(realEnd, Direction.getNearest(vec3d.x, vec3d.y, vec3d.z), Vector3d(realEnd).toBlockPos())
         } as BlockHitResult
     }
 

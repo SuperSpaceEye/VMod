@@ -1,10 +1,10 @@
 package net.spaceeye.vmod.rendering
 
 import com.mojang.blaze3d.vertex.VertexConsumer
-import com.mojang.math.Matrix4f
 import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.utils.Vector3d
+import org.joml.Matrix4f
 
 object RenderingUtils {
     val ropeTexture = ResourceLocation(VM.MOD_ID, "textures/misc/rope.png")

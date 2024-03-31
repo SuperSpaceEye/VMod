@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIBlock
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
@@ -14,7 +14,7 @@ import net.spaceeye.vmod.translate.GUIComponents
 import net.spaceeye.vmod.translate.get
 
 interface HydraulicsGUIBuilder: GUIBuilder {
-    override val itemName: TranslatableComponent
+    override val itemName: Component
         get() = GUIComponents.HYDRAULICS
 
     override fun makeGUISettings(parentWindow: UIBlock) {

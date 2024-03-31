@@ -5,7 +5,7 @@
   "vmod.gui.axis": "轴承",
   "vmod.gui.strip": "剥离",
 
-  "vmod.gui.setting.compliance": "力顺",
+  "vmod.gui.setting.compliance": "顺性系数",
   "vmod.gui.setting.max_force": "可承受的最大力",
   "vmod.gui.setting.fixed_distance": "固定距离",
   "vmod.gui.setting.width": "宽度",
@@ -27,7 +27,7 @@
   "vmod.gui.setting.centered_in_block": "方块中心",
 
   "key.vmod.gui_open_or_close": "打开或关闭工具枪GUI",
-  "key.vmod.remove_top_constraint": "解除顶部约束",
+  "key.vmod.remove_top_constraint": "解除上个约束",
   "key.vmod.reset_constraint_mode": "重置约束模式",
   "vmod.keymappings_name": "VMod 工具枪",
 

@@ -15,6 +15,7 @@ import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
@@ -24,6 +25,8 @@ class RopeMConstraint(): MConstraint {
     private var renderer: BaseRenderer? = null
 
     var attachmentPoints_ = mutableListOf<BlockPos>()
+
+    var ropeLength = 0.0
 
     var vsId: ConstraintId = -1
 
@@ -41,6 +44,7 @@ class RopeMConstraint(): MConstraint {
         constraint = VSRopeConstraint(shipId0, shipId1, compliance, localPos0, localPos1, maxForce, ropeLength)
         this.renderer = renderer
         attachmentPoints_ = attachmentPoints.toMutableList()
+        this.ropeLength = ropeLength
     }
 
     override lateinit var mID: ManagedConstraintId
@@ -84,11 +88,23 @@ class RopeMConstraint(): MConstraint {
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
     }
 
+    override fun onScale(level: ServerLevel, scale: Double) {
+        constraint = VSRopeConstraint(constraint.shipId0, constraint.shipId1, constraint.compliance, constraint.localPos0, constraint.localPos1, constraint.maxForce, ropeLength * scale)
+
+        level.shipObjectWorld.removeConstraint(vsId)
+        vsId = level.shipObjectWorld.createNewConstraint(constraint)!!
+    }
+
+    override fun getVSIds(): Set<VSConstraintId> {
+        return setOf(vsId)
+    }
+
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null
 
         tag.putInt("managedID", mID.id)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
+        tag.putDouble("ropeLength", ropeLength)
 
         return tag
     }
@@ -98,6 +114,8 @@ class RopeMConstraint(): MConstraint {
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
         tryConvertDimensionId(tag, lastDimensionIds); constraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
+
+        ropeLength = if (tag.contains("ropeLength")) tag.getDouble("ropeLength") else constraint.ropeLength
 
         return this
     }

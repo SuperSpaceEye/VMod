@@ -11,6 +11,7 @@ object ToolgunModes {
         AxisMode(),
 
 
+        ScaleMode(),
         StripMode()
     )
     var initialized = false

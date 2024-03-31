@@ -9,6 +9,9 @@
 * "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
 
+## Ticking Constraints
+* Redo them
+
 ## HUD Rendering
 * Make system for HUD rendering
 

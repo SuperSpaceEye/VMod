@@ -116,6 +116,8 @@ class Vector3d(x:Number, y:Number, z:Number) {
     inline fun dot(x: Double, y: Double, z: Double): Double {return Math.fma(this.x, x, Math.fma(this.y, y, this.z * z)); }
     inline fun dot(other: Vector3d): Double {return dot(other.x, other.y, other.z)}
 
+    inline fun avg(): Double { return (x + y + z)/3.0 }
+
     inline fun add(other: Vector3d, dest: Vector3d): Vector3d {
         dest.x = x + other.x
         dest.y = y + other.y

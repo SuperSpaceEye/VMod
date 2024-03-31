@@ -56,7 +56,15 @@ class BasicMConstraint(): MConstraint {
 
     override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        ELOG("MOVING SHIPYARD POSITIONS IS NOT IMPLEMENTED FOR BasicMConstraint")
+        ELOG("moveShipyardPosition IS NOT IMPLEMENTED FOR BasicMConstraint")
+    }
+
+    override fun onScale(level: ServerLevel, scale: Double) {
+        ELOG("onScale IS NOT IMPLEMENTED FOR BasicMConstraint")
+    }
+
+    override fun getVSIds(): Set<VSConstraintId> {
+        return setOf(vsID)
     }
 
     override fun nbtSerialize(): CompoundTag? {

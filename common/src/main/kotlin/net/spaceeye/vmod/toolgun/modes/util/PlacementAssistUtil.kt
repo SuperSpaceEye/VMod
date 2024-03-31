@@ -241,7 +241,7 @@ interface PlacementAssistServer {
         if (raycastResult.state.isAir) {return handleFailure(player)}
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return handleFailure(player)
         paFirstResult = raycastResult
-        val traversed = VSConstraintsKeeper.traverseGetConnectedShips(ship.id)
+        val traversed = VSConstraintsKeeper.traverseGetConnectedShips(ship.id).traversedShipIds
         paNetworkingObject.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, PlacementAssistNetworking.S2CSendTraversalInfo(traversed))
     }
 

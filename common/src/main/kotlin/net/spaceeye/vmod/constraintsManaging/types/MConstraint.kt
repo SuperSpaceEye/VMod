@@ -15,6 +15,7 @@ import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 
 interface Tickable {
     fun tick(server: MinecraftServer, unregister: () -> Unit)
@@ -37,6 +38,9 @@ interface MConstraint {
 
     // is called on ship splitting
     fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId)
+
+    fun onScale(level: ServerLevel, scale: Double)
+    fun getVSIds(): Set<VSConstraintId>
 
     fun nbtSerialize(): CompoundTag?
     fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint?

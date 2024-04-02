@@ -1,5 +1,6 @@
 ## Constraints
 * Add scale tool that would scale all ships connected to constraint
+* Remove backward-compatibility code when constraints are in a more finished state
 
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
@@ -68,3 +69,6 @@ Ig i can use attachments to do something, but i'm really not sure.
 
 ## Winch
 A rope that can be made longer or shorter
+
+## Wheels
+A tool that will create wheels from VS phys entities + maybe 

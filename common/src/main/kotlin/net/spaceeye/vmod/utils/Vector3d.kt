@@ -9,6 +9,7 @@ typealias MCVector3d = com.mojang.math.Vector3d
 typealias MCVector3f = com.mojang.math.Vector3f
 typealias JVector3d  = org.joml.Vector3d
 typealias JVector3dc = org.joml.Vector3dc
+typealias JVector3i  = org.joml.Vector3i
 typealias MCVec3     = net.minecraft.world.phys.Vec3
 
 fun FriendlyByteBuf.writeVector3d(vector3d: Vector3d) {
@@ -43,6 +44,7 @@ class Vector3d(x:Number, y:Number, z:Number) {
 
     inline fun toMCVector3d(): MCVector3d {return MCVector3d(x, y, z) }
     inline fun toJomlVector3d(): JVector3d {return JVector3d(x, y, z) }
+    inline fun toJomlVector3i(): JVector3i {return JVector3i(x.toInt(), y.toInt(), z.toInt()) }
     inline fun toArray(): Array<Double> {return arrayOf(x, y, z) }
     inline fun toBlockPos(): BlockPos {return BlockPos(x, y, z) }
     inline fun toMCVec3(): MCVec3 {return MCVec3(x, y, z)}

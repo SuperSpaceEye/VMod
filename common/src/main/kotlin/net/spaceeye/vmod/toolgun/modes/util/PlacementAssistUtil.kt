@@ -15,6 +15,7 @@ import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.MConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.S2CConnection
+import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.transformProviders.CenteredAroundPlacementAssistTransformProvider
@@ -134,18 +135,26 @@ open class PlacementAssistNetworking(networkName: String) {
 
     // Client has no information about constraints, so server should send it to the client
     val s2cSendTraversalInfo = "send_traversal_info" idWithConns {
-        object : S2CConnection<PlacementAssistNetworking.S2CSendTraversalInfo>(it, networkName) {
+        object : S2CConnection<S2CSendTraversalInfo>(it, networkName) {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = S2CSendTraversalInfo(buf)
-                if (obj!!.paCaughtShip == null) {return}
+                val obj = obj!!
 
-                val primaryTransform = obj!!.paCaughtShip!!.transformProvider
+                if (obj.paCaughtShip == null) {return}
+
+                if (obj.paCaughtShips != null) {
+                    obj.paCaughtShips?.forEach {
+                        Minecraft.getInstance().shipObjectWorld.allShips.getById(it)?.transformProvider = null
+                    }
+                }
+
+                val primaryTransform = obj.paCaughtShip!!.transformProvider
                 if (primaryTransform !is PlacementAssistTransformProvider) { return }
 
-                obj!!.paCaughtShips = pkt.data.filter { it != obj!!.paCaughtShip!!.id }.toLongArray()
+                obj.paCaughtShips = pkt.data.filter { it != obj.paCaughtShip!!.id }.toLongArray()
                 val clientShipObjectWorld = Minecraft.getInstance().shipObjectWorld
 
-                obj!!.paCaughtShips!!.forEach {
+                obj.paCaughtShips!!.forEach {
                     val ship = clientShipObjectWorld.allShips.getById(it)
                     ship?.transformProvider = CenteredAroundPlacementAssistTransformProvider(primaryTransform, ship!!)
                 }
@@ -156,24 +165,6 @@ open class PlacementAssistNetworking(networkName: String) {
     class S2CHandleFailurePacket(): Serializable {
         override fun serialize(): FriendlyByteBuf { return getBuffer() }
         override fun deserialize(buf: FriendlyByteBuf) {}
-    }
-
-    class S2CSendTraversalInfo(): Serializable {
-        var data: LongArray = longArrayOf()
-
-        constructor(buf: FriendlyByteBuf): this() { deserialize(buf) }
-        constructor(data: MutableSet<ShipId>): this() { this.data = data.toLongArray() }
-        override fun serialize(): FriendlyByteBuf {
-            val buf = getBuffer()
-
-            buf.writeLongArray(data)
-
-            return buf
-        }
-
-        override fun deserialize(buf: FriendlyByteBuf) {
-            data = buf.readLongArray()
-        }
     }
 
     infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
@@ -242,7 +233,7 @@ interface PlacementAssistServer {
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return handleFailure(player)
         paFirstResult = raycastResult
         val traversed = VSConstraintsKeeper.traverseGetConnectedShips(ship.id).traversedShipIds
-        paNetworkingObject.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, PlacementAssistNetworking.S2CSendTraversalInfo(traversed))
+        paNetworkingObject.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, S2CSendTraversalInfo(traversed))
     }
 
     private fun paFunctionSecond(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {

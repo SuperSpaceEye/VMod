@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.toolgun.modes.util
+package net.spaceeye.vmod.toolgun.modes
 
 import net.spaceeye.vmod.toolgun.modes.state.*
 
@@ -11,6 +11,7 @@ object ToolgunModes {
         AxisMode(),
 
 
+        CopyMode(),
         ScaleMode(),
         StripMode()
     )

@@ -88,6 +88,7 @@ object VSConstraintsKeeper: ServerClosable() {
             }
             traversedVSConstraints.addAll(constraintIds)
         }
+        traversedShips.removeAll(dimensionIds.toSet())
 
         return TraversedData(traversedShips, traversedMConstraints, traversedVSConstraints)
     }

@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity
 import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
 import org.joml.Vector3i
 import org.joml.primitives.AABBd
+import org.joml.primitives.AABBic
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.util.events.EventEmitter
@@ -34,47 +35,38 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 //    ))
 //}
 
-private fun copyShipBlocks(level: ServerLevel, originShip: ServerShip, newShip: ServerShip) {
-    val originAABB = originShip.shipAABB!!
-    val originCenter = Vector3d(originShip.transform.positionInShip)
+private inline fun copyShipBlock(level: ServerLevel, ox: Int, oy: Int, oz: Int, newShipCenter: Vector3d, originCenter: Vector3d) {
+    val from = BlockPos(ox, oy, oz)
+    val state = level.getBlockState(from)
+    if (state.isAir) {return}
+    val be = level.getBlockEntity(from)
 
-    val newShipCenter = Vector3d(newShip.transform.positionInShip)
+    val to = BlockPos(
+        newShipCenter.x + (ox - originCenter.x),
+        newShipCenter.y + (oy - originCenter.y),
+        newShipCenter.z + (oz - originCenter.z),
+    )
 
-    for (oy in originAABB.minY() until originAABB.maxY()) {
-    for (ox in originAABB.minX() until originAABB.maxX()) {
-    for (oz in originAABB.minZ() until originAABB.maxZ()) {
-        val from = BlockPos(ox, oy, oz)
-        val state = level.getBlockState(from)
-        if (state.isAir) {continue}
-        val be = level.getBlockEntity(from)
+    val tag = be?.let {
+        val tag = it.saveWithFullMetadata()
+        tag.putInt("x", to.x)
+        tag.putInt("y", to.y)
+        tag.putInt("z", to.z)
 
-        val to = BlockPos(
-            newShipCenter.x + (ox - originCenter.x),
-            newShipCenter.y + (oy - originCenter.y),
-            newShipCenter.z + (oz - originCenter.z),
-        )
-
-        val tag = be?.let {
-            val tag = it.saveWithFullMetadata()
-            tag.putInt("x", to.x)
-            tag.putInt("y", to.y)
-            tag.putInt("z", to.z)
-
-            // so that it won't drop its contents
-            if (it is Clearable) {
-                it.clearContent()
-            }
-
-            // so loot containers dont drop its content
-            if (it is RandomizableContainerBlockEntity) {
-                it.setLootTable(null, 0)
-            }
-
-            tag
+        // so that it won't drop its contents
+        if (it is Clearable) {
+            it.clearContent()
         }
-        level.getChunkAt(to).setBlockState(to, state, false)
-        tag?.let { level.getBlockEntity(to)!!.load(tag) }
-    } } }
+
+        // so loot containers dont drop its content
+        if (it is RandomizableContainerBlockEntity) {
+            it.setLootTable(null, 0)
+        }
+
+        tag
+    }
+    level.getChunkAt(to).setBlockState(to, state, false)
+    tag?.let { level.getBlockEntity(to)!!.load(tag) }
 }
 
 fun createShip(level: ServerLevel, originShip: ServerShip, center: Vector3d, toCenter: Vector3d): ServerShip {
@@ -146,32 +138,77 @@ fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycas
 
     val createdShips = originShips.map { createShip(level, it, objectLogicalCenter + minObjectHitboxPosition, toCenter) }
 
-    CreateShipPool.serverCreateShip.on {
-    _, handler ->
+
+    var numCreatedShips = 0
+    var totalNumShips = originShips.size
+
     originShips.zip(createdShips).forEach {
-        copyShipBlocks(level, it.first, it.second)
+        val originAABB = it.first.shipAABB!!
+        val originCenter = Vector3d(it.first.transform.positionInShip)
+
+        val newShipCenter = Vector3d(it.second.transform.positionInShip)
+
+        CreateShipPool.registerShipCreation(
+            originAABB, {
+                ox, oy, oz ->
+                copyShipBlock(level, ox, oy, oz, newShipCenter, originCenter)
+            }
+        ) {
+            numCreatedShips++
+            if (numCreatedShips < totalNumShips) {return@registerShipCreation}
+
+            traversed.traversedMConstraintIds.forEach {
+
+            }
+        }
     }
+}
 
-//    traversed.traversedMConstraintIds.forEach {
-//
-//    }
-//
-//    createdShips.forEach { it.isStatic = false }
-
-    handler.unregister()
+inline fun cFor(start: Int, predicate: (it: Int) -> Boolean, post: (it: Int) -> Int, fn:  (it: Int) -> Unit) {
+    var c = start
+    while (predicate(c)) {
+        fn(c)
+        c = post(c)
     }
 }
 
 object CreateShipPool {
-    val serverCreateShip = EventEmitterImpl<ServerCreateShip>()
+    private val serverCreateShip = EventEmitterImpl<ServerCreateShip>()
 
-    class ServerCreateShip() {
+    fun registerShipCreation(boundsAABB: AABBic, copyFN: (ox: Int, oy: Int, oz: Int) -> Unit, postFN: () -> Unit) {
+        var oy = boundsAABB.minY()
+        var ox = boundsAABB.minX()
+        var oz = boundsAABB.minZ()
+
+        serverCreateShip.on {
+            (start, maxTime), handler ->
+
+            cFor(oy, {it < boundsAABB.maxY()}, {it + 1}) {oy_ ->
+            cFor(ox, {it < boundsAABB.maxX()}, {it + 1}) {ox_ ->
+            cFor(oz, {it < boundsAABB.maxZ()}, {it + 1}) {oz_ ->
+                copyFN(ox_, oy_, oz_)
+                if (getNow_ms() > start + maxTime) {
+                    ox = ox_
+                    oy = oy_
+                    oz = oz_
+                    return@on
+                }
+            }
+            oz = boundsAABB.minZ() }
+            ox = boundsAABB.minX() }
+            postFN()
+
+            handler.unregister()
+        }
+    }
+
+    data class ServerCreateShip(val start: Long, val maxTime: Long) {
         companion object : EventEmitter<ServerCreateShip> by serverCreateShip
     }
 
     init {
         TickEvent.SERVER_PRE.register {
-            serverCreateShip.emit(ServerCreateShip())
+            serverCreateShip.emit(ServerCreateShip(getNow_ms(), 50L))
         }
     }
 }

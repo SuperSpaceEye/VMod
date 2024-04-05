@@ -8,22 +8,29 @@ import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.rendering.types.BaseRenderer
+import net.spaceeye.vmod.rendering.types.RopeRenderer
+import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.deserializeBlockPositions
 import net.spaceeye.vmod.utils.serializeBlockPositions
 import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
+import java.lang.AssertionError
 
 class RopeMConstraint(): MConstraint {
     lateinit var constraint: VSRopeConstraint
     private var renderer: BaseRenderer? = null
 
     var attachmentPoints_ = mutableListOf<BlockPos>()
+
+    var ropeLength = 0.0
 
     var vsId: ConstraintId = -1
 
@@ -41,6 +48,7 @@ class RopeMConstraint(): MConstraint {
         constraint = VSRopeConstraint(shipId0, shipId1, compliance, localPos0, localPos1, maxForce, ropeLength)
         this.renderer = renderer
         attachmentPoints_ = attachmentPoints.toMutableList()
+        this.ropeLength = ropeLength
     }
 
     override lateinit var mID: ManagedConstraintId
@@ -84,11 +92,61 @@ class RopeMConstraint(): MConstraint {
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
     }
 
+    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
+        if (!mapped.keys.containsAll(listOf(constraint.shipId0, constraint.shipId1))) { return null }
+
+        val dimensionIds = level.shipObjectWorld.dimensionToGroundBodyIdImmutable.values.toSet()
+
+        val oShip1 = if (!dimensionIds.contains(constraint.shipId0)) level.shipObjectWorld.loadedShips.getById(constraint.shipId0) else null
+        val oShip2 = if (!dimensionIds.contains(constraint.shipId1)) level.shipObjectWorld.loadedShips.getById(constraint.shipId1) else null
+
+        val nShip1 = if (oShip1 != null) level.shipObjectWorld.loadedShips.getById(mapped[constraint.shipId0]!!) else null
+        val nShip2 = if (oShip2 != null) level.shipObjectWorld.loadedShips.getById(mapped[constraint.shipId1]!!) else null
+
+        val localPos0 = if (nShip1 != null) Vector3d(constraint.localPos0) - Vector3d(nShip1.transform.positionInShip) + Vector3d(oShip1!!.transform.positionInShip) else Vector3d(constraint.localPos0)
+        val localPos1 = if (nShip2 != null) Vector3d(constraint.localPos1) - Vector3d(nShip2.transform.positionInShip) + Vector3d(oShip2!!.transform.positionInShip) else Vector3d(constraint.localPos1)
+
+        val apoint1 = (if (nShip1 != null) Vector3d(attachmentPoints_[0]) - Vector3d(nShip1.transform.positionInShip) + Vector3d(oShip1!!.transform.positionInShip) else Vector3d(attachmentPoints_[0])).toBlockPos()
+        val apoint2 = (if (nShip2 != null) Vector3d(attachmentPoints_[1]) - Vector3d(nShip2.transform.positionInShip) + Vector3d(oShip2!!.transform.positionInShip) else Vector3d(attachmentPoints_[1])).toBlockPos()
+
+        val newAttachmentPoints = listOf(apoint1, apoint2)
+
+        var newRenderer: BaseRenderer? = null
+        if (renderer != null) {
+            newRenderer = when (renderer) {
+                is A2BRenderer -> {
+                    val renderer = renderer as A2BRenderer
+                    A2BRenderer(nShip1 != null, nShip2 != null, localPos0, localPos1, renderer.color, renderer.width)
+                }
+                is RopeRenderer -> {
+                    val renderer = renderer as RopeRenderer
+                    RopeRenderer(nShip1 != null, nShip2 != null, localPos0, localPos1, renderer.length, renderer.width, renderer.segments)
+                }
+
+                else -> {throw AssertionError()}
+            }
+        }
+
+        return RopeMConstraint(nShip1?.id ?: constraint.shipId0, nShip2?.id ?: constraint.shipId1, constraint.compliance, localPos0.toJomlVector3d(), localPos1.toJomlVector3d(), constraint.maxForce, constraint.ropeLength, newAttachmentPoints, newRenderer)
+    }
+
+    override fun onScale(level: ServerLevel, scale: Double) {
+        constraint = VSRopeConstraint(constraint.shipId0, constraint.shipId1, constraint.compliance, constraint.localPos0, constraint.localPos1, constraint.maxForce, ropeLength * scale)
+
+        level.shipObjectWorld.removeConstraint(vsId)
+        vsId = level.shipObjectWorld.createNewConstraint(constraint)!!
+    }
+
+    override fun getVSIds(): Set<VSConstraintId> {
+        return setOf(vsId)
+    }
+
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null
 
         tag.putInt("managedID", mID.id)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
+        tag.putDouble("ropeLength", ropeLength)
 
         return tag
     }
@@ -98,6 +156,8 @@ class RopeMConstraint(): MConstraint {
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
         tryConvertDimensionId(tag, lastDimensionIds); constraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
+
+        ropeLength = if (tag.contains("ropeLength")) tag.getDouble("ropeLength") else constraint.ropeLength
 
         return this
     }

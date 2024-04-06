@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIBlock
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
@@ -10,7 +10,7 @@ import net.spaceeye.vmod.translate.GUIComponents.SCALE
 import net.spaceeye.vmod.translate.get
 
 interface ScaleGUIBuilder: GUIBuilder {
-    override val itemName: TranslatableComponent
+    override val itemName: Component
         get() = SCALE
 
     override fun makeGUISettings(parentWindow: UIBlock) {

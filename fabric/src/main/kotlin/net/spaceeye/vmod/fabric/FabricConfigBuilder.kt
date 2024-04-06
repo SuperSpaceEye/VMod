@@ -1,6 +1,6 @@
 package net.spaceeye.vmod.fabric
 
-import net.minecraftforge.api.ModLoadingContext
+import fuzs.forgeconfigapiport.api.config.v2.ForgeConfigRegistry
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.config.ModConfig
 import net.spaceeye.vmod.VM
@@ -25,7 +25,7 @@ class FabricConfigBuilder: AbstractConfigBuilder() {
             else -> throw AssertionError("Invalid config type $type")
         }
 
-        ModLoadingContext.registerConfig(VM.MOD_ID, type, SPEC, "vmod-$type.toml")
+        ForgeConfigRegistry.INSTANCE.register(VM.MOD_ID, type, SPEC, "vmod-$type.toml")
     }
 
     override fun <T : Any> makeItem(name: String, defaultValue: T, description: String, range: Pair<T, T>?): ConfigValueGetSet {

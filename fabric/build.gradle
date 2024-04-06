@@ -23,14 +23,18 @@ repositories {
         }
     }
     maven {
+        name = 'Terraformers'
+        url = "https://maven.terraformersmc.com/"
+    }
+    maven {
         url = "https://repo.essential.gg/repository/maven-public"
     }
     mavenCentral()
 }
 
 dependencies {
-    api 'org.joml:joml-primitives:1.10.0'
-    api 'org.joml:joml:1.10.4'
+    compileOnlyApi 'org.joml:joml-primitives:1.10.0'
+    compileOnlyApi 'org.joml:joml:1.10.4'
 
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
@@ -51,9 +55,14 @@ dependencies {
     include (modImplementation("gg.essential:elementa-1.18.1-fabric:622"))
     include (modImplementation("gg.essential:universalcraft-1.20.1-fabric:323"))
 
-    implementation 'com.electronwill.night-config:core:3.6.3'
-    implementation 'com.electronwill.night-config:toml:3.6.3'
-    modCompileOnlyApi "curse.maven:forge-config-api-port-fabric-547434:3943250"
+//    implementation 'com.electronwill.night-config:core:3.6.3'
+//    implementation 'com.electronwill.night-config:toml:3.6.3'
+    modApi "curse.maven:forge-config-api-port-fabric-547434:4583000"
+
+    // Configured
+    modLocalRuntime "curse.maven:configured-fabric-667378:4166864"    // Configured version 2.0.2 for Minecraft 1.19.3
+    // Mod Menu
+    modLocalRuntime "com.terraformersmc:modmenu:5.0.2"
 }
 
 processResources {

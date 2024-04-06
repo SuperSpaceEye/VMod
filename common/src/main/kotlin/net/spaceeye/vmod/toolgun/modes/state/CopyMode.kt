@@ -4,7 +4,7 @@ import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
@@ -51,7 +51,7 @@ class CopyMode: BaseMode {
     override fun serialize(): FriendlyByteBuf { return getBuffer() }
     override fun deserialize(buf: FriendlyByteBuf) {}
 
-    override val itemName: TranslatableComponent
+    override val itemName: Component
         get() = COPY
 
     override fun makeGUISettings(parentWindow: UIBlock) {}

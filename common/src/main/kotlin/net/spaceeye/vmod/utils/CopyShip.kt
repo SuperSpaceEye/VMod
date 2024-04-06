@@ -27,9 +27,9 @@ private inline fun copyShipBlock(level: ServerLevel, state: BlockState, ox: Int,
     val be = level.getBlockEntity(from)
 
     val to = BlockPos(
-        newShipCenter.x + (ox.toDouble() - originCenter.x) + 0.5,
-        newShipCenter.y + (oy.toDouble() - originCenter.y) + 0.5,
-        newShipCenter.z + (oz.toDouble() - originCenter.z) + 0.5,
+            (newShipCenter.x + (ox.toDouble() - originCenter.x) + 0.5).toInt(),
+            (newShipCenter.y + (oy.toDouble() - originCenter.y) + 0.5).toInt(),
+            (newShipCenter.z + (oz.toDouble() - originCenter.z) + 0.5).toInt(),
     )
 
     val tag = be?.let {

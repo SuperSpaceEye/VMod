@@ -103,6 +103,7 @@ remapJar {
     inputFile.set shadowJar.archiveFile
     dependsOn shadowJar
     archiveClassifier.set(null)
+    archiveBaseName.set("${archiveBaseName.get()}-Forge")
 }
 
 jar {

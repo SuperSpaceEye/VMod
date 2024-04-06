@@ -17,6 +17,7 @@ object GUIComponents {
     val AXIS = t("axis")
     val SCALE = t("scale")
     val STRIP = t("strip")
+    val COPY = t("copy")
 
     val COMPLIANCE = s("compliance")
     val MAX_FORCE = s("max_force")

@@ -5,6 +5,7 @@
   "vmod.gui.axis": "Axis",
   "vmod.gui.strip": "Strip",
   "vmod.gui.scale": "Scale",
+  "vmod.gui.copy": "Copy",
 
   "vmod.gui.setting.compliance": "Compliance",
   "vmod.gui.setting.max_force": "Max Force",

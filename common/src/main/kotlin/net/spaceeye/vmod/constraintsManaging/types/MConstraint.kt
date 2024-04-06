@@ -39,7 +39,7 @@ interface MConstraint {
     // is called on ship splitting
     fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId)
 
-    fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {return null}
+    fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint?
 
     fun onScale(level: ServerLevel, scale: Double)
     fun getVSIds(): Set<VSConstraintId>

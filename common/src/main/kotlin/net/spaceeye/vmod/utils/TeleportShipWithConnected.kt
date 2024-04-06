@@ -5,6 +5,7 @@ import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
 import net.spaceeye.vmod.constraintsManaging.getManagedConstraint
 import org.joml.Quaterniond
+import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
@@ -15,7 +16,7 @@ fun teleportShipWithConnected(
     level: ServerLevel,
     mainShip: ServerShip,
     pos: Vector3d,
-    rotation: Quaterniond,
+    rotation: Quaterniondc,
     scale: Double = 1.0,
 
     maintainRelativeScale: Boolean = false

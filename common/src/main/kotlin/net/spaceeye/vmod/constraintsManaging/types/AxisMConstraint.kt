@@ -3,11 +3,11 @@ package net.spaceeye.vmod.constraintsManaging.types
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
+import net.spaceeye.vmod.constraintsManaging.commonCopy
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
@@ -62,7 +62,8 @@ class AxisMConstraint(): MConstraint {
         this.fixedLength = if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength
 
         val dist1 = rpoint1 - rpoint2
-        val dir = dist1.normalize() * 20
+        val len = dist1.dist()
+        val dir = dist1.normalize() * ( if (len < 10 || len > 30) 20 else 40)
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -153,7 +154,25 @@ class AxisMConstraint(): MConstraint {
         renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id)
     }
 
-    //TODO this doesn't work
+    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
+        return commonCopy(level, mapped, aconstraint1, attachmentPoints_, renderer) {
+            nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer ->
+            commonCopy(level, mapped, aconstraint2, attachmentPoints_, renderer) {
+                _, _, _, _, slocalPos0, slocalPos1, _, _ ->
+
+                val srpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, slocalPos0) } else slocalPos0
+                val srpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, slocalPos1) } else slocalPos1
+
+
+                val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
+                val rpoint2 = rpoint1 + (srpoint1 - srpoint2).normalize() * fixedLength
+
+
+                AxisMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, fixedLength, disableCollisions, newAttachmentPoints, newRenderer)
+            }
+        }
+    }
+
     override fun onScale(level: ServerLevel, scale: Double) {
         val ratio = aconstraint2.fixedDistance / aconstraint1.fixedDistance
         val newDistance = fixedLength * scale
@@ -220,8 +239,6 @@ class AxisMConstraint(): MConstraint {
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
-        level.shipObjectWorld.loadedShips.getById(aconstraint1.shipId0)?.transformProvider = null
-        level.shipObjectWorld.loadedShips.getById(aconstraint1.shipId1)?.transformProvider = null
         if (disableCollisions) {
             level.shipObjectWorld.enableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)
         }

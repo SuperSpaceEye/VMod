@@ -3,6 +3,8 @@ package net.spaceeye.vmod
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.event.events.common.LifecycleEvent
 import dev.architectury.platform.Platform
+import dev.architectury.utils.Env
+import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
@@ -39,7 +41,7 @@ object VM {
         SimpleMessagerNetworking
         ToolgunModes
         ServerToolGunState
-        ClientToolGunState
+        EnvExecutor.runInEnv(Env.CLIENT) { Runnable { ClientToolGunState } }
 
         VMBlocks.register()
         VMBlockEntities.register()
@@ -57,11 +59,6 @@ object VM {
             ConstraintManager.setDirty()
         }
 
-        ClientPlayerEvent.CLIENT_PLAYER_QUIT.register {
-            if (it != Minecraft.getInstance().player || it == null) {return@register}
-            closeClientObjects()
-        }
-
         LifecycleEvent.SERVER_STOPPING.register {
             serverStopping = true
         }
@@ -77,6 +74,13 @@ object VM {
             ServerLevelHolder.overworldServerLevel = server.overworld()
             ConstraintManager.initNewInstance()
         }
+
+        EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+        ClientPlayerEvent.CLIENT_PLAYER_QUIT.register {
+            if (it != Minecraft.getInstance().player || it == null) {return@register}
+            closeClientObjects()
+        }
+        }}
 
         ToolgunItem.makeEvents()
     }

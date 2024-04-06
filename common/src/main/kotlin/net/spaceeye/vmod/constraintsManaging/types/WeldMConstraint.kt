@@ -7,12 +7,10 @@ import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
+import net.spaceeye.vmod.constraintsManaging.commonCopy
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.deserializeBlockPositions
-import net.spaceeye.vmod.utils.posWorldToShip
-import net.spaceeye.vmod.utils.serializeBlockPositions
+import net.spaceeye.vmod.utils.*
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -60,7 +58,8 @@ class WeldMConstraint(): MConstraint {
         this.fixedDistance = if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength
 
         val dist1 = rpoint1 - rpoint2
-        val dir = dist1.normalize() * 20
+        val len = dist1.dist()
+        val dir = dist1.normalize() * ( if (len < 10 || len > 30) 20 else 40)
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -133,6 +132,19 @@ class WeldMConstraint(): MConstraint {
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
 
         renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id)
+    }
+
+    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
+        return commonCopy(level, mapped, aconstraint1, attachmentPoints_, renderer) {
+            nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer ->
+
+            val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
+            val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
+
+            val con = WeldMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, aconstraint1.fixedDistance, newAttachmentPoints, newRenderer)
+            con.fixedDistance = fixedDistance
+            con
+        }
     }
 
     override fun onScale(level: ServerLevel, scale: Double) {

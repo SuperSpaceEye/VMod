@@ -18,6 +18,7 @@ import net.spaceeye.vmod.toolgun.modes.serializing.StripSerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
+import org.valkyrienskies.mod.common.shipObjectWorld
 
 class StripMode: BaseMode, StripSerializable, StripCRIHandler, StripGUIBuilder {
     enum class StripModes {

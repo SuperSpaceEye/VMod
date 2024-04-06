@@ -4,6 +4,8 @@ import dev.architectury.event.EventResult
 import dev.architectury.event.events.client.ClientLifecycleEvent
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.event.events.client.ClientRawInputEvent
+import dev.architectury.utils.Env
+import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.spaceeye.vmod.VMItems
@@ -19,6 +21,8 @@ class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
 
         @JvmStatic
         fun makeEvents() {
+            EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+
             ClientRawInputEvent.KEY_PRESSED.register {
                 client, keyCode, scanCode, action, modifiers ->
                 if (!playerIsUsingToolgun()) {return@register EventResult.pass()}
@@ -73,6 +77,8 @@ class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
                 if (it != Minecraft.getInstance().player || it == null) {return@register}
                 inited = false
             }
+
+            }}
         }
     }
 }

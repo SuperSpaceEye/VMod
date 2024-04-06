@@ -6,7 +6,6 @@ import gg.essential.elementa.components.UIBlock
 import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.toolgun.modes.util.ToolgunModes
 
 interface GUIBuilder {
     val itemName: Component

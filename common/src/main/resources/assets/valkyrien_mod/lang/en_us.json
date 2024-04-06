@@ -4,6 +4,7 @@
   "vmod.gui.hydraulics": "Hydraulics",
   "vmod.gui.axis": "Axis",
   "vmod.gui.strip": "Strip",
+  "vmod.gui.scale": "Scale",
 
   "vmod.gui.setting.compliance": "Compliance",
   "vmod.gui.setting.max_force": "Max Force",
@@ -20,11 +21,16 @@
   "vmod.gui.setting.removed": "Removed",
   "vmod.gui.setting.disable_collisions": "Disable Collisions",
   "vmod.gui.setting.distance_from_block": "Distance From Block",
+  "vmod.gui.setting.radius": "Radius",
 
   "vmod.gui.setting.hitpos_modes": "HitPos Modes",
   "vmod.gui.setting.normal": "Normal",
   "vmod.gui.setting.centered_on_side": "Centered On Side",
   "vmod.gui.setting.centered_in_block": "Centered In Block",
+
+  "vmod.gui.setting.strip_modes": "Strip Modes",
+  "vmod.gui.setting.strip_all": "Strip All",
+  "vmod.gui.setting.strip_in_radius": "Strip In Radius",
 
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
   "key.vmod.remove_top_constraint": "Remove Top Constraint",

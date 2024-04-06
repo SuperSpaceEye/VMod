@@ -15,6 +15,7 @@ object GUIComponents {
     val ROPE = t("rope")
     val HYDRAULICS = t("hydraulics")
     val AXIS = t("axis")
+    val SCALE = t("scale")
     val STRIP = t("strip")
 
     val COMPLIANCE = s("compliance")
@@ -32,9 +33,14 @@ object GUIComponents {
     val REMOVED = s("removed")
     val DISABLE_COLLISIONS = s("disable_collisions")
     val DISTANCE_FROM_BLOCK = s("distance_from_block")
+    val RADIUS = s("radius")
 
     val HITPOS_MODES = s("hitpos_modes")
     val NORMAL = s("normal")
     val CENTERED_ON_SIDE = s("centered_on_side")
     val CENTERED_IN_BLOCK = s("centered_in_block")
+
+    val STRIP_MODES = s("strip_modes")
+    val STRIP_ALL = s("strip_all")
+    val STRIP_IN_RADIUS = s("strip_in_radius")
 }

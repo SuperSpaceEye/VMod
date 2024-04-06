@@ -17,7 +17,7 @@ import org.valkyrienskies.core.apigame.constraints.VSConstraint
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class BasicMConstraint(): MConstraint {
+open class BasicMConstraint(): MConstraint {
     constructor(constraint_: VSConstraint, attachmentPoints: List<BlockPos> = listOf()) :this() {
         constraint = constraint_
         this.attachmentPoints_ = attachmentPoints
@@ -56,7 +56,20 @@ class BasicMConstraint(): MConstraint {
 
     override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        ELOG("MOVING SHIPYARD POSITIONS IS NOT IMPLEMENTED FOR BasicMConstraint")
+        ELOG("moveShipyardPosition IS NOT IMPLEMENTED FOR BasicMConstraint")
+    }
+
+    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
+        ELOG("copyMConstraint IS NOT IMPLEMENTED FOR BasicMConstraint")
+        return null
+    }
+
+    override fun onScale(level: ServerLevel, scale: Double) {
+        ELOG("onScale IS NOT IMPLEMENTED FOR BasicMConstraint")
+    }
+
+    override fun getVSIds(): Set<VSConstraintId> {
+        return setOf(vsID)
     }
 
     override fun nbtSerialize(): CompoundTag? {

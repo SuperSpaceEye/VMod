@@ -48,7 +48,14 @@ object VSConstraintsKeeper: ServerClosable() {
         return shipToIds.getOrDefault(shipId, listOf())
     }
 
-    fun traverseGetConnectedShips(shipId: ShipId): MutableSet<ShipId> {
+    data class TraversedData(
+        val traversedShipIds: MutableSet<ShipId>,
+        val traversedMConstraintIds: MutableSet<Int>,
+        val traversedVSConstraintIds: MutableSet<Int>
+        )
+
+    //TODO move this somewhere else
+    fun traverseGetConnectedShips(shipId: ShipId): TraversedData {
         val instance = ConstraintManager.getInstance()
         val dimensionIds = ServerLevelHolder.server!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
@@ -56,7 +63,7 @@ object VSConstraintsKeeper: ServerClosable() {
         val traversedShips = mutableSetOf<ShipId>()
         traversedShips.addAll(dimensionIds)
 
-//        val traversedMConstraints = mutableSetOf<Int>()
+        val traversedMConstraints = mutableSetOf<Int>()
         val traversedVSConstraints = mutableSetOf<Int>()
 
         while (stack.isNotEmpty()) {
@@ -64,14 +71,16 @@ object VSConstraintsKeeper: ServerClosable() {
             if (traversedShips.contains(shipId)) {continue}
             traversedShips.add(shipId)
 
-//            instance.getAllConstraintsIdOfId(shipId).forEach {
-//                if (traversedMConstraints.contains(it.id)) { return@forEach }
-//                traversedMConstraints.add(it.id)
-//                val constraint = instance.getManagedConstraint(it) ?: return@forEach
-//                stack.addAll(constraint.attachedToShips(dimensionIds).filter { !traversedShips.contains(it) })
-//            }
+            val vsIdsOfMConstraints = mutableSetOf<VSConstraintId>()
+            instance.getAllConstraintsIdOfId(shipId).forEach {
+                if (traversedMConstraints.contains(it.id)) { return@forEach }
+                traversedMConstraints.add(it.id)
+                val constraint = instance.getManagedConstraint(it) ?: return@forEach
+                stack.addAll(constraint.attachedToShips(dimensionIds).filter { !traversedShips.contains(it) })
+                vsIdsOfMConstraints.addAll(constraint.getVSIds())
+            }
 
-            val constraintIds = getIdsOfShip(shipId).filter { !traversedVSConstraints.contains(it) }
+            val constraintIds = getIdsOfShip(shipId).filter { !traversedVSConstraints.contains(it) && !vsIdsOfMConstraints.contains(it) }
             getVSConstraints(constraintIds).forEach {
                 val constraint = it.second ?: return@forEach
                 if (!traversedShips.contains(constraint.shipId0)) stack.add(constraint.shipId0)
@@ -79,8 +88,9 @@ object VSConstraintsKeeper: ServerClosable() {
             }
             traversedVSConstraints.addAll(constraintIds)
         }
+        traversedShips.removeAll(dimensionIds.toSet())
 
-        return traversedShips
+        return TraversedData(traversedShips, traversedMConstraints, traversedVSConstraints)
     }
 
     override fun close() {

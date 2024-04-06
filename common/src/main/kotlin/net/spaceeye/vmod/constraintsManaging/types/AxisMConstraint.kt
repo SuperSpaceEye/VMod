@@ -7,6 +7,7 @@ import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
+import net.spaceeye.vmod.constraintsManaging.commonCopy
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
@@ -25,6 +26,8 @@ class AxisMConstraint(): MConstraint {
 
     val cIDs = mutableListOf<ConstraintId>()
     var attachmentPoints_ = mutableListOf<BlockPos>()
+
+    var fixedLength: Double = 0.0
 
     var disableCollisions: Boolean = false
     var renderer: BaseRenderer? = null
@@ -56,8 +59,11 @@ class AxisMConstraint(): MConstraint {
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength)
 
+        this.fixedLength = if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength
+
         val dist1 = rpoint1 - rpoint2
-        val dir = dist1.normalize() * 20
+        val len = dist1.dist()
+        val dir = dist1.normalize() * ( if (len < 10 || len > 30) 20 else 40)
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -148,6 +154,43 @@ class AxisMConstraint(): MConstraint {
         renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id)
     }
 
+    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
+        return commonCopy(level, mapped, aconstraint1, attachmentPoints_, renderer) {
+            nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer ->
+            commonCopy(level, mapped, aconstraint2, attachmentPoints_, renderer) {
+                _, _, _, _, slocalPos0, slocalPos1, _, _ ->
+
+                val srpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, slocalPos0) } else slocalPos0
+                val srpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, slocalPos1) } else slocalPos1
+
+
+                val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
+                val rpoint2 = rpoint1 + (srpoint1 - srpoint2).normalize() * fixedLength
+
+
+                AxisMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, fixedLength, disableCollisions, newAttachmentPoints, newRenderer)
+            }
+        }
+    }
+
+    override fun onScale(level: ServerLevel, scale: Double) {
+        val ratio = aconstraint2.fixedDistance / aconstraint1.fixedDistance
+        val newDistance = fixedLength * scale
+
+        aconstraint1 = VSAttachmentConstraint(aconstraint1.shipId0, aconstraint1.shipId1, aconstraint1.compliance, aconstraint1.localPos0, aconstraint1.localPos1, aconstraint1.maxForce, newDistance)
+        aconstraint2 = VSAttachmentConstraint(aconstraint2.shipId0, aconstraint2.shipId1, aconstraint2.compliance, aconstraint2.localPos0, aconstraint2.localPos1, aconstraint2.maxForce, newDistance * ratio)
+
+        level.shipObjectWorld.removeConstraint(cIDs[0])
+        level.shipObjectWorld.removeConstraint(cIDs[1])
+
+        cIDs[0] = level.shipObjectWorld.createNewConstraint(aconstraint1)!!
+        cIDs[1] = level.shipObjectWorld.createNewConstraint(aconstraint2)!!
+    }
+
+    override fun getVSIds(): Set<VSConstraintId> {
+        return cIDs.toSet()
+    }
+
     override fun nbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
 
@@ -157,6 +200,7 @@ class AxisMConstraint(): MConstraint {
         tag.putInt("managedID", mID.id)
         tag.putBoolean("disableCollisions", disableCollisions)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
+        tag.putDouble("fixedLength", fixedLength)
 
         return tag
     }
@@ -169,6 +213,8 @@ class AxisMConstraint(): MConstraint {
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
 //        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint  = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null)
+
+        fixedLength = if (tag.contains("fixedLength")) tag.getDouble("fixedLength") else aconstraint1.fixedDistance
 
         return this
     }
@@ -193,8 +239,6 @@ class AxisMConstraint(): MConstraint {
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
-        level.shipObjectWorld.loadedShips.getById(aconstraint1.shipId0)?.transformProvider = null
-        level.shipObjectWorld.loadedShips.getById(aconstraint1.shipId1)?.transformProvider = null
         if (disableCollisions) {
             level.shipObjectWorld.enableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)
         }

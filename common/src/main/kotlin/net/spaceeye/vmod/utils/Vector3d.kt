@@ -10,6 +10,7 @@ import kotlin.math.min
 typealias JVector3d  = org.joml.Vector3d
 typealias JVector3f  = org.joml.Vector3f
 typealias JVector3dc = org.joml.Vector3dc
+typealias JVector3i  = org.joml.Vector3i
 typealias MCVec3     = net.minecraft.world.phys.Vec3
 
 fun FriendlyByteBuf.writeVector3d(vector3d: Vector3d) {
@@ -45,6 +46,7 @@ class Vector3d(x:Number, y:Number, z:Number) {
 
 //    inline fun toMCVector3d(): MCVector3d {return MCVector3d(x, y, z) }
     inline fun toJomlVector3d(): JVector3d {return JVector3d(x, y, z) }
+    inline fun toJomlVector3i(): JVector3i {return JVector3i(x.toInt(), y.toInt(), z.toInt()) }
     inline fun toArray(): Array<Double> {return arrayOf(x, y, z) }
     inline fun toBlockPos(): BlockPos {return BlockPos(x.toInt(), y.toInt(), z.toInt()) }
     inline fun toMCVec3(): MCVec3 {return MCVec3(x, y, z)}
@@ -117,6 +119,8 @@ class Vector3d(x:Number, y:Number, z:Number) {
 
     inline fun dot(x: Double, y: Double, z: Double): Double {return Math.fma(this.x, x, Math.fma(this.y, y, this.z * z)); }
     inline fun dot(other: Vector3d): Double {return dot(other.x, other.y, other.z)}
+
+    inline fun avg(): Double { return (x + y + z)/3.0 }
 
     inline fun add(other: Vector3d, dest: Vector3d): Vector3d {
         dest.x = x + other.x

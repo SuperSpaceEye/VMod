@@ -20,6 +20,8 @@ class ServerLimitsInstance {
     val extensionDistance = DoubleLimit(0.001)
     val extensionSpeed = DoubleLimit(0.001)
     val distanceFromBlock = DoubleLimit(0.0001)
+    val radius = IntLimit(1, 10)
+    val scale = DoubleLimit(0.0)
 
     val channelLength = StrLimit(50)
 }

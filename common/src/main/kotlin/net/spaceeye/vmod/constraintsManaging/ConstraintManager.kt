@@ -278,6 +278,10 @@ class ConstraintManager: SavedData() {
         return mCon.mID
     }
 
+    fun tryGetIdOfPosition(pos: BlockPos): List<ManagedConstraintId>? {
+        return posToMId.getItemsAt(pos)
+    }
+
     private fun shipWasSplitEvent(
         originalShip: ServerShip,
         newShip: ServerShip,

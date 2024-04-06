@@ -1,5 +1,6 @@
 ## Constraints
 * Add scale tool that would scale all ships connected to constraint
+* Remove backward-compatibility code when constraints are in a more finished state
 
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
@@ -8,6 +9,9 @@
 * Group rendering objects by types to elevate common operations and add shared data between rendering types
 * "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
+
+## Ticking Constraints
+* Redo them
 
 ## HUD Rendering
 * Make system for HUD rendering
@@ -65,3 +69,6 @@ Ig i can use attachments to do something, but i'm really not sure.
 
 ## Winch
 A rope that can be made longer or shorter
+
+## Wheels
+A tool that will create wheels from VS phys entities + maybe 

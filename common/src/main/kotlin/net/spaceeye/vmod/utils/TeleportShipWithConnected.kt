@@ -17,10 +17,12 @@ fun teleportShipWithConnected(
     mainShip: ServerShip,
     pos: Vector3d,
     rotation: Quaterniondc,
-    scale: Double = 1.0,
+    scale: Double? = null,
 
     maintainRelativeScale: Boolean = false
 ) {
+    val scale = scale ?: Vector3d(mainShip.transform.shipToWorldScaling).avg()
+
     val traversed = VSConstraintsKeeper.traverseGetConnectedShips(mainShip.id)
     val transform = (mainShip.transform as ShipTransformImpl).copy(pos.toJomlVector3d(), shipToWorldRotation = rotation, shipToWorldScaling = org.joml.Vector3d(scale, scale, scale))
 

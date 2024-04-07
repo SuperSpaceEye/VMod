@@ -15,6 +15,7 @@
 
 ## HUD Rendering
 * Make system for HUD rendering
+* Use it to make clearer to player that they are in the middle of making a constraint, etc.
 
 ## Sounds
 * Add sounds and shit
@@ -52,6 +53,7 @@
 
 ## Hydraulics
 * Add more options, like one to disable fixed orientation
+* Add option to not fully extend/retract hydraulics
 
 ## Ball Socket Constraint
 Basically just one attachment constraint

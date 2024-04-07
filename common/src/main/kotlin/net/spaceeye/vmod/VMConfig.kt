@@ -2,6 +2,7 @@ package net.spaceeye.vmod
 
 import net.spaceeye.vmod.config.AbstractConfigBuilder
 import net.spaceeye.vmod.config.CDouble
+import net.spaceeye.vmod.config.CInt
 import net.spaceeye.vmod.config.ConfigSubDirectory
 
 object VMConfig {
@@ -26,6 +27,8 @@ object VMConfig {
 
         class ServerToolgunSettings: ConfigSubDirectory() {
             val MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
+
+            val MAX_SHIPS_ALLOWED_TO_COPY: Int by CInt(-1, "Number of connected ships a player can copy in one request. <=0 for unlimited.")
         }
     }
 }

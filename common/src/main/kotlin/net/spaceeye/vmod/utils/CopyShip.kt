@@ -3,9 +3,12 @@ package net.spaceeye.vmod.utils
 import dev.architectury.event.events.common.TickEvent
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
-import net.minecraft.world.Clearable
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.level.ChunkPos
+import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.BlockState
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
 import net.spaceeye.vmod.constraintsManaging.getManagedConstraint
@@ -17,12 +20,17 @@ import org.joml.primitives.AABBic
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
+import org.valkyrienskies.core.impl.networking.simple.sendToClient
 import org.valkyrienskies.core.impl.util.events.EventEmitter
 import org.valkyrienskies.core.impl.util.events.EventEmitterImpl
-import org.valkyrienskies.mod.common.dimensionId
-import org.valkyrienskies.mod.common.shipObjectWorld
+import org.valkyrienskies.mod.common.*
+import org.valkyrienskies.mod.common.networking.PacketRestartChunkUpdates
+import org.valkyrienskies.mod.common.networking.PacketStopChunkUpdates
+import org.valkyrienskies.mod.common.util.toJOML
 
-private inline fun copyShipBlock(level: ServerLevel, state: BlockState, ox: Int, oy: Int, oz: Int, newShipCenter: Vector3d, originCenter: Vector3d, mapped: Map<ShipId, ShipId>) {
+val AIR = Blocks.AIR.defaultBlockState()
+
+private fun copyShipBlock(level: ServerLevel, state: BlockState, ox: Int, oy: Int, oz: Int, newShipCenter: Vector3d, originCenter: Vector3d, mapped: Map<ShipId, ShipId>) {
     val from = BlockPos(ox, oy, oz)
     val be = level.getBlockEntity(from)
 
@@ -42,21 +50,24 @@ private inline fun copyShipBlock(level: ServerLevel, state: BlockState, ox: Int,
             val prev = tag.getLong("ShiptraptionID")
             tag.putLong("ShiptraptionID", mapped.getOrDefault(prev, prev))
         }
-
-        // so that it won't drop its contents
-        if (it is Clearable) {
-            it.clearContent()
-        }
-
-        // so loot containers dont drop its content
-        if (it is RandomizableContainerBlockEntity) {
-            it.setLootTable(null, 0)
-        }
-
         tag
     }
     level.getChunkAt(to).setBlockState(to, state, false)
     tag?.let { level.getBlockEntity(to)!!.load(tag) }
+}
+
+private fun updateBlock(level: Level, pos: BlockPos, newState: BlockState) {
+    val flags = 11
+
+    level.setBlocksDirty(pos, AIR, newState)
+    level.sendBlockUpdated(pos, AIR, newState, flags)
+    level.blockUpdated(pos, newState.block)
+
+    if (!level.isClientSide && newState.hasAnalogOutputSignal()) {
+        level.updateNeighbourForOutputSignal(pos, newState.block)
+    }
+    //This updates lighting for blocks in shipspace
+    level.chunkSource.lightEngine.checkBlock(pos)
 }
 
 private fun createShip(level: ServerLevel, originShip: ServerShip, posInShipOffset: Vector3d, toPos: Vector3d): ServerShip {
@@ -75,10 +86,23 @@ private fun createShip(level: ServerLevel, originShip: ServerShip, posInShipOffs
     return newShip
 }
 
-fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycastResult: RaycastFunctions.RaycastResult) {
-    val traversed = VSConstraintsKeeper.traverseGetConnectedShips(originShip.id)
+private fun checkLimits(traversedData: VSConstraintsKeeper.TraversedData, player: ServerPlayer?): Boolean {
+    if (player == null) {return true}
 
-    val originShips = traversed.traversedShipIds.map { level.shipObjectWorld.loadedShips.getById(it)!! }
+    if (VMConfig.SERVER.TOOLGUN.MAX_SHIPS_ALLOWED_TO_COPY > 0 && traversedData.traversedShipIds.size > VMConfig.SERVER.TOOLGUN.MAX_SHIPS_ALLOWED_TO_COPY) {return false}
+
+    return true
+}
+
+fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycastResult: RaycastFunctions.RaycastResult, player: ServerPlayer? = null) {
+    val traversed = VSConstraintsKeeper.traverseGetConnectedShips(originShip.id)
+    //why? phys entities exist
+    traversed.traversedShipIds.removeAll(traversed.traversedShipIds.filter { !level.shipObjectWorld.loadedShips.contains(it) }.toSet())
+
+    if (!checkLimits(traversed, player)) {return}
+
+    //why? just in case
+    val originShips = traversed.traversedShipIds.mapNotNull { level.shipObjectWorld.loadedShips.getById(it) }
 
     val objectAABB = AABBd()
     originShips.forEach {
@@ -111,6 +135,22 @@ fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycas
         createShip(level, originShip, originOffset, toPos)
     }
 
+    val chunksToBeUpdated = mutableMapOf<ChunkPos, Pair<ChunkPos, ChunkPos>>()
+
+    createdShips.forEach {ship ->
+        ship.activeChunksSet.forEach { chunkX, chunkZ ->
+            chunksToBeUpdated[ChunkPos(chunkX, chunkZ)] = Pair(ChunkPos(chunkX, chunkZ), ChunkPos(chunkX, chunkZ))
+        }
+    }
+
+    val chunkPairs = chunksToBeUpdated.values.toList()
+    val chunkPoses = chunkPairs.flatMap { it.toList() }
+    val chunkPosesJOML = chunkPoses.map { it.toJOML() }
+
+    level.players().forEach { player ->
+        PacketStopChunkUpdates(chunkPosesJOML).sendToClient(player.playerWrapper)
+    }
+
     var numCreatedShips = 0
     var totalNumShips = originShips.size
 
@@ -130,10 +170,14 @@ fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycas
             numCreatedShips++
             if (numCreatedShips < totalNumShips) {return@registerShipCreation}
 
+            level.players().forEach { player ->
+                PacketRestartChunkUpdates(chunkPosesJOML).sendToClient(player.playerWrapper)
+            }
+
             for ((original, created) in originShips.zip(createdShips)) {
                 val tp = created.transformProvider
                 if (tp !is FixedPositionTransformProvider) { continue }
-//                created.isStatic = false
+                created.isStatic = false
                 level.shipObjectWorld.teleportShip(created, ShipTeleportDataImpl(tp.positionInWorld, original.transform.shipToWorldRotation))
             }
 
@@ -152,31 +196,48 @@ fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycas
 }
 
 object CreateShipPool {
-    private val serverCreateShip = EventEmitterImpl<ServerCreateShip>()
+    val serverCreateShip = EventEmitterImpl<ServerCreateShip>()
 
     fun registerShipCreation(level: ServerLevel, boundsAABB: AABBic, copyFN: (state: BlockState, ox: Int, oy: Int, oz: Int) -> Unit, postFN: () -> Unit) {
-        var oy = boundsAABB.minY()
-        var ox = boundsAABB.minX()
-        var oz = boundsAABB.minZ()
+        var oy = boundsAABB.minY() - 1
+        var ox = boundsAABB.minX() - 1
+        var oz = boundsAABB.minZ() - 1
+
+        val toUpdate = mutableListOf<Pair<BlockPos, BlockState>>()
+        var i = 0
 
         serverCreateShip.on {
             (start, maxTime), handler ->
 
+            if (start + maxTime < getNow_ms()) {return@on}
+
             //TODO redo this to use chunks
-            for (oy_ in oy until boundsAABB.maxY()) {
-            for (ox_ in ox until boundsAABB.maxX()) {
-            for (oz_ in oz until boundsAABB.maxZ()) {
+            for (oy_ in oy until boundsAABB.maxY() + 1) {
+            for (ox_ in ox until boundsAABB.maxX() + 1) {
+            for (oz_ in oz until boundsAABB.maxZ() + 1) {
                 val state = level.getBlockState(BlockPos(ox_, oy_, oz_))
-                if (!state.isAir) { copyFN(state, ox_, oy_, oz_) }
-                if (getNow_ms() > start + maxTime) {
-                    ox = ox_
-                    oy = oy_
-                    oz = oz_ + 1
-                    return@on
+                if (!state.isAir) {
+                    copyFN(state, ox_, oy_, oz_)
+                    toUpdate.add(Pair(BlockPos(ox_, oy_, oz_), state))
                 }
+//                if (getNow_ms() > start + maxTime) {
+//                    ox = ox_
+//                    oy = oy_
+//                    oz = oz_ + 1
+//                    return@on
+//                }
             }
-            oz = boundsAABB.minZ()}
-            ox = boundsAABB.minX(); oz = boundsAABB.minZ()}
+            oz = boundsAABB.minZ() - 1}
+            ox = boundsAABB.minX() - 1; oz = boundsAABB.minZ() - 1}
+
+            for (i_ in i until toUpdate.size) {
+                updateBlock(level, toUpdate[i_].first, toUpdate[i_].second)
+//                if (getNow_ms() > start + maxTime) {
+//                    i = i_ + 1
+//                    return@on
+//                }
+            }
+
             postFN()
 
             handler.unregister()
@@ -188,7 +249,7 @@ object CreateShipPool {
     }
 
     init {
-        TickEvent.SERVER_PRE.register {
+        TickEvent.SERVER_POST.register {
             serverCreateShip.emit(ServerCreateShip(getNow_ms(), 50L))
         }
     }

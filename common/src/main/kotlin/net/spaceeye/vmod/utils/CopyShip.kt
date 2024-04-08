@@ -104,7 +104,7 @@ fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycas
     //why? just in case
     val originShips = traversed.traversedShipIds.mapNotNull { level.shipObjectWorld.loadedShips.getById(it) }
 
-    val objectAABB = AABBd()
+    val objectAABB = AABBd(originShips[0].worldAABB)
     originShips.forEach {
         val b = it.worldAABB
         if (b.minX() < objectAABB.minX) { objectAABB.minX = b.minX() }

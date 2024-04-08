@@ -13,7 +13,9 @@ object ToolgunModes {
 
         CopyMode(),
         ScaleMode(),
-        StripMode()
+        StripMode(),
+
+        SchemMode()
     )
     var initialized = false
     init {

@@ -17,10 +17,47 @@ import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
-import org.joml.Quaterniond
+import net.spaceeye.vmod.utils.ServerClosable
 import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.mod.common.getShipManagingPos
-import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.UUID
+import kotlin.io.path.isDirectory
+
+object ClientPlayerSchematics {
+    fun listSchematics(): List<Path> {
+        try {
+            Files.createDirectories(Paths.get("VMod-Schematics"))
+        } catch (e: IOException) {return emptyList()}
+        val files = Files.list(Paths.get("VMod-Schematics"))
+        return files.filter { !it.isDirectory() }.toList()
+    }
+
+    fun loadSchematic(path: Path): IShipSchematic? {
+        val bytes = Files.readAllBytes(path)
+        return ShipSchematic.getSchematicFromBytes(bytes)
+    }
+
+    fun saveSchematic(name: String, schematic: IShipSchematic): Boolean {
+        try {
+            Files.write(Paths.get("VMod-Schematics/${name}"), schematic.saveToFile().toBytes().array())
+        } catch (e: IOException) {return false}
+        return true
+    }
+}
+
+object ServerPlayerSchematics: ServerClosable() {
+    private val schematics = mutableMapOf<UUID, IShipSchematic>()
+
+    override fun close() {
+        schematics.clear()
+    }
+
+
+}
 
 class SchemMode: BaseMode {
     override fun serverSideVerifyLimits() {}
@@ -40,6 +77,8 @@ class SchemMode: BaseMode {
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
             conn_secondary.sendToServer(this)
         }
+
+        ClientPlayerSchematics.listSchematics()
 
         return EventResult.interruptFalse()
     }
@@ -65,18 +104,18 @@ class SchemMode: BaseMode {
         if (schem == null) {return}
         if (raycastResult.state.isAir) {return}
 
-        val file = this.schem!!.saveToFile()
-        val bytes = file.toBytes()
-
-        val out = FileOutputStream("cool_ship_schem.nbt")
-        out.write(this.schem!!.saveToFile().toBytes().array())
-        out.close()
-
-        val newFile = CompoundTagIFile(CompoundTag())
-        newFile.fromBytes(bytes)
-        val loadedSchem = ShipSchematic.getSchematicConstructor().get()
-        loadedSchem.loadFromFile(newFile)
-
-        loadedSchem.placeAt(level, raycastResult.worldCenteredHitPos!!.toJomlVector3d(), Quaterniond())
+//        val file = this.schem!!.saveToFile()
+//        val bytes = file.toBytes()
+//
+//        val out = FileOutputStream("cool_ship_schem.nbt")
+//        out.write(this.schem!!.saveToFile().toBytes().array())
+//        out.close()
+//
+//        val newFile = CompoundTagIFile(CompoundTag())
+//        newFile.fromBytes(bytes)
+//        val loadedSchem = ShipSchematic.getSchematicConstructor().get()
+//        loadedSchem.loadFromByteBuffer(newFile)
+//
+//        loadedSchem.placeAt(level, raycastResult.worldCenteredHitPos!!.toJomlVector3d(), Quaterniond())
     }
 }

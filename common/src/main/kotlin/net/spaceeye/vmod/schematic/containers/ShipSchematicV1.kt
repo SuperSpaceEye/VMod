@@ -70,13 +70,34 @@ class CompoundTagIFile(var tag: CompoundTag): IFile {
     }
 }
 
+class CompoundTagIFileWithTopVersion(var tag: CompoundTag, val version: Int): IFile {
+    override fun toBytes(): ByteBuf {
+        val buffer = ByteBufOutputStream(Unpooled.buffer())
+        buffer.writeInt(version)
+        NbtIo.writeCompressed(tag, buffer)
+        return buffer.buffer()
+    }
+
+    // version was already written before calling fromBytes
+    override fun fromBytes(buffer: ByteBuf): Boolean {
+        val _buffer = ByteBufInputStream(buffer)
+        try {
+            tag = NbtIo.readCompressed(_buffer)
+        } catch (e: IOException) {
+            return false
+        }
+
+        return true
+    }
+}
+
 class RawBytesIFile(val bytes: ByteArray): IFile {
     override fun toBytes(): ByteBuf {
         return Unpooled.wrappedBuffer(bytes)
     }
 
     override fun fromBytes(buffer: ByteBuf): Boolean {
-        TODO("Not yet implemented")
+        throw AssertionError("Not Implemented. Not going to be implemented.")
     }
 }
 
@@ -163,7 +184,8 @@ class ShipSchematicV1(): IShipSchematic {
             val toPos = MVector3d(info.relPositionToCenter) + MVector3d(pos)
             level.shipObjectWorld.teleportShip(it.first, ShipTeleportDataImpl(
                     toPos.toJomlVector3d(),
-                    it.first.transform.shipToWorldRotation
+                    it.first.transform.shipToWorldRotation,
+                    newScale = MVector3d(it.first.transform.shipToWorldScaling).avg()
             ))
         }
 
@@ -243,6 +265,11 @@ class ShipSchematicV1(): IShipSchematic {
         )
     }
 
+    // TODO redo this
+    // reworked steps:
+    // 1. traverse + gather MConstraints info + gather server only info
+    // 2. send this info to client
+    // 3. client gathers block info by itself
     override fun makeFrom(originShip: ServerShip): Boolean {
         val traversed = VSConstraintsKeeper.traverseGetConnectedShips(originShip.id)
         val level = ServerLevelHolder.overworldServerLevel!!
@@ -451,8 +478,9 @@ class ShipSchematicV1(): IShipSchematic {
         }
     }
 
-    override fun loadFromFile(file: IFile): Boolean {
-        if (file !is CompoundTagIFile) {return false}
+    override fun loadFromByteBuffer(buf: ByteBuf): Boolean {
+        val file = CompoundTagIFile(CompoundTag())
+        file.fromBytes(buf)
 
         val saveTag = file.tag
 

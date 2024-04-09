@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.schematic
 
+import io.netty.buffer.Unpooled
 import net.spaceeye.vmod.schematic.containers.ShipSchematicV1
 import net.spaceeye.vmod.schematic.icontainers.IFile
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
@@ -29,8 +30,19 @@ object ShipSchematic {
         return schem
     }
 
-    internal val copyEvents = mutableMapOf<String, CopyEventSignature>()
-    internal val pasteEvents = mutableMapOf<String, PasteEventSignature>()
+    fun getSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
+        val buffer = Unpooled.wrappedBuffer(bytes)
+
+        val schematic = try {
+            getSchematicConstructor(buffer.readInt()).get()
+        } catch (e: AssertionError) {return null}
+
+        schematic.loadFromByteBuffer(buffer)
+        return schematic
+    }
+
+    private val copyEvents = mutableMapOf<String, CopyEventSignature>()
+    private val pasteEvents = mutableMapOf<String, PasteEventSignature>()
 
     fun registerCopyPasteEvents(name: String, onCopy: CopyEventSignature, onPaste: PasteEventSignature) {
         copyEvents[name] = onCopy

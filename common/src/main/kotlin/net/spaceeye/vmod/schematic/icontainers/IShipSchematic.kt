@@ -11,7 +11,7 @@ interface IShipSchematic {
     fun getInfo(): IShipSchematicInfo
 
     fun placeAt(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc): Boolean
-    fun makeFrom(ship: ServerShip): Boolean
+    fun makeFrom(originShip: ServerShip): Boolean
 
     fun saveToFile(): IFile
     fun loadFromFile(file: IFile): Boolean

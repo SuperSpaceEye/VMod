@@ -1,8 +1,8 @@
 package net.spaceeye.vmod.schematic.icontainers
 
-import java.nio.ByteBuffer
+import io.netty.buffer.ByteBuf
 
 interface IFile {
-    fun toBytes(): ByteBuffer
-    fun fromBytes(buffer: ByteBuffer): Boolean
+    fun toBytes(): ByteBuf
+    fun fromBytes(buffer: ByteBuf): Boolean
 }

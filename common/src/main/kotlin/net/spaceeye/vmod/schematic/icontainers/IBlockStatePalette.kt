@@ -6,9 +6,8 @@ interface IBlockStatePalette {
     fun toId(state: BlockState): Int
     fun fromId(id: Int): BlockState?
 
-    fun writeToFile()
-    fun writeFromFile()
-
     fun getPaletteSize(): Int
     val paletteVersion: Int
+
+    fun setPalette(newPalette: List<Pair<Int, BlockState>>)
 }

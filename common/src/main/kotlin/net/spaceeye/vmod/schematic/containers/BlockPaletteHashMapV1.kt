@@ -15,14 +15,11 @@ class BlockPaletteHashMapV1(bits: Int = 1): IBlockStatePalette {
 
     override fun fromId(id: Int): BlockState? = statePaletteMap.byId(id)
 
-    override fun writeToFile() {
-        TODO("Not yet implemented")
-    }
-
-    override fun writeFromFile() {
-        TODO("Not yet implemented")
-    }
-
     override fun getPaletteSize(): Int = statePaletteMap.size()
     override val paletteVersion: Int = 1
+
+    override fun setPalette(newPalette: List<Pair<Int, BlockState>>) {
+        statePaletteMap.clear()
+        newPalette.forEach { (pos, state) -> statePaletteMap.addMapping(state, pos) }
+    }
 }

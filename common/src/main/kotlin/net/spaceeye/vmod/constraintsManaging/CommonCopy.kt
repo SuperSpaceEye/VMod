@@ -13,6 +13,7 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
+import org.valkyrienskies.mod.common.isChunkInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.lang.AssertionError
 
@@ -25,16 +26,15 @@ fun commonCopy(
         constructor: (nShip1Id: ShipId, nShip2Id: ShipId, nShip1: ServerShip?, nShip2: ServerShip?, localPos0: Vector3d, localPos1: Vector3d, newAttachmentPoints: List<BlockPos>, newRenderer: BaseRenderer?) -> MConstraint?): MConstraint? {
     if (!mapped.keys.containsAll(listOf(constraint.shipId0, constraint.shipId1))) { return null }
 
-    val dimensionIds = level.shipObjectWorld.dimensionToGroundBodyIdImmutable.values.toSet()
+    val inShipyard1 = level.isChunkInShipyard(constraint.localPos0.x().toInt() / 16, constraint.localPos0.z().toInt() / 16)
+    val inShipyard2 = level.isChunkInShipyard(constraint.localPos1.x().toInt() / 16, constraint.localPos1.z().toInt() / 16)
 
-    val oShip1 = if (!dimensionIds.contains(constraint.shipId0)) level.shipObjectWorld.loadedShips.getById(constraint.shipId0) else null
-    val oShip2 = if (!dimensionIds.contains(constraint.shipId1)) level.shipObjectWorld.loadedShips.getById(constraint.shipId1) else null
+    val nShip1 = if (inShipyard1) level.shipObjectWorld.allShips.getById(mapped[constraint.shipId0]!!) else null
+    val nShip2 = if (inShipyard2) level.shipObjectWorld.allShips.getById(mapped[constraint.shipId1]!!) else null
 
-    val nShip1 = if (oShip1 != null) level.shipObjectWorld.loadedShips.getById(mapped[constraint.shipId0]!!) else null
-    val nShip2 = if (oShip2 != null) level.shipObjectWorld.loadedShips.getById(mapped[constraint.shipId1]!!) else null
-
-    val oCentered1 = if (oShip1 != null) {Vector3d(oShip1.chunkClaim.xMiddle * 16, 128.5, oShip1.chunkClaim.zMiddle * 16)} else {null}
-    val oCentered2 = if (oShip2 != null) {Vector3d(oShip2.chunkClaim.xMiddle * 16, 128.5, oShip2.chunkClaim.zMiddle * 16)} else {null}
+    //TODO extremely sus math
+    val oCentered1 = if (inShipyard1) {Vector3d(((constraint.localPos0.x().toInt() / 16 / 256 - 1) * 256 + 128) * 16, 128.5, ((constraint.localPos0.z().toInt() / 16 / 256) * 256 + 128) * 16)} else {null}
+    val oCentered2 = if (inShipyard2) {Vector3d(((constraint.localPos1.x().toInt() / 16 / 256 - 1) * 256 + 128) * 16, 128.5, ((constraint.localPos1.z().toInt() / 16 / 256) * 256 + 128) * 16)} else {null}
     val nCentered1 = if (nShip1 != null) {Vector3d(nShip1.chunkClaim.xMiddle * 16, 128.5, nShip1.chunkClaim.zMiddle * 16)} else {null}
     val nCentered2 = if (nShip2 != null) {Vector3d(nShip2.chunkClaim.xMiddle * 16, 128.5, nShip2.chunkClaim.zMiddle * 16)} else {null}
 

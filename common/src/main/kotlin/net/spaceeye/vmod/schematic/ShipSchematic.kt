@@ -12,6 +12,7 @@ typealias CopyEventSignature = (
         ) -> IFile?
 typealias PasteEventSignature = (
         loadedShips: List<Pair<ServerShip, Long>>,
+        file: IFile,
         unregister: () -> Unit
         ) -> Unit
 
@@ -46,5 +47,14 @@ object ShipSchematic {
         toRemove.forEach { copyEvents.remove(it) }
 
         return toReturn
+    }
+
+    internal fun onPaste(loadedShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, IFile>>) {
+        val toRemove = mutableListOf<String>()
+        files.forEach { (name, file) ->
+            val event = pasteEvents[name] ?: return@forEach
+            event(loadedShips, file) { toRemove.add(name) }
+        }
+        toRemove.forEach { pasteEvents.remove(it) }
     }
 }

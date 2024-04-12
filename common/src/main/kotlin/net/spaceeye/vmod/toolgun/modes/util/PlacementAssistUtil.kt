@@ -49,7 +49,7 @@ interface PlacementAssistCRIHandler {
     fun clientHandleMouseClickPA() {
         when (paStage) {
             ThreeClicksActivationSteps.FIRST_RAYCAST  -> clientPlacementAssistFirst()
-            ThreeClicksActivationSteps.SECOND_RAYCAST -> clientPlacementAssitSecond()
+            ThreeClicksActivationSteps.SECOND_RAYCAST -> clientPlacementAssistSecond()
             ThreeClicksActivationSteps.FINALIZATION   -> clientPlacementAssistThird()
         }
     }
@@ -89,7 +89,7 @@ interface PlacementAssistCRIHandler {
         return
     }
 
-    private fun clientPlacementAssitSecond() {
+    private fun clientPlacementAssistSecond() {
         paStage = ThreeClicksActivationSteps.FINALIZATION
         if (paCaughtShip == null) { paClientResetState(); return }
 

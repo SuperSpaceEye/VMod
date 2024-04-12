@@ -4,8 +4,9 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
 import net.spaceeye.vmod.toolgun.modes.state.HydraulicsMode
+import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistSerialize
 
-interface HydraulicsSerializable: MSerializable {
+interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
     override fun serialize(): FriendlyByteBuf {
         this as HydraulicsMode
         val buf = getBuffer()
@@ -19,6 +20,8 @@ interface HydraulicsSerializable: MSerializable {
         buf.writeUtf(channel)
 
         buf.writeBoolean(primaryFirstRaycast)
+
+        paSerialize(buf)
 
         return buf
     }
@@ -34,6 +37,8 @@ interface HydraulicsSerializable: MSerializable {
         channel = buf.readUtf()
 
         primaryFirstRaycast = buf.readBoolean()
+
+        paDeserialize(buf)
     }
 
     override fun serverSideVerifyLimits() {
@@ -43,5 +48,6 @@ interface HydraulicsSerializable: MSerializable {
         extensionDistance = ServerLimits.instance.extensionDistance.get(extensionDistance)
         extensionSpeed = ServerLimits.instance.extensionSpeed.get(extensionSpeed)
         channel = ServerLimits.instance.channelLength.get(channel)
+        paServerSideVerifyLimits()
     }
 }

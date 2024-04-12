@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIBlock
-import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
@@ -14,8 +13,7 @@ import net.spaceeye.vmod.translate.*
 import net.spaceeye.vmod.translate.get
 
 interface WeldGUIBuilder: GUIBuilder {
-    override val itemName: TranslatableComponent
-        get() = WELD
+    override val itemName get() = WELD
 
     override fun makeGUISettings(parentWindow: UIBlock) {
         this as WeldMode

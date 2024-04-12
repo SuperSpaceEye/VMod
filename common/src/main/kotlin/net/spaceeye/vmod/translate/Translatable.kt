@@ -14,6 +14,8 @@ val WELD = t("weld")
 val ROPE = t("rope")
 val HYDRAULICS = t("hydraulics")
 val AXIS = t("axis")
+val PHYS_ROPE = t("phys_rope")
+
 val SCALE = t("scale")
 val STRIP = t("strip")
 val COPY = t("copy")

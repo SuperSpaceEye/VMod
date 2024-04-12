@@ -3,6 +3,8 @@
   "vmod.gui.rope": "Rope",
   "vmod.gui.hydraulics": "Hydraulics",
   "vmod.gui.axis": "Axis",
+  "vmod.gui.phys_rope": "Physics Rope",
+
   "vmod.gui.strip": "Strip",
   "vmod.gui.scale": "Scale",
   "vmod.gui.copy": "Copy",

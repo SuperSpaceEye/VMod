@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIBlock
-import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeCheckBox
 import net.spaceeye.vmod.guiElements.makeDropDown
@@ -14,8 +13,7 @@ import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.translate.*
 
 interface AxisGUIBuilder: GUIBuilder {
-    override val itemName: TranslatableComponent
-        get() = AXIS
+    override val itemName get() = AXIS
 
     override fun makeGUISettings(parentWindow: UIBlock) {
         this as AxisMode

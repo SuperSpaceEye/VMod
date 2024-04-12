@@ -14,11 +14,12 @@ import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.gui.CopyGUIBuilder
+import net.spaceeye.vmod.toolgun.modes.inputHandling.CopyCRIHandler
+import net.spaceeye.vmod.toolgun.modes.serializing.CopySerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
-import net.spaceeye.vmod.translate.COPY
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.copyShipWithConnections
-import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.getShipManagingPos
 
@@ -46,29 +47,7 @@ object CopyNetworking {
     }
 }
 
-class CopyMode: BaseMode {
-    override fun serverSideVerifyLimits() {}
-    override fun serialize(): FriendlyByteBuf { return getBuffer() }
-    override fun deserialize(buf: FriendlyByteBuf) {}
-
-    override val itemName: TranslatableComponent
-        get() = COPY
-
-    override fun makeGUISettings(parentWindow: UIBlock) {}
-
-    override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
-            conn_primary.sendToServer(this)
-        }
-
-        if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
-            conn_secondary.sendToServer(this)
-        }
-
-
-        return EventResult.interruptFalse()
-    }
-
+class CopyMode: BaseMode, CopySerializable, CopyCRIHandler, CopyGUIBuilder {
     init {
         CopyNetworking.init(this)
     }

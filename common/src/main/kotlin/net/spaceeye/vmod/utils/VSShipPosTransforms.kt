@@ -4,6 +4,8 @@ import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 
+//TODO redo with transform.shipToWorld.transform
+
 fun posShipToWorld(ship: Ship?, pos: Vector3d, transform: ShipTransform? = null): Vector3d {
     val transform = transform ?: ship!!.transform
     val scale = Vector3d(transform.shipToWorldScaling)

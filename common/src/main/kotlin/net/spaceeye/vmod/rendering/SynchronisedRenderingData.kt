@@ -27,6 +27,7 @@ object RenderingTypes {
         register { RopeRenderer() }
         register { A2BRenderer() }
         register { TimedA2BRenderer() }
+        register { EA2BRenderer() }
     }
 
     private fun register(supplier: Supplier<BaseRenderer>) {

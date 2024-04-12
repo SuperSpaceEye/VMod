@@ -15,7 +15,7 @@ import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
-import net.spaceeye.vmod.translate.GUIComponents.COPY
+import net.spaceeye.vmod.translate.COPY
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.copyShipWithConnections
 import org.lwjgl.glfw.GLFW

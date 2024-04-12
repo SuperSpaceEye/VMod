@@ -27,11 +27,11 @@ import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.translate.GUIComponents.ACTIVATE
-import net.spaceeye.vmod.translate.GUIComponents.APPLY_CHANGES
-import net.spaceeye.vmod.translate.GUIComponents.CHANNEL
-import net.spaceeye.vmod.translate.GUIComponents.DEACTIVATE
-import net.spaceeye.vmod.translate.GUIComponents.FUNCTION
+import net.spaceeye.vmod.translate.ACTIVATE
+import net.spaceeye.vmod.translate.APPLY_CHANGES
+import net.spaceeye.vmod.translate.CHANNEL
+import net.spaceeye.vmod.translate.DEACTIVATE
+import net.spaceeye.vmod.translate.FUNCTION
 import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.Vector3d

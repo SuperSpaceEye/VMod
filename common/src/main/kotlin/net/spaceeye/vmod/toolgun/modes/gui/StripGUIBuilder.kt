@@ -8,16 +8,16 @@ import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.StripMode
-import net.spaceeye.vmod.translate.GUIComponents
-import net.spaceeye.vmod.translate.GUIComponents.RADIUS
-import net.spaceeye.vmod.translate.GUIComponents.STRIP_ALL
-import net.spaceeye.vmod.translate.GUIComponents.STRIP_IN_RADIUS
-import net.spaceeye.vmod.translate.GUIComponents.STRIP_MODES
+import net.spaceeye.vmod.translate.*
+import net.spaceeye.vmod.translate.RADIUS
+import net.spaceeye.vmod.translate.STRIP_ALL
+import net.spaceeye.vmod.translate.STRIP_IN_RADIUS
+import net.spaceeye.vmod.translate.STRIP_MODES
 import net.spaceeye.vmod.translate.get
 
 interface StripGUIBuilder: GUIBuilder {
     override val itemName: TranslatableComponent
-        get() = GUIComponents.STRIP
+        get() = STRIP
 
     override fun makeGUISettings(parentWindow: UIBlock) {
         this as StripMode

@@ -6,8 +6,7 @@ import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.ScaleMode
-import net.spaceeye.vmod.translate.GUIComponents.SCALE
-import net.spaceeye.vmod.translate.get
+import net.spaceeye.vmod.translate.*
 
 interface ScaleGUIBuilder: GUIBuilder {
     override val itemName: TranslatableComponent

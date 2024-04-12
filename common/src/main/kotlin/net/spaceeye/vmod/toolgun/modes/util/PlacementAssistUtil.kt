@@ -32,6 +32,7 @@ import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
+import kotlin.math.sign
 
 interface PlacementAssistCRIHandler {
     var paCaughtShip: ClientShip?
@@ -40,6 +41,10 @@ interface PlacementAssistCRIHandler {
     var posMode: PositionModes
 
     var paAngle: Ref<Double>
+    var paScrollAngle: Double
+    var paScrollAngleDeg: Double
+        get() {return Math.toDegrees(paScrollAngle)}
+        set(value) {paScrollAngle = Math.toRadians(value)}
 
     fun clientHandleMouseClickPA() {
         when (paStage) {
@@ -52,7 +57,7 @@ interface PlacementAssistCRIHandler {
     fun clientHandleMouseEventPA(amount: Double): EventResult {
         if (!(paStage == ThreeClicksActivationSteps.SECOND_RAYCAST || paStage == ThreeClicksActivationSteps.FINALIZATION)) { return EventResult.pass() }
 
-        paAngle.it = paAngle.it + amount * 0.2
+        paAngle.it += paScrollAngle * amount.sign
 
         return EventResult.interruptFalse()
     }
@@ -180,11 +185,13 @@ interface PlacementAssistSerialize {
     var paAngle: Ref<Double>
     var paDistanceFromBlock: Double
     var paStage: ThreeClicksActivationSteps
+    var paScrollAngle: Double
 
     fun paSerialize(buf: FriendlyByteBuf): FriendlyByteBuf {
         buf.writeDouble(paDistanceFromBlock)
         buf.writeDouble(paAngle.it)
         buf.writeEnum(paStage)
+        buf.writeDouble(paScrollAngle)
         return buf
     }
 
@@ -192,6 +199,7 @@ interface PlacementAssistSerialize {
         paDistanceFromBlock = buf.readDouble()
         paAngle.it = buf.readDouble()
         paStage = buf.readEnum(paStage.javaClass)
+        paScrollAngle = buf.readDouble()
     }
 
     fun paServerSideVerifyLimits() {

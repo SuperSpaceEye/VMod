@@ -24,7 +24,7 @@ abstract class ServerSynchronisedData<T: DataUnit>(val id: String, getClientInst
         data.clear()
     }
 
-    class ClientDataRequestConnection<T: DataUnit>(id: String, val serverInstance: ServerSynchronisedData<T>): C2SConnection<ClientDataRequestPacket>(id, "client_data_request_connection") {
+    class ClientDataRequestConnection<T: DataUnit>(id: String, val serverInstance: ServerSynchronisedData<T>): C2SConnection<ClientDataRequestPacket>("client_data_request_connection", id) {
         override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
             val packet = ClientDataRequestPacket(buf)
             if (!serverInstance.data.containsKey(packet.page)) {
@@ -44,7 +44,7 @@ abstract class ServerSynchronisedData<T: DataUnit>(val id: String, getClientInst
         }
     }
 
-    class ClientDataUpdateRequestConnection<T : DataUnit>(id: String, val serverInstance: ServerSynchronisedData<T>): C2SConnection<ClientDataUpdateRequestPacket>(id, "client_data_update_request_packet") {
+    class ClientDataUpdateRequestConnection<T : DataUnit>(id: String, val serverInstance: ServerSynchronisedData<T>): C2SConnection<ClientDataUpdateRequestPacket>("client_data_update_request_packet", id) {
         override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
             val packet = ClientDataUpdateRequestPacket(buf)
             val page = serverInstance.data[packet.page]

@@ -4,13 +4,16 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.*
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
-import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.entities.ServerEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.EA2BRenderer
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
+import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
+import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -22,9 +25,9 @@ import org.valkyrienskies.physics_api.ConstraintId
 import java.awt.Color
 import java.util.*
 
-class PhysRopeMConstraint(): MConstraint {
+class PhysRopeMConstraint(): MConstraint, MRenderable {
     lateinit var constraint: VSRopeConstraint
-    private var renderer: BaseRenderer? = null
+    override var renderer: BaseRenderer? = null
 
     var attachmentPoints_ = mutableListOf<BlockPos>()
 
@@ -53,7 +56,7 @@ class PhysRopeMConstraint(): MConstraint {
         this.segments = segments
     }
 
-    override lateinit var mID: ManagedConstraintId
+    override var mID: ManagedConstraintId = -1
     override val typeName: String get() = "PhysRopeMConstraint"
     override var saveCounter: Int = -1
 
@@ -117,7 +120,7 @@ class PhysRopeMConstraint(): MConstraint {
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null
 
-        tag.putInt("managedID", mID.id)
+        tag.putInt("managedID", mID)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
         tag.putDouble("ropeLength", ropeLength)
         tag.putInt("segments", segments)
@@ -132,19 +135,21 @@ class PhysRopeMConstraint(): MConstraint {
 
         tag.put("uuids", uuidTag)
 
+        serializeRenderer(tag)
+
         return tag
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        mID = ManagedConstraintId(tag.getInt("managedID"))
+        mID = tag.getInt("managedID")
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
-
-        tryConvertDimensionId(tag, lastDimensionIds); constraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
-
         ropeLength = tag.getDouble("ropeLength")
         segments = tag.getInt("segments")
-
         entitiesUUIDs = (tag.get("uuids") as ListTag).map { (it as CompoundTag).getUUID("uuid") }.toMutableList()
+
+        deserializeRenderer(tag)
+
+        tryConvertDimensionId(tag, lastDimensionIds); constraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
 
         return this
     }
@@ -287,7 +292,7 @@ class PhysRopeMConstraint(): MConstraint {
             prevPos = data.transform.transformDirectionNoScalingFromShipToWorld((-dir * length).toJomlVector3d(), org.joml.Vector3d())
 
             SynchronisedRenderingData.serverSynchronisedData.addRenderer(
-                    constraint.shipId0, constraint.shipId1, mID.id + i, EA2BRenderer(
+                    constraint.shipId0, constraint.shipId1, mID + i, EA2BRenderer(
                     entity, Color(120, 0, 120), 0.5, length * 2
             ))
         }
@@ -299,15 +304,15 @@ class PhysRopeMConstraint(): MConstraint {
                         constraint.maxForce, 0.01)
         )
 
-        ConstraintManager.getInstance().constraintIdCounter.setCounter(mID.id + segments)
+        ConstraintManager.getInstance().constraintIdCounter.setCounter(mID + segments)
 
         return true
     }
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
 //        vsId = level.shipObjectWorld.createNewConstraint(constraint) ?: return false
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, mID.id, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id) }
+        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, mID, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
 
         return if (entitiesUUIDs.isNotEmpty()) {
             onLoadMConstraint(level)
@@ -318,6 +323,6 @@ class PhysRopeMConstraint(): MConstraint {
 
     override fun onDeleteMConstraint(level: ServerLevel) {
 //        level.shipObjectWorld.removeConstraint(vsId)
-//        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID.id)
+//        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
     }
 }

@@ -1,10 +1,7 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
-import gg.essential.elementa.components.UIBlock
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
@@ -19,7 +16,7 @@ import net.spaceeye.vmod.toolgun.modes.inputHandling.CopyCRIHandler
 import net.spaceeye.vmod.toolgun.modes.serializing.CopySerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
-import net.spaceeye.vmod.utils.copyShipWithConnections
+import net.spaceeye.vmod.utils.vs.copyShipWithConnections
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.getShipManagingPos
 

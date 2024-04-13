@@ -13,7 +13,7 @@ import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import org.valkyrienskies.mod.client.EmptyRenderer
 
 object VMEntities {
-    val ENTITIES = DeferredRegister.create(VM.MOD_ID, Registry.ENTITY_TYPE_REGISTRY)
+    val ENTITIES: DeferredRegister<EntityType<*>> = DeferredRegister.create(VM.MOD_ID, Registry.ENTITY_TYPE_REGISTRY)
 
     var PHYS_ROPE_COMPONENT = "phys_rope_component_entity" withType ::PhysRopeComponentEntity
 

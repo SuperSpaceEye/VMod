@@ -12,7 +12,7 @@ import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.MConstraint
+import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
@@ -23,6 +23,9 @@ import net.spaceeye.vmod.transformProviders.CenteredAroundRotationAssistTransfor
 import net.spaceeye.vmod.transformProviders.PlacementAssistTransformProvider
 import net.spaceeye.vmod.transformProviders.RotationAssistTransformProvider
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
+import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip

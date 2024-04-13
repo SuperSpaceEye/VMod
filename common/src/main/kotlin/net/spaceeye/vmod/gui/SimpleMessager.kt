@@ -35,7 +35,7 @@ import net.spaceeye.vmod.translate.FUNCTION
 import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.posShipToWorld
+import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.lwjgl.glfw.GLFW
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color

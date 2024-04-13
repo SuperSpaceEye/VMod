@@ -112,7 +112,7 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
         dataUpdateRequestConnection().sendToServer(ClientDataUpdateRequestPacket(page, toUpdate))
     }
 
-    class ServerDataResponseConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerDataRequestResponsePacket>(id, "server_data_request_response_packet") {
+    class ServerDataResponseConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerDataRequestResponsePacket>("server_data_request_response_packet", id) {
         override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
             val packet = ServerDataRequestResponsePacket(buf)
             if (!packet.pageExists) {
@@ -126,7 +126,7 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
         }
     }
 
-    class ServerDataUpdateRequestResponseConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerDataUpdateRequestResponsePacket<T>>(id, "server_data_update_request_response_packet") {
+    class ServerDataUpdateRequestResponseConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerDataUpdateRequestResponsePacket<T>>("server_data_update_request_response_packet", id) {
         override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
             val packet = ServerDataUpdateRequestResponsePacket<T>(buf)
             if (!packet.pageExists) {
@@ -152,7 +152,7 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
         }
     }
 
-    class ServerChecksumsUpdatedConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerChecksumsUpdatedPacket>(id, "server_checksums_updated_packet") {
+    class ServerChecksumsUpdatedConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerChecksumsUpdatedPacket>("server_checksums_updated_packet", id) {
         override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
             val packet = ServerChecksumsUpdatedPacket(buf)
             val pageNum = packet.page

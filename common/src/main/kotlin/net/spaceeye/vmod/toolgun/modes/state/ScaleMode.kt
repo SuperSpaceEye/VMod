@@ -13,7 +13,7 @@ import net.spaceeye.vmod.toolgun.modes.serializing.ScaleSerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.teleportShipWithConnected
+import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
 import org.joml.Quaterniond
 import org.valkyrienskies.mod.common.getShipManagingPos
 

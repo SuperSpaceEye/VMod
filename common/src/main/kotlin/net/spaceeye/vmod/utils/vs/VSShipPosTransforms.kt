@@ -1,5 +1,6 @@
-package net.spaceeye.vmod.utils
+package net.spaceeye.vmod.utils.vs
 
+import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipTransform

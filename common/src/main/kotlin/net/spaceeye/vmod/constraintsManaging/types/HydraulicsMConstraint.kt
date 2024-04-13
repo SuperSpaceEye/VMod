@@ -4,17 +4,18 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
-import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
-import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
-import net.spaceeye.vmod.constraintsManaging.commonCopy
+import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.network.Activate
 import net.spaceeye.vmod.network.Deactivate
 import net.spaceeye.vmod.network.MessagingNetwork
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
+import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -25,7 +26,7 @@ import org.valkyrienskies.physics_api.ConstraintId
 import kotlin.math.max
 import kotlin.math.min
 
-class HydraulicsMConstraint(): MConstraint, Tickable {
+class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
     lateinit var rconstraint1: VSTorqueConstraint
@@ -46,9 +47,9 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
     var channel: String = ""
 
-    var renderer: BaseRenderer? = null
+    override var renderer: BaseRenderer? = null
 
-    override lateinit var mID: ManagedConstraintId
+    override var mID: ManagedConstraintId = -1
     override val typeName: String get() = "HydraulicsMConstraint"
     override var saveCounter: Int = -1
 
@@ -93,7 +94,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
 
-        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id)
+        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID)
     }
 
     //TODO copying breaks extending/retracting and doesn't work with scaling
@@ -240,7 +241,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
         tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint1) ?: return null)
 
-        tag.putInt("managedID", mID.id)
+        tag.putInt("managedID", mID)
 
         tag.putDouble("addDist", addDist)
         tag.putDouble("minDistance", minLength)
@@ -253,11 +254,13 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
         tag.putDouble("scale", scale)
 
+        serializeRenderer(tag)
+
         return tag
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        mID = ManagedConstraintId(tag.getInt("managedID"))
+        mID = tag.getInt("managedID")
 
         addDist = tag.getDouble("addDist")
         minLength = tag.getDouble("minDistance")
@@ -273,7 +276,9 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             else -> null
         }
 
-        scale = if (tag.contains("scale")) tag.getDouble("scale") else 1.0
+        scale = tag.getDouble("scale")
+
+        deserializeRenderer(tag)
 
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
@@ -369,14 +374,14 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             }
         }
 
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id) }
+        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
         return true
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
         wasDeleted = true
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID.id)
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
     }
 }

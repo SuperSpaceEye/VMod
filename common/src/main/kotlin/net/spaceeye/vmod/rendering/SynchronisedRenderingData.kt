@@ -1,110 +1,39 @@
 package net.spaceeye.vmod.rendering
 
-import com.google.common.base.Supplier
-import io.netty.buffer.Unpooled
-import net.minecraft.nbt.CompoundTag
+import dev.architectury.event.events.common.PlayerEvent
+import dev.architectury.networking.NetworkManager
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.DLOG
-import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
 import net.spaceeye.vmod.events.AVSEvents
-import net.spaceeye.vmod.networking.dataSynchronization.ClientSynchronisedData
+import net.spaceeye.vmod.networking.S2CConnection
+import net.spaceeye.vmod.networking.dataSynchronization.*
 import net.spaceeye.vmod.utils.*
-import net.spaceeye.vmod.networking.dataSynchronization.ServerChecksumsUpdatedPacket
-import net.spaceeye.vmod.networking.dataSynchronization.ServerSynchronisedData
-import net.spaceeye.vmod.rendering.ReservedRenderingPages.reservedPagesList
 import net.spaceeye.vmod.rendering.types.*
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.security.MessageDigest
 import java.util.ConcurrentModificationException
 
-object RenderingTypes {
-    private val strToIdx = mutableMapOf<String, Int>()
-    private val suppliers = mutableListOf<Supplier<BaseRenderer>>()
-
+object RenderingTypes: Registry<BaseRenderer>() {
     init {
-        register { RopeRenderer() }
-        register { A2BRenderer() }
-        register { TimedA2BRenderer() }
-        register { EA2BRenderer() }
+        register(::RopeRenderer)
+        register(::A2BRenderer)
+        register(::TimedA2BRenderer)
+        register(::EA2BRenderer)
     }
-
-    private fun register(supplier: Supplier<BaseRenderer>) {
-        suppliers.add(supplier)
-        strToIdx[supplier.get().getTypeName()] = suppliers.size - 1
-    }
-
-    fun typeToIdx(type: String) = strToIdx[type]
-    fun idxToSupplier(idx: Int) = suppliers[idx]
 }
 
-class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<BaseRenderer>): ClientSynchronisedData<BaseRenderer>("rendering_data", getServerInstance)
+class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<BaseRenderer>): ClientSynchronisedData<BaseRenderer>("rendering_data", getServerInstance) {
+    val setSchema = "rendering_data" idWithConn ::ServerSetRenderingSchemaConnection
+
+    class ServerSetRenderingSchemaConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerSetRenderingSchemaPacket>("server_set_rendering_schema", id) {
+        override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+            val packet = ServerSetRenderingSchemaPacket(buf)
+            RenderingTypes.setSchema(packet.schema.map { Pair(it.value, it.key) }.toMap())
+        }
+    }
+}
 class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronisedData<BaseRenderer>): ServerSynchronisedData<BaseRenderer>("rendering_data", getClientInstance) {
-    //TODO switch from nbt to just directly writing to byte buffer?
-    fun nbtSave(tag: CompoundTag): CompoundTag {
-        val save = CompoundTag()
-
-        DLOG("SAVING RENDERING DATA")
-        val point = getNow_ms()
-
-        for ((pageId, items) in data) {
-            if (reservedPagesList.contains(pageId)) { continue }
-            if (!ConstraintManager.allShips!!.contains(pageId)) { continue }
-
-            val shipIdTag = CompoundTag()
-            for ((id, item) in items) {
-                val dataItemTag = CompoundTag()
-
-                val typeIdx = RenderingTypes.typeToIdx(item.getTypeName())
-                if (typeIdx == null) {
-                    WLOG("RENDERING ITEM WITH TYPE ${item.getTypeName()} RETURNED NULL TYPE INDEX DURING SAVING")
-                    continue
-                }
-
-                dataItemTag.putInt("typeIdx", typeIdx)
-                dataItemTag.putByteArray("data", item.serialize().accessByteBufWithCorrectSize())
-
-                shipIdTag.put(id.toString(), dataItemTag)
-            }
-            save.put(pageId.toString(), shipIdTag)
-        }
-
-        DLOG("FINISHING SAVING RENDERING DATA IN ${getNow_ms() - point} ms")
-
-        tag.put("server_synchronised_data_${id}", save)
-        return tag
-    }
-
-    fun nbtLoad(tag: CompoundTag) {
-        if (!tag.contains("server_synchronised_data_${id}")) {return}
-        val save = tag.get("server_synchronised_data_${id}") as CompoundTag
-
-        DLOG("LOADING RENDERING DATA")
-        val point = getNow_ms()
-
-        for (shipId in save.allKeys) {
-            val shipIdTag = save.get(shipId) as CompoundTag
-            val page = data.getOrPut(shipId.toLong()) { mutableMapOf() }
-            for (id in shipIdTag.allKeys) {
-                val dataItemTag = shipIdTag[id] as CompoundTag
-
-                val typeIdx = dataItemTag.getInt("typeIdx")
-                val item = RenderingTypes.idxToSupplier(typeIdx).get()
-                try {
-                    item.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(dataItemTag.getByteArray("data"))))
-                } catch (e: Exception) {
-                    WLOG("FAILED TO DESERIALIZE RENDER COMMAND OF SHIP ${page} WITH IDX ${typeIdx} AND TYPE ${item.getTypeName()}")
-                    continue
-                }
-
-                page[id.toInt()] = item
-                idToPage[id.toInt()] = shipId.toLong()
-            }
-        }
-        DLOG("FINISHING LOADING RENDERING DATA in ${getNow_ms() - point} ms")
-    }
-
     var idToPage = mutableMapOf<Int, Long>()
 
     //TODO think of a better way to expose this
@@ -184,7 +113,7 @@ object SynchronisedRenderingData {
     lateinit var serverSynchronisedData: ServerSynchronisedRenderingData
 
     //MD2, MD5, SHA-1, SHA-256, SHA-384, SHA-512
-    val hasher = MessageDigest.getInstance("MD5")
+    val hasher: MessageDigest = MessageDigest.getInstance("MD5")
 
     init {
         clientSynchronisedData = ClientSynchronisedRenderingData { serverSynchronisedData }
@@ -205,6 +134,10 @@ object SynchronisedRenderingData {
         VSEvents.shipLoadEvent.on {
             (shipData), handler ->
             serverSynchronisedData.data.getOrPut(shipData.id) { mutableMapOf() }
+        }
+
+        PlayerEvent.PLAYER_JOIN.register {
+            clientSynchronisedData.setSchema.sendToClient(it, ServerSetRenderingSchemaPacket(RenderingTypes.getSchema()))
         }
     }
 }

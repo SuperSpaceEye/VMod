@@ -15,7 +15,7 @@ import net.spaceeye.vmod.entities.ServerEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.posShipToWorldRender
+import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -44,7 +44,7 @@ open class EA2BRenderer(): BaseRenderer {
         this.uuid = entity.uuid
     }
 
-    override fun getTypeName() = "EA2BRenderer"
+    override val typeName = "EA2BRenderer"
 
     override fun renderData(poseStack: PoseStack, camera: Camera) {
         val entity = entity ?: return

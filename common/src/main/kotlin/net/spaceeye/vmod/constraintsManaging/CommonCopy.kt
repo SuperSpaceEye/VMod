@@ -2,11 +2,10 @@ package net.spaceeye.vmod.constraintsManaging
 
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.types.MConstraint
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.RopeRenderer
-import net.spaceeye.vmod.utils.DummyServerShip
+import net.spaceeye.vmod.utils.vs.DummyServerShip
 import net.spaceeye.vmod.transformProviders.FixedPositionTransformProvider
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.ServerShip

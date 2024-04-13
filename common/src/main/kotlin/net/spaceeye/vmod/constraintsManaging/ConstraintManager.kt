@@ -9,10 +9,6 @@ import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.WLOG
-import net.spaceeye.vmod.constraintsManaging.types.MConstraint
-import net.spaceeye.vmod.constraintsManaging.types.MConstraintTypes
-import net.spaceeye.vmod.constraintsManaging.types.Tickable
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.utils.PosMap
 import net.spaceeye.vmod.utils.ServerClosable
@@ -48,6 +44,15 @@ class ConstraintManager: SavedData() {
     private val posToMId = PosMap<ManagedConstraintId>()
 
     private var saveCounter = 0
+
+    private fun saveSchema(tag: CompoundTag): CompoundTag {
+        val schemaTag = CompoundTag()
+
+        MConstraintTypes.getSchema().forEach { (type, idx) -> schemaTag.putInt(type, idx) }
+
+        tag.put("schema", schemaTag)
+        return tag
+    }
 
     private fun saveActiveConstraints(tag: CompoundTag): CompoundTag {
         val shipsTag = CompoundTag()
@@ -110,7 +115,7 @@ class ConstraintManager: SavedData() {
         val idsTag = CompoundTag()
         for ((dimensionId, shipId) in ids) { idsTag.putLong(dimensionId, shipId) }
 
-        (tag[SAVE_TAG_NAME_STRING] as CompoundTag).put("lastDimensionIds", idsTag)
+        tag.put("lastDimensionIds", idsTag)
 
         return tag
     }
@@ -118,13 +123,25 @@ class ConstraintManager: SavedData() {
     override fun save(tag: CompoundTag): CompoundTag {
         saveCounter++
 
-        var tag = saveActiveConstraints(tag)
-        tag = saveNotLoadedConstraints(tag)
+        var tag = saveSchema(tag)
         tag = saveDimensionIds(tag)
-        tag = SynchronisedRenderingData.serverSynchronisedData.nbtSave(tag)
+        tag = saveActiveConstraints(tag)
+        tag = saveNotLoadedConstraints(tag)
 
         instance = null
         return tag
+    }
+
+    private fun loadSchema(tag: CompoundTag): Map<Int, String> {
+        if (!tag.contains("schema")) { ELOG("TYPE SCHEMA NOT FOUND.") ; return MConstraintTypes.getSchema().map { Pair(it.value, it.key) }.toMap() }
+        val ret = mutableMapOf<Int, String>()
+
+        val schemaTag = tag.getCompound("schema")
+        for (key in schemaTag.allKeys) {
+            ret[schemaTag.getInt(key)] = key
+        }
+
+        return ret
     }
 
     //It's loading them the other way around because it needs to get dimensionId from saved shipId
@@ -138,13 +155,14 @@ class ConstraintManager: SavedData() {
         val dtag = tag["lastDimensionIds"] as CompoundTag
         for (dimensionId in dtag.allKeys) { ret[dtag.getLong(dimensionId)] = dimensionId }
 
-        tag.remove("lastDimensionIds")
-
         return ret
     }
 
-    private fun loadDataFromTag(shipsTag: CompoundTag) {
-        val lastDimensionIds = loadDimensionIds(shipsTag)
+    private fun loadDataFromTag(tag: CompoundTag) {
+        val schema = loadSchema(tag)
+        val lastDimensionIds = loadDimensionIds(tag)
+
+        val shipsTag = tag[SAVE_TAG_NAME_STRING]!! as CompoundTag
 
         var count = 0
         var maxId = -1
@@ -158,13 +176,13 @@ class ConstraintManager: SavedData() {
                 try {
                 ctag as CompoundTag
                 type = ctag.getInt("MCONSTRAINT_TYPE")
-                strType = MConstraintTypes.idxToType(type)!!
+                strType = schema[type]!!
                 val mConstraint = MConstraintTypes
-                    .idxToSupplier(ctag.getInt("MCONSTRAINT_TYPE"))
+                    .idxToSupplier(ctag.getInt("MCONSTRAINT_TYPE"), schema)!!
                     .get()
-                    .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("FAILED TO DESEREALIZE CONSTRAINT OF TYPE ${MConstraintTypes.idxToSupplier(type).get().typeName}"); null } ?: continue
+                    .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("FAILED TO DESEREALIZE CONSTRAINT OF TYPE ${MConstraintTypes.idxToSupplier(type, schema)!!.get().typeName}"); null } ?: continue
 
-                maxId = max(maxId, mConstraint.mID.id)
+                maxId = max(maxId, mConstraint.mID)
 
                 constraints.add(mConstraint)
                 count++
@@ -265,7 +283,7 @@ class ConstraintManager: SavedData() {
     fun makeConstraintWithId(level: ServerLevel, mCon: MConstraint, id: Int): ManagedConstraintId? {
         if (id == -1) { ELOG("CREATING A CONSTRAINT WITH NO SPECIFIED ID WHEN A SPECIFIC ID IS EXPECTED AT ${constraintIdCounter.peekID()}"); return makeConstraint(level, mCon) }
 
-        mCon.mID = ManagedConstraintId(id)
+        mCon.mID = id
         if (!tryMakeConstraint(mCon, level)) {return null}
 
         mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
@@ -377,9 +395,8 @@ class ConstraintManager: SavedData() {
         fun load(tag: CompoundTag): ConstraintManager {
             val data = create()
 
-            SynchronisedRenderingData.serverSynchronisedData.nbtLoad(tag)
             if (tag.contains(SAVE_TAG_NAME_STRING) && tag[SAVE_TAG_NAME_STRING] is CompoundTag) {
-                data.load(tag[SAVE_TAG_NAME_STRING]!! as CompoundTag)
+                data.load(tag)
             }
 
             return data

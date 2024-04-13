@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.utils
+package net.spaceeye.vmod.utils.vs
 
 import org.joml.Vector3dc
 import org.joml.primitives.AABBdc

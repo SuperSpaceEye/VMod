@@ -5,13 +5,12 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.posShipToWorld
+import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
-import kotlin.reflect.KMutableProperty0
 
 enum class PositionModes {
     NORMAL,

@@ -21,6 +21,10 @@ import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
+import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.utils.vs.posWorldToShip
+import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
+import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShip
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBdc
 import org.valkyrienskies.core.api.ships.ClientShip

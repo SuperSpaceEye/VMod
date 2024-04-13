@@ -1,9 +1,9 @@
-package net.spaceeye.vmod.utils
+package net.spaceeye.vmod.utils.vs
 
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
 import net.spaceeye.vmod.constraintsManaging.getManagedConstraint
+import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -55,5 +55,5 @@ fun teleportShipWithConnected(
         )
     )
 
-    traversed.traversedMConstraintIds.forEach { level.getManagedConstraint(ManagedConstraintId(it))?.onScale(level, scale) }
+    traversed.traversedMConstraintIds.forEach { level.getManagedConstraint(it)?.onScale(level, scale) }
 }

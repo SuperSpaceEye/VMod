@@ -18,6 +18,7 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
         buf.writeDouble(extensionDistance)
         buf.writeDouble(extensionSpeed)
         buf.writeUtf(channel)
+        buf.writeEnum(messageModes)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -35,6 +36,7 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
         extensionDistance = buf.readDouble()
         extensionSpeed = buf.readDouble()
         channel = buf.readUtf()
+        messageModes = buf.readEnum(messageModes.javaClass)
 
         primaryFirstRaycast = buf.readBoolean()
 

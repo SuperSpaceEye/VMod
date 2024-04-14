@@ -32,6 +32,12 @@
   "vmod.gui.setting.centered_on_side": "Centered On Side",
   "vmod.gui.setting.centered_in_block": "Centered In Block",
 
+  "vmod.gui.setting.input_modes": "Input Modes",
+  "vmod.gui.setting.toggle": "Toggle",
+  "vmod.gui.setting.signal": "Signal",
+
+  "vmod.gui.setting.messager_mode": "Messager Mode",
+
   "vmod.gui.setting.strip_modes": "Strip Modes",
   "vmod.gui.setting.strip_all": "Strip All",
   "vmod.gui.setting.strip_in_radius": "Strip In Radius",

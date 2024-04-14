@@ -5,11 +5,9 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.network.*
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.network.Activate
-import net.spaceeye.vmod.network.Deactivate
-import net.spaceeye.vmod.network.MessagingNetwork
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
@@ -23,8 +21,10 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sign
 
 class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
     lateinit var aconstraint1: VSAttachmentConstraint
@@ -46,6 +46,8 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
     var scale = 1.0
 
     var channel: String = ""
+
+    var mode = MessageModes.Toggle
 
     override var renderer: BaseRenderer? = null
 
@@ -133,7 +135,7 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
             val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
 
             //TODO this won't work correctly when constraint is extended
-            val con = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed * 20, channel, newAttachmentPoints, newRenderer)
+            val con = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed * 20, channel, mode, newAttachmentPoints, newRenderer)
 //            con.scale = scale
 //            con.addDist = addDist
 //            con.minLength = minLength
@@ -184,6 +186,8 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
 
         channel: String,
 
+        messageModes: MessageModes,
+
         attachmentPoints: List<BlockPos>,
 
         renderer: BaseRenderer?,
@@ -228,6 +232,7 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         this.extensionSpeed = extensionSpeed / 20.0
 
         this.channel = channel
+        this.mode = messageModes
 
         this.scale = scale
 
@@ -253,6 +258,7 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         tag.putString("channel", channel)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
         tag.putDouble("scale", scale)
+        tag.putInt("mode", mode.ordinal)
 
         serializeRenderer(tag)
 
@@ -277,6 +283,7 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         }
 
         scale = tag.getDouble("scale")
+        mode = MessageModes.values()[tag.getInt("mode")]
 
         deserializeRenderer(tag)
 
@@ -308,6 +315,48 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         extendedDist = max(extendedDist - extensionSpeed, 0.0)
         if (extendedDist <= 0) {return false}
         return true
+    }
+
+    private fun signalFn(): Boolean {
+        if (numMessages != 0) {
+            targetPercentage = totalPercentage / numMessages
+            numMessages = 0
+            totalPercentage = 0.0
+        }
+
+        val currentPercentage = extendedDist / maxLength
+        if (abs(currentPercentage - targetPercentage) < 1e-6) { return false }
+        val left = targetPercentage - currentPercentage
+        val percentageStep = extensionSpeed / maxLength
+        extendedDist += min(percentageStep, abs(left)) * maxLength * left.sign
+        return true
+    }
+
+    private fun toggleTick(msg: Message) {
+        when (msg) {
+            is Activate   -> { if(fnToUse == null) {activationCounter = 0}; activationCounter++ }
+            is Deactivate -> { if(fnToUse == null) {activationCounter = 0}; activationCounter-- }
+            else -> return
+        }
+
+        when {
+            activationCounter > 0 -> { fnToUse = ::activatingFn }
+            activationCounter < 0 -> { fnToUse = ::deactivatingFn }
+        }
+    }
+
+    var targetPercentage = 0.0
+
+    var totalPercentage = 0.0
+    var numMessages = 0
+
+    private fun signalTick(msg: Message) {
+        if (msg !is Signal) { return }
+
+        totalPercentage = min(max(msg.percentage, 0.0), 1.0)
+        numMessages++
+
+        fnToUse = ::signalFn
     }
 
     override fun tick(server: MinecraftServer, unregister: () -> Unit) {
@@ -363,14 +412,9 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
             msg, unregister ->
             if (wasDeleted) {unregister(); return@register}
 
-            when (msg) {
-                is Activate   -> { if(fnToUse == null) {activationCounter = 0}; activationCounter++ }
-                is Deactivate -> { if(fnToUse == null) {activationCounter = 0}; activationCounter-- }
-            }
-
-            when {
-                activationCounter > 0 -> { fnToUse = ::activatingFn }
-                activationCounter < 0 -> { fnToUse = ::deactivatingFn }
+            when (mode) {
+                MessageModes.Toggle -> toggleTick(msg)
+                MessageModes.Signal -> signalTick(msg)
             }
         }
 

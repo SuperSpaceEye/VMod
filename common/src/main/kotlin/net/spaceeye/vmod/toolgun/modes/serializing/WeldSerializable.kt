@@ -15,6 +15,7 @@ interface WeldSerializable: MSerializable, PlacementAssistSerialize {
         buf.writeDouble(maxForce)
         buf.writeEnum(posMode)
         buf.writeDouble(width)
+        buf.writeDouble(fixedDistance)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -29,6 +30,7 @@ interface WeldSerializable: MSerializable, PlacementAssistSerialize {
         maxForce = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
+        fixedDistance = buf.readDouble()
 
         primaryFirstRaycast = buf.readBoolean()
 

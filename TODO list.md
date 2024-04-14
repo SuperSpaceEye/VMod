@@ -1,6 +1,3 @@
-## Constraints
-* Remove backward-compatibility code when constraints are in a more finished state
-
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
 * Add clientside validation 

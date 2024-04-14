@@ -35,6 +35,12 @@ interface HydraulicsGUIBuilder: GUIBuilder {
         makeTextEntry(CHANNEL.get(), ::channel, offset, offset, parentWindow, limits.channelLength)
 
         makeDropDown(
+            HYDRAULICS_INPUT_MODES.get(), parentWindow, offset, offset, listOf(
+            DItem(TOGGLE.get(), messageModes == net.spaceeye.vmod.network.MessageModes.Toggle) { messageModes = net.spaceeye.vmod.network.MessageModes.Toggle },
+            DItem(SIGNAL.get(), messageModes == net.spaceeye.vmod.network.MessageModes.Signal) { messageModes = net.spaceeye.vmod.network.MessageModes.Signal }
+        ))
+
+        makeDropDown(
             HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },

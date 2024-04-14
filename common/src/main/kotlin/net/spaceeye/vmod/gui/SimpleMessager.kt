@@ -21,18 +21,12 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.blockentities.SimpleMessagerBlockEntity
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.network.Activate
-import net.spaceeye.vmod.network.Deactivate
+import net.spaceeye.vmod.network.*
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.translate.ACTIVATE
-import net.spaceeye.vmod.translate.APPLY_CHANGES
-import net.spaceeye.vmod.translate.CHANNEL
-import net.spaceeye.vmod.translate.DEACTIVATE
-import net.spaceeye.vmod.translate.FUNCTION
-import net.spaceeye.vmod.translate.get
+import net.spaceeye.vmod.translate.*
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorld
@@ -64,14 +58,14 @@ object SimpleMessagerNetworking {
     class S2CRequestStateResponse(): Serializable {
         constructor(buf: FriendlyByteBuf): this() { deserialize(buf) }
         constructor(succeeded: Boolean): this() {this.succeeded = succeeded}
-        constructor(succeeded: Boolean, activationState: Boolean, channel: String): this() {
+        constructor(succeeded: Boolean, msg: Message, channel: String): this() {
             this.succeeded = succeeded
-            this.activationState = activationState
+            this.msg = msg
             this.channel = channel
         }
 
         var succeeded: Boolean = false
-        var activationState: Boolean = false
+        lateinit var msg: Message
         var channel: String = ""
 
         override fun serialize(): FriendlyByteBuf {
@@ -80,7 +74,7 @@ object SimpleMessagerNetworking {
             buf.writeBoolean(succeeded)
             if (!succeeded) { return buf }
 
-            buf.writeBoolean(activationState)
+            buf.writeNbt(MessageTypes.serialize(msg))
             buf.writeUtf(channel)
 
             return buf
@@ -89,27 +83,28 @@ object SimpleMessagerNetworking {
         override fun deserialize(buf: FriendlyByteBuf) {
             succeeded = buf.readBoolean()
             if (!succeeded) {return}
-            activationState = buf.readBoolean()
+
+            msg = MessageTypes.deserialize(buf.readNbt()!!)
             channel = buf.readUtf()
         }
     }
 
     class C2SSendStateUpdate(): Serializable {
         constructor(buf: FriendlyByteBuf): this() { deserialize(buf) }
-        constructor(activationState: Boolean, channel: String, pos: BlockPos): this() {
-            this.activationState = activationState
+        constructor(msg: Message, channel: String, pos: BlockPos): this() {
+            this.msg = msg
             this.channel = channel
             this.pos = pos
         }
 
-        var activationState: Boolean = false
+        lateinit var msg: Message
         var channel: String = ""
         lateinit var pos: BlockPos
 
         override fun serialize(): FriendlyByteBuf {
             val buf = getBuffer()
 
-            buf.writeBoolean(activationState)
+            buf.writeNbt(MessageTypes.serialize(msg))
             buf.writeBlockPos(pos)
             buf.writeUtf(channel)
 
@@ -117,7 +112,7 @@ object SimpleMessagerNetworking {
         }
 
         override fun deserialize(buf: FriendlyByteBuf) {
-            activationState = buf.readBoolean()
+            msg = MessageTypes.deserialize(buf.readNbt()!!)
             pos = buf.readBlockPos()
             channel = buf.readUtf()
         }
@@ -172,7 +167,7 @@ object SimpleMessagerNetworking {
                         s2cRequestStateResponse.sendToClient(player, S2CRequestStateResponse(false))
                         return@add
                     }
-                    s2cRequestStateResponse.sendToClient(player, S2CRequestStateResponse(true, be.msg is Activate, be.channel))
+                    s2cRequestStateResponse.sendToClient(player, S2CRequestStateResponse(true, be.msg, be.channel))
                 }
             }
         }
@@ -187,7 +182,7 @@ object SimpleMessagerNetworking {
                     return
                 }
 
-                SimpleMessagerGUI.update(res.activationState, res.channel)
+                SimpleMessagerGUI.update(res.msg, res.channel)
                 SimpleMessagerGUI.open()
             }
         }
@@ -221,10 +216,7 @@ object SimpleMessagerNetworking {
                         return@add
                     }
 
-                    be.msg = when (req.activationState) {
-                        true -> Activate()
-                        false -> Deactivate()
-                    }
+                    be.msg = req.msg
                     be.channel = ServerLimits.instance.channelLength.get(req.channel)
 
                     s2cStateUpdatedResponse.sendToClient(player, S2CStateUpdatedResponse(true))
@@ -295,7 +287,7 @@ object SimpleMessagerGUI: ClientClosable() {
         open = true
     }
 
-    fun update(activationState: Boolean, channel: String) = gui!!.updateState(activationState, channel)
+    fun update(msg: Message, channel: String) = gui!!.updateState(msg, channel)
     fun updateSuccess() {gui!!.updateSuccess()}
     fun updateNoSuccess() {gui!!.updateNoSuccess()}
 
@@ -325,7 +317,8 @@ object SimpleMessagerGUI: ClientClosable() {
 
 class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): WindowScreen(ElementaVersion.V5) {
     var channel = ""
-    var activationState = false
+
+    var msg: Message? = null
 
     val mainWindow = UIBlock(Color(240, 240, 240)).constrain {
         x = CenterConstraint()
@@ -344,9 +337,10 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
     } childOf mainWindow
 
     var applyBtn = Button(Color(120, 120, 120), APPLY_CHANGES.get()) {
+        if (msg == null) {return@Button}
         SimpleMessagerNetworking.c2sSendStateUpdate.sendToServer(
             SimpleMessagerNetworking.C2SSendStateUpdate(
-            activationState, channel, pos
+            msg!!, channel, pos
         ))
     }.constrain {
         width = 98.percent()
@@ -356,31 +350,66 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
         y = 2.pixels()
     } childOf itemsHolder
 
+    var modeDropDown: DropDown
+
     var entry: TextEntry
-    var dmenu: DropDown
+    var dmenu: DropDown? = null
 
     init {
         entry = makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, itemsHolder, ServerLimits.instance.channelLength)
-        dmenu = makeDropDown(FUNCTION.get(), itemsHolder, 2f, 2f, listOf(
-            DItem(ACTIVATE.get(),    this.activationState) { this.activationState = true  },
-            DItem(DEACTIVATE.get(), !this.activationState) { this.activationState = false }
+        modeDropDown = makeDropDown(MESSAGER_MODE.get(), itemsHolder, 2f, 2f, listOf(
+            DItem(TOGGLE.get(), msg is Activate || msg is Deactivate) {
+                dmenu!!.unhide(true)
+            },
+            DItem(SIGNAL.get(), msg is Signal) {
+                dmenu!!.hide(true)
+                msg = Signal()
+            }
         ))
+
+        dmenu = makeDropDown(FUNCTION.get(), itemsHolder, 2f, 2f, listOf(
+            DItem(ACTIVATE.get(),    msg is Activate)   { msg = Activate() },
+            DItem(DEACTIVATE.get(),  msg is Deactivate) { msg = Deactivate() }
+        ))
+
+        when (msg) {
+            is Activate   -> dmenu!!.unhide(true)
+            is Deactivate -> dmenu!!.unhide(true)
+            is Signal     -> dmenu!!.hide(true)
+        }
     }
 
-    fun updateState(activationState: Boolean, channel: String) {
-        this.activationState = activationState
+    fun updateState(msg: Message, channel: String) {
+        this.msg = msg
         this.channel = channel
     }
 
     fun updateGui() {
         itemsHolder.removeChild(entry)
-        itemsHolder.removeChild(dmenu)
+        itemsHolder.removeChild(modeDropDown)
+        itemsHolder.removeChild(dmenu!!)
 
         entry = makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, itemsHolder, ServerLimits.instance.channelLength)
-        dmenu = makeDropDown(FUNCTION.get(), itemsHolder, 2f, 2f, listOf(
-            DItem(ACTIVATE.get(),    this.activationState) { this.activationState = true  },
-            DItem(DEACTIVATE.get(), !this.activationState) { this.activationState = false }
+        modeDropDown = makeDropDown(MESSAGER_MODE.get(), itemsHolder, 2f, 2f, listOf(
+            DItem(TOGGLE.get(), msg is Activate || msg is Deactivate) {
+                dmenu!!.unhide(true)
+            },
+            DItem(SIGNAL.get(), msg is Signal) {
+                dmenu!!.hide(true)
+                msg = Signal()
+            }
         ))
+
+        dmenu = makeDropDown(FUNCTION.get(), itemsHolder, 2f, 2f, listOf(
+            DItem(ACTIVATE.get(),    msg is Activate)   { msg = Activate() },
+            DItem(DEACTIVATE.get(),  msg is Deactivate) { msg = Deactivate() }
+        ))
+
+        when (msg) {
+            is Activate   -> dmenu!!.unhide(true)
+            is Deactivate -> dmenu!!.unhide(true)
+            is Signal     -> dmenu!!.hide(true)
+        }
     }
 
     fun updateSuccess() {

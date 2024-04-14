@@ -36,6 +36,8 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
 
     var channel: String = "hydraulics"
 
+    var messageModes = net.spaceeye.vmod.network.MessageModes.Toggle
+
     var primaryFirstRaycast = false
 
     override var posMode = PositionModes.NORMAL
@@ -56,7 +58,7 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
                         spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
                         compliance, maxForce,
                         minLength, minLength + extensionDistance,
-                        extensionSpeed, channel,
+                        extensionSpeed, channel, messageModes,
                         listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                         A2BRenderer(
                                 ship1 != null,
@@ -89,7 +91,7 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
             compliance, maxForce,
             minLength, minLength + extensionDistance,
             extensionSpeed,
-            channel,
+            channel, messageModes,
             listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,

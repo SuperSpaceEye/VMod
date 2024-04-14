@@ -44,6 +44,12 @@ val NORMAL = s("normal")
 val CENTERED_ON_SIDE = s("centered_on_side")
 val CENTERED_IN_BLOCK = s("centered_in_block")
 
+val HYDRAULICS_INPUT_MODES = s("input_modes")
+val TOGGLE = s("toggle")
+val SIGNAL = s("signal")
+
+val MESSAGER_MODE = s("messager_mode")
+
 val STRIP_MODES = s("strip_modes")
 val STRIP_ALL = s("strip_all")
 val STRIP_IN_RADIUS = s("strip_in_radius")

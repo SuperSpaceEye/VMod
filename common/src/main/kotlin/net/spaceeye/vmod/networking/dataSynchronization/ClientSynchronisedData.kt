@@ -20,7 +20,6 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
     val serverChecksums = ConcurrentHashMap<Long, ConcurrentHashMap<Int, ByteArray>>()
     val clientChecksums = ConcurrentHashMap<Long, ConcurrentHashMap<Int, ByteArray>>()
 
-    //TODO return to this and see if it's the best solution to concurrent modification problem
     var cachedDataToMerge = ConcurrentHashMap<Long, ConcurrentHashMap<Int, T>>()
     val pagesToRemove: MutableList<Long> = Collections.synchronizedList(mutableListOf<Long>())
     val pageIndicesToRemove = ConcurrentHashMap<Long, ConcurrentSkipListSet<Int>>()

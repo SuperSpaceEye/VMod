@@ -397,7 +397,6 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         cIDs[1] = shipObjectWorld.createNewConstraint(aconstraint2) ?: return
     }
 
-    // TODO sometimes VS2 can't create new constraints. Do something about it in the future
     private fun <T> clean(level: ServerLevel): T? {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
         return null

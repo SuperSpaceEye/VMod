@@ -9,7 +9,6 @@ import java.awt.Color
 
 data class DItem(val name: String, val highlight: Boolean, val fnToApply: () -> Unit)
 
-// TODO refactor this
 class DropDown(
     menuName: String,
     dItems: List<DItem>,

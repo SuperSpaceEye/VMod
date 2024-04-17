@@ -3,6 +3,7 @@ package net.spaceeye.vmod.constraintsManaging.types
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.*
 import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.entities.ServerEntitiesHolder
@@ -43,6 +44,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
 
     var entitiesUUIDs = mutableListOf<UUID>()
     var entities = mutableListOf<PhysRopeComponentEntity>()
+    var cIDs = mutableListOf<Int>()
 
     constructor(
         shipId0: ShipId,
@@ -89,15 +91,50 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
 
     override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        TODO()
+        if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
+
+        val first = when (previous) {
+            attachmentPoints_[0] -> { true }
+            attachmentPoints_[1] -> { false }
+            else -> {throw AssertionError("Should be impossible")}
+        }
+
+        level.shipObjectWorld.removeConstraint(if (first) cIDs[0] else cIDs.last())
+
+        val shipIds = mutableListOf(constraint.shipId0, constraint.shipId1)
+        val localPoints = mutableListOf(
+            listOf(constraint.localPos0),
+            listOf(constraint.localPos1)
+        )
+        updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
+
+        constraint = VSRopeConstraint(shipIds[0], shipIds[1], constraint.compliance, localPoints[0][0], localPoints[1][0], constraint.maxForce, constraint.ropeLength)
+
+        val rpos = (Vector3d((if (first) 1 else -1), 0, 0) * (ropeLength / segments.toDouble() * 0.5)).toJomlVector3d()
+        cIDs[if (first) 0 else {cIDs.size - 1}] = level.shipObjectWorld.createNewConstraint(
+            VSRopeConstraint(constraint.shipId0, entities[if (first) 0 else {entities.size - 1}].physicsEntityData!!.shipId,
+                constraint.compliance,
+                constraint.localPos0, rpos,
+                constraint.maxForce, 0.0)
+        ) ?: run { level.removeManagedConstraint(mID) ; return }
     }
 
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        TODO()
+        return commonCopy(level, mapped, constraint, attachmentPoints_, null) {
+                nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, _ ->
+            val con = PhysRopeMConstraint(
+                nShip1?.id ?: constraint.shipId0, nShip2?.id ?: constraint.shipId1,
+                constraint.compliance, localPos0.toJomlVector3d(), localPos1.toJomlVector3d(),
+                constraint.maxForce, constraint.ropeLength, segments, massPerSegment, radius,
+                newAttachmentPoints)
+
+            con.ropeLength = ropeLength
+            con
+        }
     }
 
     override fun onScale(level: ServerLevel, scale: Double) {
-        TODO()
+        ELOG("NOT IMPLEMENTED FOR PHYS ROPE")
     }
 
     override fun getVSIds(): Set<VSConstraintId> {
@@ -155,12 +192,12 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         for ((i, entity) in entities.withIndex()) {
             val rpos = (dir * length).toJomlVector3d()
 
-            level.shipObjectWorld.createNewConstraint(
+            cIDs.add(level.shipObjectWorld.createNewConstraint(
                 VSRopeConstraint(prevId, entity.physicsEntityData!!.shipId,
                     constraint.compliance,
                     prevPos, rpos,
                     constraint.maxForce, 0.0)
-            )
+            ) ?: run { level.removeManagedConstraint(mID) ; return })
 
 
 //            level.shipObjectWorld.createNewConstraint(
@@ -176,12 +213,12 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
             prevPos = (-dir * length).toJomlVector3d()
         }
 
-        level.shipObjectWorld.createNewConstraint(
+        cIDs.add(level.shipObjectWorld.createNewConstraint(
             VSRopeConstraint(prevId, constraint.shipId1,
                 constraint.compliance,
                 prevPos, constraint.localPos1,
                 constraint.maxForce, 0.0)
-        )
+        ) ?: run { level.removeManagedConstraint(mID) ; return })
 //
 //        level.shipObjectWorld.createNewConstraint(
 //            VSSphericalTwistLimitsConstraint(prevId, constraint.shipId1, constraint.compliance,
@@ -204,8 +241,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
     private fun onLoadMConstraint(level: ServerLevel): Boolean {
         val createConstraints = {
             val segmentLength = ropeLength / segments.toDouble()
-
-            var length = segmentLength * 0.5
+            val length = segmentLength * 0.5
 
             createConstraints(level, length)
         }

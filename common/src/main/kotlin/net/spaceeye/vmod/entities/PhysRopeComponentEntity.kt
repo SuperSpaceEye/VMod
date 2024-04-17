@@ -39,28 +39,21 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.PI
 
-object ClientEntitiesHolder: ClientClosable() {
-    val entities = ConcurrentHashMap<UUID, Entity>()
-
+object ClientEntitiesHolder{
     val clientEntityLoadedEvent = EventEmitterImpl<ClientEntityLoadedEvent>()
 
-    data class ClientEntityLoadedEvent(val uuid: UUID, val entity: Entity) {
+    data class ClientEntityLoadedEvent(val id: Int, val entity: Entity) {
         companion object : EventEmitter<ClientEntityLoadedEvent> by clientEntityLoadedEvent
     }
 
     val clientRemovedEntity = EventEmitterImpl<ClientRemovedEntity>()
 
-    data class ClientRemovedEntity(val uuid: UUID, val entity: Entity) {
+    data class ClientRemovedEntity(val id: Int, val entity: Entity) {
         companion object : EventEmitter<ClientRemovedEntity> by clientRemovedEntity
     }
 
-    override fun close() {
-        entities.clear()
-    }
-
-    fun entityLoaded(uuid: UUID, entity: Entity) {
-        entities[uuid] = entity
-        clientEntityLoadedEvent.emit(ClientEntityLoadedEvent(uuid, entity))
+    fun entityLoaded(id: Int, entity: Entity) {
+        clientEntityLoadedEvent.emit(ClientEntityLoadedEvent(id, entity))
     }
 }
 
@@ -102,13 +95,9 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
     private var lerpPos: Vector3dc? = null
     private var lerpSteps = 0
 
-    // uuid is synced between server and client, but is not saved between world reloads, so for server stuff use
-    // creationUUID, and for server/client communications use uuid
-    var creationUUID: UUID? = null
-
     init {
         if (level.isClientSide) {
-            ClientEntitiesHolder.entityLoaded(uuid, this)
+            ClientEntitiesHolder.entityLoaded(id, this)
         }
     }
 
@@ -177,20 +166,9 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
         return ClientboundAddEntityPacket(this)
     }
 
-    override fun saveAsPassenger(compoundTag: CompoundTag): Boolean {
-        if (!level.isClientSide) compoundTag.putUUID("creationUUID", creationUUID!!)
-        return super.saveAsPassenger(compoundTag)
-    }
-
-    override fun save(compoundTag: CompoundTag): Boolean {
-        if (!level.isClientSide) compoundTag.putUUID("creationUUID", creationUUID!!)
-        return super.save(compoundTag)
-    }
-
     override fun saveWithoutId(compoundTag: CompoundTag): CompoundTag {
         val physicsEntityDataAsBytes = getMapper().writeValueAsBytes(physicsEntityData)
         compoundTag.putByteArray(PHYS_DATA_NBT_KEY, physicsEntityDataAsBytes)
-        if (!level.isClientSide) compoundTag.putUUID("creationUUID", creationUUID!!)
         return super.saveWithoutId(compoundTag)
     }
 
@@ -219,8 +197,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
         super.load(compoundTag)
 
         if (!level.isClientSide) {
-            creationUUID = compoundTag.getUUID("creationUUID")
-            ServerEntitiesHolder.entityLoaded(creationUUID!!, this)
+            ServerEntitiesHolder.entityLoaded(uuid, this)
         }
     }
 
@@ -289,7 +266,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
     }
 
     override fun onClientRemoval() {
-        ClientEntitiesHolder.clientRemovedEntity.emit(ClientEntitiesHolder.ClientRemovedEntity(uuid, this))
+        ClientEntitiesHolder.clientRemovedEntity.emit(ClientEntitiesHolder.ClientRemovedEntity(id, this))
         super.onClientRemoval()
     }
 
@@ -314,10 +291,9 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
 
             entity.setPhysicsEntityData(physEntityData)
             entity.setPos(pos.x, pos.y, pos.z)
-            entity.creationUUID = entity.uuid
             level.addFreshEntity(entity)
             if (!level.isClientSide) {
-                ServerEntitiesHolder.entityLoaded(entity.creationUUID!!, entity)
+                ServerEntitiesHolder.entityLoaded(entity.uuid, entity)
             }
             return entity
         }

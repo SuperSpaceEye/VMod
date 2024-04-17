@@ -7,13 +7,16 @@ import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.entities.ServerEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
+import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.rendering.types.EA2BRenderer
+import net.spaceeye.vmod.rendering.types.PhysRopeRenderer
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
 import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
 import net.spaceeye.vmod.utils.vs.posShipToWorld
+import org.joml.AxisAngle4d
+import org.joml.Quaterniond
 import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -33,6 +36,8 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
 
     var ropeLength = 0.0
     var segments: Int = 0
+    var massPerSegment = 0.0
+    var radius: Double = 0.0
 
     var vsId: ConstraintId = -1
 
@@ -48,12 +53,16 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         maxForce: Double,
         ropeLength: Double,
         segments: Int,
+        massPerSegment: Double,
+        radius: Double,
         attachmentPoints: List<BlockPos>,
     ): this() {
         constraint = VSRopeConstraint(shipId0, shipId1, compliance, localPos0, localPos1, maxForce, ropeLength)
         attachmentPoints_ = attachmentPoints.toMutableList()
         this.ropeLength = ropeLength
         this.segments = segments
+        this.massPerSegment = massPerSegment
+        this.radius = radius
     }
 
     override var mID: ManagedConstraintId = -1
@@ -80,37 +89,15 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
 
     override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
-        level.shipObjectWorld.removeConstraint(vsId)
-
-        val shipIds = mutableListOf(constraint.shipId0, constraint.shipId1)
-        val localPoints = mutableListOf(
-            listOf(constraint.localPos0),
-            listOf(constraint.localPos1)
-        )
-        updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
-
-        constraint = VSRopeConstraint(shipIds[0], shipIds[1], constraint.compliance, localPoints[0][0], localPoints[1][0], constraint.maxForce, constraint.ropeLength)
-
-        vsId = level.shipObjectWorld.createNewConstraint(constraint)!!
-
-        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
+        TODO()
     }
 
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        return commonCopy(level, mapped, constraint, attachmentPoints_, renderer) {
-            nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer ->
-            val con = PhysRopeMConstraint(nShip1?.id ?: constraint.shipId0, nShip2?.id ?: constraint.shipId1, constraint.compliance, localPos0.toJomlVector3d(), localPos1.toJomlVector3d(), constraint.maxForce, constraint.ropeLength, segments, newAttachmentPoints)
-            con.ropeLength = ropeLength
-            con
-        }
+        TODO()
     }
 
     override fun onScale(level: ServerLevel, scale: Double) {
-        constraint = VSRopeConstraint(constraint.shipId0, constraint.shipId1, constraint.compliance, constraint.localPos0, constraint.localPos1, constraint.maxForce, ropeLength * scale)
-
-        level.shipObjectWorld.removeConstraint(vsId)
-        vsId = level.shipObjectWorld.createNewConstraint(constraint)!!
+        TODO()
     }
 
     override fun getVSIds(): Set<VSConstraintId> {
@@ -124,6 +111,8 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
         tag.putDouble("ropeLength", ropeLength)
         tag.putInt("segments", segments)
+        tag.putDouble("massPerSegment", massPerSegment)
+        tag.putDouble("radius", radius)
 
         val uuidTag = ListTag()
 
@@ -145,8 +134,10 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
         ropeLength = tag.getDouble("ropeLength")
         segments = tag.getInt("segments")
-        entitiesUUIDs = (tag.get("uuids") as ListTag).map { (it as CompoundTag).getUUID("uuid") }.toMutableList()
+        massPerSegment = tag.getDouble("massPerSegment")
+        radius = tag.getDouble("radius")
 
+        entitiesUUIDs = (tag.get("uuids") as ListTag).map { (it as CompoundTag).getUUID("uuid") }.toMutableList()
         deserializeRenderer(tag)
 
         tryConvertDimensionId(tag, lastDimensionIds); constraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
@@ -154,43 +145,69 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         return this
     }
 
+    private fun createConstraints(level: ServerLevel, length: Double) {
+        val dir = Vector3d(1, 0, 0)
+
+        var prevId = constraint.shipId0
+        var prevPos = constraint.localPos0
+//        var prevRot = if (level.shipObjectWorld.allShips.contains(prevId)) {level.shipObjectWorld.allShips.getById(prevId)!!.transform.shipToWorldRotation} else Quaterniond()
+
+        for ((i, entity) in entities.withIndex()) {
+            val rpos = (dir * length).toJomlVector3d()
+
+            level.shipObjectWorld.createNewConstraint(
+                VSRopeConstraint(prevId, entity.physicsEntityData!!.shipId,
+                    constraint.compliance,
+                    prevPos, rpos,
+                    constraint.maxForce, 0.0)
+            )
+
+
+//            level.shipObjectWorld.createNewConstraint(
+//                VSSphericalTwistLimitsConstraint(prevId, entity.physicsEntityData!!.shipId, constraint.compliance,
+//                    prevRot, entity.physicsEntityData!!.transform.shipToWorldRotation,
+//                    1e200, Math.toRadians(-60.0) * 0, Math.toRadians(60.0) * 0)
+//            )
+//
+//            level.shipObjectWorld.disableCollisionBetweenBodies(prevId, entity.physicsEntityData!!.shipId)
+
+
+            prevId = entity.physicsEntityData!!.shipId
+            prevPos = (-dir * length).toJomlVector3d()
+        }
+
+        level.shipObjectWorld.createNewConstraint(
+            VSRopeConstraint(prevId, constraint.shipId1,
+                constraint.compliance,
+                prevPos, constraint.localPos1,
+                constraint.maxForce, 0.0)
+        )
+//
+//        level.shipObjectWorld.createNewConstraint(
+//            VSSphericalTwistLimitsConstraint(prevId, constraint.shipId1, constraint.compliance,
+//                prevRot,
+//                (if (level.shipObjectWorld.allShips.contains(constraint.shipId1)) {level.shipObjectWorld.allShips.getById(constraint.shipId1)!!.transform.shipToWorldRotation} else Quaterniond()),
+//                1e200, Math.toRadians(-60.0) * 0, Math.toRadians(60.0) * 0
+//            )
+//        )
+
+//        level.shipObjectWorld.disableCollisionBetweenBodies(prevId, constraint.shipId1)
+
+        SynchronisedRenderingData.serverSynchronisedData.addRenderer(
+            constraint.shipId0, constraint.shipId1, mID, PhysRopeRenderer(
+                constraint.shipId0, constraint.shipId1, Vector3d(constraint.localPos0), Vector3d(constraint.localPos1),
+                Color(120, 0, 120), 0.5, length * 2, entities.map { it.id }
+            )
+        )
+    }
+
     private fun onLoadMConstraint(level: ServerLevel): Boolean {
         val createConstraints = {
             val segmentLength = ropeLength / segments.toDouble()
 
-            val dir = Vector3d(1, 0, 0)
+            var length = segmentLength * 0.5
 
-            var length = segmentLength
-
-            var prevId = constraint.shipId0
-            var prevPos = constraint.localPos0
-
-            for ((i, entity) in entities.withIndex()) {
-                val data = entity.physicsEntityData!!
-
-                val rpos = data.transform.transformDirectionNoScalingFromShipToWorld((dir * length).toJomlVector3d(), org.joml.Vector3d())
-
-                level.shipObjectWorld.createNewConstraint(
-                        VSRopeConstraint(prevId, entity.physicsEntityData!!.shipId,
-                                constraint.compliance,
-                                prevPos, rpos,
-                                constraint.maxForce, 0.01)
-                )
-
-                if (i != 0) {
-                    level.shipObjectWorld.disableCollisionBetweenBodies(prevId, entity.physicsEntityData!!.shipId)
-                }
-
-                prevId = entity.physicsEntityData!!.shipId
-                prevPos = data.transform.transformDirectionNoScalingFromShipToWorld((-dir * length).toJomlVector3d(), org.joml.Vector3d())
-            }
-
-            level.shipObjectWorld.createNewConstraint(
-                    VSRopeConstraint(prevId, constraint.shipId1,
-                            constraint.compliance,
-                            prevPos, constraint.localPos1,
-                            constraint.maxForce, 0.01)
-            )
+            createConstraints(level, length)
         }
 
         synchronized(ServerEntitiesHolder.entities) {
@@ -207,7 +224,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
                 val temp = mutableListOf<PhysRopeComponentEntity>()
                 temp.addAll(entities)
                 entities.forEach {
-                    temp[entitiesUUIDs.indexOf(it.creationUUID)] = it
+                    temp[entitiesUUIDs.indexOf(it.uuid)] = it
                 }
                 entities = temp
 
@@ -230,7 +247,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
                 val temp = mutableListOf<PhysRopeComponentEntity>()
                 temp.addAll(entities)
                 entities.forEach {
-                    temp[entitiesUUIDs.indexOf(it.creationUUID)] = it
+                    temp[entitiesUUIDs.indexOf(it.uuid)] = it
                 }
                 entities = temp
 
@@ -248,9 +265,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         val rpos2 = if(!dimensionIds.contains(constraint.shipId1)) posShipToWorld(level.shipObjectWorld.allShips.getById(constraint.shipId1), Vector3d(constraint.localPos1)) else Vector3d(constraint.localPos1)
 
         val rdir = (rpos1 - rpos2).snormalize()
-        val rot = getQuatFromDir(rdir).normalize()
-
-        val dir = Vector3d(1, 0, 0)
+        val rot = Quaterniond(AxisAngle4d(0.0, rdir.x, rdir.y, rdir.z)).normalize()
 
         val xLin = linspace(rpos1.x, rpos2.x, segments + 2)
         val yLin = linspace(rpos1.y, rpos2.y, segments + 2)
@@ -258,71 +273,42 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
 
         val segmentLength = ropeLength / segments.toDouble()
 
-
-        var radius = 0.5
-        var length = segmentLength * 0.5
+        var radius = radius
+        val length = segmentLength * 0.5
         if (length < radius) { radius = length / 2}
-
-        var prevId = constraint.shipId0
-        var prevPos = constraint.localPos0
 
         for (i in 0 until segments) {
             val pos = Vector3d(xLin[i+1], yLin[i+1], zLin[i+1])
-            val entity = PhysRopeComponentEntity.createEntity(
-                    level, 1000.0, radius, length, pos.toJomlVector3d(), rot, false)
+            val entity = PhysRopeComponentEntity.createEntity(level, massPerSegment, radius, length, pos.toJomlVector3d(), rot, false)
             entities.add(entity)
-            entitiesUUIDs.add(entity.creationUUID!!)
-
-            val data = entity.physicsEntityData!!
-
-            val rpos = data.transform.transformDirectionNoScalingFromShipToWorld((dir * length).toJomlVector3d(), org.joml.Vector3d())
-
-            level.shipObjectWorld.createNewConstraint(
-                    VSRopeConstraint(prevId, entity.physicsEntityData!!.shipId,
-                            constraint.compliance,
-                            prevPos, rpos,
-                            constraint.maxForce, 0.01)
-            )
-
-            if (i != 0) {
-                level.shipObjectWorld.disableCollisionBetweenBodies(prevId, entity.physicsEntityData!!.shipId)
-            }
-
-            prevId = entity.physicsEntityData!!.shipId
-            prevPos = data.transform.transformDirectionNoScalingFromShipToWorld((-dir * length).toJomlVector3d(), org.joml.Vector3d())
-
-            SynchronisedRenderingData.serverSynchronisedData.addRenderer(
-                    constraint.shipId0, constraint.shipId1, mID + i, EA2BRenderer(
-                    entity, Color(120, 0, 120), 0.5, length * 2
-            ))
+            entitiesUUIDs.add(entity.uuid)
         }
 
-        level.shipObjectWorld.createNewConstraint(
-                VSRopeConstraint(prevId, constraint.shipId1,
-                        constraint.compliance,
-                        prevPos, constraint.localPos1,
-                        constraint.maxForce, 0.01)
-        )
-
-        ConstraintManager.getInstance().constraintIdCounter.setCounter(mID + segments)
+        createConstraints(level, length)
 
         return true
     }
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
-//        vsId = level.shipObjectWorld.createNewConstraint(constraint) ?: return false
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, mID, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
+        RandomEvents.serverOnTick.on {
+            _, handler ->
+            if (entitiesUUIDs.isNotEmpty()) {
+                onLoadMConstraint(level)
+            } else {
+                createNewMConstraint(level)
+            }
 
-        return if (entitiesUUIDs.isNotEmpty()) {
-            onLoadMConstraint(level)
-        } else {
-            createNewMConstraint(level)
+            handler.unregister()
         }
+
+        return true
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
-//        level.shipObjectWorld.removeConstraint(vsId)
-//        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
+        RandomEvents.serverOnTick.on {
+            (server), handler ->
+            entities.forEach { it.kill() }
+        }
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
     }
 }

@@ -36,6 +36,7 @@ val REMOVED = s("removed")
 val DISABLE_COLLISIONS = s("disable_collisions")
 val DISTANCE_FROM_BLOCK = s("distance_from_block")
 val RADIUS = s("radius")
+val MASS_PER_SEGMENT = s("mass_per_segment")
 
 val PLACEMENT_ASSIST_SCROLL_STEP = s("placement_assist_scroll_step")
 

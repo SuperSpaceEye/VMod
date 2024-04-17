@@ -45,11 +45,13 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
 
     override fun serverSideVerifyLimits() {
         this as HydraulicsMode
-        compliance = ServerLimits.instance.compliance.get(compliance)
-        maxForce = ServerLimits.instance.maxForce.get(maxForce)
-        extensionDistance = ServerLimits.instance.extensionDistance.get(extensionDistance)
-        extensionSpeed = ServerLimits.instance.extensionSpeed.get(extensionSpeed)
-        channel = ServerLimits.instance.channelLength.get(channel)
+        val limits = ServerLimits.instance
+
+        compliance = limits.compliance.get(compliance)
+        maxForce = limits.maxForce.get(maxForce)
+        extensionDistance = limits.extensionDistance.get(extensionDistance)
+        extensionSpeed = limits.extensionSpeed.get(extensionSpeed)
+        channel = limits.channelLength.get(channel)
         paServerSideVerifyLimits()
     }
 }

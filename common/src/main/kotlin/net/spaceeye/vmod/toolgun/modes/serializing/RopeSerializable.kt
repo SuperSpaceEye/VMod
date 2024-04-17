@@ -38,8 +38,10 @@ interface RopeSerializable: MSerializable {
 
     override fun serverSideVerifyLimits() {
         this as RopeMode
-        compliance = ServerLimits.instance.compliance.get(compliance)
-        maxForce = ServerLimits.instance.maxForce.get(maxForce)
-        fixedDistance = ServerLimits.instance.fixedDistance.get(fixedDistance)
+        val limits = ServerLimits.instance
+
+        compliance = limits.compliance.get(compliance)
+        maxForce = limits.maxForce.get(maxForce)
+        fixedDistance = limits.fixedDistance.get(fixedDistance)
     }
 }

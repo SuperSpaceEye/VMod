@@ -5,7 +5,6 @@ import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
-import net.spaceeye.vmod.limits.IntLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.PhysRopeMode
@@ -24,7 +23,9 @@ interface PhysRopeGUIBuilder: GUIBuilder {
         makeTextEntry(MAX_FORCE.get(),      ::maxForce,      offset, offset, parentWindow, limits.maxForce)
         makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow, limits.fixedDistance)
         makeTextEntry(WIDTH.get(),          ::width,         offset, offset, parentWindow, DoubleLimit(0.0, 1.0)) //TODO those
-        makeTextEntry(SEGMENTS.get(),       ::segments,      offset, offset, parentWindow, IntLimit(1, 100))
+        makeTextEntry(SEGMENTS.get(),       ::segments,      offset, offset, parentWindow, limits.physRopeSegments)
+        makeTextEntry(MASS_PER_SEGMENT.get(),::massPerSegment,offset,offset, parentWindow, limits.physRopeMassPerSegment)
+        makeTextEntry(RADIUS.get(),         ::radius,        offset, offset, parentWindow, limits.physRopeRadius)
         makeDropDown(
             HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },

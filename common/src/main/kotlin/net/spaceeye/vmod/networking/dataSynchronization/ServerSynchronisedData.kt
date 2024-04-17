@@ -6,11 +6,10 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.utils.ServerClosable
-
+import java.util.concurrent.ConcurrentHashMap
 
 abstract class ServerSynchronisedData<T: DataUnit>(val id: String, getClientInstance: () -> ClientSynchronisedData<T>): ServerClosable() {
-    //TODO i think this can crash and i need to use ConcurrentHashMap
-    val data = mutableMapOf<Long, MutableMap<Int, T>>()
+    val data = ConcurrentHashMap<Long, MutableMap<Int, T>>()
 
     val serverRequestChecksumResponseConnection   = {getClientInstance().serverRequestChecksumResponseConnection}
     val serverDataUpdateRequestResponseConnection = {getClientInstance().serverDataUpdateRequestResponseConnection}
@@ -46,6 +45,7 @@ abstract class ServerSynchronisedData<T: DataUnit>(val id: String, getClientInst
 
     class ClientDataUpdateRequestConnection<T : DataUnit>(id: String, val serverInstance: ServerSynchronisedData<T>): C2SConnection<ClientDataUpdateRequestPacket>("client_data_update_request_packet", id) {
         override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+            synchronized(serverInstance.data) {
             val packet = ClientDataUpdateRequestPacket(buf)
             val page = serverInstance.data[packet.page]
             if (page == null) {
@@ -62,6 +62,7 @@ abstract class ServerSynchronisedData<T: DataUnit>(val id: String, getClientInst
                 context.player as ServerPlayer,
                 ServerDataUpdateRequestResponsePacket(true, packet.page, dataToSend, nullData)
             )
+            }
         }
     }
 

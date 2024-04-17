@@ -17,6 +17,8 @@ interface PhysRopeSerializable: MSerializable {
         buf.writeEnum(posMode)
         buf.writeDouble(width)
         buf.writeInt(segments)
+        buf.writeDouble(massPerSegment)
+        buf.writeDouble(radius)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -32,14 +34,21 @@ interface PhysRopeSerializable: MSerializable {
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
         segments = buf.readInt()
+        massPerSegment = buf.readDouble()
+        radius = buf.readDouble()
 
         primaryFirstRaycast = buf.readBoolean()
     }
 
     override fun serverSideVerifyLimits() {
         this as PhysRopeMode
-        compliance = ServerLimits.instance.compliance.get(compliance)
-        maxForce = ServerLimits.instance.maxForce.get(maxForce)
-        fixedDistance = ServerLimits.instance.fixedDistance.get(fixedDistance)
+        val limits = ServerLimits.instance
+
+        compliance = limits.compliance.get(compliance)
+        maxForce = limits.maxForce.get(maxForce)
+        fixedDistance = limits.fixedDistance.get(fixedDistance)
+        massPerSegment = limits.physRopeMassPerSegment.get(massPerSegment)
+        radius = limits.physRopeRadius.get(radius)
+        segments = limits.physRopeSegments.get(segments)
     }
 }

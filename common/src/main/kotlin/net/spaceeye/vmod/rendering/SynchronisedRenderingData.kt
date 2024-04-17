@@ -19,7 +19,7 @@ object RenderingTypes: Registry<BaseRenderer>() {
         register(::RopeRenderer)
         register(::A2BRenderer)
         register(::TimedA2BRenderer)
-        register(::EA2BRenderer)
+        register(::PhysRopeRenderer)
     }
 }
 
@@ -38,6 +38,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
 
     //TODO think of a better way to expose this
     fun addRenderer(shipId1: Long, shipId2: Long, id: Int, renderer: BaseRenderer) {
+        synchronized(data) {
         data.getOrPut(shipId2) { mutableMapOf() }
         data.getOrPut(shipId1) { mutableMapOf() }
         val idToUse = if (ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.containsValue(shipId1)) {shipId2} else {shipId1}
@@ -51,9 +52,11 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
             idToUse, mutableListOf(Pair(id, renderer.hash()))
         ))
+        }
     }
 
     fun removeRenderer(id: Int): Boolean {
+        synchronized(data) {
         val pageId = idToPage[id] ?: return false
         val page = data[pageId] ?: return false
         page.remove(id)
@@ -63,17 +66,21 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
         ))
 
         return true
+        }
     }
 
     fun getRenderer(id: Int): BaseRenderer? {
+        synchronized(data) {
         val pageId = idToPage[id] ?: return null
         val page = data[pageId] ?: return null
         return page[id]
+        }
     }
 
     var idCounter = 0
 
     private fun trimTimedRenderers() {
+        synchronized(data) {
         val page = data[ReservedRenderingPages.TimedRenderingObjects] ?: return
         if (page.isEmpty()) { return }
         val toRemove = mutableListOf<Int>()
@@ -87,10 +94,12 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
             }
             toRemove.forEach { page.remove(it) }
         } catch (e: ConcurrentModificationException) {return}
+        }
     }
 
     //TODO trim timed objects
     fun addTimedRenderer(renderer: BaseRenderer) {
+        synchronized(data) {
         trimTimedRenderers()
         val page = data.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { mutableMapOf() }
         page[idCounter] = renderer
@@ -99,6 +108,7 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
             ReservedRenderingPages.TimedRenderingObjects, mutableListOf(Pair(idCounter, renderer.hash()))
         ))
         idCounter++
+        }
     }
 
     override fun close() {

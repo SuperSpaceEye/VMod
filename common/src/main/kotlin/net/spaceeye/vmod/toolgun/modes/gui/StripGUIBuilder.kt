@@ -20,7 +20,7 @@ interface StripGUIBuilder: GUIBuilder {
     override fun makeGUISettings(parentWindow: UIBlock) {
         this as StripMode
 
-        makeTextEntry(RADIUS.get(), ::radius, 2f, 2f, parentWindow, ServerLimits.instance.radius)
+        makeTextEntry(RADIUS.get(), ::radius, 2f, 2f, parentWindow, ServerLimits.instance.stripRadius)
         makeDropDown(STRIP_MODES.get(), parentWindow, 2f, 2f, listOf(
             DItem(STRIP_ALL.get(), mode == StripMode.StripModes.StripAll) {mode = StripMode.StripModes.StripAll},
             DItem(STRIP_IN_RADIUS.get(), mode == StripMode.StripModes.StripInRadius) {mode = StripMode.StripModes.StripInRadius}

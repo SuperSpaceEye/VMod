@@ -26,6 +26,9 @@ class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCRIHandler, PhysRope
 
     var width: Double = .2
     var segments: Int = 16
+    var massPerSegment: Double = 1000.0
+    var radius: Double = 0.5
+
 
     var primaryFirstRaycast = false
 
@@ -45,7 +48,7 @@ class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCRIHandler, PhysRope
             shipId1, shipId2,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-            maxForce, dist, segments,
+            maxForce, dist, segments, massPerSegment, radius,
             listOf(prresult.blockPosition, rresult.blockPosition),
         )).addFor(player)
 

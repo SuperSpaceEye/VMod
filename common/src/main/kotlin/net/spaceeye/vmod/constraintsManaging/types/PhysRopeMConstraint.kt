@@ -230,10 +230,12 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
 
 //        level.shipObjectWorld.disableCollisionBetweenBodies(prevId, constraint.shipId1)
 
+        val radius = if (length < radius) { length / 2} else radius
+
         SynchronisedRenderingData.serverSynchronisedData.addRenderer(
             constraint.shipId0, constraint.shipId1, mID, PhysRopeRenderer(
                 constraint.shipId0, constraint.shipId1, Vector3d(constraint.localPos0), Vector3d(constraint.localPos1),
-                Color(120, 0, 120), 0.5, length * 2, entities.map { it.id }
+                Color(120, 0, 120),  radius, length * 2, entities.map { it.id }
             )
         )
     }

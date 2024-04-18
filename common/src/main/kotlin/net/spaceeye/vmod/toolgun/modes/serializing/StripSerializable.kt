@@ -23,6 +23,6 @@ interface StripSerializable: MSerializable {
     }
     override fun serverSideVerifyLimits() {
         this as StripMode
-        radius = ServerLimits.instance.radius.get(radius)
+        radius = ServerLimits.instance.stripRadius.get(radius)
     }
 }

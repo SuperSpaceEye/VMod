@@ -1,8 +1,8 @@
 package net.spaceeye.vmod.transformProviders
 
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.posShipToWorldRender
-import net.spaceeye.vmod.utils.posWorldToShip
+import net.spaceeye.vmod.utils.vs.posShipToWorldRender
+import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider

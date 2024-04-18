@@ -81,7 +81,7 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
         poseStack.popPose()
     }
 
-    override fun getTypeName(): String = "TimedA2BRenderer"
+    override val typeName: String = "TimedA2BRenderer"
 
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()

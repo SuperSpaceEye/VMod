@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.posShipToWorldRender
+import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import net.spaceeye.vmod.utils.readVector3d
 import net.spaceeye.vmod.utils.writeVector3d
 import org.lwjgl.opengl.GL11
@@ -47,7 +47,7 @@ class RopeRenderer(): BaseRenderer {
         this.segments = segments
     }
 
-    override fun getTypeName() = "SimpleRopeRendering"
+    override val typeName = "RopeRendering"
 
     override fun renderData(poseStack: PoseStack, camera: Camera) {
         val level = Minecraft.getInstance().level

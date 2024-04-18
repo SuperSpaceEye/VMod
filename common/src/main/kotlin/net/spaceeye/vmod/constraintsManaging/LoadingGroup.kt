@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.constraintsManaging
 
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.types.MConstraint
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
@@ -34,7 +33,7 @@ internal class LoadingGroup(
 
     private fun applyConstraints() {
         for (constraint in constraintsToLoad) {
-            level.makeManagedConstraintWithId(constraint, constraint.mID.id)
+            level.makeManagedConstraintWithId(constraint, constraint.mID)
         }
         for ((k, ship) in shipRefs) {
             ship.isStatic = shipIsStaticStatus[ship.id] ?: continue

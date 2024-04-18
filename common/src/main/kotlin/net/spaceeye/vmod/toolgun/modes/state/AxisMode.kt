@@ -29,11 +29,12 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder, Plac
 
     var fixedDistance: Double = -1.0
     var disableCollisions: Boolean = false
+    override var posMode = PositionModes.NORMAL
 
     override var paDistanceFromBlock = 0.01
     override var paStage: ThreeClicksActivationSteps = ThreeClicksActivationSteps.FIRST_RAYCAST
-    override var posMode = PositionModes.NORMAL
     override var paAngle: Ref<Double> = Ref(0.0)
+    override var paScrollAngle: Double = Math.toRadians(10.0)
     override var paFirstResult: RaycastFunctions.RaycastResult? = null
     override var paSecondResult: RaycastFunctions.RaycastResult? = null
     override var paCaughtShip: ClientShip? = null

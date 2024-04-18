@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.constraintsManaging
 
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.types.MConstraint
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
 fun ServerLevel.getManagedConstraint(id: ManagedConstraintId)              = ConstraintManager.getInstance().getManagedConstraint(id)

@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.utils
 
-private val serverClosable = mutableListOf<ServerClosable>()
-private val clientClosable = mutableListOf<ClientClosable>()
+private val serverClosable = mutableListOf<Closable>()
+private val clientClosable = mutableListOf<Closable>()
 
 fun closeServerObjects() { serverClosable.forEach { it.close() } }
 fun closeClientObjects() { clientClosable.forEach { it.close() } }

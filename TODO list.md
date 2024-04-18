@@ -1,7 +1,3 @@
-## Constraints
-* Add scale tool that would scale all ships connected to constraint
-* Remove backward-compatibility code when constraints are in a more finished state
-
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
 * Add clientside validation 
@@ -9,6 +5,10 @@
 * Group rendering objects by types to elevate common operations and add shared data between rendering types
 * "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
+
+## General Code Structure
+* Extract more code from Placement Assist for an easier use
+* Extract more common code (weld/axis/hydraulics)
 
 ## Ticking Constraints
 * Redo them
@@ -54,6 +54,8 @@
 ## Hydraulics
 * Add more options, like one to disable fixed orientation
 * Add option to not fully extend/retract hydraulics
+* Make it more stable
+* Fix the bug that crashes VS
 
 ## Ball Socket Constraint
 Basically just one attachment constraint

@@ -23,7 +23,7 @@ interface WeldCRIHandler: ClientRawInputsHandler, PlacementAssistCRIHandler {
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         this as WeldMode
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
-            clientHandlPrimary()
+            clientHandlePrimary()
             conn_primary.sendToServer(this)
         }
 
@@ -39,7 +39,7 @@ interface WeldCRIHandler: ClientRawInputsHandler, PlacementAssistCRIHandler {
         return clientHandleMouseEventPA(amount)
     }
 
-    private fun clientHandlPrimary() {
+    private fun clientHandlePrimary() {
         this as WeldMode
         primaryFirstRaycast = !primaryFirstRaycast
     }

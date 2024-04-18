@@ -73,8 +73,8 @@ object VSConstraintsKeeper: ServerClosable() {
 
             val vsIdsOfMConstraints = mutableSetOf<VSConstraintId>()
             instance.getAllConstraintsIdOfId(shipId).forEach {
-                if (traversedMConstraints.contains(it.id)) { return@forEach }
-                traversedMConstraints.add(it.id)
+                if (traversedMConstraints.contains(it)) { return@forEach }
+                traversedMConstraints.add(it)
                 val constraint = instance.getManagedConstraint(it) ?: return@forEach
                 stack.addAll(constraint.attachedToShips(dimensionIds).filter { !traversedShips.contains(it) })
                 vsIdsOfMConstraints.addAll(constraint.getVSIds())

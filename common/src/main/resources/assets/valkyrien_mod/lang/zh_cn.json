@@ -3,8 +3,11 @@
   "vmod.gui.rope": "绳索",
   "vmod.gui.hydraulics": "液压",
   "vmod.gui.axis": "轴承",
+  "vmod.gui.phys_rope": "物理绳索",
+
   "vmod.gui.strip": "剥离",
   "vmod.gui.scale": "缩放",
+  "vmod.gui.copy": "复制",
 
   "vmod.gui.setting.compliance": "顺性系数",
   "vmod.gui.setting.max_force": "可承受的最大力",
@@ -22,11 +25,16 @@
   "vmod.gui.setting.disable_collisions": "关闭碰撞",
   "vmod.gui.setting.distance_from_block": "距该方块的距离",
   "vmod.gui.setting.radius": "半径",
+  "vmod.gui.setting.placement_assist_scroll_step": "放置辅助鼠标滚轮步长",
 
   "vmod.gui.setting.hitpos_modes": "选点模式",
   "vmod.gui.setting.normal": "普通",
   "vmod.gui.setting.centered_on_side": "面中心",
   "vmod.gui.setting.centered_in_block": "方块中心",
+
+  "vmod.gui.setting.input_modes": "输入模式",
+  "vmod.gui.setting.toggle": "切换",
+  "vmod.gui.setting.signal": "信号",
 
   "vmod.gui.setting.strip_modes": "剥离模式",
   "vmod.gui.setting.strip_all": "剥离此对象所有约束",

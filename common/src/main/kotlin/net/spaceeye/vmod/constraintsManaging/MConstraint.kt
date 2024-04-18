@@ -1,14 +1,18 @@
-package net.spaceeye.vmod.constraintsManaging.types
+package net.spaceeye.vmod.constraintsManaging
 
+import io.netty.buffer.Unpooled
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
+import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.RopeRenderer
+import net.spaceeye.vmod.utils.RegistryObject
 import net.spaceeye.vmod.utils.Vector3d
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.joml.Vector3dc
@@ -21,9 +25,39 @@ interface Tickable {
     fun tick(server: MinecraftServer, unregister: () -> Unit)
 }
 
-interface MConstraint {
+interface MRenderable {
+    var renderer: BaseRenderer?
+
+    fun serializeRenderer(tag: CompoundTag) {
+        if (renderer != null) {
+            try {
+                tag.putString("rendererType", renderer!!.typeName)
+                tag.putByteArray("renderer", renderer!!.serialize().accessByteBufWithCorrectSize())
+            } catch (e: Exception) {
+                ELOG("FAILED TO SERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}")
+            } catch (e: Error) {
+                ELOG("FAILED TO SERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}")
+            }
+        }
+    }
+
+    fun deserializeRenderer(tag: CompoundTag) {
+        if (tag.contains("renderer")) {
+            try {
+                val type = tag.getString("rendererType")
+                renderer = RenderingTypes.typeToSupplier(type).get()
+                renderer!!.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(tag.getByteArray("renderer"))))
+            }catch (e: Exception) {
+                ELOG("FAILED TO DESERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}")
+            } catch (e: Error) {
+                ELOG("FAILED TO DESERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}")
+            }
+        }
+    }
+}
+
+interface MConstraint: RegistryObject {
     var mID: ManagedConstraintId
-    val typeName: String
     // SHOULD BE SET TO -1.
     // DO NOT USE IT ANYWHERE. JUST IMPLEMENT AS SIMPLE VAR
     var saveCounter: Int
@@ -80,20 +114,20 @@ fun updateRenderer(
     shipId1: ShipId,
     mID: ManagedConstraintId
 ): BaseRenderer? {
-    val renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id) ?: return null
-    SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID.id)
+    val renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) ?: return null
+    SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
 
     when (renderer) {
         is RopeRenderer -> {
             renderer.point1 = Vector3d(localPos0)
             renderer.point2 = Vector3d(localPos1)
-            SynchronisedRenderingData.serverSynchronisedData.addRenderer(shipId0, shipId1, mID.id, renderer)
+            SynchronisedRenderingData.serverSynchronisedData.addRenderer(shipId0, shipId1, mID, renderer)
         }
 
         is A2BRenderer -> {
             renderer.point1 = Vector3d(localPos0)
             renderer.point2 = Vector3d(localPos1)
-            SynchronisedRenderingData.serverSynchronisedData.addRenderer(shipId0, shipId1, mID.id, renderer)
+            SynchronisedRenderingData.serverSynchronisedData.addRenderer(shipId0, shipId1, mID, renderer)
         }
     }
     return renderer

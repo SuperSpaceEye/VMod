@@ -15,6 +15,7 @@ interface WeldSerializable: MSerializable, PlacementAssistSerialize {
         buf.writeDouble(maxForce)
         buf.writeEnum(posMode)
         buf.writeDouble(width)
+        buf.writeDouble(fixedDistance)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -29,6 +30,7 @@ interface WeldSerializable: MSerializable, PlacementAssistSerialize {
         maxForce = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
+        fixedDistance = buf.readDouble()
 
         primaryFirstRaycast = buf.readBoolean()
 
@@ -37,9 +39,11 @@ interface WeldSerializable: MSerializable, PlacementAssistSerialize {
 
     override fun serverSideVerifyLimits() {
         this as WeldMode
-        compliance = ServerLimits.instance.compliance.get(compliance)
-        maxForce = ServerLimits.instance.maxForce.get(maxForce)
-        fixedDistance = ServerLimits.instance.fixedDistance.get(fixedDistance)
+        val limits = ServerLimits.instance
+
+        compliance = limits.compliance.get(compliance)
+        maxForce = limits.maxForce.get(maxForce)
+        fixedDistance = limits.fixedDistance.get(fixedDistance)
         paServerSideVerifyLimits()
     }
 }

@@ -4,13 +4,32 @@ import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.utils.RegistryObject
 
 interface Hashable {
     fun hash(): ByteArray
 }
 
-interface DataUnit: Hashable, Serializable {
-    fun getTypeName() : String
+interface DataUnit: Hashable, Serializable, RegistryObject
+
+class ServerSetRenderingSchemaPacket(): Serializable {
+    constructor(buf: FriendlyByteBuf) : this() { deserialize(buf) }
+    constructor(schema: Map<String, Int>) : this() {
+        this.schema = schema
+    }
+    var schema = mapOf<String, Int>()
+
+    override fun serialize(): FriendlyByteBuf {
+        val buf = getBuffer()
+
+        buf.writeCollection(schema.toList()) {buf, (key, idx) -> buf.writeUtf(key); buf.writeInt(idx) }
+
+        return buf
+    }
+
+    override fun deserialize(buf: FriendlyByteBuf) {
+        schema = buf.readCollection({mutableListOf<Pair<String, Int>>()}) {Pair(buf.readUtf(), buf.readInt())}.toMap()
+    }
 }
 
 class ClientDataRequestPacket(): Serializable {
@@ -131,7 +150,7 @@ class ServerDataUpdateRequestResponsePacket<T : DataUnit>(): Serializable {
         if (!pageExists) {return buf}
         buf.writeCollection(newData) {
                 buf, item ->
-            buf.writeInt(RenderingTypes.typeToIdx(item.second.getTypeName())!!)
+            buf.writeInt(RenderingTypes.typeToIdx(item.second.typeName)!!)
             buf.writeInt(item.first)
             buf.writeByteArray(item.second.serialize().array())
         }

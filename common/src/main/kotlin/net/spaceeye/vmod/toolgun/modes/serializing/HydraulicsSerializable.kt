@@ -4,8 +4,9 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
 import net.spaceeye.vmod.toolgun.modes.state.HydraulicsMode
+import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistSerialize
 
-interface HydraulicsSerializable: MSerializable {
+interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
     override fun serialize(): FriendlyByteBuf {
         this as HydraulicsMode
         val buf = getBuffer()
@@ -17,8 +18,11 @@ interface HydraulicsSerializable: MSerializable {
         buf.writeDouble(extensionDistance)
         buf.writeDouble(extensionSpeed)
         buf.writeUtf(channel)
+        buf.writeEnum(messageModes)
 
         buf.writeBoolean(primaryFirstRaycast)
+
+        paSerialize(buf)
 
         return buf
     }
@@ -32,16 +36,22 @@ interface HydraulicsSerializable: MSerializable {
         extensionDistance = buf.readDouble()
         extensionSpeed = buf.readDouble()
         channel = buf.readUtf()
+        messageModes = buf.readEnum(messageModes.javaClass)
 
         primaryFirstRaycast = buf.readBoolean()
+
+        paDeserialize(buf)
     }
 
     override fun serverSideVerifyLimits() {
         this as HydraulicsMode
-        compliance = ServerLimits.instance.compliance.get(compliance)
-        maxForce = ServerLimits.instance.maxForce.get(maxForce)
-        extensionDistance = ServerLimits.instance.extensionDistance.get(extensionDistance)
-        extensionSpeed = ServerLimits.instance.extensionSpeed.get(extensionSpeed)
-        channel = ServerLimits.instance.channelLength.get(channel)
+        val limits = ServerLimits.instance
+
+        compliance = limits.compliance.get(compliance)
+        maxForce = limits.maxForce.get(maxForce)
+        extensionDistance = limits.extensionDistance.get(extensionDistance)
+        extensionSpeed = limits.extensionSpeed.get(extensionSpeed)
+        channel = limits.channelLength.get(channel)
+        paServerSideVerifyLimits()
     }
 }

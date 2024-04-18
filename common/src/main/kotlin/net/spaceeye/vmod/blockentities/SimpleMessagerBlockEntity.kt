@@ -6,8 +6,8 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.VMBlockEntities
 import net.spaceeye.vmod.network.Activate
-import net.spaceeye.vmod.network.Deactivate
 import net.spaceeye.vmod.network.Message
+import net.spaceeye.vmod.network.MessageTypes
 
 class SimpleMessagerBlockEntity(pos: BlockPos, state: BlockState): BlockEntity(VMBlockEntities.SIMPLE_MESSAGER.get(), pos, state) {
     var channel = "hydraulics"
@@ -16,17 +16,11 @@ class SimpleMessagerBlockEntity(pos: BlockPos, state: BlockState): BlockEntity(V
     override fun load(tag: CompoundTag) {
         super.load(tag)
         channel = tag.getString("channel")
-        msg = when(tag.getBoolean("msg")) {
-            true -> Activate()
-            false -> Deactivate()
-        }
+        msg = MessageTypes.deserialize(tag.getCompound("msg"))
     }
     override fun saveAdditional(tag: CompoundTag) {
         super.saveAdditional(tag)
         tag.putString("channel", channel)
-        tag.putBoolean("msg", when (msg) {
-            is Activate -> true
-            else -> false
-        })
+        tag.put("msg", MessageTypes.serialize(msg))
     }
 }

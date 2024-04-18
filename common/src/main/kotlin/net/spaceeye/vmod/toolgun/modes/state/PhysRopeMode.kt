@@ -24,7 +24,6 @@ class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCRIHandler, PhysRope
 
     var posMode = PositionModes.NORMAL
 
-    var width: Double = .2
     var segments: Int = 16
     var massPerSegment: Double = 1000.0
     var radius: Double = 0.5

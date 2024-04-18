@@ -13,6 +13,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.entities.ClientEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
+import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -192,17 +193,34 @@ class PhysRopeRenderer(): BaseRenderer {
                 return@forEachIndexed
             }
 
+            var got = false
             ClientEntitiesHolder.clientEntityLoadedEvent.on {
                 (anID, anEntity), handler ->
+                if (got) {handler.unregister(); return@on}
                 val entity = Minecraft.getInstance().level!!.getEntity(id)
                 if (entity != null) {
                     entities[i] = entity as PhysRopeComponentEntity
                     handler.unregister()
+                    got = true
                 }
 
                 if (anID != id) {return@on}
                 entities[i] = anEntity as PhysRopeComponentEntity
                 handler.unregister()
+                got = true
+            }
+
+            //kinda stupid but it's needed because last entity id may not appear and idk why it doesn't
+            var times = 0
+            RandomEvents.clientOnTick.on {
+                _, handler ->
+                if (got) {handler.unregister(); return@on}
+                times++
+                if (times > 11) {handler.unregister(); return@on}
+                val entity = Minecraft.getInstance().level!!.getEntity(id) ?: return@on
+                entities[i] = entity as PhysRopeComponentEntity
+                handler.unregister()
+                got = true
             }
         }
     }

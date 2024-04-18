@@ -1,9 +1,9 @@
 package net.spaceeye.vmod
 
-import dev.architectury.registry.level.entity.EntityRendererRegistry
+import dev.architectury.registry.client.level.entity.EntityRendererRegistry
 import dev.architectury.registry.registries.DeferredRegister
 import dev.architectury.registry.registries.RegistrySupplier
-import net.minecraft.core.Registry
+import net.minecraft.core.registries.Registries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
@@ -13,7 +13,7 @@ import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import org.valkyrienskies.mod.client.EmptyRenderer
 
 object VMEntities {
-    val ENTITIES: DeferredRegister<EntityType<*>> = DeferredRegister.create(VM.MOD_ID, Registry.ENTITY_TYPE_REGISTRY)
+    val ENTITIES: DeferredRegister<EntityType<*>> = DeferredRegister.create(VM.MOD_ID, Registries.ENTITY_TYPE)
 
     var PHYS_ROPE_COMPONENT = "phys_rope_component_entity" withType ::PhysRopeComponentEntity
 

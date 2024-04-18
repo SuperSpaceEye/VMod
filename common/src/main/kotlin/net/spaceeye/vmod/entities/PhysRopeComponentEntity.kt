@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.protocol.Packet
+import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.network.syncher.EntityDataSerializers
@@ -95,6 +96,9 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
     private var lerpPos: Vector3dc? = null
     private var lerpSteps = 0
 
+    private val level: Level
+        get() = level()
+
     init {
         if (level.isClientSide) {
             ClientEntitiesHolder.entityLoaded(id, this)
@@ -162,7 +166,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
     override fun addAdditionalSaveData(compoundTag: CompoundTag) {
     }
 
-    override fun getAddEntityPacket(): Packet<*> {
+    override fun getAddEntityPacket(): Packet<ClientGamePacketListener> {
         return ClientboundAddEntityPacket(this)
     }
 
@@ -256,8 +260,8 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
         val compoundTag = entity.saveWithoutId(CompoundTag())
         compoundTag.remove("Dimension")
         loadForTeleport(compoundTag)
-        ((this as EntityAccessor).portalCooldown) = (entity as EntityAccessor).portalCooldown
-        portalEntrancePos = entity.portalEntrancePos
+//        ((this as EntityAccessor).portalCooldown) = (entity as EntityAccessor).portalCooldown
+//        portalEntrancePos = entity.portalEntrancePos
     }
 
     override fun kill() {

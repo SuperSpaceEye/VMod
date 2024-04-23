@@ -24,6 +24,7 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
+import org.valkyrienskies.core.apigame.constraints.VSSphericalTwistLimitsConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
 import java.awt.Color
@@ -45,6 +46,10 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
     var entitiesUUIDs = mutableListOf<UUID>()
     var entities = mutableListOf<PhysRopeComponentEntity>()
     var cIDs = mutableListOf<Int>()
+
+    var firstRotation: Quaterniond? = null
+    var middleRotation: Quaterniond? = null
+    var lastRotation: Quaterniond? = null
 
     constructor(
         shipId0: ShipId,
@@ -160,6 +165,9 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         }
 
         tag.put("uuids", uuidTag)
+        tag.putQuaterniond("firstRotation", firstRotation!!)
+        tag.putQuaterniond("middleRotation", middleRotation!!)
+        tag.putQuaterniond("lastRotation", lastRotation!!)
 
         serializeRenderer(tag)
 
@@ -174,6 +182,10 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         massPerSegment = tag.getDouble("massPerSegment")
         radius = tag.getDouble("radius")
 
+        firstRotation = tag.getQuaterniond("firstRotation")
+        middleRotation = tag.getQuaterniond("middleRotation")
+        lastRotation = tag.getQuaterniond("lastRotation")
+
         entitiesUUIDs = (tag.get("uuids") as ListTag).map { (it as CompoundTag).getUUID("uuid") }.toMutableList()
         deserializeRenderer(tag)
 
@@ -182,12 +194,14 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         return this
     }
 
-    private fun createConstraints(level: ServerLevel, length: Double) {
+    private fun createConstraints(level: ServerLevel, length: Double, worldDirection: Vector3d? = null) {
         val dir = Vector3d(1, 0, 0)
 
         var prevId = constraint.shipId0
         var prevPos = constraint.localPos0
-//        var prevRot = if (level.shipObjectWorld.allShips.contains(prevId)) {level.shipObjectWorld.allShips.getById(prevId)!!.transform.shipToWorldRotation} else Quaterniond()
+
+        var prevRot = firstRotation ?: getHingeRotation(level.shipObjectWorld.allShips.getById(prevId)?.transform, worldDirection!!)
+        firstRotation = prevRot
 
         for ((i, entity) in entities.withIndex()) {
             val rpos = (dir * length).toJomlVector3d()
@@ -199,18 +213,18 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
                     constraint.maxForce, 0.0)
             ) ?: run { level.removeManagedConstraint(mID) ; return })
 
+            val thisRot = middleRotation ?: getHingeRotation(entity.physicsEntityData!!.transform, worldDirection!!)
+            middleRotation = thisRot
 
-//            level.shipObjectWorld.createNewConstraint(
-//                VSSphericalTwistLimitsConstraint(prevId, entity.physicsEntityData!!.shipId, constraint.compliance,
-//                    prevRot, entity.physicsEntityData!!.transform.shipToWorldRotation,
-//                    1e200, Math.toRadians(-60.0) * 0, Math.toRadians(60.0) * 0)
-//            )
-//
-//            level.shipObjectWorld.disableCollisionBetweenBodies(prevId, entity.physicsEntityData!!.shipId)
-
+            level.shipObjectWorld.createNewConstraint(
+                VSSphericalTwistLimitsConstraint(prevId, entity.physicsEntityData!!.shipId, constraint.compliance,
+                    prevRot, thisRot,
+                    1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
+            )
 
             prevId = entity.physicsEntityData!!.shipId
             prevPos = (-dir * length).toJomlVector3d()
+            prevRot = thisRot
         }
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(
@@ -219,18 +233,19 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
                 prevPos, constraint.localPos1,
                 constraint.maxForce, 0.0)
         ) ?: run { level.removeManagedConstraint(mID) ; return })
-//
-//        level.shipObjectWorld.createNewConstraint(
-//            VSSphericalTwistLimitsConstraint(prevId, constraint.shipId1, constraint.compliance,
-//                prevRot,
-//                (if (level.shipObjectWorld.allShips.contains(constraint.shipId1)) {level.shipObjectWorld.allShips.getById(constraint.shipId1)!!.transform.shipToWorldRotation} else Quaterniond()),
-//                1e200, Math.toRadians(-60.0) * 0, Math.toRadians(60.0) * 0
-//            )
-//        )
 
-//        level.shipObjectWorld.disableCollisionBetweenBodies(prevId, constraint.shipId1)
+        val lastRotation_ = lastRotation ?: getHingeRotation(level.shipObjectWorld.allShips.getById(constraint.shipId1)?.transform, worldDirection!!)
+        lastRotation = lastRotation_
 
-        val radius = if (length < radius) { length / 2} else radius
+        level.shipObjectWorld.createNewConstraint(
+            VSSphericalTwistLimitsConstraint(prevId, constraint.shipId1, constraint.compliance,
+                prevRot, lastRotation_,
+                1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
+        )
+
+        var radius = radius
+        if (length < radius) { radius = length / 2 }
+        if (length > radius * 4) { radius = length / 4 } // capsule constraint is actually just 4 balls in a row so
 
         SynchronisedRenderingData.serverSynchronisedData.addRenderer(
             constraint.shipId0, constraint.shipId1, mID, PhysRopeRenderer(
@@ -312,8 +327,9 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         val segmentLength = ropeLength / segments.toDouble()
 
         var radius = radius
-        val length = segmentLength * 0.5
+        var length = segmentLength * 0.5
         if (length < radius) { radius = length / 2}
+        if (length > radius * 4) { radius = length / 4 }
 
         for (i in 0 until segments) {
             val pos = Vector3d(xLin[i+1], yLin[i+1], zLin[i+1])
@@ -322,7 +338,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
             entitiesUUIDs.add(entity.uuid)
         }
 
-        createConstraints(level, length)
+        createConstraints(level, length, rdir)
 
         return true
     }

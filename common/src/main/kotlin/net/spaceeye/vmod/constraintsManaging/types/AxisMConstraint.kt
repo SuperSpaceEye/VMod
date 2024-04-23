@@ -23,7 +23,7 @@ import org.valkyrienskies.physics_api.ConstraintId
 class AxisMConstraint(): MConstraint, MRenderable {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
-//    lateinit var rconstraint: VSConstraint
+    lateinit var rconstraint: VSConstraint
 
     val cIDs = mutableListOf<ConstraintId>()
     var attachmentPoints_ = mutableListOf<BlockPos>()
@@ -82,27 +82,12 @@ class AxisMConstraint(): MConstraint, MRenderable {
             maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength + addDist
         )
 
-//         TODO this doesn't work
-//        val rot1 = if (ship1 != null) ship1.transform.shipToWorldRotation else Quaterniond()
-//        val rot2 = if (ship2 != null) ship2.transform.shipToWorldRotation else Quaterniond()
-//
-//        val cdir = (rpoint1 - rpoint2).snormalize()
-//        val x = Vector3d(1.0, 0.0, 0.0)
-//        val xCross = Vector3d(cdir).scross(x)
-//        val hRot = if (xCross.sqrDist() < 1e-6) {
-//            Quaterniond()
-//        } else {
-//            Quaterniond(AxisAngle4d(cdir.toJomlVector3d().angle(x.toJomlVector3d()), xCross.snormalize().toJomlVector3d()))
-//        }
-//
-//        rconstraint = VSHingeOrientationConstraint(
-//            shipId0, shipId1, compliance, hRot, hRot,
-//            maxForce)
-//
-//      TODO https://stackoverflow.com/questions/59438501/how-to-get-a-vector3-rotation-between-two-quaternions
-//      I'm pretty sure that this is how krunch calculates around what axis shit will rotate with VSHingeOrientationConstraint
-//        val qw = rot2.mul(rot1.invert(Quaterniond()), Quaterniond())
-//        val rAngle = AxisAngle4d(qw)
+        val hrot1 = getHingeRotation(ship1?.transform, dir.normalize())
+        val hrot2 = getHingeRotation(ship2?.transform, dir.normalize())
+
+        rconstraint = VSHingeOrientationConstraint(
+            shipId0, shipId1, compliance, hrot1, hrot2,
+            maxForce)
 
         this.renderer = renderer
         this.disableCollisions = disableCollisions
@@ -197,7 +182,7 @@ class AxisMConstraint(): MConstraint, MRenderable {
 
         tag.put("c1", VSConstraintSerializationUtil.serializeConstraint(aconstraint1) ?: return null)
         tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
-//        tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint ) ?: return null)
+        tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint ) ?: return null)
         tag.putInt("managedID", mID)
         tag.putBoolean("disableCollisions", disableCollisions)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
@@ -218,7 +203,7 @@ class AxisMConstraint(): MConstraint, MRenderable {
 
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-//        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint  = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null)
+        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint  = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null)
 
         return this
     }
@@ -231,7 +216,7 @@ class AxisMConstraint(): MConstraint, MRenderable {
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
-//        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
 
         if (disableCollisions) {
             level.shipObjectWorld.disableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)

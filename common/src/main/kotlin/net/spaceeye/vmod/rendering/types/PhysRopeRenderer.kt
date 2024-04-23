@@ -15,8 +15,11 @@ import net.spaceeye.vmod.entities.ClientEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.rendering.RenderingUtils
+import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawPolygonTube
+import net.spaceeye.vmod.rendering.RenderingUtils.Quad.makePolygon
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
+import org.joml.Quaterniond
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
@@ -37,6 +40,8 @@ class PhysRopeRenderer(): BaseRenderer {
 
     var ids = listOf<Int>()
     var entities = mutableListOf<PhysRopeComponentEntity?>()
+
+    var sides: Int = 8
 
     constructor(shipId1: ShipId, shipId2: ShipId,
                 point1: Vector3d, point2: Vector3d,
@@ -78,73 +83,70 @@ class PhysRopeRenderer(): BaseRenderer {
         val cameraPos = Vector3d(camera.position)
         val matrix = poseStack.last().pose()
 
-        val dir1 = Vector3d(chainLength, 0, 0) * 0.5
-        val dir2 = -dir1
+        // ========================
+//        val dir1 = Vector3d(chainLength, 0, 0) * 0.5
+//        val dir2 = -dir1
+//
+//        for (entity in entities) {
+//            if (entity == null) {continue}
+//
+//            val transform = entity.getRenderTransform(level.shipObjectWorld as ShipObjectClientWorld) ?: continue
+//
+//            val pos1 = posShipToWorldRender(null, dir1, transform) - cameraPos
+//            val pos2 = posShipToWorldRender(null, dir2, transform) - cameraPos
+//
+//            RenderingUtils.Quad.makeFlatRectFacingCameraTexture(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, width, pos1, pos2)
+//        }
+        // =======================
+        val ship1 = level.shipObjectWorld.allShips.getById(shipId1)
+        val ship2 = level.shipObjectWorld.allShips.getById(shipId2)
+
+        val quat1 = Quaterniond(ship1?.renderTransform?.shipToWorldRotation ?: Quaterniond())
+        val quat2 = Quaterniond(ship2?.renderTransform?.shipToWorldRotation ?: Quaterniond())
+
+        val capsuleDir = -Vector3d(chainLength, 0, 0) * 0.5
+
+        var ppos = (if (ship1 == null) point1 else posShipToWorldRender(ship1, point1)) - cameraPos
+        var cpos: Vector3d = if (entities[0] != null && entities[0]!!.getRenderTransform(level.shipObjectWorld as ShipObjectClientWorld) != null) {
+            Vector3d(entities[0]!!.getRenderTransform(level.shipObjectWorld as ShipObjectClientWorld)!!.positionInWorld)
+        } else {
+            if (ship2 == null) point2 else posShipToWorldRender(ship2, point2)
+        } - cameraPos
+
+        var up = getUpFromQuat(quat1)
+
+        var dir = (cpos - ppos).snormalize()
+        var right = dir.cross(up)
+        var lPoints = makePolygon(sides, width, 0.0, up, right, ppos)
+        var rPoints: List<Vector3d>
 
         for (entity in entities) {
-            if (entity == null) {continue}
-
+            if (entity == null) { continue }
             val transform = entity.getRenderTransform(level.shipObjectWorld as ShipObjectClientWorld) ?: continue
+            cpos = posShipToWorldRender(null, capsuleDir, transform) - cameraPos
 
-            val pos1 = posShipToWorldRender(null, dir1, transform) - cameraPos
-            val pos2 = posShipToWorldRender(null, dir2, transform) - cameraPos
+            up = getUpFromQuat(transform.shipToWorldRotation)
 
-            RenderingUtils.Quad.makeFlatRectFacingCameraTexture(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, width, pos1, pos2)
+            dir = (cpos - ppos).snormalize()
+            right = dir.cross(up)
+            rPoints = makePolygon(sides, width, 0.0, up, right, cpos)
+
+            drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, 0.0f, 1.0f, lPoints, rPoints)
+
+            lPoints = rPoints
+            ppos = cpos
         }
 
-        //TODO
-//        val ship1 = level.shipObjectWorld.allShips.getById(shipId1)
-//        val ship2 = level.shipObjectWorld.allShips.getById(shipId2)
-//
-//        val quat1 = Quaterniond(ship1?.renderTransform?.shipToWorldRotation ?: Quaterniond())
-//        val quat2 = Quaterniond(ship2?.renderTransform?.shipToWorldRotation ?: Quaterniond())
-//
-//        val dir = -Vector3d(chainLength, 0, 0) * 0.5
-//
-//        var ppos = if (ship1 == null) point1 else posShipToWorldRender(ship1, point1)
-//        var cpos: Vector3d
-//
-//        ppos = ppos - cameraPos
-//
-//        var qrot = Quaterniond(quat1)
-//
-//        var qup = Quaterniond(0.0, 1.0, 0.0, 0.0).premul(qrot).mul(qrot.conjugate(Quaterniond()))
-//
-//        var up = Vector3d(qup.x, qup.y, qup.z).snormalize()
-//
-//        var lu: Vector3d = up * width + ppos
-//        var ld: Vector3d =-up * width + ppos
-//
-//        for ((i, entity) in entities.withIndex()) {
-//            if (entity == null) { continue }
-//            val transform = entity.getRenderTransform(level.shipObjectWorld as ShipObjectClientWorld) ?: continue
-//            cpos = posShipToWorldRender(null, dir, transform) - cameraPos
-//
-//            qrot = Quaterniond(transform.shipToWorldRotation)
-//            qup = Quaterniond(0.0, 1.0, 0.0, 0.0).premul(qrot).mul(qrot.conjugate(Quaterniond()))
-//            up = Vector3d(qup.x, qup.y, qup.z).snormalize()
-//
-//            val ru = -up * width + cpos
-//            val rd =  up * width + cpos
-//
-//            drawQuad(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, lu, ld, ru, rd, 0.0f, 1.0f)
-//
-//            lu = rd
-//            ld = ru
-//        }
-//
-//        cpos = if (ship2 == null) point2 else posShipToWorldRender(ship2, point2)
-//        cpos = cpos - cameraPos
-//
-//        qrot = quat2
-//        qup = Quaterniond(0.0, 1.0, 0.0, 0.0).premul(qrot).mul(qrot.conjugate(Quaterniond()))
-//        up = Vector3d(qup.x, qup.y, qup.z).snormalize()
-//
-//        val ru = -up * width + cpos
-//        val rd =  up * width + cpos
-//
-//        drawQuad(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, lu, ld, ru, rd, 0.0f, 1.0f)
+        cpos = if (ship2 == null) point2 else posShipToWorldRender(ship2, point2)
+        cpos = cpos - cameraPos
 
+        up = getUpFromQuat(quat2)
+
+        dir = (cpos - ppos).snormalize()
+        right = dir.cross(up)
+        rPoints = makePolygon(sides, width, 0.0, up, right, cpos)
+
+        drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, 0.0f, 1.0f, lPoints, rPoints)
 
         tesselator.end()
         poseStack.popPose()
@@ -166,6 +168,8 @@ class PhysRopeRenderer(): BaseRenderer {
         buf.writeDouble(width)
         buf.writeDouble(chainLength)
 
+        buf.writeInt(sides)
+
         buf.writeCollection(ids) { buf, id -> buf.writeInt(id)}
 
         return buf
@@ -182,6 +186,8 @@ class PhysRopeRenderer(): BaseRenderer {
 
         width = buf.readDouble()
         chainLength = buf.readDouble()
+
+        sides = buf.readInt()
 
         ids = buf.readCollection({ mutableListOf() }) {buf.readInt()}
 

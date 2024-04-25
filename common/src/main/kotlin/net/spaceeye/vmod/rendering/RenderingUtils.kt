@@ -55,19 +55,19 @@ object RenderingUtils {
             buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(uv1, 1.0f).uv2(lightmapUV).endVertex()
         }
 
-        @JvmStatic inline fun makePolygon(sides: Int, radius: Double, rotation: Double, up: Vector3d, right: Vector3d, pos: Vector3d): List<Vector3d> {
+        @JvmStatic inline fun makePolygon(sides: Int, radius: Double, up: Vector3d, right: Vector3d, pos: Vector3d): List<Vector3d> {
             val segment = PI * 2.0 / sides
             val points = mutableListOf<Vector3d>()
             for (i in 0 until sides) {
                 points.add(
-                    (up * sin(segment * i + rotation)
-                + right * cos(segment * i + rotation)) * radius + pos)
+                    (up * sin(segment * i)
+                + right * cos(segment * i)) * radius + pos)
             }
 
             return points
         }
 
-        @JvmStatic inline fun makePolygonTube(sides: Int, radius: Double, rotation: Double,
+        @JvmStatic inline fun makePolygonTube(sides: Int, radius: Double,
                                           pos1: Vector3d, pos2: Vector3d, up: Vector3d?): Pair<List<Vector3d>, List<Vector3d>> {
             val ndir = (pos2 - pos1).snormalize()
             val sdir = ndir.add(ndir.y, ndir.z, ndir.x).snormalize()
@@ -75,8 +75,8 @@ object RenderingUtils {
             val up = up ?: sdir.cross(ndir)
             val right = ndir.cross(up)
 
-            val lpoints = makePolygon(sides, radius, rotation, up, right, pos1)
-            val rpoints = makePolygon(sides, radius, rotation, up, right, pos2)
+            val lpoints = makePolygon(sides, radius, up, right, pos1)
+            val rpoints = makePolygon(sides, radius, up, right, pos2)
 
             return Pair(lpoints, rpoints)
         }

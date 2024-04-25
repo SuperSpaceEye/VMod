@@ -115,9 +115,7 @@ class PhysRopeRenderer(): BaseRenderer {
 
         var up = getUpFromQuat(quat1)
 
-        var dir = (cpos - ppos).snormalize()
-        var right = dir.cross(up)
-        var lPoints = makePolygon(sides, width, 0.0, up, right, ppos)
+        var lPoints = makePoints(cpos, ppos, ppos, up)
         var rPoints: List<Vector3d>
 
         for (entity in entities) {
@@ -126,10 +124,7 @@ class PhysRopeRenderer(): BaseRenderer {
             cpos = posShipToWorldRender(null, capsuleDir, transform) - cameraPos
 
             up = getUpFromQuat(transform.shipToWorldRotation)
-
-            dir = (cpos - ppos).snormalize()
-            right = dir.cross(up)
-            rPoints = makePolygon(sides, width, 0.0, up, right, cpos)
+            rPoints = makePoints(cpos, ppos, up, cpos)
 
             drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, 0.0f, 1.0f, lPoints, rPoints)
 
@@ -142,9 +137,7 @@ class PhysRopeRenderer(): BaseRenderer {
 
         up = getUpFromQuat(quat2)
 
-        dir = (cpos - ppos).snormalize()
-        right = dir.cross(up)
-        rPoints = makePolygon(sides, width, 0.0, up, right, cpos)
+        rPoints = makePoints(cpos, ppos, up, cpos)
 
         drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, 0.0f, 1.0f, lPoints, rPoints)
 
@@ -153,6 +146,8 @@ class PhysRopeRenderer(): BaseRenderer {
 
         RenderSystem.enableCull()
     }
+
+    private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, ) = makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse)
 
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()

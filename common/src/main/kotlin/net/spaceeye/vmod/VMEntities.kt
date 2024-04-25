@@ -3,6 +3,8 @@ package net.spaceeye.vmod
 import dev.architectury.registry.level.entity.EntityRendererRegistry
 import dev.architectury.registry.registries.DeferredRegister
 import dev.architectury.registry.registries.RegistrySupplier
+import dev.architectury.utils.EnvExecutor
+import net.fabricmc.api.EnvType
 import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -30,8 +32,12 @@ object VMEntities {
     fun register() {
         ENTITIES.register()
 
-        EntityRendererRegistry.register({ PHYS_ROPE_COMPONENT.get() }) {
-            context -> EmptyRenderer(context)
+        EnvExecutor.runInEnv(EnvType.CLIENT) {
+            Runnable {
+                EntityRendererRegistry.register({ PHYS_ROPE_COMPONENT.get() }) { context ->
+                    EmptyRenderer(context)
+                }
+            }
         }
     }
 }

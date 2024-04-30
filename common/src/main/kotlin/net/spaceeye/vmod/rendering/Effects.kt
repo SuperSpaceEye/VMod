@@ -34,7 +34,6 @@ object Effects {
                 .05,
                 getNow_ms(),
                 200,
-                200.0,
                 result.origin
             )
         )

@@ -10,6 +10,7 @@ object ToolgunModes {
         HydraulicsMode(),
         AxisMode(),
         PhysRopeMode(),
+        DisableCollisionsMode(),
 
 
         CopyMode(),

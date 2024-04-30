@@ -30,7 +30,6 @@ class AxisMConstraint(): MConstraint, MRenderable {
 
     var fixedLength: Double = 0.0
 
-    var disableCollisions: Boolean = false
     override var renderer: BaseRenderer? = null
 
     constructor(
@@ -47,8 +46,6 @@ class AxisMConstraint(): MConstraint, MRenderable {
         compliance: Double,
         maxForce: Double,
         fixedLength: Double = -1.0,
-
-        disableCollisions: Boolean = false,
 
         attachmentPoints: List<BlockPos>,
 
@@ -90,7 +87,6 @@ class AxisMConstraint(): MConstraint, MRenderable {
             maxForce)
 
         this.renderer = renderer
-        this.disableCollisions = disableCollisions
         attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
@@ -154,7 +150,7 @@ class AxisMConstraint(): MConstraint, MRenderable {
                 val rpoint2 = rpoint1 + (srpoint1 - srpoint2).normalize() * fixedLength
 
 
-                AxisMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, fixedLength, disableCollisions, newAttachmentPoints, newRenderer)
+                AxisMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, fixedLength, newAttachmentPoints, newRenderer)
             }
         }
     }
@@ -184,7 +180,6 @@ class AxisMConstraint(): MConstraint, MRenderable {
         tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
         tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint ) ?: return null)
         tag.putInt("managedID", mID)
-        tag.putBoolean("disableCollisions", disableCollisions)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
         tag.putDouble("fixedLength", fixedLength)
 
@@ -195,7 +190,6 @@ class AxisMConstraint(): MConstraint, MRenderable {
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         mID = tag.getInt("managedID")
-        disableCollisions = tag.getBoolean("disableCollisions")
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
         fixedLength = tag.getDouble("fixedLength")
 
@@ -218,19 +212,12 @@ class AxisMConstraint(): MConstraint, MRenderable {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
 
-        if (disableCollisions) {
-            level.shipObjectWorld.disableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)
-        }
-
         if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID, renderer!!)
         } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
         return true
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
-        if (disableCollisions) {
-            level.shipObjectWorld.enableCollisionBetweenBodies(aconstraint1.shipId0, aconstraint1.shipId1)
-        }
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
         SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
     }

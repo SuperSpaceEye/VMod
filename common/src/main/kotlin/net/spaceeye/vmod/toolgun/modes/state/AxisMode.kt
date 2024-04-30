@@ -28,7 +28,6 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder, Plac
     var width: Double = .2
 
     var fixedDistance: Double = -1.0
-    var disableCollisions: Boolean = false
     override var posMode = PositionModes.NORMAL
 
     override var paDistanceFromBlock = 0.01
@@ -44,7 +43,7 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder, Plac
         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult> ->
             AxisMConstraint(
                 spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
-                compliance, maxForce, fixedDistance, disableCollisions,
+                compliance, maxForce, fixedDistance,
                 listOf(rresults.first.blockPosition, rresults.second.blockPosition)
             )
         }
@@ -71,7 +70,6 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder, Plac
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
             fixedDistance,
-            disableCollisions,
             listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,

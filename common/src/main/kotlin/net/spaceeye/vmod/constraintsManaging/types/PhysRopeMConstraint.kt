@@ -165,9 +165,9 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         }
 
         tag.put("uuids", uuidTag)
-        tag.putQuaterniond("firstRotation", firstRotation!!)
-        tag.putQuaterniond("middleRotation", middleRotation!!)
-        tag.putQuaterniond("lastRotation", lastRotation!!)
+//        tag.putQuaterniond("firstRotation", firstRotation!!)
+//        tag.putQuaterniond("middleRotation", middleRotation!!)
+//        tag.putQuaterniond("lastRotation", lastRotation!!)
 
         serializeRenderer(tag)
 
@@ -182,9 +182,9 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         massPerSegment = tag.getDouble("massPerSegment")
         radius = tag.getDouble("radius")
 
-        firstRotation = tag.getQuaterniond("firstRotation")
-        middleRotation = tag.getQuaterniond("middleRotation")
-        lastRotation = tag.getQuaterniond("lastRotation")
+//        firstRotation = tag.getQuaterniond("firstRotation")
+//        middleRotation = tag.getQuaterniond("middleRotation")
+//        lastRotation = tag.getQuaterniond("lastRotation")
 
         entitiesUUIDs = (tag.get("uuids") as ListTag).map { (it as CompoundTag).getUUID("uuid") }.toMutableList()
         deserializeRenderer(tag)
@@ -200,8 +200,8 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         var prevId = constraint.shipId0
         var prevPos = constraint.localPos0
 
-        var prevRot = firstRotation ?: getHingeRotation(level.shipObjectWorld.allShips.getById(prevId)?.transform, worldDirection!!)
-        firstRotation = prevRot
+//        var prevRot = firstRotation ?: getHingeRotation(level.shipObjectWorld.allShips.getById(prevId)?.transform, worldDirection!!)
+//        firstRotation = prevRot
 
         for ((i, entity) in entities.withIndex()) {
             val rpos = (dir * length).toJomlVector3d()
@@ -216,15 +216,15 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
             val thisRot = middleRotation ?: getHingeRotation(entity.physicsEntityData!!.transform, worldDirection!!)
             middleRotation = thisRot
 
-            level.shipObjectWorld.createNewConstraint(
-                VSSphericalTwistLimitsConstraint(prevId, entity.physicsEntityData!!.shipId, constraint.compliance,
-                    prevRot, thisRot,
-                    1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
-            )
+//            level.shipObjectWorld.createNewConstraint(
+//                VSSphericalTwistLimitsConstraint(prevId, entity.physicsEntityData!!.shipId, constraint.compliance,
+//                    prevRot, thisRot,
+//                    1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
+//            )
 
             prevId = entity.physicsEntityData!!.shipId
             prevPos = (-dir * length).toJomlVector3d()
-            prevRot = thisRot
+//            prevRot = thisRot
         }
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(
@@ -237,11 +237,11 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         val lastRotation_ = lastRotation ?: getHingeRotation(level.shipObjectWorld.allShips.getById(constraint.shipId1)?.transform, worldDirection!!)
         lastRotation = lastRotation_
 
-        level.shipObjectWorld.createNewConstraint(
-            VSSphericalTwistLimitsConstraint(prevId, constraint.shipId1, constraint.compliance,
-                prevRot, lastRotation_,
-                1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
-        )
+//        level.shipObjectWorld.createNewConstraint(
+//            VSSphericalTwistLimitsConstraint(prevId, constraint.shipId1, constraint.compliance,
+//                prevRot, lastRotation_,
+//                1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
+//        )
 
         var radius = radius
         if (length < radius) { radius = length / 2 }

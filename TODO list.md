@@ -48,12 +48,8 @@
 * Add ability to change rendering modes
 * Add more setting options
 
-## Axis Constraint
-* Figure out how VSHingeOrientationConstraint works and use it to make axis constraint more stable
-
 ## Hydraulics
 * Add more options, like one to disable fixed orientation
-* Add option to not fully extend/retract hydraulics
 * Make it more stable
 * Fix the bug that crashes VS
 

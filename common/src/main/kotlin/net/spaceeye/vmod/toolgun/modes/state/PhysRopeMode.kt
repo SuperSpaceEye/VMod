@@ -13,9 +13,15 @@ import net.spaceeye.vmod.toolgun.modes.gui.PhysRopeGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.inputHandling.PhysRopeCRIHandler
 import net.spaceeye.vmod.toolgun.modes.serializing.PhysRopeSerializable
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
-import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
+import net.spaceeye.vmod.toolgun.modes.util.getModePositions
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
+import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.vs.posShipToWorld
+import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.mod.common.dimensionId
+import org.valkyrienskies.mod.common.getShipManagingPos
+import org.valkyrienskies.mod.common.shipObjectWorld
 
 class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCRIHandler, PhysRopeGUIBuilder {
     var compliance = 1e-20
@@ -37,8 +43,25 @@ class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCRIHandler, PhysRope
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
-            level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
+    fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+        if (raycastResult.state.isAir) {return}
+        val (res, previousResult) = if (previousResult == null || primaryFirstRaycast) { previousResult = raycastResult; Pair(false, null) } else { Pair(true, previousResult) }
+        if (!res) {return}
+
+        val ship1 = level.getShipManagingPos(previousResult!!.blockPosition)
+        val ship2 = level.getShipManagingPos(raycastResult.blockPosition)
+
+        //allow for constraint to be created on the same ship, but not on the ground
+        //why? because rendering is ship based, and it won't render shit that is connected only to the ground
+        if (ship1 == null && ship2 == null) {resetState(); return}
+
+        val shipId1: ShipId = ship1?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
+        val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
+
+        val (spoint1, spoint2) = getModePositions(posMode, previousResult, raycastResult)
+
+        val rpoint1 = if (ship1 == null) spoint1 else posShipToWorld(ship1, Vector3d(spoint1))
+        val rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist()}
 
@@ -48,7 +71,7 @@ class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCRIHandler, PhysRope
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce, dist, segments, massPerSegment, radius,
-            listOf(prresult.blockPosition, rresult.blockPosition),
+            listOf(previousResult.blockPosition, raycastResult.blockPosition),
         )).addFor(player)
 
         resetState()

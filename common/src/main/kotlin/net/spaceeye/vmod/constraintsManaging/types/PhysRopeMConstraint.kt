@@ -3,7 +3,6 @@ package net.spaceeye.vmod.constraintsManaging.types
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.*
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.entities.ServerEntitiesHolder
@@ -22,9 +21,8 @@ import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
-import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
-import org.valkyrienskies.core.apigame.constraints.VSSphericalTwistLimitsConstraint
+import org.valkyrienskies.core.apigame.constraints.*
+import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
 import java.awt.Color
@@ -41,15 +39,13 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
     var massPerSegment = 0.0
     var radius: Double = 0.0
 
-    var vsId: ConstraintId = -1
-
     var entitiesUUIDs = mutableListOf<UUID>()
     var entities = mutableListOf<PhysRopeComponentEntity>()
     var cIDs = mutableListOf<Int>()
 
-    var firstRotation: Quaterniond? = null
-    var middleRotation: Quaterniond? = null
-    var lastRotation: Quaterniond? = null
+//    var firstRotation: Quaterniond? = null
+//    var middleRotation: Quaterniond? = null
+//    var lastRotation: Quaterniond? = null
 
     constructor(
         shipId0: ShipId,
@@ -138,12 +134,46 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         }
     }
 
-    override fun onScale(level: ServerLevel, scale: Double) {
-        ELOG("NOT IMPLEMENTED FOR PHYS ROPE")
+    //TODO the way it works is pretty stupid, redo when possible
+    //why does it recreate phys entities instead of modifying them?
+    //shipObjectWorld.teleportPhysicsEntity doesn't scale entities when you give it new scale
+    //changing physEntityServer also doesn't seem to work but i'm not sure
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
+        val newPositions = entities.map {
+            (Vector3d(it.physicsEntityData!!.transform.positionInWorld) - scalingCenter) * scaleBy + scalingCenter
+        }
+
+        val oldEntities = entities
+
+        entities = mutableListOf()
+        entitiesUUIDs.clear()
+        cIDs.clear()
+
+        massPerSegment *= scaleBy
+        radius *= scaleBy
+        ropeLength *= scaleBy
+
+        createNewMConstraint(level)
+
+        oldEntities.zip(entities).zip(newPositions).forEach { (entities, pos) ->
+            val (old, new) = entities
+
+            level.shipObjectWorld.teleportPhysicsEntity(new.physicsEntityServer!!, ShipTeleportDataImpl(
+                pos.toJomlVector3d(),
+                old.physicsEntityServer!!.shipTransform.shipToWorldRotation,
+                org.joml.Vector3d(),
+                org.joml.Vector3d(),
+                old.physicsEntityServer!!.dimensionId
+            ))
+//            new.physicsEntityServer!!.isStatic = false
+//            new.physicsEntityServer!!.needsUpdating = true
+        }
+
+        oldEntities.forEach { it.kill() }
     }
 
     override fun getVSIds(): Set<VSConstraintId> {
-        return setOf(vsId)
+        return cIDs.toSet()
     }
 
     override fun nbtSerialize(): CompoundTag? {
@@ -165,9 +195,9 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         }
 
         tag.put("uuids", uuidTag)
-        tag.putQuaterniond("firstRotation", firstRotation!!)
-        tag.putQuaterniond("middleRotation", middleRotation!!)
-        tag.putQuaterniond("lastRotation", lastRotation!!)
+//        tag.putQuaterniond("firstRotation", firstRotation!!)
+//        tag.putQuaterniond("middleRotation", middleRotation!!)
+//        tag.putQuaterniond("lastRotation", lastRotation!!)
 
         serializeRenderer(tag)
 
@@ -182,9 +212,9 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         massPerSegment = tag.getDouble("massPerSegment")
         radius = tag.getDouble("radius")
 
-        firstRotation = tag.getQuaterniond("firstRotation")
-        middleRotation = tag.getQuaterniond("middleRotation")
-        lastRotation = tag.getQuaterniond("lastRotation")
+//        firstRotation = tag.getQuaterniond("firstRotation")
+//        middleRotation = tag.getQuaterniond("middleRotation")
+//        lastRotation = tag.getQuaterniond("lastRotation")
 
         entitiesUUIDs = (tag.get("uuids") as ListTag).map { (it as CompoundTag).getUUID("uuid") }.toMutableList()
         deserializeRenderer(tag)
@@ -200,8 +230,8 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         var prevId = constraint.shipId0
         var prevPos = constraint.localPos0
 
-        var prevRot = firstRotation ?: getHingeRotation(level.shipObjectWorld.allShips.getById(prevId)?.transform, worldDirection!!)
-        firstRotation = prevRot
+//        var prevRot = firstRotation ?: getHingeRotation(level.shipObjectWorld.allShips.getById(prevId)?.transform, worldDirection!!)
+//        firstRotation = prevRot
 
         for ((i, entity) in entities.withIndex()) {
             val rpos = (dir * length).toJomlVector3d()
@@ -213,18 +243,20 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
                     constraint.maxForce, 0.0)
             ) ?: run { level.removeManagedConstraint(mID) ; return })
 
-            val thisRot = middleRotation ?: getHingeRotation(entity.physicsEntityData!!.transform, worldDirection!!)
-            middleRotation = thisRot
+            level.shipObjectWorld.disableCollisionBetweenBodies(prevId, entity.physicsEntityData!!.shipId)
 
-            level.shipObjectWorld.createNewConstraint(
-                VSSphericalTwistLimitsConstraint(prevId, entity.physicsEntityData!!.shipId, constraint.compliance,
-                    prevRot, thisRot,
-                    1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
-            )
+//            val thisRot = middleRotation ?: getHingeRotation(entity.physicsEntityData!!.transform, worldDirection!!)
+//            middleRotation = thisRot
+
+//            level.shipObjectWorld.createNewConstraint(
+//                VSSphericalTwistLimitsConstraint(prevId, entity.physicsEntityData!!.shipId, constraint.compliance,
+//                    prevRot, thisRot,
+//                    1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
+//            )
 
             prevId = entity.physicsEntityData!!.shipId
             prevPos = (-dir * length).toJomlVector3d()
-            prevRot = thisRot
+//            prevRot = thisRot
         }
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(
@@ -234,14 +266,16 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
                 constraint.maxForce, 0.0)
         ) ?: run { level.removeManagedConstraint(mID) ; return })
 
-        val lastRotation_ = lastRotation ?: getHingeRotation(level.shipObjectWorld.allShips.getById(constraint.shipId1)?.transform, worldDirection!!)
-        lastRotation = lastRotation_
+        level.shipObjectWorld.disableCollisionBetweenBodies(prevId, constraint.shipId1)
 
-        level.shipObjectWorld.createNewConstraint(
-            VSSphericalTwistLimitsConstraint(prevId, constraint.shipId1, constraint.compliance,
-                prevRot, lastRotation_,
-                1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
-        )
+//        val lastRotation_ = lastRotation ?: getHingeRotation(level.shipObjectWorld.allShips.getById(constraint.shipId1)?.transform, worldDirection!!)
+//        lastRotation = lastRotation_
+
+//        level.shipObjectWorld.createNewConstraint(
+//            VSSphericalTwistLimitsConstraint(prevId, constraint.shipId1, constraint.compliance,
+//                prevRot, lastRotation_,
+//                1e200, Math.toRadians(-20.0), Math.toRadians(20.0))
+//        )
 
         var radius = radius
         if (length < radius) { radius = length / 2 }

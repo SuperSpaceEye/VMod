@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -41,7 +42,7 @@ class DisabledCollisionMConstraint(): MConstraint {
     }
 
     override fun getAttachmentPoints(): List<BlockPos> = listOf()
-    override fun onScale(level: ServerLevel, scale: Double) {}
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
     override fun getVSIds(): Set<VSConstraintId> = setOf()
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? { return DisabledCollisionMConstraint(mapped[shipId1] ?: return null, mapped[shipId2] ?: return null) }
 
@@ -71,12 +72,16 @@ class DisabledCollisionMConstraint(): MConstraint {
         tag.putLong("shipId1", shipId1)
         tag.putLong("shipId2", shipId2)
 
+        tag.putInt("managedId", mID)
+
         return tag
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         shipId1 = tag.getLong("shipId1")
         shipId2 = tag.getLong("shipId2")
+
+        mID = tag.getInt("managedId")
 
         return this
     }

@@ -29,11 +29,17 @@ class DisableCollisionsMode: BaseMode, DisableCollisionsSerializable, DisableCol
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, shipId2)).addFor(player)
+        resetState()
     }
 
     fun activateSecondaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (raycastResult.state.isAir) {return}
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return
-        level.getAllDisabledCollisionsOfId(ship.id)?.map {(id, _) -> id}?.forEach { level.enableCollisionBetween(ship.id, it) }
+        level.getAllDisabledCollisionsOfId(ship.id)?.forEach { (id, num) -> for (i in 0 until num) { level.enableCollisionBetween(ship.id, id) } }
+    }
+
+    override fun resetState() {
+        previousResult = null
+        primaryFirstRaycast = false
     }
 }

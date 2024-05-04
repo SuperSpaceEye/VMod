@@ -35,7 +35,7 @@ class ConstraintManager: SavedData() {
     private val shipsConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
     private val idToConstraint = mutableMapOf<ManagedConstraintId, MConstraint>()
     internal val constraintIdCounter = ConstraintIdCounter()
-    private val idToDisabledCollisions = mutableMapOf<ShipId, MutableMap<ShipId, MutablePair<Int, (() -> Unit)?>>>()
+    private val idToDisabledCollisions = mutableMapOf<ShipId, MutableMap<ShipId, MutablePair<Int, MutableList<(() -> Unit)?>>>>()
 
     private val tickingConstraints = mutableListOf<Tickable>()
 
@@ -305,26 +305,30 @@ class ConstraintManager: SavedData() {
     fun disableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId, callback: (() -> Unit)? = null) {
         level.shipObjectWorld.disableCollisionBetweenBodies(shipId1, shipId2)
 
-        idToDisabledCollisions.getOrPut(shipId1) { mutableMapOf() }.compute (shipId2) { _, pair-> if (pair == null) { MutablePair(1, callback) } else { pair.left++; pair } }
-        idToDisabledCollisions.getOrPut(shipId2) { mutableMapOf() }.compute (shipId1) { _, pair-> if (pair == null) { MutablePair(1, callback) } else { pair.left++; pair } }
+        idToDisabledCollisions.getOrPut(shipId1) { mutableMapOf() }.compute (shipId2) { _, pair-> if (pair == null) { MutablePair(1, mutableListOf(callback)) } else { pair.left++; pair.right.add(callback); pair } }
+        idToDisabledCollisions.getOrPut(shipId2) { mutableMapOf() }.compute (shipId1) { _, pair-> if (pair == null) { MutablePair(1, mutableListOf(callback)) } else { pair.left++; pair.right.add(callback); pair } }
     }
 
     fun enableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId) {
-        val set = idToDisabledCollisions[shipId1]
-        if (set == null) {level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2); return}
-        val value = set[shipId2]
+        val map = idToDisabledCollisions[shipId1]
+        if (map == null) {level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2); return}
+        val value = map[shipId2]
         if (value == null) {level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2); return}
         value.left--
         if (value.left > 0) {
-            set.compute(shipId2) {_, pair -> pair!!.left--; pair}
             idToDisabledCollisions[shipId2]!!.compute(shipId1) {_, pair -> pair!!.left--; pair}
             return
         }
 
-        level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2)
-        value.right?.invoke()
-        set.remove(shipId2)
+        map.remove(shipId2)
         idToDisabledCollisions[shipId2]!!.remove(shipId1)
+
+        if (map.isEmpty()) { idToDisabledCollisions.remove(shipId1) }
+        if (idToDisabledCollisions[shipId2]!!.isEmpty()) { idToDisabledCollisions.remove(shipId2) }
+
+        level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2)
+
+        value.right?.filterNotNull()?.forEach { it.invoke() }
     }
 
     fun getAllDisabledCollisionsOfId(shipId: ShipId): Map<ShipId, Int>? {

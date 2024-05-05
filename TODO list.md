@@ -20,6 +20,9 @@
 ## Sounds
 * Add sounds and shit
 
+## Toolgun Modes
+* Remake them again to use events for CRI events, reset, etc for an easier additions of PA, etc.
+
 ## Toolgun Menu
 * Expand menu with more GUI components (sliders, drop down options, etc)
 * Make menu look better

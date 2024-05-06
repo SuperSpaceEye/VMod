@@ -13,6 +13,7 @@ import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.utils.PosMap
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.ServerLevelHolder
+import org.apache.commons.lang3.tuple.MutablePair
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -34,6 +35,7 @@ class ConstraintManager: SavedData() {
     private val shipsConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
     private val idToConstraint = mutableMapOf<ManagedConstraintId, MConstraint>()
     internal val constraintIdCounter = ConstraintIdCounter()
+    private val idToDisabledCollisions = mutableMapOf<ShipId, MutableMap<ShipId, MutablePair<Int, MutableList<(() -> Unit)?>>>>()
 
     private val tickingConstraints = mutableListOf<Tickable>()
 
@@ -298,6 +300,39 @@ class ConstraintManager: SavedData() {
 
     fun tryGetIdOfPosition(pos: BlockPos): List<ManagedConstraintId>? {
         return posToMId.getItemsAt(pos)
+    }
+
+    fun disableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId, callback: (() -> Unit)? = null) {
+        level.shipObjectWorld.disableCollisionBetweenBodies(shipId1, shipId2)
+
+        idToDisabledCollisions.getOrPut(shipId1) { mutableMapOf() }.compute (shipId2) { _, pair-> if (pair == null) { MutablePair(1, mutableListOf(callback)) } else { pair.left++; pair.right.add(callback); pair } }
+        idToDisabledCollisions.getOrPut(shipId2) { mutableMapOf() }.compute (shipId1) { _, pair-> if (pair == null) { MutablePair(1, mutableListOf(callback)) } else { pair.left++; pair.right.add(callback); pair } }
+    }
+
+    fun enableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId) {
+        val map = idToDisabledCollisions[shipId1]
+        if (map == null) {level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2); return}
+        val value = map[shipId2]
+        if (value == null) {level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2); return}
+        value.left--
+        if (value.left > 0) {
+            idToDisabledCollisions[shipId2]!!.compute(shipId1) {_, pair -> pair!!.left--; pair}
+            return
+        }
+
+        map.remove(shipId2)
+        idToDisabledCollisions[shipId2]!!.remove(shipId1)
+
+        if (map.isEmpty()) { idToDisabledCollisions.remove(shipId1) }
+        if (idToDisabledCollisions[shipId2]!!.isEmpty()) { idToDisabledCollisions.remove(shipId2) }
+
+        level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2)
+
+        value.right?.filterNotNull()?.forEach { it.invoke() }
+    }
+
+    fun getAllDisabledCollisionsOfId(shipId: ShipId): Map<ShipId, Int>? {
+        return idToDisabledCollisions[shipId]?.map { (k, v) -> Pair(k, v.left) }?.toMap()
     }
 
     private fun shipWasSplitEvent(

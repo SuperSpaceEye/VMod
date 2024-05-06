@@ -28,7 +28,6 @@ interface AxisGUIBuilder: GUIBuilder {
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
 
         makeTextEntry(FIXED_DISTANCE.get(),     ::fixedDistance,     offset, offset, parentWindow)
-        makeCheckBox (DISABLE_COLLISIONS.get(), ::disableCollisions, offset, offset, parentWindow)
 
         makeTextEntry(DISTANCE_FROM_BLOCK.get(), ::paDistanceFromBlock, offset, offset, parentWindow, limits.distanceFromBlock)
         makeDropDown(

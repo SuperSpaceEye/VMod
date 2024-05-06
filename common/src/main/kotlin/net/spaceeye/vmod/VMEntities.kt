@@ -4,6 +4,8 @@ import dev.architectury.registry.client.level.entity.EntityRendererRegistry
 import dev.architectury.registry.registries.DeferredRegister
 import dev.architectury.registry.registries.RegistrySupplier
 import net.minecraft.core.registries.Registries
+import dev.architectury.utils.EnvExecutor
+import net.fabricmc.api.EnvType
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
@@ -30,8 +32,12 @@ object VMEntities {
     fun register() {
         ENTITIES.register()
 
-        EntityRendererRegistry.register({ PHYS_ROPE_COMPONENT.get() }) {
-            context -> EmptyRenderer(context)
+        EnvExecutor.runInEnv(EnvType.CLIENT) {
+            Runnable {
+                EntityRendererRegistry.register({ PHYS_ROPE_COMPONENT.get() }) { context ->
+                    EmptyRenderer(context)
+                }
+            }
         }
     }
 }

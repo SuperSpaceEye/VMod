@@ -15,7 +15,6 @@ interface AxisSerializable: MSerializable, PlacementAssistSerialize {
         buf.writeDouble(maxForce)
         buf.writeEnum(posMode)
         buf.writeDouble(width)
-        buf.writeBoolean(disableCollisions)
 
         buf.writeBoolean(secondaryFirstRaycast)
 
@@ -30,7 +29,6 @@ interface AxisSerializable: MSerializable, PlacementAssistSerialize {
         maxForce = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
-        disableCollisions = buf.readBoolean()
 
         secondaryFirstRaycast = buf.readBoolean()
 

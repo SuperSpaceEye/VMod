@@ -99,6 +99,10 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
     private val level: Level
         get() = level()
 
+    val radius: Double? get() = physicsEntityData?.let { (it.collisionShapeData as VSCapsuleCollisionShapeData).radius }
+    val length: Double? get() = physicsEntityData?.let { (it.collisionShapeData as VSCapsuleCollisionShapeData).length }
+    val mass:   Double? get() = physicsEntityData?.inertiaData?.mass
+
     init {
         if (level.isClientSide) {
             ClientEntitiesHolder.entityLoaded(id, this)

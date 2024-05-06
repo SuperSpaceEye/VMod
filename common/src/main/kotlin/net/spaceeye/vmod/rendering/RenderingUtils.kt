@@ -5,6 +5,9 @@ import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Matrix4f
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 object RenderingUtils {
     val ropeTexture = ResourceLocation(VM.MOD_ID, "textures/misc/rope.png")
@@ -50,6 +53,46 @@ object RenderingUtils {
             buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(uv0, 0.0f).uv2(lightmapUV).endVertex()
             buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(uv1, 0.0f).uv2(lightmapUV).endVertex()
             buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(uv1, 1.0f).uv2(lightmapUV).endVertex()
+        }
+
+        @JvmStatic inline fun makePolygon(sides: Int, radius: Double, up: Vector3d, right: Vector3d, pos: Vector3d): List<Vector3d> {
+            val segment = PI * 2.0 / sides
+            val points = mutableListOf<Vector3d>()
+            for (i in 0 until sides) {
+                points.add(
+                    (up * sin(segment * i)
+                + right * cos(segment * i)) * radius + pos)
+            }
+
+            return points
+        }
+
+        @JvmStatic inline fun makePolygonTube(sides: Int, radius: Double,
+                                          pos1: Vector3d, pos2: Vector3d, up: Vector3d?): Pair<List<Vector3d>, List<Vector3d>> {
+            val ndir = (pos2 - pos1).snormalize()
+            val sdir = ndir.add(ndir.y, ndir.z, ndir.x).snormalize()
+
+            val up = up ?: sdir.cross(ndir)
+            val right = ndir.cross(up)
+
+            val lpoints = makePolygon(sides, radius, up, right, pos1)
+            val rpoints = makePolygon(sides, radius, up, right, pos2)
+
+            return Pair(lpoints, rpoints)
+        }
+
+        @JvmStatic inline fun drawPolygonTube(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
+                                              uv0: Float, uv1: Float, lpoints: List<Vector3d>, rpoints: List<Vector3d>) {
+            val times = lpoints.size
+
+            for (i in 0 until times-1) {
+                drawQuad(buf, matrix, r, g, b, a, lightmapUV,
+                    lpoints[i], lpoints[i+1], rpoints[i+1], rpoints[i],
+                    uv0, uv1)
+            }
+            drawQuad(buf, matrix, r, g, b, a, lightmapUV,
+                lpoints[times-1], lpoints[0], rpoints[0], rpoints[times-1],
+                uv0, uv1)
         }
 
         @JvmStatic inline fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,

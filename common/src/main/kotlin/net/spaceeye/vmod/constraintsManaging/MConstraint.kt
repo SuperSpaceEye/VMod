@@ -75,7 +75,8 @@ interface MConstraint: RegistryObject {
 
     fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint?
 
-    fun onScale(level: ServerLevel, scale: Double)
+    fun onScaleBy(level: ServerLevel, scaleBy: Double) {throw NotImplementedError("")}
+    fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) { onScaleBy(level, scaleBy) }
     fun getVSIds(): Set<VSConstraintId>
 
     fun nbtSerialize(): CompoundTag?

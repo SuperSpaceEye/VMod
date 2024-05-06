@@ -65,7 +65,7 @@ open class BasicMConstraint(): MConstraint {
         return null
     }
 
-    override fun onScale(level: ServerLevel, scale: Double) {
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
         ELOG("onScale IS NOT IMPLEMENTED FOR BasicMConstraint")
     }
 

@@ -10,6 +10,7 @@ import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.HydraulicsGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.inputHandling.HydraulicsCRIHandler
 import net.spaceeye.vmod.toolgun.modes.serializing.HydraulicsSerializable
@@ -70,8 +71,8 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
                 )
             }
 
-    init {
-        HydraulicsNetworking.init(this)
+    override fun init(type: BaseNetworking.EnvType) {
+        HydraulicsNetworking.init(this, type)
     }
 
     val conn_primary = register { object : C2SConnection<HydraulicsMode>("hydraulics_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }

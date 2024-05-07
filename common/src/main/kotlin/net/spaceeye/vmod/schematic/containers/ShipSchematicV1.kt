@@ -387,7 +387,7 @@ class ShipSchematicV1(): IShipSchematic {
         serializeGridDataInfo(saveTag)
         serializeExtraBlockData(saveTag)
 
-        return CompoundTagIFile(saveTag)
+        return CompoundTagIFileWithTopVersion(saveTag, schematicVersion)
     }
 
     private fun deserializeMetadata(tag: CompoundTag) {

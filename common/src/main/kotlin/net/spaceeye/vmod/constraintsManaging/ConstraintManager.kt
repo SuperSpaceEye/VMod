@@ -477,7 +477,8 @@ class ConstraintManager: SavedData() {
                 val toSave = shipsToBeSaved.filter { instance.shipsConstraints.containsKey(it.id) }
                 if (toSave.isEmpty()) {return@registerCopyPasteEvents null}
 
-                val saveTag = CompoundTag()
+                val tag = CompoundTag()
+                val shipsTag = CompoundTag()
                 instance.saveCounter++
 
                 toSave.forEach { ship ->
@@ -490,27 +491,28 @@ class ConstraintManager: SavedData() {
                         constraintsTag.add(ctag)
                         constraint.saveCounter = instance.saveCounter
                     }
-                    saveTag.put("${ship.id}", constraintsTag)
+                    shipsTag.put("${ship.id}", constraintsTag)
                 }
 
-                saveTag.put(SAVE_TAG_NAME_STRING, CompoundTag())
+                tag.put(SAVE_TAG_NAME_STRING, shipsTag)
 
-                instance.saveDimensionIds(saveTag)
+                instance.saveDimensionIds(tag)
+                instance.saveSchema(tag)
 
-                CompoundTagIFile(saveTag)
+                CompoundTagIFile(tag)
             }, { loadedShips: List<Pair<ServerShip, Long>>, loadFile: IFile, unregister: () -> Unit ->
                 val instance = getInstance()
 
                 val file = CompoundTagIFile(CompoundTag())
                 file.fromBytes(loadFile.toBytes())
 
-                val shipsTag = file.tag
-
-                val lastDimensionIds = instance.loadDimensionIds(shipsTag.get(SAVE_TAG_NAME_STRING) as CompoundTag)
-
-                shipsTag.remove(SAVE_TAG_NAME_STRING)
-
+                val tag = file.tag
                 val toInitConstraints = mutableListOf<MConstraint>()
+
+                val schema = instance.loadSchema(tag)
+                val lastDimensionIds = instance.loadDimensionIds(tag)
+
+                val shipsTag = tag[SAVE_TAG_NAME_STRING]!! as CompoundTag
 
                 var count = 0
                 var maxId = -1
@@ -522,18 +524,18 @@ class ConstraintManager: SavedData() {
                         var strType = "UNKNOWN"
 
                         try {
-                            ctag as CompoundTag
-                            type = ctag.getInt("MCONSTRAINT_TYPE")
-                            strType = MConstraintTypes.idxToType(type)!!
-                            val mConstraint = MConstraintTypes
-                                .idxToSupplier(ctag.getInt("MCONSTRAINT_TYPE"))
-                                .get()
-                                .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("FAILED TO DESEREALIZE CONSTRAINT OF TYPE ${MConstraintTypes.idxToSupplier(type).get().typeName}"); null } ?: continue
+                        ctag as CompoundTag
+                        type = ctag.getInt("MCONSTRAINT_TYPE")
+                        strType = schema[type]!!
+                        val mConstraint = MConstraintTypes
+                            .idxToSupplier(ctag.getInt("MCONSTRAINT_TYPE"))
+                            .get()
+                            .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("FAILED TO DESEREALIZE CONSTRAINT OF TYPE ${MConstraintTypes.idxToSupplier(type).get().typeName}"); null } ?: continue
 
-                            maxId = max(maxId, mConstraint.mID.id)
+                        maxId = max(maxId, mConstraint.mID)
 
-                            constraints.add(mConstraint)
-                            count++
+                        constraints.add(mConstraint)
+                        count++
                         } catch (e: Exception) { ELOG("FAILED TO LOAD CONSTRAINT WITH IDX ${type} AND TYPE ${strType}") }
                     }
                     toInitConstraints.addAll(constraints)

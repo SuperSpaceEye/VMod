@@ -18,6 +18,7 @@ import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.transformProviders.CenteredAroundPlacementAssistTransformProvider
 import net.spaceeye.vmod.transformProviders.CenteredAroundRotationAssistTransformProvider
 import net.spaceeye.vmod.transformProviders.PlacementAssistTransformProvider
@@ -128,14 +129,11 @@ interface PlacementAssistCRIHandler {
 
 interface PANetworkingUnit: BaseMode, PlacementAssistServer, PlacementAssistCRIHandler
 
-open class PlacementAssistNetworking(networkName: String) {
-    private var obj: PANetworkingUnit? = null
-    fun init(mode: PANetworkingUnit) {if (obj == null) { obj = mode} }
-
+open class PlacementAssistNetworking(networkName: String): BaseNetworking<PANetworkingUnit>() {
     val s2cHandleFailure = "handle_failure" idWithConns {
         object : S2CConnection<S2CHandleFailurePacket>(it, networkName) {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val obj = obj ?: return
+                val obj = clientObj ?: return
                 obj.resetState()
             }
         }
@@ -146,7 +144,7 @@ open class PlacementAssistNetworking(networkName: String) {
         object : S2CConnection<S2CSendTraversalInfo>(it, networkName) {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = S2CSendTraversalInfo(buf)
-                val obj = obj!!
+                val obj = clientObj!!
 
                 if (obj.paCaughtShip == null) {return}
 
@@ -173,14 +171,6 @@ open class PlacementAssistNetworking(networkName: String) {
     class S2CHandleFailurePacket(): Serializable {
         override fun serialize(): FriendlyByteBuf { return getBuffer() }
         override fun deserialize(buf: FriendlyByteBuf) {}
-    }
-
-    infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
-        val instance = constructor(this)
-        try { // Why? so that if it's registered on dedicated client/server it won't die
-            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
-        } catch(e: NoSuchMethodError) {}
-        return instance
     }
 }
 

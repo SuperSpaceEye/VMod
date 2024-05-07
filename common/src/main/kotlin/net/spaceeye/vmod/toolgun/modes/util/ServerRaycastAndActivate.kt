@@ -9,6 +9,7 @@ import net.spaceeye.vmod.rendering.Effects
 import net.spaceeye.vmod.toolgun.PlayerToolgunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 
@@ -23,6 +24,7 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
     if (serverMode.mode !is T) { serverMode = PlayerToolgunState(constructor()); ServerToolGunState.playersStates[player.uuid] = serverMode }
 
     try {
+    serverMode.mode.init(BaseNetworking.EnvType.Server)
     serverMode.mode.deserialize(buf)
     serverMode.mode.serverSideVerifyLimits()
 

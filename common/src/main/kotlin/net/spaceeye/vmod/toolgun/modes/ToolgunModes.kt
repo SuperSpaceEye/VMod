@@ -22,5 +22,7 @@ object ToolgunModes {
     var initialized = false
     init {
         initialized = true
+
+        modes.forEach { it.init(BaseNetworking.EnvType.Client) }
     }
 }

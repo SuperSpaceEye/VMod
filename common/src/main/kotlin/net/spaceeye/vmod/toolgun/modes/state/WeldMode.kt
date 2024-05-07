@@ -10,6 +10,7 @@ import net.spaceeye.vmod.constraintsManaging.types.WeldMConstraint
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.WeldGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.inputHandling.WeldCRIHandler
 import net.spaceeye.vmod.toolgun.modes.serializing.WeldSerializable
@@ -49,8 +50,8 @@ class WeldMode: BaseMode, WeldSerializable, WeldCRIHandler, WeldGUIBuilder, Plac
             )
         }
 
-    init {
-        WeldNetworking.init(this)
+    override fun init(type: BaseNetworking.EnvType) {
+        WeldNetworking.init(this, type)
     }
 
     val conn_primary = register { object : C2SConnection<WeldMode>("weld_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<WeldMode>(context.player, buf, ::WeldMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }

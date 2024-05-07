@@ -3,14 +3,15 @@ package net.spaceeye.vmod.constraintsManaging.types
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
-import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
-import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
-import net.spaceeye.vmod.constraintsManaging.commonCopy
+import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
+import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -19,18 +20,16 @@ import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
 
-class WeldMConstraint(): MConstraint {
+class WeldMConstraint(): MConstraint, MRenderable {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
     lateinit var rconstraint1: VSTorqueConstraint
 
     var attachmentPoints_ = mutableListOf<BlockPos>()
 
-    var fixedDistance: Double = 0.0
-
     val cIDs = mutableListOf<ConstraintId>()
 
-    var renderer: BaseRenderer? = null
+    override var renderer: BaseRenderer? = null
 
     constructor(
         // shipyard pos
@@ -54,8 +53,6 @@ class WeldMConstraint(): MConstraint {
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength)
-
-        this.fixedDistance = if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength
 
         val dist1 = rpoint1 - rpoint2
         val len = dist1.dist()
@@ -86,7 +83,7 @@ class WeldMConstraint(): MConstraint {
         attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
-    override lateinit var mID: ManagedConstraintId
+    override var mID: ManagedConstraintId = -1
     override val typeName: String get() = "WeldMConstraint"
     override var saveCounter: Int = -1
 
@@ -131,7 +128,7 @@ class WeldMConstraint(): MConstraint {
 
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
 
-        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id)
+        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID)
     }
 
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
@@ -142,17 +139,13 @@ class WeldMConstraint(): MConstraint {
             val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
 
             val con = WeldMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, aconstraint1.fixedDistance, newAttachmentPoints, newRenderer)
-            con.fixedDistance = fixedDistance
             con
         }
     }
 
-    override fun onScale(level: ServerLevel, scale: Double) {
-        val ratio = aconstraint2.fixedDistance / aconstraint1.fixedDistance
-        val newDistance = fixedDistance * scale
-
-        aconstraint1 = VSAttachmentConstraint(aconstraint1.shipId0, aconstraint1.shipId1, aconstraint1.compliance, aconstraint1.localPos0, aconstraint1.localPos1, aconstraint1.maxForce, newDistance)
-        aconstraint2 = VSAttachmentConstraint(aconstraint2.shipId0, aconstraint2.shipId1, aconstraint2.compliance, aconstraint2.localPos0, aconstraint2.localPos1, aconstraint2.maxForce, newDistance * ratio)
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
+        aconstraint1 = VSAttachmentConstraint(aconstraint1.shipId0, aconstraint1.shipId1, aconstraint1.compliance, aconstraint1.localPos0, aconstraint1.localPos1, aconstraint1.maxForce, aconstraint1.fixedDistance * scaleBy)
+        aconstraint2 = VSAttachmentConstraint(aconstraint2.shipId0, aconstraint2.shipId1, aconstraint2.compliance, aconstraint2.localPos0, aconstraint2.localPos1, aconstraint2.maxForce, aconstraint2.fixedDistance * scaleBy)
 
         level.shipObjectWorld.removeConstraint(cIDs[0])
         level.shipObjectWorld.removeConstraint(cIDs[1])
@@ -172,23 +165,22 @@ class WeldMConstraint(): MConstraint {
         tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
         tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint1) ?: return null)
 
-        tag.putInt("managedID", mID.id)
-        tag.putDouble("fixedLength", fixedDistance)
+        tag.putInt("managedID", mID)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
+
+        serializeRenderer(tag)
 
         return tag
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        mID = ManagedConstraintId(if (tag.contains("managedID")) tag.getInt("managedID") else -1)
+        mID = tag.getInt("managedID")
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
+        deserializeRenderer(tag)
 
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint1 = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSTorqueConstraint
-
-        fixedDistance = if (tag.contains("fixedDistance")) tag.getDouble("fixedDistance") else aconstraint1.fixedDistance
-
         return this
     }
 
@@ -202,13 +194,13 @@ class WeldMConstraint(): MConstraint {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint1) ?: clean(level) ?: return false)
 
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id) }
+        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
         return true
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID.id)
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
     }
 }

@@ -4,10 +4,11 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
-import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil
-import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
+import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
 import net.spaceeye.vmod.utils.deserializeBlockPositions
 import net.spaceeye.vmod.utils.serializeBlockPositions
 import org.valkyrienskies.core.api.ships.QueryableShipData
@@ -33,7 +34,7 @@ open class BasicMConstraint(): MConstraint {
     var vsID: VSConstraintId = 0
 
     override val typeName: String get() = "BasicMConstraint"
-    override lateinit var mID: ManagedConstraintId
+    override var mID: ManagedConstraintId = -1
     override var saveCounter: Int = -1
 
     override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
@@ -64,7 +65,7 @@ open class BasicMConstraint(): MConstraint {
         return null
     }
 
-    override fun onScale(level: ServerLevel, scale: Double) {
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
         ELOG("onScale IS NOT IMPLEMENTED FOR BasicMConstraint")
     }
 
@@ -74,14 +75,14 @@ open class BasicMConstraint(): MConstraint {
 
     override fun nbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null
-        tag.putInt("managedID", mID.id)
+        tag.putInt("managedID", mID)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
 
         return tag
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        mID = ManagedConstraintId(tag.getInt("managedID"))
+        mID = tag.getInt("managedID")
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
         tryConvertDimensionId(tag, lastDimensionIds)

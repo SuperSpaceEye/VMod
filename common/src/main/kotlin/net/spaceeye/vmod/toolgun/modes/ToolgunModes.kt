@@ -9,6 +9,8 @@ object ToolgunModes {
         RopeMode(),
         HydraulicsMode(),
         AxisMode(),
+        PhysRopeMode(),
+        DisableCollisionsMode(),
 
 
         CopyMode(),

@@ -13,8 +13,6 @@ interface BaseRenderer: DataUnit {
 }
 
 interface PositionDependentRenderer: BaseRenderer {
-    // if client is farther than rendering area, then it will not render
-    val renderingArea: Double
     // position that will be used in calculation of whenever or not to render the object
     // doesn't need to be an actual position
     val renderingPosition: Vector3d
@@ -22,7 +20,7 @@ interface PositionDependentRenderer: BaseRenderer {
 
 interface TimedRenderer: BaseRenderer {
     // timestamp of when it was started
-    // if -1, then do not take beginning time into account, and always execute it
+    // if -1, then do not take beginning time into account, and always start executing it
     var timestampOfBeginning: Long
     // time for how long it should be active
     // if timestampOfBeginning + activeFor_mc > current time, then it will not render on client

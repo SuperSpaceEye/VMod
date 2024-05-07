@@ -22,7 +22,7 @@ object VMItems {
 
     var LOGO: RegistrySupplier<Item> = ITEMS.register("vmod_logo") { Item(Item.Properties()) }
 
-    var TOOLGUN = ITEMS.register("toolgun") { ToolgunItem() }
+    var TOOLGUN: RegistrySupplier<ToolgunItem> = ITEMS.register("toolgun") { ToolgunItem() }
 
     fun register() {
         VMBlocks.registerItems(ITEMS)

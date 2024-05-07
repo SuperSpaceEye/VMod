@@ -13,7 +13,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.posShipToWorldRender
+import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import net.spaceeye.vmod.utils.readVector3d
 import net.spaceeye.vmod.utils.writeVector3d
 import org.lwjgl.opengl.GL11
@@ -47,7 +47,7 @@ open class A2BRenderer(): BaseRenderer {
         this.width = width
     }
 
-    override fun getTypeName() = "A2BRenderer"
+    override val typeName = "A2BRenderer"
 
     override fun renderData(poseStack: PoseStack, camera: Camera) {
         val level = Minecraft.getInstance().level

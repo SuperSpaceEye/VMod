@@ -24,7 +24,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
     override var timestampOfBeginning: Long = -1
     override var activeFor_ms: Long = -1
     override var wasActivated: Boolean = false
-    override var renderingArea: Double = 0.0
     override var renderingPosition: Vector3d = Vector3d()
 
     constructor(point1: Vector3d,
@@ -34,7 +33,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
 
                 timestampOfBeginning: Long,
                 activeFor_ms: Long,
-                renderingArea: Double,
                 renderingPosition: Vector3d
     ): this() {
         this.point1 = point1
@@ -44,7 +42,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
 
         this.timestampOfBeginning = timestampOfBeginning
         this.activeFor_ms = activeFor_ms
-        this.renderingArea = renderingArea
         this.renderingPosition = renderingPosition
     }
 
@@ -81,7 +78,7 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
         poseStack.popPose()
     }
 
-    override fun getTypeName(): String = "TimedA2BRenderer"
+    override val typeName: String = "TimedA2BRenderer"
 
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
@@ -93,7 +90,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
 
         buf.writeLong(timestampOfBeginning)
         buf.writeLong(activeFor_ms)
-        buf.writeDouble(renderingArea)
         buf.writeVector3d(renderingPosition)
 
         return buf
@@ -107,7 +103,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
 
         timestampOfBeginning = buf.readLong()
         activeFor_ms = buf.readLong()
-        renderingArea = buf.readDouble()
         renderingPosition = buf.readVector3d()
     }
 }

@@ -4,17 +4,16 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
-import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.deserializeConstraint
-import net.spaceeye.vmod.constraintsManaging.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.constraintsManaging.VSConstraintSerializationUtil
-import net.spaceeye.vmod.constraintsManaging.commonCopy
-import net.spaceeye.vmod.network.Activate
-import net.spaceeye.vmod.network.Deactivate
-import net.spaceeye.vmod.network.MessagingNetwork
+import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.network.*
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
+import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
+import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -22,10 +21,12 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sign
 
-class HydraulicsMConstraint(): MConstraint, Tickable {
+class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
     lateinit var aconstraint1: VSAttachmentConstraint
     lateinit var aconstraint2: VSAttachmentConstraint
     lateinit var rconstraint1: VSTorqueConstraint
@@ -42,13 +43,13 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
     var addDist: Double = 0.0
 
-    var scale = 1.0
-
     var channel: String = ""
 
-    var renderer: BaseRenderer? = null
+    var mode = MessageModes.Toggle
 
-    override lateinit var mID: ManagedConstraintId
+    override var renderer: BaseRenderer? = null
+
+    override var mID: ManagedConstraintId = -1
     override val typeName: String get() = "HydraulicsMConstraint"
     override var saveCounter: Int = -1
 
@@ -93,70 +94,42 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
 
-        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id)
+        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID)
     }
 
-    //TODO copying breaks extending/retracting and doesn't work with scaling
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-//        return commonCopy(level, mapped, aconstraint1, attachmentPoints_, renderer) {
-//            nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer ->
-//            commonCopy(level, mapped, aconstraint2, attachmentPoints_, renderer) {
-//                _, _, _, _, slocalPos0, slocalPos1, _, _ ->
-//
-//                val srpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, slocalPos0) } else slocalPos0
-//                val srpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, slocalPos1) } else slocalPos1
-//
-//
-//                val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
-//                val rpoint2 = rpoint1 + (srpoint1 - srpoint2).normalize() * minLength
-//
-//
-//                val con = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed * 20, channel, newAttachmentPoints, newRenderer)
-////                con.scale = scale
-////                con.addDist = addDist
-////                con.minLength = minLength
-////                con.maxLength = maxLength
-////                con.extendedDist = extendedDist
-////                con.extensionSpeed = extensionSpeed
-////                con.aconstraint1 = VSAttachmentConstraint(con.aconstraint1.shipId0, con.aconstraint1.shipId1, con.aconstraint1.compliance, con.aconstraint1.localPos0, con.aconstraint1.localPos1, con.aconstraint1.maxForce, (con.minLength + con.extendedDist) * con.scale)
-////                con.aconstraint2 = VSAttachmentConstraint(con.aconstraint2.shipId0, con.aconstraint2.shipId1, con.aconstraint2.compliance, con.aconstraint2.localPos0, con.aconstraint2.localPos1, con.aconstraint2.maxForce, (con.minLength + con.addDist + con.extendedDist) * con.scale)
-//
-//                con
-//            }
-//        }
-
         return commonCopy(level, mapped, aconstraint1, attachmentPoints_, renderer) {
             nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer ->
 
             val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
             val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
 
-            //TODO this won't work correctly when constraint is extended
-            val con = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed * 20, channel, newAttachmentPoints, newRenderer)
-//            con.scale = scale
-//            con.addDist = addDist
-//            con.minLength = minLength
-//            con.maxLength = maxLength
-//            con.extendedDist = extendedDist
-//            con.extensionSpeed = extensionSpeed
-//            con.aconstraint1 = VSAttachmentConstraint(con.aconstraint1.shipId0, con.aconstraint1.shipId1, con.aconstraint1.compliance, con.aconstraint1.localPos0, con.aconstraint1.localPos1, con.aconstraint1.maxForce, (con.minLength + con.extendedDist) * con.scale)
-//            con.aconstraint2 = VSAttachmentConstraint(con.aconstraint2.shipId0, con.aconstraint2.shipId1, con.aconstraint2.compliance, con.aconstraint2.localPos0, con.aconstraint2.localPos1, con.aconstraint2.maxForce, (con.minLength + con.addDist + con.extendedDist) * con.scale)
+            val con = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed * 20, channel, mode, newAttachmentPoints, newRenderer)
+            con.addDist = addDist
+            con.minLength = minLength
+            con.maxLength = maxLength
+            con.extendedDist = extendedDist
+            con.extensionSpeed = extensionSpeed
+            con.aconstraint1 = VSAttachmentConstraint(con.aconstraint1.shipId0, con.aconstraint1.shipId1, con.aconstraint1.compliance, con.aconstraint1.localPos0, con.aconstraint1.localPos1, con.aconstraint1.maxForce, con.minLength + con.extendedDist)
+            con.aconstraint2 = VSAttachmentConstraint(con.aconstraint2.shipId0, con.aconstraint2.shipId1, con.aconstraint2.compliance, con.aconstraint2.localPos0, con.aconstraint2.localPos1, con.aconstraint2.maxForce, con.minLength + con.addDist + con.extendedDist)
 
             con
         }
     }
 
-    override fun onScale(level: ServerLevel, scale: Double) {
-        aconstraint1 = VSAttachmentConstraint(aconstraint1.shipId0, aconstraint1.shipId1, aconstraint1.compliance, aconstraint1.localPos0, aconstraint1.localPos1, aconstraint1.maxForce, (minLength + extendedDist) * scale)
-        aconstraint2 = VSAttachmentConstraint(aconstraint2.shipId0, aconstraint2.shipId1, aconstraint2.compliance, aconstraint2.localPos0, aconstraint2.localPos1, aconstraint2.maxForce, (minLength + addDist + extendedDist) * scale)
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
+        minLength *= scaleBy
+        extendedDist *= scaleBy
+        addDist *= scaleBy
+
+        aconstraint1 = VSAttachmentConstraint(aconstraint1.shipId0, aconstraint1.shipId1, aconstraint1.compliance, aconstraint1.localPos0, aconstraint1.localPos1, aconstraint1.maxForce, minLength + extendedDist)
+        aconstraint2 = VSAttachmentConstraint(aconstraint2.shipId0, aconstraint2.shipId1, aconstraint2.compliance, aconstraint2.localPos0, aconstraint2.localPos1, aconstraint2.maxForce, minLength + addDist + extendedDist)
 
         level.shipObjectWorld.removeConstraint(cIDs[0])
         level.shipObjectWorld.removeConstraint(cIDs[1])
 
         cIDs[0] = level.shipObjectWorld.createNewConstraint(aconstraint1)!!
         cIDs[1] = level.shipObjectWorld.createNewConstraint(aconstraint2)!!
-
-        this.scale = scale
     }
 
     override fun getVSIds(): Set<VSConstraintId> {
@@ -183,20 +156,19 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
 
         channel: String,
 
+        messageModes: MessageModes,
+
         attachmentPoints: List<BlockPos>,
 
-        renderer: BaseRenderer?,
-
-        scale: Double = 1.0
-    ): this() {
+        renderer: BaseRenderer?): this() {
         aconstraint1 = VSAttachmentConstraint(
             shipId0, shipId1,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-            maxForce, minLength * scale)
+            maxForce, minLength)
 
         val dist1 = rpoint1 - rpoint2
-        val len = dist1.dist() / scale
+        val len = dist1.dist()
         val dir = dist1.normalize() * ( if (len < 10 || len > 30) 20 else 40)
 
         val srpoint1 = rpoint1 + dir
@@ -212,7 +184,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             shipId0, shipId1,
             compliance,
             sspoint1.toJomlVector3d(), sspoint2.toJomlVector3d(),
-            maxForce, (minLength + addDist) * scale
+            maxForce, (minLength + addDist)
         )
 
         val rot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
@@ -227,8 +199,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         this.extensionSpeed = extensionSpeed / 20.0
 
         this.channel = channel
-
-        this.scale = scale
+        this.mode = messageModes
 
         attachmentPoints_ = attachmentPoints.toMutableList()
     }
@@ -240,7 +211,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
         tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint1) ?: return null)
 
-        tag.putInt("managedID", mID.id)
+        tag.putInt("managedID", mID)
 
         tag.putDouble("addDist", addDist)
         tag.putDouble("minDistance", minLength)
@@ -251,13 +222,15 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         tag.putBoolean("isDeactivating", fnToUse == ::deactivatingFn)
         tag.putString("channel", channel)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
-        tag.putDouble("scale", scale)
+        tag.putInt("mode", mode.ordinal)
+
+        serializeRenderer(tag)
 
         return tag
     }
 
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        mID = ManagedConstraintId(tag.getInt("managedID"))
+        mID = tag.getInt("managedID")
 
         addDist = tag.getDouble("addDist")
         minLength = tag.getDouble("minDistance")
@@ -273,7 +246,9 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             else -> null
         }
 
-        scale = if (tag.contains("scale")) tag.getDouble("scale") else 1.0
+        mode = MessageModes.values()[tag.getInt("mode")]
+
+        deserializeRenderer(tag)
 
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
@@ -305,6 +280,48 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
         return true
     }
 
+    private fun signalFn(): Boolean {
+        if (numMessages != 0) {
+            targetPercentage = totalPercentage / numMessages
+            numMessages = 0
+            totalPercentage = 0.0
+        }
+
+        val currentPercentage = extendedDist / maxLength
+        if (abs(currentPercentage - targetPercentage) < 1e-6) { return false }
+        val left = targetPercentage - currentPercentage
+        val percentageStep = extensionSpeed / maxLength
+        extendedDist += min(percentageStep, abs(left)) * maxLength * left.sign
+        return true
+    }
+
+    private fun toggleTick(msg: Message) {
+        when (msg) {
+            is Activate   -> { if(fnToUse == null) {activationCounter = 0}; activationCounter++ }
+            is Deactivate -> { if(fnToUse == null) {activationCounter = 0}; activationCounter-- }
+            else -> return
+        }
+
+        when {
+            activationCounter > 0 -> { fnToUse = ::activatingFn }
+            activationCounter < 0 -> { fnToUse = ::deactivatingFn }
+        }
+    }
+
+    var targetPercentage = 0.0
+
+    var totalPercentage = 0.0
+    var numMessages = 0
+
+    private fun signalTick(msg: Message) {
+        if (msg !is Signal) { return }
+
+        totalPercentage = min(max(msg.percentage, 0.0), 1.0)
+        numMessages++
+
+        fnToUse = ::signalFn
+    }
+
     override fun tick(server: MinecraftServer, unregister: () -> Unit) {
         if (wasDeleted) {
             unregister()
@@ -326,7 +343,7 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             aconstraint1.localPos0,
             aconstraint1.localPos1,
             aconstraint1.maxForce,
-            (minLength + extendedDist) * scale
+            minLength + extendedDist
         )
         cIDs[0] = shipObjectWorld.createNewConstraint(aconstraint1) ?: return
 
@@ -338,12 +355,11 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             aconstraint2.localPos0,
             aconstraint2.localPos1,
             aconstraint2.maxForce,
-            (minLength + addDist + extendedDist) * scale
+            minLength + addDist + extendedDist
         )
         cIDs[1] = shipObjectWorld.createNewConstraint(aconstraint2) ?: return
     }
 
-    // TODO sometimes VS2 can't create new constraints. Do something about it in the future
     private fun <T> clean(level: ServerLevel): T? {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
         return null
@@ -358,25 +374,20 @@ class HydraulicsMConstraint(): MConstraint, Tickable {
             msg, unregister ->
             if (wasDeleted) {unregister(); return@register}
 
-            when (msg) {
-                is Activate   -> { if(fnToUse == null) {activationCounter = 0}; activationCounter++ }
-                is Deactivate -> { if(fnToUse == null) {activationCounter = 0}; activationCounter-- }
-            }
-
-            when {
-                activationCounter > 0 -> { fnToUse = ::activatingFn }
-                activationCounter < 0 -> { fnToUse = ::deactivatingFn }
+            when (mode) {
+                MessageModes.Toggle -> toggleTick(msg)
+                MessageModes.Signal -> signalTick(msg)
             }
         }
 
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID.id, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID.id) }
+        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
         return true
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
         wasDeleted = true
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID.id)
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
     }
 }

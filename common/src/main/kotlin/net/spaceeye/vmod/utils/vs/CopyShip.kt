@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.utils
+package net.spaceeye.vmod.utils.vs
 
 import dev.architectury.event.events.common.TickEvent
 import net.minecraft.core.BlockPos
@@ -9,11 +9,13 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
 import net.spaceeye.vmod.constraintsManaging.getManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.transformProviders.FixedPositionTransformProvider
+import net.spaceeye.vmod.utils.RaycastFunctions
+import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.getNow_ms
 import org.joml.Vector3i
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBic
@@ -28,7 +30,7 @@ import org.valkyrienskies.mod.common.networking.PacketRestartChunkUpdates
 import org.valkyrienskies.mod.common.networking.PacketStopChunkUpdates
 import org.valkyrienskies.mod.common.util.toJOML
 
-val AIR = Blocks.AIR.defaultBlockState()
+val AIR: BlockState = Blocks.AIR.defaultBlockState()
 
 private fun copyShipBlock(level: ServerLevel, state: BlockState, ox: Int, oy: Int, oz: Int, newShipCenter: Vector3d, originCenter: Vector3d, mapped: Map<ShipId, ShipId>) {
     val from = BlockPos(ox, oy, oz)
@@ -168,7 +170,7 @@ fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycas
             copyShipBlock(level, state, ox, oy, oz, newShipCenter, originCenter, mapped)
         }) {
             numCreatedShips++
-            if (numCreatedShips < totalNumShips) {return@registerShipCreation}
+            if (numCreatedShips < totalNumShips) { return@registerShipCreation }
 
             level.players().forEach { player ->
                 PacketRestartChunkUpdates(chunkPosesJOML).sendToClient(player.playerWrapper)
@@ -182,7 +184,7 @@ fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycas
             }
 
             traversed.traversedMConstraintIds.forEach {
-                val newConstraint = level.getManagedConstraint(ManagedConstraintId(it))?.copyMConstraint(level, mapped) ?: return@forEach
+                val newConstraint = level.getManagedConstraint(it)?.copyMConstraint(level, mapped) ?: return@forEach
                 level.makeManagedConstraint(newConstraint)
             }
 

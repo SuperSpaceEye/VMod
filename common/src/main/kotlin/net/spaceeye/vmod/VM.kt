@@ -46,6 +46,7 @@ object VM {
         VMBlocks.register()
         VMBlockEntities.register()
         VMItems.register()
+        VMEntities.register()
 
         makeEvents()
     }

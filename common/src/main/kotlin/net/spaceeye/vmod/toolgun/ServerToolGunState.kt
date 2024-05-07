@@ -8,7 +8,7 @@ import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.translate.GUIComponents.REMOVED
+import net.spaceeye.vmod.translate.REMOVED
 import net.spaceeye.vmod.utils.ServerClosable
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap

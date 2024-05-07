@@ -5,6 +5,10 @@ import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.posShipToWorldRender
+import net.spaceeye.vmod.utils.vs.posWorldToShipRender
+import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorldRender
+import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShipRender
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider

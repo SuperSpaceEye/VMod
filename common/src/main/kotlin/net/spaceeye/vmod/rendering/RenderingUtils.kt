@@ -5,12 +5,15 @@ import com.mojang.math.Matrix4f
 import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.utils.Vector3d
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 object RenderingUtils {
     val ropeTexture = ResourceLocation(VM.MOD_ID, "textures/misc/rope.png")
-    inline fun tof(n: Double) = n.toFloat()
+    @JvmStatic inline fun tof(n: Double) = n.toFloat()
     object Quad {
-        inline fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,
+        @JvmStatic inline fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,
                                r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
                                b1: Vector3d, b2: Vector3d, b3: Vector3d, b4: Vector3d,
                                t1: Vector3d, t2: Vector3d, t3: Vector3d, t4: Vector3d,
@@ -36,7 +39,63 @@ object RenderingUtils {
             buf.vertex(matrix,  tof(b1.x), tof(b1.y), tof(b1.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
         }
 
-        inline fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,
+        @JvmStatic inline fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
+                            lu: Vector3d, ld: Vector3d, ru: Vector3d, rd: Vector3d) {
+            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
+            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
+            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
+            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
+        }
+
+        @JvmStatic inline fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
+                                       lu: Vector3d, ld: Vector3d, ru: Vector3d, rd: Vector3d, uv0: Float, uv1: Float) {
+            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(uv0, 1.0f).uv2(lightmapUV).endVertex()
+            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(uv0, 0.0f).uv2(lightmapUV).endVertex()
+            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(uv1, 0.0f).uv2(lightmapUV).endVertex()
+            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(uv1, 1.0f).uv2(lightmapUV).endVertex()
+        }
+
+        @JvmStatic inline fun makePolygon(sides: Int, radius: Double, up: Vector3d, right: Vector3d, pos: Vector3d): List<Vector3d> {
+            val segment = PI * 2.0 / sides
+            val points = mutableListOf<Vector3d>()
+            for (i in 0 until sides) {
+                points.add(
+                    (up * sin(segment * i)
+                + right * cos(segment * i)) * radius + pos)
+            }
+
+            return points
+        }
+
+        @JvmStatic inline fun makePolygonTube(sides: Int, radius: Double,
+                                          pos1: Vector3d, pos2: Vector3d, up: Vector3d?): Pair<List<Vector3d>, List<Vector3d>> {
+            val ndir = (pos2 - pos1).snormalize()
+            val sdir = ndir.add(ndir.y, ndir.z, ndir.x).snormalize()
+
+            val up = up ?: sdir.cross(ndir)
+            val right = ndir.cross(up)
+
+            val lpoints = makePolygon(sides, radius, up, right, pos1)
+            val rpoints = makePolygon(sides, radius, up, right, pos2)
+
+            return Pair(lpoints, rpoints)
+        }
+
+        @JvmStatic inline fun drawPolygonTube(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
+                                              uv0: Float, uv1: Float, lpoints: List<Vector3d>, rpoints: List<Vector3d>) {
+            val times = lpoints.size
+
+            for (i in 0 until times-1) {
+                drawQuad(buf, matrix, r, g, b, a, lightmapUV,
+                    lpoints[i], lpoints[i+1], rpoints[i+1], rpoints[i],
+                    uv0, uv1)
+            }
+            drawQuad(buf, matrix, r, g, b, a, lightmapUV,
+                lpoints[times-1], lpoints[0], rpoints[0], rpoints[times-1],
+                uv0, uv1)
+        }
+
+        @JvmStatic inline fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,
                                r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
                                width: Double,
                                pos1: Vector3d, pos2: Vector3d) {
@@ -60,7 +119,7 @@ object RenderingUtils {
             makeBoxTube(buf, matrix, r, g, b, a, lightmapUV, ldb, lub, rub, rdb, ldt, lut, rut, rdt)
         }
 
-        inline fun makeFlatRectFacingCamera(buf: VertexConsumer, matrix: Matrix4f,
+        @JvmStatic inline fun makeFlatRectFacingCamera(buf: VertexConsumer, matrix: Matrix4f,
                                             r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
                                             width: Double,
                                             pos1: Vector3d, pos2: Vector3d
@@ -81,28 +140,71 @@ object RenderingUtils {
             val lu =  up * width + pos1
             val ld = -up * width + pos1
 
-            val ru = -up * width + pos1 + wdir
-            val rd =  up * width + pos1 + wdir
+            val ru = -up * width + pos2
+            val rd =  up * width + pos2
 
-            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
+            drawQuad(buf, matrix, r, g, b, a, lightmapUV, lu, ld, ru, rd)
         }
 
-        inline fun lerp(a: Vector3d, b: Vector3d, f: Double) : Vector3d {
+        @JvmStatic inline fun makeFlatRectFacingCameraTexture(buf: VertexConsumer, matrix: Matrix4f,
+                                                       r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
+                                                       width: Double,
+                                                       pos1: Vector3d, pos2: Vector3d
+        ) {
+            // wdir = worldPos2 - worldPos1
+            // t = (cameraPos - worldPos1).dot(wdir) / wdir.dot(wdir)
+            // closestPointToCameraOnLine = worldPos1 + wdir * t
+            // perpendicularVector = (cameraPos - closestPointToCameraOnLine).snormalize()
+            //
+            // cameraPos should be origin, so it becomes
+
+            val wdir = pos2 - pos1
+            // perpendicular direction
+            val pdir = (-pos1 - wdir * ((-pos1).dot(wdir) / wdir.dot(wdir))).snormalize()
+
+            val up = pdir.cross(wdir.normalize())
+
+            val lu =  up * width + pos1
+            val ld = -up * width + pos1
+
+            val ru = -up * width + pos2
+            val rd =  up * width + pos2
+
+            drawQuad(buf, matrix, r, g, b, a, lightmapUV, lu, ld, ru, rd, 0.0f, 1.0f)
+        }
+
+        @JvmStatic inline fun makeFlatRectFacingCameraTexture(
+            buf: VertexConsumer, matrix: Matrix4f,
+            r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
+            width: Double,
+            lu: Vector3d, ld: Vector3d, pos1: Vector3d, pos2: Vector3d
+        ): Pair<Vector3d, Vector3d> {
+            val wdir = pos2 - pos1
+            // perpendicular direction
+            val pdir = (-pos1 - wdir * ((-pos1).dot(wdir) / wdir.dot(wdir))).snormalize()
+
+            val up = pdir.cross(wdir.normalize())
+
+            val ru = -up * width + pos2
+            val rd =  up * width + pos2
+
+            drawQuad(buf, matrix, r, g, b, a, lightmapUV, lu, ld, ru, rd, 0.0f, 1.0f)
+            return Pair(ru, rd)
+        }
+
+        @JvmStatic inline fun lerp(a: Vector3d, b: Vector3d, f: Double) : Vector3d {
 			return a + (b - a) * f
 		}
 		
 		// x is position on rope (from 0 to 1)
 		// l is available length (ie. initial distance - actual distance)
-		inline fun height(l: Double, x: Double) : Double {
+        @JvmStatic inline fun height(l: Double, x: Double) : Double {
 			val a = 2*l
 			return x*a*(x - 1)
 		}
 		
 		// ilength is initial rope length
-		inline fun drawRope(buf: VertexConsumer, matrix: Matrix4f,
+        @JvmStatic inline fun drawRope(buf: VertexConsumer, matrix: Matrix4f,
             r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
             width: Double, segments: Int, ilength: Double,
             pos1: Vector3d, pos2: Vector3d
@@ -142,10 +244,10 @@ object RenderingUtils {
 				val ru = -up1 * width + current
 				val rd =  up1 * width + current
 
-				buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(tof(x0), 0.0f).uv2(lightmapUV).endVertex()
-				buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(tof(x0), 1.0f).uv2(lightmapUV).endVertex()
-				buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(tof(x1), 1.0f).uv2(lightmapUV).endVertex()
-				buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(tof(x1), 0.0f).uv2(lightmapUV).endVertex()
+				buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(tof(0.0), 0.0f).uv2(lightmapUV).endVertex()
+				buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(tof(0.0), 1.0f).uv2(lightmapUV).endVertex()
+				buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(tof(1.0), 1.0f).uv2(lightmapUV).endVertex()
+				buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(tof(1.0), 0.0f).uv2(lightmapUV).endVertex()
 			}
         }
     }

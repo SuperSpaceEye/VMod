@@ -3,6 +3,8 @@
   "vmod.gui.rope": "Rope",
   "vmod.gui.hydraulics": "Hydraulics",
   "vmod.gui.axis": "Axis",
+  "vmod.gui.phys_rope": "Physics Rope",
+
   "vmod.gui.strip": "Strip",
   "vmod.gui.scale": "Scale",
   "vmod.gui.copy": "Copy",
@@ -23,11 +25,19 @@
   "vmod.gui.setting.disable_collisions": "Disable Collisions",
   "vmod.gui.setting.distance_from_block": "Distance From Block",
   "vmod.gui.setting.radius": "Radius",
+  "vmod.gui.setting.placement_assist_scroll_step": "Placement Assist Scroll Step",
+  "vmod.gui.setting.mass_per_segment": "Mass Per Segment",
 
   "vmod.gui.setting.hitpos_modes": "HitPos Modes",
   "vmod.gui.setting.normal": "Normal",
   "vmod.gui.setting.centered_on_side": "Centered On Side",
   "vmod.gui.setting.centered_in_block": "Centered In Block",
+
+  "vmod.gui.setting.input_modes": "Input Modes",
+  "vmod.gui.setting.toggle": "Toggle",
+  "vmod.gui.setting.signal": "Signal",
+
+  "vmod.gui.setting.messager_mode": "Messager Mode",
 
   "vmod.gui.setting.strip_modes": "Strip Modes",
   "vmod.gui.setting.strip_all": "Strip All",

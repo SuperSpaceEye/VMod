@@ -18,6 +18,7 @@ import net.minecraft.world.phys.BlockHitResult
 import net.spaceeye.vmod.blockentities.SimpleMessagerBlockEntity
 import net.spaceeye.vmod.gui.SimpleMessagerGUI
 import net.spaceeye.vmod.network.MessagingNetwork
+import net.spaceeye.vmod.network.Signal
 
 class SimpleMessager(properties: Properties): BaseEntityBlock(properties) {
     override fun use(
@@ -40,8 +41,19 @@ class SimpleMessager(properties: Properties): BaseEntityBlock(properties) {
         return BlockEntityTicker {
             level, blockPos, blockState, blockEntity ->
             if (blockEntity !is SimpleMessagerBlockEntity) {return@BlockEntityTicker}
-            if (!level.hasNeighborSignal(blockPos)) {return@BlockEntityTicker}
-            MessagingNetwork.notify(blockEntity.channel, blockEntity.msg)
+            val msg = blockEntity.msg
+            if (!level.hasNeighborSignal(blockPos)) {
+                if (msg is Signal && msg.percentage != 0.0) {
+                    msg.percentage = 0.0
+                    MessagingNetwork.notify(blockEntity.channel, msg)
+                }
+                return@BlockEntityTicker
+            }
+            if (msg is Signal) {
+                val signal = level.getBestNeighborSignal(blockPos)
+                msg.percentage = signal.toDouble() / 15.0
+            }
+            MessagingNetwork.notify(blockEntity.channel, msg)
         }
     }
 

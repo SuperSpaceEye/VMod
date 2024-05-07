@@ -1,15 +1,22 @@
-package net.spaceeye.vmod.utils
+package net.spaceeye.vmod.utils.vs
 
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
 import net.spaceeye.vmod.constraintsManaging.getManagedConstraint
+import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.shipObjectWorld
+
+fun getMinScale(level: ServerLevel, traversedData: VSConstraintsKeeper.TraversedData): Double {
+    return traversedData.traversedShipIds.mapNotNull {
+        val ship = level.shipObjectWorld.allShips.getById(it) ?: return@mapNotNull null
+        Vector3d(ship.transform.shipToWorldScaling).avg()
+    }.min()
+}
 
 //TODO scaling is a bit fucky
 fun teleportShipWithConnected(
@@ -18,13 +25,14 @@ fun teleportShipWithConnected(
     pos: Vector3d,
     rotation: Quaterniondc,
     scale: Double? = null,
-
-    maintainRelativeScale: Boolean = false
 ) {
-    val scale = scale ?: Vector3d(mainShip.transform.shipToWorldScaling).avg()
-
     val traversed = VSConstraintsKeeper.traverseGetConnectedShips(mainShip.id)
-    val transform = (mainShip.transform as ShipTransformImpl).copy(pos.toJomlVector3d(), shipToWorldRotation = rotation, shipToWorldScaling = org.joml.Vector3d(scale, scale, scale))
+
+    val minScale = getMinScale(level, traversed)
+    val scale = scale ?: minScale
+    val scaleBy = if (minScale != scale) { scale / minScale } else { 1.0 }
+
+    val transform = (mainShip.transform as ShipTransformImpl).copy(pos.toJomlVector3d(), shipToWorldRotation = rotation, shipToWorldScaling = org.joml.Vector3d(1.0, 1.0, 1.0).mul(Vector3d(mainShip.transform.shipToWorldScaling).avg() * scaleBy) )
 
     traversed.traversedShipIds.forEach {
         if (it == mainShip.id) { return@forEach }
@@ -37,23 +45,20 @@ fun teleportShipWithConnected(
 
         val newRotation = diff.mul(otherShip.transform.shipToWorldRotation)
 
-        val ratio = Vector3d(otherShip.transform.shipToWorldScaling).avg() / Vector3d(mainShip.transform.shipToWorldScaling).avg()
-
-//        val newScale = if (maintainRelativeScale) {scale * ratio} else {scale}
-        val newScale = scale
+        val newScale = Vector3d(otherShip.transform.shipToWorldScaling).avg() * scaleBy
 
         level.shipObjectWorld.teleportShip(
             otherShip, ShipTeleportDataImpl(
-                newPos.toJomlVector3d(), newRotation, org.joml.Vector3d(), newScale = newScale
+                newPos.toJomlVector3d(), newRotation, otherShip.velocity, otherShip.omega, otherShip.chunkClaimDimension, newScale
             )
         )
     }
 
     level.shipObjectWorld.teleportShip(
         mainShip, ShipTeleportDataImpl(
-            pos.toJomlVector3d(), rotation, org.joml.Vector3d(), newScale = scale
+            pos.toJomlVector3d(), rotation, mainShip.velocity, mainShip.omega, mainShip.chunkClaimDimension, Vector3d(mainShip.transform.shipToWorldScaling).avg() * scaleBy
         )
     )
 
-    traversed.traversedMConstraintIds.forEach { level.getManagedConstraint(ManagedConstraintId(it))?.onScale(level, scale) }
+    if (scaleBy != 1.0) { traversed.traversedMConstraintIds.forEach { level.getManagedConstraint(it)?.onScaleBy(level, scaleBy, Vector3d(mainShip.transform.positionInWorld)) } }
 }

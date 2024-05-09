@@ -22,6 +22,24 @@ interface Serializable {
     fun getBuffer() = FriendlyByteBuf(Unpooled.buffer(512))
 }
 
+interface NetworkingRegisteringFunctions {
+    infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
+        val instance = constructor(this)
+        try { // Why? so that if it's registered on dedicated client/server it won't die
+            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        } catch(e: NoSuchMethodError) {}
+        return instance
+    }
+
+    infix fun <TT: Serializable> String.idWithConnc(constructor: (String) -> C2SConnection<TT>): C2SConnection<TT> {
+        val instance = constructor(this)
+        try { // Why? so that if it's registered on dedicated client/server it won't die
+            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+        } catch(e: NoSuchMethodError) {}
+        return instance
+    }
+}
+
 abstract class C2SConnection<T : Serializable>(id: String, connectionName: String): Connection {
     override val side: NetworkManager.Side = NetworkManager.Side.C2S
     override val id = ResourceLocation(VM.MOD_ID, "c2s_${connectionName}_$id")

@@ -265,11 +265,6 @@ class ShipSchematicV1(): IShipSchematic {
         )
     }
 
-    // TODO redo this
-    // reworked steps:
-    // 1. traverse + gather MConstraints info + gather server only info
-    // 2. send this info to client
-    // 3. client gathers block info by itself
     override fun makeFrom(originShip: ServerShip): Boolean {
         val traversed = VSConstraintsKeeper.traverseGetConnectedShips(originShip.id)
         val level = ServerLevelHolder.overworldServerLevel!!

@@ -1,10 +1,12 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
 import dev.architectury.event.EventResult
+import dev.architectury.event.events.common.PlayerEvent
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.*
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
+import io.netty.buffer.ByteBuf
 import net.minecraft.client.Minecraft
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.TextComponent
@@ -14,9 +16,11 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.networking.C2SConnection
+import net.spaceeye.vmod.networking.S2CDataStream
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
+import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.PlayerToolgunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
@@ -37,6 +41,60 @@ import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
 
 object ClientPlayerSchematics {
+    var dataStream = S2CDataStream(
+        "schem_stream",
+        512,
+        ::SendSchemRequest,
+        {
+            val playerUUID = it.uuid
+
+            ServerToolGunState.playersStates[playerUUID]?.let { state ->
+            val mode = state.mode
+            if (mode !is SchemMode) { return@let null }
+            if (mode.schem == null) { return@let null }
+            SchemHolder(mode.schem!!.saveToFile().toBytes())
+            }
+        },
+        ::SchemHolder,
+        {uuid, data ->
+        ClientToolGunState.currentMode?.let {
+            if (it !is SchemMode) {return@let}
+            it.schem = ShipSchematic.getSchematicFromBytes(data!!.data.array())
+            it.saveSchem(listSchematics())
+
+            }
+        }
+        )
+
+    class SchemHolder(): Serializable {
+        lateinit var data: ByteBuf
+
+        constructor(data: ByteBuf): this() {this.data = data}
+
+        override fun serialize(): FriendlyByteBuf {
+            return FriendlyByteBuf(data)
+        }
+        override fun deserialize(buf: FriendlyByteBuf) {
+            data = buf
+        }
+    }
+
+    class SendSchemRequest(): Serializable {
+        lateinit var uuid: UUID
+        constructor(player: Player): this() {this.uuid = player.uuid}
+
+        override fun serialize(): FriendlyByteBuf {
+            val buf = getBuffer()
+
+            buf.writeUUID(uuid)
+
+            return buf
+        }
+        override fun deserialize(buf: FriendlyByteBuf) {
+            uuid = buf.readUUID()
+        }
+    }
+
     fun listSchematics(): List<Path> {
         try {
             Files.createDirectories(Paths.get("VMod-Schematics"))
@@ -63,6 +121,12 @@ object ServerPlayerSchematics: ServerClosable() {
 
     override fun close() {
         schematics.clear()
+    }
+
+    init {
+        PlayerEvent.PLAYER_QUIT.register {
+            schematics.remove(it.uuid)
+        }
     }
 }
 
@@ -150,7 +214,7 @@ class SchemMode: BaseMode {
         val paths = ClientPlayerSchematics.listSchematics()
 
         Button(Color.GRAY.brighter(), "Save") {
-            SchemNetworking.c2sSaveSchematic.sendToServer(SchemNetworking.C2SSaveSchematic())
+            ClientPlayerSchematics.dataStream.c2sRequestData.sendToServer(ClientPlayerSchematics.SendSchemRequest(Minecraft.getInstance().player!!))
         }.constrain {
             x = 0.pixels()
             y = 0.pixels()

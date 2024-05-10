@@ -1,12 +1,11 @@
 package net.spaceeye.vmod.networking
 
 import dev.architectury.networking.NetworkManager
+import dev.architectury.networking.NetworkManager.Side
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.WLOG
+import net.spaceeye.vmod.utils.Either
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
 import java.util.UUID
@@ -14,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 import kotlin.math.min
 
+//TODO redo this
 object DataStreamReceiverDataHolder: ServerClosable() {
     val receivedData = ConcurrentHashMap<UUID, ReceiverItem>()
 
@@ -73,57 +73,58 @@ object DataStreamTransmitterDataHolder: ServerClosable() {
         var lastUpdated: Long = getNow_ms())
 }
 
-class S2CDataStream<
+class DataStream<
         TRequest: Serializable,
         TData: Serializable>(
     streamName: String,
-    partByteAmount: Int = 524288,
+    transmitterSide: Side,
+    currentSide: Side,
+    partByteAmount: Int = 2000000,
     requestPacketConstructor: () -> TRequest,
-    requestProcessor: (req: TRequest) -> TData?,
     dataPacketConstructor: () -> TData,
-    dataTransmitted: (uuid: UUID, data: TData?) -> Unit,
+    transmitterRequestProcessor: (req: TRequest) -> Either<TData, RequestFailurePkt>? = { throw AssertionError("Invoked Transmitter code on Receiver side") },
+    receiverDataTransmitted: (uuid: UUID, data: TData?) -> Unit = {uuid, data -> throw AssertionError("Invoked Receiver code on Transmitter side") },
+    receiverDataTransmissionFailed: (failurePkt: RequestFailurePkt) -> Unit = { ELOG("Transmission Failed") }
     ): NetworkingRegisteringFunctions {
 
-    private fun sendPart(player: Player, uuid: UUID, part: Int) {
+    private fun sendPart(context: NetworkManager.PacketContext, uuid: UUID, part: Int) {
         val req = DataStreamTransmitterDataHolder.requestsHolder[uuid] ?: return
-
-        WLOG("SENDING PART $part")
 
         val partData = mutableListOf<Byte>()
         req.data.forEachByte((part - 1) * req.partByteAmount, min(req.data.array().size - (part - 1) * req.partByteAmount, req.partByteAmount)) { partData.add(it) }
         req.lastUpdated = getNow_ms()
-        s2cSendPart.sendToClient(player as ServerPlayer, DataPartPkt(part, req.numParts, uuid, partData.toByteArray()))
+        t2rSendPart.transmitData(context, DataPartPkt(part, req.numParts, uuid, partData.toByteArray()))
     }
 
-    val c2sRequestData = "request_data" idWithConnc {
-        object : C2SConnection<TRequest>(it, streamName) {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-
+    // is invoked on the receiver, handler is registered on the transmitter
+    val r2tRequestData = registerTR("request_data", currentSide) {
+        object : TRConnection<TRequest>(it, streamName, transmitterSide.opposite()) {
+            override fun handlerFn(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = requestPacketConstructor()
                 pkt.deserialize(buf)
-                val data = requestProcessor(pkt)
-                if (data == null) {
-                    s2cRequestFailure.sendToClient(context.player as ServerPlayer, RequestFailurePkt())
-                    return
-                }
-                val dataBuf = data.serialize()
+                val data = transmitterRequestProcessor(pkt)
+
+                if (data == null) { t2rRequestFailure.transmitData(context, RequestFailurePkt()); return }
+                if (data is Either.Right){ t2rRequestFailure.transmitData(context, data.b); return }
+
+                val dataBuf = (data as Either.Left).a.serialize()
                 val length = dataBuf.array().size / partByteAmount + 1
                 val uuid = DataStreamTransmitterDataHolder.addRequest(DataStreamTransmitterDataHolder.RequestItem(dataBuf, partByteAmount, length))
-                sendPart(context.player, uuid, 1)
+                sendPart(context, uuid, 1)
             }
         }
     }
-    private val s2cRequestFailure = "request_failure" idWithConns {
-        object : S2CConnection<RequestFailurePkt>(it, streamName) {
-            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                ELOG("REQUEST FAILED")
+    private val t2rRequestFailure = registerTR("request_failure", currentSide) {
+        object : TRConnection<RequestFailurePkt>(it, streamName, transmitterSide) {
+            override fun handlerFn(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                receiverDataTransmissionFailed(RequestFailurePkt(buf))
             }
         }
     }
 
-    val s2cSendPart = "send_part" idWithConns {
-        object : S2CConnection<DataPartPkt>(it, streamName) {
-            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+    val t2rSendPart = registerTR("send_part", currentSide) {
+        object : TRConnection<DataPartPkt>(it, streamName, transmitterSide) {
+            override fun handlerFn(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = DataPartPkt(buf)
                 val data = DataStreamReceiverDataHolder.updateReceived(pkt.requestUUID, pkt.data)
 
@@ -131,31 +132,44 @@ class S2CDataStream<
                     val dataPkt = dataPacketConstructor()
                     dataPkt.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(data.toByteArray())))
                     DataStreamReceiverDataHolder.receivedData.remove(pkt.requestUUID)
-                    dataTransmitted(pkt.requestUUID, dataPkt)
+                    receiverDataTransmitted(pkt.requestUUID, dataPkt)
                     return
                 }
 
-                c2sRequestPart.sendToServer(RequestPart(pkt.part+1, pkt.requestUUID))
+                r2tRequestPart.transmitData(context, RequestPart(pkt.part+1, pkt.requestUUID))
             }
         }
     }
-    val c2sRequestPart = "request_part" idWithConnc {
-        object : C2SConnection<RequestPart>(it, streamName) {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+    val r2tRequestPart = registerTR("request_part", currentSide) {
+        object : TRConnection<RequestPart>(it, streamName, transmitterSide.opposite()) {
+            override fun handlerFn(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = RequestPart(buf)
                 val item = DataStreamTransmitterDataHolder.requestsHolder[pkt.requestUUID]
                 if (item == null) {
-                    s2cRequestFailure.sendToClient(context.player as ServerPlayer, RequestFailurePkt())
+                    t2rRequestFailure.transmitData(context, RequestFailurePkt())
                     return
                 }
-                sendPart(context.player, pkt.requestUUID, pkt.partNum)
+                sendPart(context, pkt.requestUUID, pkt.partNum)
             }
         }
     }
 
     class RequestFailurePkt(): Serializable {
-        override fun serialize(): FriendlyByteBuf { return getBuffer() }
-        override fun deserialize(buf: FriendlyByteBuf) {}
+        var extraData = byteArrayOf()
+
+        constructor(extraData: ByteArray): this() {this.extraData = extraData}
+        constructor(buf: FriendlyByteBuf): this() {deserialize(buf)}
+
+        override fun serialize(): FriendlyByteBuf {
+            val buf = getBuffer()
+
+            buf.writeByteArray(extraData)
+
+            return buf
+        }
+        override fun deserialize(buf: FriendlyByteBuf) {
+            extraData = buf.readByteArray()
+        }
     }
 
     class DataPartPkt(): Serializable {

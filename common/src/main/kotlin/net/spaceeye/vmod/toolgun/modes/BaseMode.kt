@@ -5,6 +5,7 @@ import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIBlock
 import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.networking.C2SConnection
+import net.spaceeye.vmod.networking.NetworkingRegisteringFunctions
 import net.spaceeye.vmod.networking.Serializable
 
 interface GUIBuilder {
@@ -25,11 +26,27 @@ interface MSerializable: Serializable {
 interface BaseMode : MSerializable, GUIBuilder, ClientRawInputsHandler {
     fun resetState() {}
 
+    fun init(type: BaseNetworking.EnvType) {}
+
     fun <T: Serializable> register(constructor: () -> C2SConnection<T>): C2SConnection<T> {
         val instance = constructor()
         if (!ToolgunModes.initialized) {
             try { NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler()) } catch (e: NoSuchMethodError) { }
         }
         return instance
+    }
+}
+
+abstract class BaseNetworking <T: BaseMode>: NetworkingRegisteringFunctions {
+    var clientObj: T? = null
+    var serverObj: T? = null
+
+    enum class EnvType { Client, Server }
+
+    fun init(obj: T, type: EnvType) {
+        when (type) {
+            EnvType.Client -> clientObj = obj
+            EnvType.Server -> serverObj = obj
+        }
     }
 }

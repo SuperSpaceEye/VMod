@@ -286,12 +286,13 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
             numMessages = 0
             totalPercentage = 0.0
         }
+        val length = maxLength - minLength
 
-        val currentPercentage = extendedDist / maxLength
+        val currentPercentage = extendedDist / length
         if (abs(currentPercentage - targetPercentage) < 1e-6) { return false }
         val left = targetPercentage - currentPercentage
-        val percentageStep = extensionSpeed / maxLength
-        extendedDist += min(percentageStep, abs(left)) * maxLength * left.sign
+        val percentageStep = extensionSpeed / length
+        extendedDist += min(percentageStep, abs(left)) * length * left.sign
         return true
     }
 

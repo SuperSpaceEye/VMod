@@ -10,6 +10,7 @@ import net.spaceeye.vmod.constraintsManaging.types.AxisMConstraint
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.AxisGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.inputHandling.AxisCRIHandler
 import net.spaceeye.vmod.toolgun.modes.serializing.AxisSerializable
@@ -50,8 +51,8 @@ class AxisMode: BaseMode, AxisSerializable, AxisCRIHandler, AxisGUIBuilder, Plac
 
     var secondaryFirstRaycast = false
 
-    init {
-        AxisNetworking.init(this)
+    override fun init(type: BaseNetworking.EnvType) {
+        AxisNetworking.init(this, type)
     }
 
     val conn_secondary = register { object : C2SConnection<AxisMode>("axis_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<AxisMode>(context.player, buf, ::AxisMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }

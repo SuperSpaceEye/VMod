@@ -10,6 +10,9 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.events.AVSEvents
+import net.spaceeye.vmod.schematic.ShipSchematic
+import net.spaceeye.vmod.schematic.containers.CompoundTagIFile
+import net.spaceeye.vmod.schematic.icontainers.IFile
 import net.spaceeye.vmod.utils.PosMap
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.ServerLevelHolder
@@ -465,6 +468,92 @@ class ConstraintManager: SavedData() {
                 it, handler ->
                 instance?.shipWasSplitEvent(it.originalShip, it.newShip, it.centerBlock, it.blocks)
             }
+
+            ShipSchematic.registerCopyPasteEvents(
+                    "VMod Constraint Manager",
+            { shipsToBeSaved: List<ServerShip>, unregister: () -> Unit ->
+                val instance = getInstance()
+
+                val toSave = shipsToBeSaved.filter { instance.shipsConstraints.containsKey(it.id) }
+                if (toSave.isEmpty()) {return@registerCopyPasteEvents null}
+
+                val tag = CompoundTag()
+                val shipsTag = CompoundTag()
+                instance.saveCounter++
+
+                toSave.forEach { ship ->
+                    val constraintsTag = ListTag()
+                    val constraints = instance.shipsConstraints[ship.id]!!
+                    for (constraint in constraints) {
+                        if (constraint.saveCounter == instance.saveCounter) { continue }
+                        val ctag = constraint.nbtSerialize() ?: run { WLOG("UNABLE TO SERIALIZE CONSTRAINT ${constraint.typeName} WITH ID ${constraint.mID}"); null } ?: continue
+                        ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("CONSTRAINT OF TYPE ${constraint.typeName} WAS NOT REGISTERED"); null } ?: continue)
+                        constraintsTag.add(ctag)
+                        constraint.saveCounter = instance.saveCounter
+                    }
+                    shipsTag.put("${ship.id}", constraintsTag)
+                }
+
+                tag.put(SAVE_TAG_NAME_STRING, shipsTag)
+
+                instance.saveDimensionIds(tag)
+                instance.saveSchema(tag)
+
+                CompoundTagIFile(tag)
+            }, { loadedShips: List<Pair<ServerShip, Long>>, loadFile: IFile, unregister: () -> Unit ->
+                val instance = getInstance()
+
+                val file = CompoundTagIFile(CompoundTag())
+                file.fromBytes(loadFile.toBytes())
+
+                val tag = file.tag
+                val toInitConstraints = mutableListOf<MConstraint>()
+
+                val schema = instance.loadSchema(tag)
+                val lastDimensionIds = instance.loadDimensionIds(tag)
+
+                val shipsTag = tag[SAVE_TAG_NAME_STRING]!! as CompoundTag
+
+                var count = 0
+                var maxId = -1
+                for (shipId in shipsTag.allKeys) {
+                    val shipConstraintsTag = shipsTag[shipId]!! as ListTag
+                    val constraints = mutableListOf<MConstraint>()
+                    for (ctag in shipConstraintsTag) {
+                        var type = -1
+                        var strType = "UNKNOWN"
+
+                        try {
+                        ctag as CompoundTag
+                        type = ctag.getInt("MCONSTRAINT_TYPE")
+                        strType = schema[type]!!
+                        val mConstraint = MConstraintTypes
+                            .idxToSupplier(ctag.getInt("MCONSTRAINT_TYPE"))
+                            .get()
+                            .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("FAILED TO DESEREALIZE CONSTRAINT OF TYPE ${MConstraintTypes.idxToSupplier(type).get().typeName}"); null } ?: continue
+
+                        maxId = max(maxId, mConstraint.mID)
+
+                        constraints.add(mConstraint)
+                        count++
+                        } catch (e: Exception) { ELOG("FAILED TO LOAD CONSTRAINT WITH IDX ${type} AND TYPE ${strType}") }
+                    }
+                    toInitConstraints.addAll(constraints)
+                }
+
+                val mapped = loadedShips.associate {
+                    if (lastDimensionIds.containsKey(it.second)) {
+                        Pair(level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
+                    } else {
+                        Pair(it.second, it.first.id)
+                    }
+                }
+
+                for (it in toInitConstraints) {
+                    level!!.makeManagedConstraint(it.copyMConstraint(level!!, mapped)?: continue)
+                }
+            }
+            )
         }
     }
 }

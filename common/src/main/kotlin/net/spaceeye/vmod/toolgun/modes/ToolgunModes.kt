@@ -15,10 +15,14 @@ object ToolgunModes {
 
         CopyMode(),
         ScaleMode(),
-        StripMode()
+        StripMode(),
+
+//        SchemMode()
     )
     var initialized = false
     init {
         initialized = true
+
+        modes.forEach { it.init(BaseNetworking.EnvType.Client) }
     }
 }

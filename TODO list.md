@@ -13,6 +13,9 @@
 ## Ticking Constraints
 * Redo them
 
+## Synchronised Data
+* It spams too many packets, idk why
+
 ## HUD Rendering
 * Make system for HUD rendering
 * Use it to make clearer to player that they are in the middle of making a constraint, etc.

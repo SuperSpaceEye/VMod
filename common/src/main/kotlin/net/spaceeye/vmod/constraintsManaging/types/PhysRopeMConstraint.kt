@@ -165,8 +165,6 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
                 org.joml.Vector3d(),
                 old.physicsEntityServer!!.dimensionId
             ))
-//            new.physicsEntityServer!!.isStatic = false
-//            new.physicsEntityServer!!.needsUpdating = true
         }
 
         oldEntities.forEach { it.kill() }

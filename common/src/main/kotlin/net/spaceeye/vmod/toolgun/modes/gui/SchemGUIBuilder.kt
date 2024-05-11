@@ -5,7 +5,7 @@ import gg.essential.elementa.components.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import net.minecraft.client.Minecraft
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.StrLimit
@@ -77,7 +77,7 @@ class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
 }
 
 interface SchemGUIBuilder: GUIBuilder {
-    override val itemName get() = TranslatableComponent("Schem")
+    override val itemName get() = Component.literal("Schem")
 
     var itemsScroll: ScrollComponent?
     var parentWindow: UIBlock

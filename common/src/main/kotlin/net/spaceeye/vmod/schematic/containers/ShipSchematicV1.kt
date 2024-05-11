@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBufInputStream
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.Unpooled
 import net.minecraft.core.BlockPos
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.nbt.NbtIo
@@ -159,7 +160,7 @@ class ShipSchematicV1(): IShipSchematic {
             )
 
             blockData.forEach {
-                val pos = BlockPos(it.pos.x + offset.x, it.pos.y + offset.y, it.pos.z + offset.z)
+                val pos = BlockPos((it.pos.x + offset.x).toInt(), (it.pos.y + offset.y).toInt(), (it.pos.z + offset.z).toInt())
                 val state = blockPalette.fromId(it.paletteId) ?: run {
                     ELOG("STATE UNDER ID ${it.paletteId} IS NULL. TRYING TO CONTINUE PASTING SCHEMATIC.")
                     return@forEach
@@ -437,8 +438,9 @@ class ShipSchematicV1(): IShipSchematic {
     private fun deserializeBlockPalette(tag: CompoundTag) {
         val paletteTag = tag.get("blockPalette") as ListTag
 
+        val lookup = BuiltInRegistries.BLOCK.asLookup()
         val newPalette = paletteTag.mapIndexed { i, it ->
-            val state = NbtUtils.readBlockState(it as CompoundTag)
+            val state = NbtUtils.readBlockState(lookup, it as CompoundTag)
             Pair(i, state)
         }
 

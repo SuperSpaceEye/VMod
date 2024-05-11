@@ -27,8 +27,8 @@ fun getHingeRotation(transform: ShipTransform?, worldDirection: Vector3d): Quate
 
     if (abs(kCosTheta / k + 1.0) < 1e-5) {
         val ort = right.toJomlVector3d().orthogonalize(right.toJomlVector3d())
-        return Quaterniond(ort.x, ort.y, ort.z, 0.0)
+        return Quaterniond(ort.x, ort.y, ort.z, 0.0).normalize()
     }
 
-    return Quaterniond(a.x, a.y, a.z, k + kCosTheta).normalize().invert()
+    return Quaterniond(a.x, a.y, a.z, k + kCosTheta).normalize()
 }

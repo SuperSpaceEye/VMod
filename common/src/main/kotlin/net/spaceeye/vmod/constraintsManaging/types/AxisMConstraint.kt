@@ -79,7 +79,6 @@ class AxisMConstraint(): MConstraint, MRenderable {
             maxForce, if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength + addDist
         )
 
-        // it's still wrong
         val hrot1 = getHingeRotation(ship1?.transform, dir.normalize())
         val hrot2 = getHingeRotation(ship2?.transform, dir.normalize())
 
@@ -208,7 +207,7 @@ class AxisMConstraint(): MConstraint, MRenderable {
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
-//        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
+        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
 
         if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID, renderer!!)
         } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }

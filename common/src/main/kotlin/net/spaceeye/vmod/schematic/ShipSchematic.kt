@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.schematic
 
 import io.netty.buffer.Unpooled
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.schematic.containers.ShipSchematicV1
 import net.spaceeye.vmod.schematic.icontainers.IFile
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
@@ -35,7 +36,10 @@ object ShipSchematic {
 
         val schematic = try {
             getSchematicConstructor(buffer.readInt()).get()
-        } catch (e: AssertionError) {return null}
+        } catch (e: AssertionError) {return null
+        } catch (e: Exception) { ELOG("Failed to load schematic with exception:\n${e.stackTraceToString()}"); return null
+        } catch (e: Error) { ELOG("Failed to load schematic with error:\n${e.stackTraceToString()}"); return null }
+
 
         schematic.loadFromByteBuffer(buffer)
         return schematic

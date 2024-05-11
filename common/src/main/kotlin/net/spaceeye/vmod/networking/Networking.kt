@@ -13,7 +13,7 @@ import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VM
 
 interface Connection {
-    val side: NetworkManager.Side
+    val side: Side
     val id: ResourceLocation
     fun getHandler(): NetworkReceiver
 }

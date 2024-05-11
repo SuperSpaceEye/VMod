@@ -2,6 +2,8 @@ package net.spaceeye.vmod.toolgun.modes.state
 
 import dev.architectury.event.events.common.PlayerEvent
 import dev.architectury.networking.NetworkManager
+import gg.essential.elementa.components.ScrollComponent
+import gg.essential.elementa.components.UIBlock
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
@@ -32,7 +34,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.UUID
+import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
+
+const val SCHEM_EXTENSION = "vschem"
 
 //TODO Add rate limit
 object ClientPlayerSchematics {
@@ -49,6 +54,7 @@ object ClientPlayerSchematics {
                 if (it !is SchemMode) {return@let}
                 it.schem = ShipSchematic.getSchematicFromBytes(data!!.data.array())
                 it.saveSchem(listSchematics())
+                it.reloadScrollItems()
             }
         },
     )
@@ -113,7 +119,7 @@ object ClientPlayerSchematics {
             Files.createDirectories(Paths.get("VMod-Schematics"))
         } catch (e: IOException) {return emptyList()}
         val files = Files.list(Paths.get("VMod-Schematics"))
-        return files.filter { !it.isDirectory() }.toList()
+        return files.filter { !it.isDirectory() && (it.extension == SCHEM_EXTENSION) }.toList()
     }
 
     fun loadSchematic(path: Path): IShipSchematic? {
@@ -211,18 +217,19 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
 }
 
 class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
+    override var itemsScroll: ScrollComponent? = null
+    override lateinit var parentWindow: UIBlock
+
     override fun init(type: BaseNetworking.EnvType) {
         SchemNetworking.init(this, type)
     }
 
     fun saveSchem(items: List<Path>) {
-        var name = "new_schematic_1"
-
+        var name = filename
         val names = items.map { it.fileName.toString() }
 
-        while (names.contains(name)) {
-            name += "1"
-        }
+        while (names.contains(name + ".${SCHEM_EXTENSION}")) { name += "_" }
+        if (!name.endsWith(".${SCHEM_EXTENSION}")) { name += ".${SCHEM_EXTENSION}" }
 
         ClientPlayerSchematics.saveSchematic(name, schem!!)
     }
@@ -231,6 +238,7 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
     val conn_secondary = register { object : C2SConnection<SchemMode>("schem_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
 
     var schem: IShipSchematic? = null
+    var filename = ""
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {resetState(); return}

@@ -10,11 +10,9 @@ import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.concurrent.thread
 import kotlin.math.min
 
-//TODO redo this
-object DataStreamReceiverDataHolder: ServerClosable() {
+class DataStreamReceiverDataHolder: ServerClosable() {
     val receivedData = ConcurrentHashMap<UUID, ReceiverItem>()
 
     fun updateReceived(uuid: UUID, data: ByteArray): MutableList<Byte> {
@@ -30,28 +28,8 @@ object DataStreamReceiverDataHolder: ServerClosable() {
     }
 }
 
-object DataStreamTransmitterDataHolder: ServerClosable() {
+class DataStreamTransmitterDataHolder: ServerClosable() {
     val requestsHolder = ConcurrentHashMap<UUID, RequestItem>()
-
-    init {
-        thread {
-            while (true) {
-                synchronized(requestsHolder) {
-                    val now = getNow_ms()
-
-                    val toRemove = mutableListOf<UUID>()
-                    for ((k, item) in requestsHolder) {
-                        if (now - item.lastUpdated > 100 * 1000) {
-                            toRemove.add(k)
-                            continue
-                        }
-                    }
-                    toRemove.forEach { requestsHolder.remove(it) }
-                }
-                Thread.sleep(5 * 1000)
-            }
-        }
-    }
 
     fun addRequest(requestItem: RequestItem): UUID {
         val uuid = UUID.randomUUID()
@@ -87,8 +65,11 @@ class DataStream<
     receiverDataTransmissionFailed: (failurePkt: RequestFailurePkt) -> Unit = { ELOG("Transmission Failed") }
     ): NetworkingRegisteringFunctions {
 
+    val transmitterData = DataStreamTransmitterDataHolder()
+    val receiverData = DataStreamReceiverDataHolder()
+
     private fun sendPart(context: NetworkManager.PacketContext, uuid: UUID, part: Int) {
-        val req = DataStreamTransmitterDataHolder.requestsHolder[uuid] ?: return
+        val req = transmitterData.requestsHolder[uuid] ?: return
 
         val partData = mutableListOf<Byte>()
         req.data.forEachByte((part - 1) * req.partByteAmount, min(req.data.array().size - (part - 1) * req.partByteAmount, req.partByteAmount)) { partData.add(it) }
@@ -109,7 +90,7 @@ class DataStream<
 
                 val dataBuf = (data as Either.Left).a.serialize()
                 val length = dataBuf.array().size / partByteAmount + 1
-                val uuid = DataStreamTransmitterDataHolder.addRequest(DataStreamTransmitterDataHolder.RequestItem(dataBuf, partByteAmount, length))
+                val uuid = transmitterData.addRequest(DataStreamTransmitterDataHolder.RequestItem(dataBuf, partByteAmount, length))
                 sendPart(context, uuid, 1)
             }
         }
@@ -126,12 +107,12 @@ class DataStream<
         object : TRConnection<DataPartPkt>(it, streamName, transmitterSide) {
             override fun handlerFn(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = DataPartPkt(buf)
-                val data = DataStreamReceiverDataHolder.updateReceived(pkt.requestUUID, pkt.data)
+                val data = receiverData.updateReceived(pkt.requestUUID, pkt.data)
 
                 if (pkt.part == pkt.maxParts) {
                     val dataPkt = dataPacketConstructor()
                     dataPkt.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(data.toByteArray())))
-                    DataStreamReceiverDataHolder.receivedData.remove(pkt.requestUUID)
+                    receiverData.receivedData.remove(pkt.requestUUID)
                     receiverDataTransmitted(pkt.requestUUID, dataPkt)
                     return
                 }
@@ -144,7 +125,7 @@ class DataStream<
         object : TRConnection<RequestPart>(it, streamName, transmitterSide.opposite()) {
             override fun handlerFn(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = RequestPart(buf)
-                val item = DataStreamTransmitterDataHolder.requestsHolder[pkt.requestUUID]
+                val item = transmitterData.requestsHolder[pkt.requestUUID]
                 if (item == null) {
                     t2rRequestFailure.transmitData(context, RequestFailurePkt())
                     return

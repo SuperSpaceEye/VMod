@@ -187,6 +187,7 @@ class ShipSchematicV1(): IShipSchematic {
                     it.first.transform.shipToWorldRotation,
                     newScale = MVector3d(it.first.transform.shipToWorldScaling).avg()
             ))
+            it.first.isStatic = false
         }
 
         return true

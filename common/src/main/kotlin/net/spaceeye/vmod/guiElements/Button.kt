@@ -3,6 +3,7 @@ package net.spaceeye.vmod.guiElements
 import gg.essential.elementa.components.UIBlock
 import gg.essential.elementa.components.UIText
 import gg.essential.elementa.constraints.CenterConstraint
+import gg.essential.elementa.constraints.ChildBasedMaxSizeConstraint
 import gg.essential.elementa.constraints.animation.Animations
 import gg.essential.elementa.dsl.*
 import java.awt.Color
@@ -10,6 +11,10 @@ import java.awt.Color
 class Button(var baseColor: Color, buttonName: String, text_scale: Float = 1f, var animationTime: Float = 0.5f, fnToActivate: () -> Unit): UIBlock(baseColor) {
     var activeColor = baseColor
     init {
+        constrain {
+            width = ChildBasedMaxSizeConstraint() + 4.pixels()
+            height = ChildBasedMaxSizeConstraint() + 4.pixels()
+        }
         onMouseEnter {
             animate {
                 setColorAnimation(

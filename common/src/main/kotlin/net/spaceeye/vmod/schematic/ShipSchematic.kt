@@ -18,8 +18,12 @@ typealias PasteEventSignature = (
         unregister: () -> Unit
         ) -> Unit
 
+// 1. For rendering abuse timed objects (just set basically infinite duration and place it at -1 ship id or smth)
+// 2. For rendering i can do the same as CenteredAroundPlacementAssistTransformProvider, with mainShip transform being
+//    custom transform 
+
 object ShipSchematic {
-    val currentSchematicVersion: Int = 1
+    const val currentSchematicVersion: Int = 1
 
     private val schematicVersions = mapOf<Int, Supplier<IShipSchematic>>(
             Pair(1, Supplier { ShipSchematicV1() } )
@@ -40,8 +44,12 @@ object ShipSchematic {
         } catch (e: Exception) { ELOG("Failed to load schematic with exception:\n${e.stackTraceToString()}"); return null
         } catch (e: Error) { ELOG("Failed to load schematic with error:\n${e.stackTraceToString()}"); return null }
 
+        try {
+            schematic.loadFromByteBuffer(buffer)
+        } catch (e: AssertionError) {return null
+        } catch (e: Exception) { ELOG("Failed to load schematic with exception:\n${e.stackTraceToString()}"); return null
+        } catch (e: Error) { ELOG("Failed to load schematic with error:\n${e.stackTraceToString()}"); return null }
 
-        schematic.loadFromByteBuffer(buffer)
         return schematic
     }
 

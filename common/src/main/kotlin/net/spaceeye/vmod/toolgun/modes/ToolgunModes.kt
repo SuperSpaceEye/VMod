@@ -17,7 +17,7 @@ object ToolgunModes {
         ScaleMode(),
         StripMode(),
 
-//        SchemMode()
+        SchemMode()
     )
     var initialized = false
     init {

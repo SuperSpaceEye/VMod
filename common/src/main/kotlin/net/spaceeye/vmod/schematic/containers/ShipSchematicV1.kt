@@ -20,6 +20,8 @@ import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.transformProviders.FixedPositionTransformProvider
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.utils.vs.rotateAroundCenter
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.joml.Vector3d
@@ -30,6 +32,7 @@ import org.joml.primitives.AABBi
 import org.joml.primitives.AABBic
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -39,8 +42,9 @@ typealias MVector3d = net.spaceeye.vmod.utils.Vector3d
 
 data class BlockData(var pos: BlockPos, var paletteId: Int, var extraDataId: Int)
 
-class ShipSchematicInfo(override val worldBounds: AABBdc,
-                        override var shipInfo: List<IShipInfo>) : IShipSchematicInfo
+class ShipSchematicInfo(
+    override val maxObjectWorldPos: Vector3d,
+    override var shipInfo: List<IShipInfo>) : IShipSchematicInfo
 
 class ShipInfo(
         override val id: Long,
@@ -225,10 +229,21 @@ class ShipSchematicV1(): IShipSchematic {
         }}}
     }
 
-    private fun saveMetadata(ships: List<ServerShip>) {
-        val objectAABB = AABBd(ships[0].worldAABB)
-        ships.forEach {
-            val b = it.worldAABB
+    // it will save ship data with origin ship unrotated
+    private fun saveShipData(ships: List<ServerShip>, originShip: ServerShip) {
+        val getWorldAABB = {it: ServerShip, newTransform: ShipTransform -> AABBd (
+            posShipToWorld(null, MVector3d(it.shipAABB!!.minX(), it.shipAABB!!.minY(), it.shipAABB!!.minZ()), newTransform).toJomlVector3d(),
+            posShipToWorld(null, MVector3d(it.shipAABB!!.maxX(), it.shipAABB!!.maxY(), it.shipAABB!!.maxZ()), newTransform).toJomlVector3d()
+        )}
+
+        val invRotation = originShip.transform.shipToWorldRotation.invert(Quaterniond())
+        val newTransforms = ships.map { rotateAroundCenter(originShip.transform, it.transform, invRotation) }
+        val worldAABBs = mutableListOf<AABBd>()
+
+        val objectAABB = getWorldAABB(ships[0], newTransforms[0])
+        ships.zip(newTransforms).forEach {(it, newTransform) ->
+            val b = getWorldAABB(it, newTransform)
+            worldAABBs.add(b)
             if (b.minX() < objectAABB.minX) { objectAABB.minX = b.minX() }
             if (b.maxX() > objectAABB.maxX) { objectAABB.maxX = b.maxX() }
             if (b.minY() < objectAABB.minY) { objectAABB.minY = b.minY() }
@@ -237,13 +252,14 @@ class ShipSchematicV1(): IShipSchematic {
             if (b.maxZ() > objectAABB.maxZ) { objectAABB.maxZ = b.maxZ() }
         }
 
-        val objectLogicalCenter = MVector3d(
-                (objectAABB.maxX() - objectAABB.minX()) / 2 + objectAABB.minX(),
-                (objectAABB.maxY() - objectAABB.minY()) / 2 + objectAABB.minY(),
-                (objectAABB.maxZ() - objectAABB.minZ()) / 2 + objectAABB.minZ()
-        )
+        val minPos = MVector3d(objectAABB.minX, objectAABB.minY, objectAABB.minZ)
+        val maxPos = MVector3d(objectAABB.maxX, objectAABB.maxY, objectAABB.maxZ)
 
-        val sinfo = ships.map {
+        val normalizedMaxObjectPos = (maxPos - minPos) / 2
+        val objectCenter = normalizedMaxObjectPos + minPos
+
+        val sinfo = ships.zip(newTransforms).zip(worldAABBs).map {(pair, worldAABB) ->
+            val (it, newTransform) = pair
             val chunkMin = MVector3d(
                     it.chunkClaim.xStart * 16,
                     -64,
@@ -252,17 +268,17 @@ class ShipSchematicV1(): IShipSchematic {
 
             ShipInfo(
                     it.id,
-                    (MVector3d(it.transform.positionInWorld) - objectLogicalCenter).toJomlVector3d(),
+                    (MVector3d(newTransform.positionInWorld) - objectCenter).toJomlVector3d(),
                     AABBi(it.shipAABB!!),
-                    AABBd(it.worldAABB),
-                    Vector3d(it.transform.positionInShip).sub(chunkMin.toJomlVector3d(), Vector3d()),
-                    MVector3d(it.transform.shipToWorldScaling).avg(),
-                    Quaterniond(it.transform.shipToWorldRotation))
+                    worldAABB,
+                    Vector3d(newTransform.positionInShip).sub(chunkMin.toJomlVector3d(), Vector3d()),
+                    MVector3d(newTransform.shipToWorldScaling).avg(),
+                    Quaterniond(newTransform.shipToWorldRotation))
         }
 
         schemInfo = ShipSchematicInfo(
-                objectAABB,
-                sinfo
+            normalizedMaxObjectPos.toJomlVector3d(),
+            sinfo
         )
     }
 
@@ -274,7 +290,7 @@ class ShipSchematicV1(): IShipSchematic {
 
         extraData = ShipSchematic.onCopy(ships)
 
-        saveMetadata(ships)
+        saveShipData(ships, originShip)
         ships.forEach { ship -> saveShipBlocks(level, ship) }
 
         return true
@@ -288,8 +304,11 @@ class ShipSchematicV1(): IShipSchematic {
     }
 
     private fun serializeShipData(tag: CompoundTag) {
-        val shipDataTag = ListTag()
+        val shipDataTag = CompoundTag()
 
+        shipDataTag.putVector3d("maxObjectPos", schemInfo.maxObjectWorldPos)
+
+        val shipsDataTag = ListTag()
         schemInfo.shipInfo.forEach {
             val shipTag = CompoundTag()
 
@@ -315,9 +334,10 @@ class ShipSchematicV1(): IShipSchematic {
             shipTag.putDouble("sc", it.shipScale)
             shipTag.putQuaterniond("rot", it.rotation)
 
-            shipDataTag.add(shipTag)
+            shipsDataTag.add(shipTag)
         }
 
+        shipDataTag.put("data", shipsDataTag)
         tag.put("shipData", shipDataTag)
     }
 
@@ -391,10 +411,14 @@ class ShipSchematicV1(): IShipSchematic {
     }
 
     private fun deserializeShipData(tag: CompoundTag) {
-        val shipDataTag = tag.get("shipData") as ListTag
+        val shipDataTag = tag.get("shipData") as CompoundTag
 
-        schemInfo = ShipSchematicInfo( AABBd(),
-                shipDataTag.map {shipTag ->
+        val maxObjectPos = shipDataTag.getVector3d("maxObjectPos") ?: Vector3d(0.0, 0.0, 0.0)
+
+        val shipsDataTag = shipDataTag.get("data") as ListTag
+
+        schemInfo = ShipSchematicInfo( maxObjectPos,
+            shipsDataTag.map {shipTag ->
             shipTag as CompoundTag
 
             ShipInfo(

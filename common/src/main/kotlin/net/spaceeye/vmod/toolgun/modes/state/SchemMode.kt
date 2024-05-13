@@ -27,6 +27,7 @@ import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.Either
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.ServerClosable
+import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.io.IOException
@@ -254,6 +255,12 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
         val schem = ServerPlayerSchematics.schematics[player.uuid] ?: return
         if (raycastResult.state.isAir) {return}
 
-        schem.placeAt(level, raycastResult.worldCenteredHitPos!!.toJomlVector3d(), Quaterniond())
+        val info = schem.getInfo()
+
+        val hitPos = raycastResult.worldHitPos!!
+
+        val pos = hitPos + (raycastResult.worldNormalDirection!! * Vector3d(info.maxObjectWorldPos))
+
+        schem.placeAt(level, pos.toJomlVector3d(), Quaterniond())
     }
 }

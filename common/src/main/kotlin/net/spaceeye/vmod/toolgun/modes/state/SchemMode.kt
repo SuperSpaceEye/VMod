@@ -31,6 +31,7 @@ import net.spaceeye.vmod.toolgun.modes.serializing.SchemSerializable
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.*
+import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.joml.primitives.AABBd
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
@@ -299,8 +300,7 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
     val conn_primary = register { object : C2SConnection<SchemMode>("schem_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
     val conn_secondary = register { object : C2SConnection<SchemMode>("schem_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
 
-    private var renderer: SchemOutlinesRenderer? = null
-    val rotation = Quaterniond()
+    var renderer: SchemOutlinesRenderer? = null
 
     private var shipInfo_: IShipSchematicInfo? = null
     var shipInfo: IShipSchematicInfo?
@@ -334,7 +334,7 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
                 ), it.shipBounds)
             }
 
-            renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectEdge), rotation, center, data)
+            renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectEdge), rotationAngle, center, data)
 
             synchronized(rd.serverChecksums) {
             synchronized(rd.clientChecksums) {
@@ -348,9 +348,12 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
     private var schem_: IShipSchematic? = null
     var schem: IShipSchematic?
         get() = schem_
-        set(value) {schem_ = value; if (value != null) {shipInfo = value.getInfo()}}
+        set(value) {schem_ = value; shipInfo = value?.getInfo()}
 
     var filename = ""
+
+    var rotationAngle = Ref(0.0)
+    var scrollAngle = Math.toRadians(10.0)
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {resetState(); return}
@@ -372,6 +375,17 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
         val hitPos = raycastResult.worldHitPos!!
         val pos = hitPos + (raycastResult.worldNormalDirection!! * Vector3d(info.maxObjectEdge))
 
-        schem.placeAt(level, pos.toJomlVector3d(), Quaterniond())
+        val rotation = Quaterniond()
+            .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))
+            .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
+            .normalize()
+
+        schem.placeAt(level, pos.toJomlVector3d(), rotation)
+    }
+
+    override fun resetState() {
+        schem = null
+        shipInfo = null
+        rotationAngle.it = 0.0
     }
 }

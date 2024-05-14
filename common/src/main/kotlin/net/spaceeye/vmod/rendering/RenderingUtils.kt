@@ -15,25 +15,37 @@ object RenderingUtils {
     @JvmStatic inline fun tof(n: Double) = n.toFloat()
     object Line {
         @JvmStatic inline fun renderLine(buf: VertexConsumer, matrix: Matrix4f, color: Color,
-                                         start: Vector3d, stop: Vector3d) {
-            buf.vertex(matrix, tof(start.x), tof(start.y), tof(start.z)).color(color.rgb).endVertex()
-            buf.vertex(matrix, tof(stop .x), tof(stop .y), tof(stop .z)).color(color.rgb).endVertex()
+                                         start: Vector3d, stop: Vector3d, width:Double = 0.5) {
+            val wdir = stop - start
+            val pdir = (-start - wdir * ((-start).dot(wdir) / wdir.dot(wdir))).snormalize()
+            val up = pdir.cross(wdir.normalize())
+
+            val lu =  up * width + start
+            val ld = -up * width + start
+
+            val ru = -up * width + stop
+            val rd =  up * width + stop
+
+            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(color.rgb).endVertex()
+            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(color.rgb).endVertex()
+            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(color.rgb).endVertex()
+            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(color.rgb).endVertex()
         }
-        @JvmStatic inline fun renderLineBox(buf: VertexConsumer, matrix: Matrix4f, color: Color, points: List<Vector3d>) {
-            renderLine(buf, matrix, color, points[0], points[1])
-            renderLine(buf, matrix, color, points[1], points[2])
-            renderLine(buf, matrix, color, points[2], points[3])
-            renderLine(buf, matrix, color, points[3], points[0])
+        @JvmStatic inline fun renderLineBox(buf: VertexConsumer, matrix: Matrix4f, color: Color, points: List<Vector3d>, width: Double = 0.1) {
+            renderLine(buf, matrix, color, points[0], points[1], width)
+            renderLine(buf, matrix, color, points[1], points[2], width)
+            renderLine(buf, matrix, color, points[2], points[3], width)
+            renderLine(buf, matrix, color, points[3], points[0], width)
 
-            renderLine(buf, matrix, color, points[4], points[5])
-            renderLine(buf, matrix, color, points[5], points[6])
-            renderLine(buf, matrix, color, points[6], points[7])
-            renderLine(buf, matrix, color, points[7], points[4])
+            renderLine(buf, matrix, color, points[4], points[5], width)
+            renderLine(buf, matrix, color, points[5], points[6], width)
+            renderLine(buf, matrix, color, points[6], points[7], width)
+            renderLine(buf, matrix, color, points[7], points[4], width)
 
-            renderLine(buf, matrix, color, points[4], points[0])
-            renderLine(buf, matrix, color, points[5], points[1])
-            renderLine(buf, matrix, color, points[6], points[2])
-            renderLine(buf, matrix, color, points[7], points[3])
+            renderLine(buf, matrix, color, points[4], points[0], width)
+            renderLine(buf, matrix, color, points[5], points[1], width)
+            renderLine(buf, matrix, color, points[6], points[2], width)
+            renderLine(buf, matrix, color, points[7], points[3], width)
         }
     }
 

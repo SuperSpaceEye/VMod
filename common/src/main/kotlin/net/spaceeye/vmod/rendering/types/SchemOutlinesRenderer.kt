@@ -15,9 +15,12 @@ import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
 import net.spaceeye.vmod.utils.RaycastFunctions
+import net.spaceeye.vmod.utils.Ref
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.getQuatFromDir
 import net.spaceeye.vmod.utils.vs.*
-import org.joml.Quaterniondc
+import org.joml.AxisAngle4d
+import org.joml.Quaterniond
 import org.joml.primitives.AABBic
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
@@ -27,7 +30,7 @@ import java.awt.Color
 
 class SchemOutlinesRenderer(
     val maxObjectEdge: Vector3d,
-    val rotation: Quaterniondc,
+    val rotationAngle: Ref<Double>,
     val center: ShipTransformImpl,
     val ships: List<Pair<ShipTransform, AABBic>>
 ): BaseRenderer, TimedRenderer, PositionDependentRenderer {
@@ -47,6 +50,8 @@ class SchemOutlinesRenderer(
         if (mode !is SchemMode) {return}
         if (!ToolgunItem.playerIsUsingToolgun()) {return}
 
+        val width = 0.05
+
         val raycastResult = RaycastFunctions.raycast(
             level,
             RaycastFunctions.Source(
@@ -64,6 +69,11 @@ class SchemOutlinesRenderer(
         val hitPos = raycastResult.worldHitPos ?: return
         val pos = hitPos + (raycastResult.worldNormalDirection!! * Vector3d(maxObjectEdge))
 
+        val rotation = Quaterniond()
+            .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))
+            .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
+            .normalize()
+
         val cameraPos = Vector3d(camera.position)
 
         val tesselator = Tesselator.getInstance()
@@ -75,7 +85,7 @@ class SchemOutlinesRenderer(
         RenderSystem.setShader(GameRenderer::getPositionColorShader)
         RenderSystem.enableBlend()
 
-        vBuffer.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR)
+        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
 
         poseStack.pushPose()
         val matrix = poseStack.last().pose()
@@ -99,7 +109,27 @@ class SchemOutlinesRenderer(
                 aabbPoints[i] = posShipToWorld(null, it, newTransform) + offset
             }
 
-            RenderingUtils.Line.renderLineBox(vBuffer, matrix, Color.RED, aabbPoints)
+            RenderingUtils.Line.renderLineBox(vBuffer, matrix, Color.RED, aabbPoints, width)
+
+            var transformCenter = Vector3d(newTransform.positionInShip)
+
+            var xAxis = Vector3d(transformCenter)
+            var yAxis = Vector3d(transformCenter)
+            var zAxis = Vector3d(transformCenter)
+
+            xAxis.x = aabb.maxX().toDouble()
+            yAxis.y = aabb.maxY().toDouble()
+            zAxis.z = aabb.maxZ().toDouble()
+
+            xAxis = posShipToWorld(null, xAxis, newTransform) + offset
+            yAxis = posShipToWorld(null, yAxis, newTransform) + offset
+            zAxis = posShipToWorld(null, zAxis, newTransform) + offset
+
+            transformCenter = posShipToWorld(null, transformCenter, newTransform) + offset
+
+            RenderingUtils.Line.renderLine(vBuffer, matrix, Color.RED,   transformCenter, xAxis, width)
+            RenderingUtils.Line.renderLine(vBuffer, matrix, Color.GREEN, transformCenter, yAxis, width)
+            RenderingUtils.Line.renderLine(vBuffer, matrix, Color.BLUE,  transformCenter, zAxis, width)
         }
 
         tesselator.end()

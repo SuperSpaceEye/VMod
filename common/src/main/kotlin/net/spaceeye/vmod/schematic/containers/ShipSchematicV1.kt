@@ -20,7 +20,6 @@ import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.transformProviders.FixedPositionTransformProvider
 import net.spaceeye.vmod.utils.*
-import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
@@ -34,6 +33,8 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
+import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
+import org.valkyrienskies.core.util.toAABBd
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.io.IOException
@@ -122,15 +123,27 @@ class ShipSchematicV1(): IShipSchematic {
     override fun placeAt(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc): Boolean {
         val shipData = schemInfo.shipInfo
 
+        val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
+
+        val newTransforms = mutableListOf<ShipTransform>()
         val ships = shipData.map {
-            val toPos = MVector3d(it.relPositionToCenter) + MVector3d(pos)
+            val thisTransform = ShipTransformImpl(
+                it.relPositionToCenter,
+                it.posInShip,
+                it.rotation,
+                JVector3d(it.shipScale, it.shipScale, it.shipScale)
+            )
+            val newTransform = rotateAroundCenter(center, thisTransform, rotation)
+            newTransforms.add(newTransform)
+
+            val toPos = MVector3d(newTransform.positionInWorld) + MVector3d(pos)
 
             val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(), false, it.shipScale, level.dimensionId)
             newShip.isStatic = true
 
             level.shipObjectWorld.teleportShip(newShip, ShipTeleportDataImpl(
                 toPos.toJomlVector3d(),
-                it.rotation,
+                newTransform.shipToWorldRotation,
                 newScale = it.shipScale
             ))
 
@@ -182,13 +195,13 @@ class ShipSchematicV1(): IShipSchematic {
 
         ShipSchematic.onPaste(ships, extraData)
 
-        ships.zip(shipData).forEach {
-            (it, info) ->
+        ships.zip(newTransforms).forEach {
+            (it, transform) ->
             it.first.transformProvider = null
-            val toPos = MVector3d(info.relPositionToCenter) + MVector3d(pos)
+            val toPos = MVector3d(transform.positionInWorld) + MVector3d(pos)
             level.shipObjectWorld.teleportShip(it.first, ShipTeleportDataImpl(
                     toPos.toJomlVector3d(),
-                    it.first.transform.shipToWorldRotation,
+                    transform.shipToWorldRotation,
                     newScale = MVector3d(it.first.transform.shipToWorldScaling).avg()
             ))
             it.first.isStatic = false
@@ -231,10 +244,7 @@ class ShipSchematicV1(): IShipSchematic {
 
     // it will save ship data with origin ship unrotated
     private fun saveShipData(ships: List<ServerShip>, originShip: ServerShip) {
-        val getWorldAABB = {it: ServerShip, newTransform: ShipTransform -> AABBd (
-            posShipToWorld(null, MVector3d(it.shipAABB!!.minX(), it.shipAABB!!.minY(), it.shipAABB!!.minZ()), newTransform).toJomlVector3d(),
-            posShipToWorld(null, MVector3d(it.shipAABB!!.maxX(), it.shipAABB!!.maxY(), it.shipAABB!!.maxZ()), newTransform).toJomlVector3d()
-        )}
+        val getWorldAABB = {it: ServerShip, newTransform: ShipTransform -> it.shipAABB!!.toAABBd(AABBd()).transform(newTransform.shipToWorld) }
 
         val invRotation = originShip.transform.shipToWorldRotation.invert(Quaterniond())
         val newTransforms = ships.map { rotateAroundCenter(originShip.transform, it.transform, invRotation) }

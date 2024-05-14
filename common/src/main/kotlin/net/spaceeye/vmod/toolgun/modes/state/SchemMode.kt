@@ -13,9 +13,15 @@ import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.DataStream
+import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.rendering.types.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.ShipSchematic
+import net.spaceeye.vmod.schematic.containers.ShipInfo
+import net.spaceeye.vmod.schematic.containers.ShipSchematicInfo
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
+import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
@@ -24,17 +30,21 @@ import net.spaceeye.vmod.toolgun.modes.inputHandling.SchemCRIHandler
 import net.spaceeye.vmod.toolgun.modes.serializing.SchemSerializable
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
-import net.spaceeye.vmod.utils.Either
-import net.spaceeye.vmod.utils.RaycastFunctions
-import net.spaceeye.vmod.utils.ServerClosable
-import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.*
 import org.joml.Quaterniond
+import org.joml.primitives.AABBd
+import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
+import org.valkyrienskies.core.util.readAABBi
+import org.valkyrienskies.core.util.readQuatd
+import org.valkyrienskies.core.util.writeAABBi
+import org.valkyrienskies.core.util.writeQuatd
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
 
@@ -211,6 +221,57 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
         }
     }
 
+    val s2cSendShipInfo = "send_ship_info" idWithConns {
+        object : S2CConnection<S2CSendShipInfo>(it, networkName) {
+            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val mode = ClientToolGunState.currentMode ?: return
+                if (mode !is SchemMode) {return}
+                val pkt = S2CSendShipInfo(buf)
+                mode.shipInfo = pkt.shipInfo
+            }
+        }
+    }
+
+    class S2CSendShipInfo(): Serializable {
+        lateinit var shipInfo: IShipSchematicInfo
+
+        constructor(info: IShipSchematicInfo): this() {shipInfo = info}
+        constructor(buf: FriendlyByteBuf): this() {deserialize(buf)}
+
+        override fun serialize(): FriendlyByteBuf {
+            val buf = getBuffer()
+
+            buf.writeVector3d(Vector3d(shipInfo.maxObjectEdge))
+            buf.writeCollection(shipInfo.shipInfo) { buf, item ->
+                buf.writeVector3d(Vector3d(item.relPositionToCenter))
+                buf.writeAABBi(item.shipBounds)
+                buf.writeVector3d(Vector3d(item.posInShip))
+                buf.writeDouble(item.shipScale)
+                buf.writeQuatd(item.rotation)
+            }
+
+            return buf
+        }
+
+        override fun deserialize(buf: FriendlyByteBuf) {
+            val maxObjectEdge = buf.readVector3d().toJomlVector3d()
+            val data = buf.readCollection({mutableListOf<ShipInfo>()}) {
+                val relPositionToCenter = buf.readVector3d().toJomlVector3d()
+                val shipBounds = buf.readAABBi()
+                val posInShip = buf.readVector3d().toJomlVector3d()
+                val shipScale = buf.readDouble()
+                val rotation = buf.readQuatd()
+
+                ShipInfo(0, relPositionToCenter, shipBounds, AABBd(), posInShip, shipScale, rotation)
+            }
+
+            shipInfo = ShipSchematicInfo(
+                maxObjectEdge,
+                data
+            )
+        }
+    }
+
     class C2SLoadSchematic(): Serializable {
         override fun serialize(): FriendlyByteBuf { return getBuffer() }
         override fun deserialize(buf: FriendlyByteBuf) {}
@@ -238,7 +299,57 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
     val conn_primary = register { object : C2SConnection<SchemMode>("schem_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
     val conn_secondary = register { object : C2SConnection<SchemMode>("schem_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
 
-    var schem: IShipSchematic? = null
+    private var renderer: SchemOutlinesRenderer? = null
+    val rotation = Quaterniond()
+
+    private var shipInfo_: IShipSchematicInfo? = null
+    var shipInfo: IShipSchematicInfo?
+        get() = shipInfo_
+        set(info) {
+            shipInfo_ = info
+            val rd = SynchronisedRenderingData.clientSynchronisedData
+            if (info == null) {
+                renderer = null
+                synchronized(rd.serverChecksums) {
+                synchronized(rd.clientChecksums) {
+                synchronized(rd.cachedDataToMerge) {
+                    rd.clientChecksums.getOrPut(-1) { ConcurrentHashMap() }.remove(-1)
+                    rd.serverChecksums.getOrPut(-1) { ConcurrentHashMap() }.remove(-1)
+
+                    rd.cachedData.getOrPut(-1) { mutableMapOf() }.remove(-1)
+                } } }
+
+                return
+            }
+
+
+            val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
+
+            val data = info.shipInfo.map {
+                Pair(ShipTransformImpl(
+                    it.relPositionToCenter,
+                    it.posInShip,
+                    it.rotation,
+                    JVector3d(it.shipScale, it.shipScale, it.shipScale)
+                ), it.shipBounds)
+            }
+
+            renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectEdge), rotation, center, data)
+
+            synchronized(rd.serverChecksums) {
+            synchronized(rd.clientChecksums) {
+            synchronized(rd.cachedDataToMerge) {
+                rd.clientChecksums.getOrPut(-1) { ConcurrentHashMap() }.getOrPut(-1) { byteArrayOf() }
+                rd.serverChecksums.getOrPut(-1) { ConcurrentHashMap() }.getOrPut(-1) { byteArrayOf() }
+
+                rd.cachedData.getOrPut(-1) { mutableMapOf() }[-1] = renderer!!
+            } } }
+        }
+    private var schem_: IShipSchematic? = null
+    var schem: IShipSchematic?
+        get() = schem_
+        set(value) {schem_ = value; if (value != null) {shipInfo = value.getInfo()}}
+
     var filename = ""
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
@@ -248,6 +359,7 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
         val serverCaughtShip = level.getShipManagingPos(raycastResult.blockPosition) ?: return
         val schem = ShipSchematic.getSchematicConstructor().get()
         schem.makeFrom(serverCaughtShip)
+        SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
         ServerPlayerSchematics.schematics[player.uuid] = schem
     }
 
@@ -258,8 +370,7 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
         val info = schem.getInfo()
 
         val hitPos = raycastResult.worldHitPos!!
-
-        val pos = hitPos + (raycastResult.worldNormalDirection!! * Vector3d(info.maxObjectWorldPos))
+        val pos = hitPos + (raycastResult.worldNormalDirection!! * Vector3d(info.maxObjectEdge))
 
         schem.placeAt(level, pos.toJomlVector3d(), Quaterniond())
     }

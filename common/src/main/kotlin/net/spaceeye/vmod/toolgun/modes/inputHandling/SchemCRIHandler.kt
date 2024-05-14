@@ -10,6 +10,7 @@ interface SchemCRIHandler: ClientRawInputsHandler {
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         this as SchemMode
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
+            shipInfo = null
             conn_primary.sendToServer(this)
         }
 

@@ -14,15 +14,6 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.security.MessageDigest
 import java.util.ConcurrentModificationException
 
-object RenderingTypes: Registry<BaseRenderer>() {
-    init {
-        register(::RopeRenderer)
-        register(::A2BRenderer)
-        register(::TimedA2BRenderer)
-        register(::PhysRopeRenderer)
-    }
-}
-
 class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<BaseRenderer>): ClientSynchronisedData<BaseRenderer>("rendering_data", getServerInstance) {
     val setSchema = "rendering_data" idWithConn ::ServerSetRenderingSchemaConnection
 

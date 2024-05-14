@@ -5,6 +5,7 @@ import com.mojang.math.Matrix4f
 import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.utils.Vector3d
+import java.awt.Color
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -12,6 +13,30 @@ import kotlin.math.sin
 object RenderingUtils {
     val ropeTexture = ResourceLocation(VM.MOD_ID, "textures/misc/rope.png")
     @JvmStatic inline fun tof(n: Double) = n.toFloat()
+    object Line {
+        @JvmStatic inline fun renderLine(buf: VertexConsumer, matrix: Matrix4f, color: Color,
+                                         start: Vector3d, stop: Vector3d) {
+            buf.vertex(matrix, tof(start.x), tof(start.y), tof(start.z)).color(color.rgb).endVertex()
+            buf.vertex(matrix, tof(stop .x), tof(stop .y), tof(stop .z)).color(color.rgb).endVertex()
+        }
+        @JvmStatic inline fun renderLineBox(buf: VertexConsumer, matrix: Matrix4f, color: Color, points: List<Vector3d>) {
+            renderLine(buf, matrix, color, points[0], points[1])
+            renderLine(buf, matrix, color, points[1], points[2])
+            renderLine(buf, matrix, color, points[2], points[3])
+            renderLine(buf, matrix, color, points[3], points[0])
+
+            renderLine(buf, matrix, color, points[4], points[5])
+            renderLine(buf, matrix, color, points[5], points[6])
+            renderLine(buf, matrix, color, points[6], points[7])
+            renderLine(buf, matrix, color, points[7], points[4])
+
+            renderLine(buf, matrix, color, points[4], points[0])
+            renderLine(buf, matrix, color, points[5], points[1])
+            renderLine(buf, matrix, color, points[6], points[2])
+            renderLine(buf, matrix, color, points[7], points[3])
+        }
+    }
+
     object Quad {
         @JvmStatic inline fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,
                                r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,

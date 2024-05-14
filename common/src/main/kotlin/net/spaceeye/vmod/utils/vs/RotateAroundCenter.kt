@@ -2,10 +2,11 @@ package net.spaceeye.vmod.utils.vs
 
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
+import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 
-fun rotateAroundCenter(center: ShipTransform, obj: ShipTransform, rotation: Quaterniond): ShipTransform {
+fun rotateAroundCenter(center: ShipTransform, obj: ShipTransform, rotation: Quaterniondc): ShipTransform {
     center as ShipTransformImpl
     obj as ShipTransformImpl
 

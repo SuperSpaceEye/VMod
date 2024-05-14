@@ -43,7 +43,7 @@ typealias MVector3d = net.spaceeye.vmod.utils.Vector3d
 data class BlockData(var pos: BlockPos, var paletteId: Int, var extraDataId: Int)
 
 class ShipSchematicInfo(
-    override val maxObjectWorldPos: Vector3d,
+    override val maxObjectEdge: Vector3d,
     override var shipInfo: List<IShipInfo>) : IShipSchematicInfo
 
 class ShipInfo(
@@ -136,7 +136,7 @@ class ShipSchematicV1(): IShipSchematic {
 
             val chunkMin = Vector3d(
                 newShip.chunkClaim.xStart * 16,
-                -64,
+                0,
                 newShip.chunkClaim.zStart * 16
             )
 
@@ -158,7 +158,7 @@ class ShipSchematicV1(): IShipSchematic {
             val blockData = blockData[id]!!
             val offset = MVector3d(
                     ship.chunkClaim.xStart * 16,
-                    -64,
+                    0,
                     ship.chunkClaim.zStart * 16
             )
 
@@ -203,7 +203,7 @@ class ShipSchematicV1(): IShipSchematic {
         val boundsAABB = originShip.shipAABB!!
         val chunkMin = BlockPos(
                 originShip.chunkClaim.xStart * 16,
-                -64,
+                0,
                 originShip.chunkClaim.zStart * 16
         )
 
@@ -262,14 +262,23 @@ class ShipSchematicV1(): IShipSchematic {
             val (it, newTransform) = pair
             val chunkMin = MVector3d(
                     it.chunkClaim.xStart * 16,
-                    -64,
+                    0,
                     it.chunkClaim.zStart * 16
+            )
+
+            val shipAABB = AABBi(
+                it.shipAABB!!.minX() - it.chunkClaim.xStart * 16,
+                it.shipAABB!!.minY(),
+                it.shipAABB!!.minZ() - it.chunkClaim.zStart * 16,
+                it.shipAABB!!.maxX() - it.chunkClaim.xStart * 16,
+                it.shipAABB!!.maxY(),
+                it.shipAABB!!.maxZ() - it.chunkClaim.zStart * 16
             )
 
             ShipInfo(
                     it.id,
                     (MVector3d(newTransform.positionInWorld) - objectCenter).toJomlVector3d(),
-                    AABBi(it.shipAABB!!),
+                    shipAABB,
                     worldAABB,
                     Vector3d(newTransform.positionInShip).sub(chunkMin.toJomlVector3d(), Vector3d()),
                     MVector3d(newTransform.shipToWorldScaling).avg(),
@@ -306,7 +315,7 @@ class ShipSchematicV1(): IShipSchematic {
     private fun serializeShipData(tag: CompoundTag) {
         val shipDataTag = CompoundTag()
 
-        shipDataTag.putVector3d("maxObjectPos", schemInfo.maxObjectWorldPos)
+        shipDataTag.putVector3d("maxObjectPos", schemInfo.maxObjectEdge)
 
         val shipsDataTag = ListTag()
         schemInfo.shipInfo.forEach {

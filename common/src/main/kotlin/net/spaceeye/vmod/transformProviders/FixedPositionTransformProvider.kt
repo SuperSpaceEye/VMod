@@ -5,6 +5,7 @@ import org.valkyrienskies.core.api.ships.ServerShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 
+//TODO this is probably stupid?
 class FixedPositionTransformProvider(
         var positionInWorld: org.joml.Vector3dc,
         var positionInShip: org.joml.Vector3dc

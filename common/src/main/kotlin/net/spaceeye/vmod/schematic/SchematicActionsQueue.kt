@@ -1,0 +1,266 @@
+package net.spaceeye.vmod.schematic
+
+import dev.architectury.event.events.common.TickEvent
+import net.minecraft.core.BlockPos
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.level.chunk.LevelChunk
+import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.VMConfig
+import net.spaceeye.vmod.schematic.containers.*
+import net.spaceeye.vmod.utils.ServerClosable
+import net.spaceeye.vmod.utils.getNow_ms
+import org.valkyrienskies.core.api.ships.ServerShip
+import java.util.*
+
+object SchematicActionsQueue: ServerClosable() {
+    private val placeData = mutableMapOf<UUID, SchemPlacementItem>()
+    private val saveData = mutableMapOf<UUID, SchemSaveItem>()
+
+    //why? If there are multiple schematics queued and there is a huge schematic it will not prevent other schematics
+    // from being placed.
+    private var placeLastKeys = placeData.keys.toList()
+    private var placeLastPosition = 0
+
+    private var saveLastKeys = placeData.keys.toList()
+    private var saveLastPosition = 0
+
+    fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
+
+    fun queueShipsCreationEvent(
+        level: ServerLevel,
+        uuid: UUID,
+        ships: List<Pair<ServerShip, Long>>,
+        schematicV1: ShipSchematicV1,
+        postPlacementFn: () -> Unit) {
+        placeData[uuid] = SchemPlacementItem(level, schematicV1, ships, postPlacementFn)
+    }
+
+    class SchemPlacementItem(
+        val level: ServerLevel,
+        val schematicV1: ShipSchematicV1,
+        val ships: List<Pair<ServerShip, Long>>,
+        val postPlacementFn: () -> Unit
+    ) {
+        var currentShip = 0
+        var currentChunk = 0
+
+        private fun placeChunk(level: ServerLevel, currentChunkData: SchemBlockData<BlockItem>, blockPalette: BlockPaletteHashMapV1, flatExtraData: List<CompoundTag>, offset: MVector3d) {
+            currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
+                val pos = BlockPos(x + offset.x, y + offset.y, z + offset.z)
+                val state = blockPalette.fromId(it.paletteId) ?: run {
+                    throw RuntimeException("State under ID ${it.paletteId} is null.")
+                }
+
+                level.getChunkAt(pos).setBlockState(pos, state, false)
+                if (it.extraDataId != -1) {
+                    val tag = flatExtraData[it.extraDataId]
+                    tag.putInt("x", pos.x)
+                    tag.putInt("y", pos.y)
+                    tag.putInt("z", pos.z)
+                    level.getChunkAt(pos).getBlockEntity(pos)?.load(tag) ?: run {
+                        ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
+                    }
+                }
+            }
+        }
+
+        fun place(start: Long, timeout: Long): Boolean {
+            while (currentShip < ships.size) {
+                val ship = ships[currentShip].first
+                val currentBlockData = schematicV1.blockData[ships[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
+                val blockPalette = schematicV1.blockPalette
+                val flatExtraData = schematicV1.flatExtraData
+                currentBlockData.updateKeys()
+
+                val offset = MVector3d(
+                    ship.chunkClaim.xStart * 16,
+                    0,
+                    ship.chunkClaim.zStart * 16
+                )
+
+                while (currentChunk < currentBlockData.sortedChunkKeys.size) {
+                    placeChunk(level, currentBlockData, blockPalette, flatExtraData, offset)
+                    currentChunk++
+
+                    //TODO figure out why desync happens
+//                    if (getNow_ms() - start > timeout) { return false }
+                }
+
+                currentChunk = 0
+                currentShip++
+                if (getNow_ms() - start > timeout) { return false }
+            }
+
+            return true
+        }
+    }
+
+    fun queueShipsSavingEvent(
+        level: ServerLevel,
+        uuid: UUID,
+        ships: List<ServerShip>,
+        schematicV1: ShipSchematicV1,
+        postPlacementFn: () -> Unit) {
+        saveData[uuid] = SchemSaveItem(level, schematicV1, ships, postPlacementFn)
+    }
+
+    class SchemSaveItem(
+        val level: ServerLevel,
+        val schematicV1: ShipSchematicV1,
+        val ships: List<ServerShip>,
+        val postCopyFn: () -> Unit
+    ) {
+        var currentShip = 0
+        var currentChunk = 0
+
+        var copyingShip = -1
+        var minCx = 0
+        var maxCx = 0
+
+        var minCz = 0
+        var maxCz = 0
+
+        var cx = 0
+        var cz = 0
+
+        private fun saveChunk(chunk: LevelChunk,
+                                     data: SchemBlockData<BlockItem>, flatExtraData: MutableList<CompoundTag>, blockPalette: BlockPaletteHashMapV1,
+                                     chunkMin: BlockPos, cX: Int, cZ: Int,
+                                     minX: Int, maxX: Int, minZ: Int, maxZ: Int, minY: Int, maxY: Int) {
+            for (y in minY until maxY) {
+            for (x in minX until maxX) {
+            for (z in minZ until maxZ) {
+                val cpos = BlockPos(x, y, z)
+                val state = chunk.getBlockState(cpos)
+                if (state.isAir) {continue}
+
+                val be = chunk.getBlockEntity(cpos)
+                val fed = if (be == null) {-1} else {
+                    flatExtraData.add(be.saveWithFullMetadata())
+                    flatExtraData.size - 1
+                }
+
+                val id = blockPalette.toId(state)
+                data.add(
+                    x + cX * 16 - chunkMin.x,
+                    y           - chunkMin.y,
+                    z + cZ * 16 - chunkMin.z,
+                    BlockItem(id, fed)
+                )
+            } } }
+        }
+
+        fun save(start: Long, timeout: Long): Boolean {
+            val blockData = schematicV1.blockData
+            val fed = schematicV1.flatExtraData
+            val blockPalette = schematicV1.blockPalette
+
+            while (currentShip < ships.size) {
+                val ship = ships[currentShip]
+                val data = blockData.getOrPut(ship.id) { SchemBlockData() }
+
+                val boundsAABB = ship.shipAABB!!
+
+                val chunkMin = BlockPos(
+                    ship.chunkClaim.xStart * 16,
+                    0,
+                    ship.chunkClaim.zStart * 16
+                )
+
+                if (copyingShip != currentShip) {
+                    minCx = boundsAABB.minX() shr 4
+                    maxCx = boundsAABB.maxX() shr 4
+                    minCz = boundsAABB.minZ() shr 4
+                    maxCz = boundsAABB.maxZ() shr 4
+
+                    cx = minCx
+                    cz = minCz
+
+                    copyingShip = currentShip
+                }
+
+                val minY = boundsAABB.minY()
+                val maxY = boundsAABB.maxY()
+
+                while (cx < maxCx+1) {
+                    var minX = 0
+                    var maxX = 16
+
+                    if (cx == minCx) {minX = boundsAABB.minX() and 15}
+                    if (cx == maxCx) {maxX = boundsAABB.maxX() and 15}
+
+                    while (cz < maxCz+1) {
+                        var minZ = 0
+                        var maxZ = 16
+
+                        if (cz == minCx) {minZ = boundsAABB.minZ() and 15}
+                        if (cz == maxCx) {maxZ = boundsAABB.maxZ() and 15}
+
+                        saveChunk(level.getChunk(cx, cz), data, fed, blockPalette, chunkMin, cx, cz, minX, maxX, minZ, maxZ, minY, maxY)
+                        cz++
+                        if (getNow_ms() - start > timeout) { return false }
+                    }
+                    cz = minCz
+                    cx++
+                }
+
+                currentChunk = 0
+                currentShip++
+            }
+
+            return true
+        }
+    }
+
+    init {
+        TickEvent.SERVER_POST.register {
+            if (placeData.isEmpty()) {return@register}
+            val timeout = VMConfig.SERVER.SCHEMATICS.TIMEOUT_TIME.toLong()
+            val start = getNow_ms()
+            while (getNow_ms() - start < timeout) {
+                if (placeLastPosition >= placeLastKeys.size) {
+                    placeLastKeys = placeData.keys.toList()
+                    placeLastPosition = 0
+                    if (placeLastKeys.isEmpty()) {return@register}
+                }
+
+                val item = placeData[placeLastKeys[placeLastPosition]]
+                val result = try {item?.place(start, timeout)} catch (e: Exception) {null}
+                if (result == null || result) {
+                    item!!.postPlacementFn()
+                    placeData.remove(placeLastKeys[placeLastPosition])
+                }
+
+                placeLastPosition++
+            }
+        }
+
+        TickEvent.SERVER_POST.register {
+            if (saveData.isEmpty()) {return@register}
+            val timeout = VMConfig.SERVER.SCHEMATICS.TIMEOUT_TIME.toLong()
+            val start = getNow_ms()
+            while (getNow_ms() - start < timeout) {
+                if (saveLastPosition >= saveLastKeys.size) {
+                    saveLastKeys = saveData.keys.toList()
+                    saveLastPosition = 0
+                    if (saveLastKeys.isEmpty()) {return@register}
+                }
+
+                val item = saveData[saveLastKeys[saveLastPosition]]
+                val result = try {item?.save(start, timeout)} catch (e: Exception) {null}
+                if (result == null || result) {
+                    item!!.postCopyFn()
+                    saveData.remove(saveLastKeys[saveLastPosition])
+                }
+
+                saveLastPosition++
+            }
+        }
+    }
+
+    override fun close() {
+        placeData.clear()
+        saveData.clear()
+    }
+}

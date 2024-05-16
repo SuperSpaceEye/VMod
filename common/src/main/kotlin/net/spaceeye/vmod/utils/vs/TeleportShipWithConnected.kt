@@ -1,17 +1,18 @@
 package net.spaceeye.vmod.utils.vs
 
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
+import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker
 import net.spaceeye.vmod.constraintsManaging.getManagedConstraint
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.ServerShip
+import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-fun getMinScale(level: ServerLevel, traversedData: VSConstraintsKeeper.TraversedData): Double {
+fun getMinScale(level: ServerLevel, traversedData: VSConstraintsTracker.TraversedData): Double {
     return traversedData.traversedShipIds.mapNotNull {
         val ship = level.shipObjectWorld.allShips.getById(it) ?: return@mapNotNull null
         Vector3d(ship.transform.shipToWorldScaling).avg()
@@ -25,8 +26,9 @@ fun teleportShipWithConnected(
     pos: Vector3d,
     rotation: Quaterniondc,
     scale: Double? = null,
+    dimensionId: DimensionId? = null
 ) {
-    val traversed = VSConstraintsKeeper.traverseGetConnectedShips(mainShip.id)
+    val traversed = VSConstraintsTracker.traverseGetConnectedShips(mainShip.id)
 
     val minScale = getMinScale(level, traversed)
     val scale = scale ?: minScale
@@ -49,14 +51,14 @@ fun teleportShipWithConnected(
 
         level.shipObjectWorld.teleportShip(
             otherShip, ShipTeleportDataImpl(
-                newPos.toJomlVector3d(), newRotation, otherShip.velocity, otherShip.omega, otherShip.chunkClaimDimension, newScale
+                newPos.toJomlVector3d(), newRotation, otherShip.velocity, otherShip.omega, dimensionId ?: otherShip.chunkClaimDimension, newScale
             )
         )
     }
 
     level.shipObjectWorld.teleportShip(
         mainShip, ShipTeleportDataImpl(
-            pos.toJomlVector3d(), rotation, mainShip.velocity, mainShip.omega, mainShip.chunkClaimDimension, Vector3d(mainShip.transform.shipToWorldScaling).avg() * scaleBy
+            pos.toJomlVector3d(), rotation, mainShip.velocity, mainShip.omega, dimensionId ?: mainShip.chunkClaimDimension, Vector3d(mainShip.transform.shipToWorldScaling).avg() * scaleBy
         )
     )
 

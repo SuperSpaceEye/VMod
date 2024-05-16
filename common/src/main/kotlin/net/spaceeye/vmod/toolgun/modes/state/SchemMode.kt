@@ -17,6 +17,7 @@ import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.SchemOutlinesRenderer
+import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.schematic.containers.ShipInfo
 import net.spaceeye.vmod.schematic.containers.ShipSchematicInfo
@@ -33,7 +34,6 @@ import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
-import org.joml.primitives.AABBd
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.core.util.readAABBi
 import org.valkyrienskies.core.util.readQuatd
@@ -171,8 +171,11 @@ object ServerPlayerSchematics: ServerClosable() {
         ::SchemHolder,
         receiverDataTransmitted = {_, data ->
             schematics[data!!.uuid] = ShipSchematic.getSchematicFromBytes(data.data.array())
+            loadRequests.remove(data.uuid)
         }
     )
+
+    val loadRequests = mutableMapOf<UUID, Long>()
 
     class SendLoadRequest(): Serializable {
         lateinit var requestUUID: UUID
@@ -196,11 +199,13 @@ object ServerPlayerSchematics: ServerClosable() {
 
     override fun close() {
         schematics.clear()
+        loadRequests.clear()
     }
 
     init {
         PlayerEvent.PLAYER_QUIT.register {
             schematics.remove(it.uuid)
+            loadRequests.remove(it.uuid)
         }
     }
 }
@@ -217,6 +222,10 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     val c2sLoadSchematic = "load_schematic" idWithConnc {
         object : C2SConnection<C2SLoadSchematic>(it, networkName) {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val lastReq = ServerPlayerSchematics.loadRequests[context.player.uuid]
+                if (lastReq != null && getNow_ms() - lastReq < 10000L) { return }
+
+                ServerPlayerSchematics.loadRequests[context.player.uuid] = getNow_ms()
                 ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(context, ServerPlayerSchematics.SendLoadRequest(context.player.uuid))
             }
         }
@@ -263,7 +272,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
                 val shipScale = buf.readDouble()
                 val rotation = buf.readQuatd()
 
-                ShipInfo(0, relPositionToCenter, shipBounds, AABBd(), posInShip, shipScale, rotation)
+                ShipInfo(0, relPositionToCenter, shipBounds, posInShip, shipScale, rotation)
             }
 
             shipInfo = ShipSchematicInfo(
@@ -358,17 +367,23 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {resetState(); return}
         player as ServerPlayer
+        // TODO
+        if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}
 
         val serverCaughtShip = level.getShipManagingPos(raycastResult.blockPosition) ?: return
         val schem = ShipSchematic.getSchematicConstructor().get()
-        schem.makeFrom(serverCaughtShip)
-        SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
-        ServerPlayerSchematics.schematics[player.uuid] = schem
+        schem.makeFrom(player.uuid, serverCaughtShip) {
+            SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
+            ServerPlayerSchematics.schematics[player.uuid] = schem
+        }
     }
 
+    //TODO make it create shit on server thread
     fun activateSecondaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         val schem = ServerPlayerSchematics.schematics[player.uuid] ?: return
         if (raycastResult.state.isAir) {return}
+        //TODO
+        if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}
 
         val info = schem.getInfo()
 
@@ -380,7 +395,7 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
             .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
             .normalize()
 
-        schem.placeAt(level, pos.toJomlVector3d(), rotation)
+        schem.placeAt(level, player.uuid, pos.toJomlVector3d(), rotation)
     }
 
     override fun resetState() {

@@ -5,7 +5,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
-import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper
+import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
@@ -64,7 +64,7 @@ class CopyMode: BaseMode, CopySerializable, CopyCRIHandler, CopyGUIBuilder {
         player as ServerPlayer
 
         serverCaughtShip = level.getShipManagingPos(raycastResult.blockPosition) ?: return
-        val traversed = VSConstraintsKeeper.traverseGetConnectedShips(serverCaughtShip!!.id)
+        val traversed = VSConstraintsTracker.traverseGetConnectedShips(serverCaughtShip!!.id)
 
         CopyNetworking.s2cSendTraversalInfo.sendToClient(player, S2CSendTraversalInfo(traversed.traversedShipIds))
     }

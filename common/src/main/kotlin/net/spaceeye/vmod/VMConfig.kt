@@ -31,13 +31,23 @@ object VMConfig {
     class Common: ConfigSubDirectory()
     class Server: ConfigSubDirectory() {
         val TOOLGUN = ServerToolgunSettings()
+        val PERMISSIONS = Permissions()
+        val SCHEMATICS = Schematics()
 
         class ServerToolgunSettings: ConfigSubDirectory() {
             val MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
 
             val MAX_SHIPS_ALLOWED_TO_COPY: Int by CInt(-1, "Number of connected ships a player can copy in one request. <=0 for unlimited.")
 
-            val SCHEMATIC_PACKET_PART_SIZE: Int by CInt(2000000, "Reload the game for change to take the effect.", Pair(512, 2000000))
+            val SCHEMATIC_PACKET_PART_SIZE: Int by CInt(1000000, "Reload the game for change to take the effect.", Pair(512, 1000000))
+        }
+
+        class Permissions: ConfigSubDirectory() {
+            var VMOD_COMMANDS_PERMISSION_LEVEL: Int by CInt(4, "", Pair(0, 4))
+        }
+
+        class Schematics: ConfigSubDirectory() {
+            var TIMEOUT_TIME: Int by CInt(50, "", Pair(0, 20000))
         }
     }
 }

@@ -64,6 +64,7 @@ fun commonCopy(
     val cShip1 = if (nShip1 != null) { DummyServerShip(nShip1) } else null
     val cShip2 = if (nShip2 != null) { DummyServerShip(nShip2) } else null
 
+    //TODO this is stupid
     if (cShip1 != null) {cShip1.transform = (cShip1.transform as ShipTransformImpl).copy(positionInShip = (nShip1!!.transformProvider as FixedPositionTransformProvider).positionInShip)}
     if (cShip2 != null) {cShip2.transform = (cShip2.transform as ShipTransformImpl).copy(positionInShip = (nShip2!!.transformProvider as FixedPositionTransformProvider).positionInShip)}
 

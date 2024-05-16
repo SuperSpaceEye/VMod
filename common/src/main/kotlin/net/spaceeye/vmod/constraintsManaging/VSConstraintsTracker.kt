@@ -10,7 +10,7 @@ import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
 
-object VSConstraintsKeeper: ServerClosable() {
+object VSConstraintsTracker: ServerClosable() {
     val idToShips = mutableMapOf<Int, Pair<ShipId, ShipId>>()
     val shipToIds = mutableMapOf<ShipId, MutableList<Int>>()
 

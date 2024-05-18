@@ -148,7 +148,11 @@ object SchematicActionsQueue: ServerClosable() {
                     flatExtraData.size - 1
                 }
 
-                SchemCompatObj.onCopy(level, bePos, state, ships, be, tag)
+                val cancel = SchemCompatObj.onCopy(level, bePos, state, ships, be, tag)
+                if (cancel) {
+                    if (fed != -1) { flatExtraData.removeLast() }
+                    continue
+                }
 
                 val id = blockPalette.toId(state)
                 data.add(

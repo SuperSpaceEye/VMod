@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.state.BlockState
 import org.valkyrienskies.core.api.ships.ServerShip
 
 interface SchemCompatItem {
-    fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?)
+    fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit)
     fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
 }
 
@@ -19,11 +19,13 @@ object SchemCompatObj {
     init {
         if (Platform.isModLoaded("vs_clockwork")) { items.add(ClockworkSchemCompat()) }
         if (Platform.isModLoaded("trackwork")) { items.add(TrackworkSchemCompat()) }
-        if (Platform.isModLoaded("vs_takeoff")) { items.add(TakeoffSchemCompat()) }
+//        if (Platform.isModLoaded("vs_takeoff")) { items.add(TakeoffSchemCompat()) }
     }
 
-    fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?) {
-        items.forEach { it.onCopy(level, pos, state, ships, be, tag) }
+    fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?): Boolean {
+        var cancel = false
+        items.forEach { it.onCopy(level, pos, state, ships, be, tag) { cancel = true } }
+        return cancel
     }
     fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState): ((BlockEntity?) -> Unit)? {
         val callbacks = mutableListOf<(BlockEntity?) -> Unit>()

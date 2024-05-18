@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.constraintsManaging.getCenterPos
 import net.spaceeye.vmod.schematic.ShipSchematic
@@ -140,9 +142,9 @@ class ClockworkSchemCompat(): SchemCompatItem {
         }
     }
 
-    override fun onCopy() {}
+    override fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?) {}
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (state.block != ClockworkBlocks.PHYS_BEARING.get()) {return}
         val id = tag.getLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID)
         val mapped = oldToNewId[id] ?: -1

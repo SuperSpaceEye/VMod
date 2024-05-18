@@ -28,12 +28,7 @@ object SchematicActionsQueue: ServerClosable() {
 
     fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
 
-    fun queueShipsCreationEvent(
-        level: ServerLevel,
-        uuid: UUID,
-        ships: List<Pair<ServerShip, Long>>,
-        schematicV1: ShipSchematicV1,
-        postPlacementFn: () -> Unit) {
+    fun queueShipsCreationEvent(level: ServerLevel, uuid: UUID, ships: List<Pair<ServerShip, Long>>, schematicV1: ShipSchematicV1, postPlacementFn: () -> Unit) {
         placeData[uuid] = SchemPlacementItem(level, schematicV1, ships, postPlacementFn)
     }
 
@@ -45,6 +40,8 @@ object SchematicActionsQueue: ServerClosable() {
     ) {
         var currentShip = 0
         var currentChunk = 0
+
+        var afterPasteCallbacks = mutableListOf<() -> Unit>()
 
         private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: SchemBlockData<BlockItem>, blockPalette: BlockPaletteHashMapV1, flatExtraData: List<CompoundTag>, offset: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
@@ -59,10 +56,12 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.putInt("x", pos.x)
                     tag.putInt("y", pos.y)
                     tag.putInt("z", pos.z)
-                    SchemCompatObj.onPaste(level, oldToNewId, tag, state)
-                    level.getChunkAt(pos).getBlockEntity(pos)?.load(tag) ?: run {
+                    val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state)
+                    val be = level.getChunkAt(pos).getBlockEntity(pos)
+                    be?.load(tag) ?: run {
                         ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
                     }
+                    cb?.let { afterPasteCallbacks.add { cb(be) } }
                 }
             }
         }
@@ -94,6 +93,7 @@ object SchematicActionsQueue: ServerClosable() {
                 currentShip++
                 if (getNow_ms() - start > timeout) { return false }
             }
+            afterPasteCallbacks.forEach { it() }
 
             return true
         }
@@ -127,10 +127,10 @@ object SchematicActionsQueue: ServerClosable() {
         var cx = 0
         var cz = 0
 
-        private fun saveChunk(chunk: LevelChunk,
-                                     data: SchemBlockData<BlockItem>, flatExtraData: MutableList<CompoundTag>, blockPalette: BlockPaletteHashMapV1,
-                                     chunkMin: BlockPos, cX: Int, cZ: Int,
-                                     minX: Int, maxX: Int, minZ: Int, maxZ: Int, minY: Int, maxY: Int) {
+        private fun saveChunk(level: ServerLevel, chunk: LevelChunk, ships: List<ServerShip>,
+                              data: SchemBlockData<BlockItem>, flatExtraData: MutableList<CompoundTag>, blockPalette: BlockPaletteHashMapV1,
+                              chunkMin: BlockPos, cX: Int, cZ: Int,
+                              minX: Int, maxX: Int, minZ: Int, maxZ: Int, minY: Int, maxY: Int) {
             for (y in minY until maxY) {
             for (x in minX until maxX) {
             for (z in minZ until maxZ) {
@@ -141,12 +141,14 @@ object SchematicActionsQueue: ServerClosable() {
                 val bePos = BlockPos(x + cX * 16, y, z + cZ * 16)
 
                 val be = chunk.getBlockEntity(bePos)
+                var tag: CompoundTag? = null
                 val fed = if (be == null) {-1} else {
-                    var tag = be.saveWithFullMetadata()
-
+                    tag = be.saveWithFullMetadata()
                     flatExtraData.add(tag)
                     flatExtraData.size - 1
                 }
+
+                SchemCompatObj.onCopy(level, bePos, state, ships, be, tag)
 
                 val id = blockPalette.toId(state)
                 data.add(
@@ -204,7 +206,7 @@ object SchematicActionsQueue: ServerClosable() {
                         if (cz == minCx) {minZ = boundsAABB.minZ() and 15}
                         if (cz == maxCx) {maxZ = boundsAABB.maxZ() and 15}
 
-                        saveChunk(level.getChunk(cx, cz), data, fed, blockPalette, chunkMin, cx, cz, minX, maxX, minZ, maxZ, minY, maxY)
+                        saveChunk(level, level.getChunk(cx, cz), ships, data, fed, blockPalette, chunkMin, cx, cz, minX, maxX, minZ, maxZ, minY, maxY)
                         cz++
                         if (getNow_ms() - start > timeout) { return false }
                     }

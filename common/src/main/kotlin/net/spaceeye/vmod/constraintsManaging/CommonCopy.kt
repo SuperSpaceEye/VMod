@@ -18,7 +18,7 @@ import java.lang.AssertionError
 
 //TODO extremely sus math
 //it's needed to not use ship's chunk claim
-private inline fun getRelPos(x: Int, z: Int) = Vector3d(((x / 16 / 256 - 1) * 256 + 128) * 16, 0, ((z / 16 / 256) * 256 + 128) * 16)
+inline fun getCenterPos(x: Int, z: Int) = Vector3d(((x / 16 / 256 - 1) * 256 + 128) * 16, 0, ((z / 16 / 256) * 256 + 128) * 16)
 
 fun commonCopy(
         level: ServerLevel,
@@ -36,10 +36,10 @@ fun commonCopy(
     val nShip2 = if (inShipyard2) level.shipObjectWorld.allShips.getById(mapped[constraint.shipId1]!!) else null
 
     // not actually center positions, but positions are transformed the same way, so it doesn't matter
-    val oCentered1 = if (inShipyard1) {getRelPos(constraint.localPos0.x().toInt(), constraint.localPos0.z().toInt())} else {null}
-    val oCentered2 = if (inShipyard2) {getRelPos(constraint.localPos1.x().toInt(), constraint.localPos1.z().toInt())} else {null}
-    val nCentered1 = if (nShip1!=null){getRelPos(nShip1.transform.positionInShip.x().toInt(), nShip1.transform.positionInShip.z().toInt())} else {null}
-    val nCentered2 = if (nShip2!=null){getRelPos(nShip2.transform.positionInShip.x().toInt(), nShip2.transform.positionInShip.z().toInt())} else {null}
+    val oCentered1 = if (inShipyard1) {getCenterPos(constraint.localPos0.x().toInt(), constraint.localPos0.z().toInt())} else {null}
+    val oCentered2 = if (inShipyard2) {getCenterPos(constraint.localPos1.x().toInt(), constraint.localPos1.z().toInt())} else {null}
+    val nCentered1 = if (nShip1!=null){getCenterPos(nShip1.transform.positionInShip.x().toInt(), nShip1.transform.positionInShip.z().toInt())} else {null}
+    val nCentered2 = if (nShip2!=null){getCenterPos(nShip2.transform.positionInShip.x().toInt(), nShip2.transform.positionInShip.z().toInt())} else {null}
 
     val nShip1Id = nShip1?.id ?: constraint.shipId0
     val nShip2Id = nShip2?.id ?: constraint.shipId1

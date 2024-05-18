@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.chunk.LevelChunk
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
+import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.schematic.containers.*
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
@@ -45,7 +46,7 @@ object SchematicActionsQueue: ServerClosable() {
         var currentShip = 0
         var currentChunk = 0
 
-        private fun placeChunk(level: ServerLevel, currentChunkData: SchemBlockData<BlockItem>, blockPalette: BlockPaletteHashMapV1, flatExtraData: List<CompoundTag>, offset: MVector3d) {
+        private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: SchemBlockData<BlockItem>, blockPalette: BlockPaletteHashMapV1, flatExtraData: List<CompoundTag>, offset: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
                 val pos = BlockPos(x + offset.x, y + offset.y, z + offset.z)
                 val state = blockPalette.fromId(it.paletteId) ?: run {
@@ -58,6 +59,7 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.putInt("x", pos.x)
                     tag.putInt("y", pos.y)
                     tag.putInt("z", pos.z)
+                    SchemCompatObj.onPaste(level, oldToNewId, tag, state)
                     level.getChunkAt(pos).getBlockEntity(pos)?.load(tag) ?: run {
                         ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
                     }
@@ -70,7 +72,8 @@ object SchematicActionsQueue: ServerClosable() {
                 val ship = ships[currentShip].first
                 val currentBlockData = schematicV1.blockData[ships[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
                 val blockPalette = schematicV1.blockPalette
-                val flatExtraData = schematicV1.flatExtraData
+                val flatExtraData = schematicV1.flatExtraData.map { it.copy() }
+                val oldToNewId = ships.associate { Pair(it.second, it.first.id) }
                 currentBlockData.updateKeys()
 
                 val offset = MVector3d(
@@ -80,7 +83,7 @@ object SchematicActionsQueue: ServerClosable() {
                 )
 
                 while (currentChunk < currentBlockData.sortedChunkKeys.size) {
-                    placeChunk(level, currentBlockData, blockPalette, flatExtraData, offset)
+                    placeChunk(level, oldToNewId, currentBlockData, blockPalette, flatExtraData, offset)
                     currentChunk++
 
                     //TODO figure out why desync happens
@@ -135,9 +138,13 @@ object SchematicActionsQueue: ServerClosable() {
                 val state = chunk.getBlockState(cpos)
                 if (state.isAir) {continue}
 
-                val be = chunk.getBlockEntity(cpos)
+                val bePos = BlockPos(x + cX * 16, y, z + cZ * 16)
+
+                val be = chunk.getBlockEntity(bePos)
                 val fed = if (be == null) {-1} else {
-                    flatExtraData.add(be.saveWithFullMetadata())
+                    var tag = be.saveWithFullMetadata()
+
+                    flatExtraData.add(tag)
                     flatExtraData.size - 1
                 }
 

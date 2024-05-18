@@ -471,7 +471,7 @@ class ConstraintManager: SavedData() {
 
             ShipSchematic.registerCopyPasteEvents(
                     "VMod Constraint Manager",
-            { shipsToBeSaved: List<ServerShip>, unregister: () -> Unit ->
+            {level: ServerLevel, shipsToBeSaved: List<ServerShip>, unregister: () -> Unit ->
                 val instance = getInstance()
 
                 val toSave = shipsToBeSaved.filter { instance.shipsConstraints.containsKey(it.id) }
@@ -500,13 +500,13 @@ class ConstraintManager: SavedData() {
                 instance.saveSchema(tag)
 
                 CompoundTagIFile(tag)
-            }, { loadedShips: List<Pair<ServerShip, Long>>, loadFile: IFile, unregister: () -> Unit ->
+            }, {level: ServerLevel , loadedShips: List<Pair<ServerShip, Long>>, loadFile: IFile, unregister: () -> Unit ->
                 val instance = getInstance()
 
                 val file = CompoundTagIFile(CompoundTag())
                 file.fromBytes(loadFile.toBytes())
 
-                val tag = file.tag
+                val tag = file.tag!!
                 val toInitConstraints = mutableListOf<MConstraint>()
 
                 val schema = instance.loadSchema(tag)

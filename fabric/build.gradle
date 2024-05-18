@@ -73,7 +73,7 @@ remapJar {
     inputFile.set shadowJar.archiveFile
     dependsOn shadowJar
     archiveClassifier.set(null)
-    archiveBaseName.set("${archiveBaseName.get()}-Fabric")
+    archiveBaseName.set("${archiveBaseName.get()}-${minecraft_version}-Fabric")
 }
 
 jar {

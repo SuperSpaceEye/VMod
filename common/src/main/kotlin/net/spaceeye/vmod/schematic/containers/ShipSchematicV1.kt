@@ -95,8 +95,10 @@ class ShipSchematicV1(): IShipSchematic {
             }
         }
 
+        ShipSchematic.onPasteBeforeBlocksAreLoaded(level, ships, extraData)
+
         SchematicActionsQueue.queueShipsCreationEvent(level, uuid, ships, this) {
-            ShipSchematic.onPaste(ships, extraData)
+            ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData)
 
             ships.zip(newTransforms).forEach {
                 (it, transform) ->
@@ -169,13 +171,12 @@ class ShipSchematicV1(): IShipSchematic {
         )
     }
 
-    override fun makeFrom(uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
+    override fun makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
         val traversed = VSConstraintsTracker.traverseGetConnectedShips(originShip.id)
-        val level = ServerLevelHolder.overworldServerLevel!!
 
         val ships = traversed.traversedShipIds.mapNotNull { level.shipObjectWorld.allShips.getById(it) }
 
-        extraData = ShipSchematic.onCopy(ships)
+        extraData = ShipSchematic.onCopy(level, ships)
 
         saveShipData(ships, originShip)
         SchematicActionsQueue.queueShipsSavingEvent(level, uuid, ships, this, postSaveFn)
@@ -362,7 +363,7 @@ class ShipSchematicV1(): IShipSchematic {
         val file = CompoundTagIFile(CompoundTag())
         file.fromBytes(buf)
 
-        val saveTag = file.tag
+        val saveTag = file.tag!!
 
         deserializeShipData(saveTag)
         deserializeExtraData(saveTag)

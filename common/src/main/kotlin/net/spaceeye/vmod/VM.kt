@@ -6,10 +6,12 @@ import dev.architectury.platform.Platform
 import dev.architectury.utils.Env
 import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
+import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
@@ -41,6 +43,8 @@ object VM {
         SimpleMessagerNetworking
         ToolgunModes
         ServerToolGunState
+        ShipSchematic
+        SchemCompatObj
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable { ClientToolGunState } }
 
         VMBlocks.register()

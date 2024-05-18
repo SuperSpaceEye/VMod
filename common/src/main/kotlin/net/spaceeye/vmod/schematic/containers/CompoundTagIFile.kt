@@ -9,7 +9,7 @@ import net.minecraft.nbt.NbtIo
 import net.spaceeye.vmod.schematic.icontainers.IFile
 import java.io.IOException
 
-class CompoundTagIFile(var tag: CompoundTag): IFile {
+class CompoundTagIFile(var tag: CompoundTag? = null): IFile {
     override fun toBytes(): ByteBuf {
         val buffer = ByteBufOutputStream(Unpooled.buffer())
         NbtIo.writeCompressed(tag, buffer)

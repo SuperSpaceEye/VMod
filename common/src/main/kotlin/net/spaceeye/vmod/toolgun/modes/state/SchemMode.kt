@@ -372,7 +372,7 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
 
         val serverCaughtShip = level.getShipManagingPos(raycastResult.blockPosition) ?: return
         val schem = ShipSchematic.getSchematicConstructor().get()
-        schem.makeFrom(player.uuid, serverCaughtShip) {
+        schem.makeFrom(player.level as ServerLevel, player.uuid, serverCaughtShip) {
             SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
             ServerPlayerSchematics.schematics[player.uuid] = schem
         }

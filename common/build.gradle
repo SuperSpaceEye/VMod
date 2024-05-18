@@ -2,6 +2,7 @@ repositories {
     maven {
         url = "https://repo.essential.gg/repository/maven-public"
     }
+    maven { url = "https://mvn.devos.one/snapshots/" } // Create Fabric, Porting Lib, Forge Tags, Milk Lib, Registrate Fabric
     mavenCentral()
 }
 
@@ -26,6 +27,10 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
 
     modImplementation("gg.essential:elementa-1.18.1-forge:622")
+
+    modCompileOnlyApi(files("vs_jars/clockwork-1.18.2-0.1.16-fabric-a0682a9698.jar"))
+
+    modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
 }
 
 architectury {

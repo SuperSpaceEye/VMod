@@ -13,7 +13,7 @@ interface IShipSchematic {
     fun getInfo(): IShipSchematicInfo
 
     fun placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc): Boolean
-    fun makeFrom(uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit = {}): Boolean
+    fun makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit = {}): Boolean
 
     fun saveToFile(): IFile
     fun loadFromByteBuffer(buf: ByteBuf): Boolean

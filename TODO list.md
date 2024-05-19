@@ -38,14 +38,16 @@
     * Set limit for total mconstraints of acc level.
     * Some other commands idk
 
-## Commands
-* Add custom command for teleporting of the whole structure
-* Add custom command for scaling of the whole structure
-
 ## Server side things
 * Add server side validation for (kinda ✅) constraints and rendering
 * Add the ability for server to change limits
 * Add the ability for server and clients to synchronise limits
+
+## Schematic
+* Copy all ships that are in AABB of all connected (maybe recursive? idk)
+* Copy entities (maybe, idfk)
+* Copy phys entities (not very important rn)
+* Copy ship attachments (maybe, idk if i really need to do it)
 
 ## Weld Constraint
 * Add texture for weld rendering

@@ -14,14 +14,12 @@ import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
 import net.spaceeye.vmod.toolgun.modes.state.SchemNetworking
+import net.spaceeye.vmod.translate.*
 import java.awt.Color
 import java.util.*
 
 class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
     var filename = ""
-    var isDragging = false
-
-    private var dragOffset: Pair<Float, Float> = 0f to 0f
 
     init {
         constrain {
@@ -31,34 +29,11 @@ class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
             width = 150.pixels()
             height = 50.pixels()
         }
-        onMouseClick { event->
-            isDragging = true
 
-            dragOffset = event.absoluteX to event.absoluteY
-        }.onMouseRelease {
-            isDragging = false
-        }.onMouseDrag { mouseX, mouseY, _ ->
-            return@onMouseDrag
-            if (!isDragging) return@onMouseDrag
+        val entry = makeTextEntry(FILENAME.get(), ::filename, 2f, 2f, this, StrLimit(50))
+        entry.focus()
 
-            val absoluteX = mouseX + getLeft()
-            val absoluteY = mouseY + getTop()
-
-            val deltaX = absoluteX - dragOffset.first
-            val deltaY = absoluteY - dragOffset.second
-
-            dragOffset = absoluteX to absoluteY
-
-            val newX = this@SaveForm.getLeft() + deltaX
-            val newY = this@SaveForm.getTop() + deltaY
-
-            this@SaveForm.setX(newX.pixels())
-            this@SaveForm.setY(newY.pixels())
-        }
-
-        makeTextEntry("Filename", ::filename, 2f, 2f, this, StrLimit(50))
-
-        Button(Color.GRAY.brighter().brighter(), "Save") {
+        Button(Color.GRAY.brighter().brighter(), SAVE.get()) {
             parent.removeChild(this)
             mode.filename = filename
             ClientPlayerSchematics.saveSchemStream.r2tRequestData.transmitData(FakePacketContext(), ClientPlayerSchematics.SendSchemRequest(Minecraft.getInstance().player!!))
@@ -67,7 +42,7 @@ class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
             y = SiblingConstraint() + 2.pixels()
         } childOf this
 
-        Button(Color.GRAY.brighter().brighter(), "Cancel") {
+        Button(Color.GRAY.brighter().brighter(), CANCEL.get()) {
             parent.removeChild(this)
         }.constrain {
             x = 2.pixels()
@@ -77,7 +52,7 @@ class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
 }
 
 interface SchemGUIBuilder: GUIBuilder {
-    override val itemName get() = TranslatableComponent("Schem")
+    override val itemName get() = SCHEMATIC
 
     var itemsScroll: ScrollComponent?
     var parentWindow: UIBlock
@@ -110,7 +85,7 @@ interface SchemGUIBuilder: GUIBuilder {
                 height = ChildBasedMaxSizeConstraint() + 2.pixels()
             } childOf itemsScroll!!
 
-            Button(Color.GRAY.brighter(), "Load") {
+            Button(Color.GRAY.brighter(), LOAD.get()) {
                 schem = ClientPlayerSchematics.loadSchematic(path)
                 if (schem != null) {
                     SchemNetworking.c2sLoadSchematic.sendToServer(SchemNetworking.C2SLoadSchematic())
@@ -144,7 +119,7 @@ interface SchemGUIBuilder: GUIBuilder {
         this as SchemMode
         this.parentWindow = parentWindow
 
-        Button(Color.GRAY.brighter(), "Save") {
+        Button(Color.GRAY.brighter(), SAVE.get()) {
             SaveForm(this) childOf parentWindow
         }.constrain {
             x = 2.pixels()

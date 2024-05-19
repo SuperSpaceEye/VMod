@@ -72,10 +72,8 @@ class ClockworkSchemCompat(): SchemCompatItem {
                     val tag = CompoundTag()
 
                     val oldPos = Vector3d(item.bearingPosition ?: continue)
-                    val pos = oldPos - getCenterPos(oldPos.x.toInt(), oldPos.z.toInt())
 
                     tag.putInt("k", k)
-                    tag.putVector3d("pos", pos.toJomlVector3d())
                     tag.putLong("ship", level.getShipManagingPos(oldPos.toBlockPos())!!.id)
 
                     posTag.add(tag)

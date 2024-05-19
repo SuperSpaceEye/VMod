@@ -19,7 +19,7 @@ object SchemCompatObj {
     init {
         if (Platform.isModLoaded("vs_clockwork")) { items.add(ClockworkSchemCompat()) }
         if (Platform.isModLoaded("trackwork")) { items.add(TrackworkSchemCompat()) }
-//        if (Platform.isModLoaded("vs_takeoff")) { items.add(TakeoffSchemCompat()) }
+        if (Platform.isModLoaded("vs_takeoff")) { items.add(TakeoffSchemCompat()) }
     }
 
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?): Boolean {

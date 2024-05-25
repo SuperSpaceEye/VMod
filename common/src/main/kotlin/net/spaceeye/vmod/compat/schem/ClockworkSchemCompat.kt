@@ -11,11 +11,10 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.constraintsManaging.getCenterPos
+import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.containers.CompoundTagIFile
-import net.spaceeye.vmod.schematic.icontainers.IFile
+import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.putVector3d
 import org.valkyrienskies.clockwork.ClockworkBlocks
 import org.valkyrienskies.clockwork.content.contraptions.phys.bearing.data.PhysBearingData
 import org.valkyrienskies.clockwork.content.forces.contraption.BearingController
@@ -50,7 +49,7 @@ class ClockworkSchemCompat(): SchemCompatItem {
             ).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 
-    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, unregister: () -> Unit): IFile {
+    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, unregister: () -> Unit): Serializable {
         val tag = CompoundTag()
 
         val tagData = ListTag()
@@ -85,18 +84,19 @@ class ClockworkSchemCompat(): SchemCompatItem {
 
         tag.put("data", tagData)
 
-        return CompoundTagIFile(tag)
+        return CompoundTagSerializable(tag)
     }
 
-    private fun onPasteEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: IFile, unregister: () -> Unit) {
-        val data = CompoundTagIFile()
-        if (!data.fromBytes(file.toBytes())) {return}
+    private fun onPasteEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable, unregister: () -> Unit) {
+        val data = CompoundTagSerializable()
+        data.deserialize(file.serialize())
+        val tag = data.tag ?: return
 
         val mapper = getMapper()
 
         val oldToShip = loadedShips.associate { Pair(it.second, it.first) }
 
-        (data.tag!!["data"] as ListTag).map {
+        (tag["data"] as ListTag).map {
             it as CompoundTag
 
             val oldId = it.getLong("oldId")

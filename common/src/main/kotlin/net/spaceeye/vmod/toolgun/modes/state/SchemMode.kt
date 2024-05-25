@@ -81,7 +81,7 @@ object ClientPlayerSchematics {
         transmitterRequestProcessor = {loadRequest ->
             val res = ClientToolGunState.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
-                mode.schem?.let { SchemHolder(it.saveToFile().toBytes(), loadRequest.requestUUID) }
+                mode.schem?.let { SchemHolder(it.saveToFile().serialize(), loadRequest.requestUUID) }
             }
             if (res != null) { Either.Left(res) } else { Either.Right(DataStream.RequestFailurePkt()) }
         }
@@ -141,7 +141,7 @@ object ClientPlayerSchematics {
 
     fun saveSchematic(name: String, schematic: IShipSchematic): Boolean {
         try {
-            Files.write(Paths.get("VMod-Schematics/${name}"), schematic.saveToFile().toBytes().array())
+            Files.write(Paths.get("VMod-Schematics/${name}"), schematic.saveToFile().serialize().array())
         } catch (e: IOException) {return false}
         return true
     }
@@ -156,7 +156,7 @@ object ServerPlayerSchematics: ServerClosable() {
         ClientPlayerSchematics::SendSchemRequest,
         ClientPlayerSchematics::SchemHolder,
         transmitterRequestProcessor = {
-            val res = schematics[it.uuid] ?.let { SchemHolder(it.saveToFile().toBytes()) }
+            val res = schematics[it.uuid] ?.let { SchemHolder(it.saveToFile().serialize()) }
             if (res != null) { Either.Left(res) } else { Either.Right(DataStream.RequestFailurePkt()) }
         }
     )

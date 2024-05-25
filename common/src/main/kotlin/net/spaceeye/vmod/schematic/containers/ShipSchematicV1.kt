@@ -4,12 +4,13 @@ import io.netty.buffer.ByteBuf
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.nbt.NbtUtils
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.block.Blocks
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.icontainers.IFile
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.transformProviders.FixedPositionTransformProvider
@@ -45,7 +46,7 @@ class ShipSchematicV1(): IShipSchematic {
 //    var worldEntityData = mutableMapOf<UUID, CompoundTag>()
 //    var shipyardEntityData = mutableMapOf<ShipId, MutableMap<UUID, CompoundTag>>()
 
-    var extraData = listOf<Pair<String, IFile>>()
+    var extraData = listOf<Pair<String, Serializable>>()
 
     lateinit var schemInfo: IShipSchematicInfo
 
@@ -253,7 +254,7 @@ class ShipSchematicV1(): IShipSchematic {
     private fun serializeExtraData(tag: CompoundTag) {
         val extraDataTag = CompoundTag()
 
-        extraData.forEach { (name, file) -> extraDataTag.putByteArray(name, file.toBytes().array()) }
+        extraData.forEach { (name, file) -> extraDataTag.putByteArray(name, file.serialize().array()) }
 
         tag.put("extraData", extraDataTag)
     }
@@ -302,7 +303,7 @@ class ShipSchematicV1(): IShipSchematic {
         tag.put("gridData", gridDataTag)
     }
 
-    override fun saveToFile(): IFile {
+    override fun saveToFile(): Serializable {
         val saveTag = CompoundTag()
 
         serializeShipData(saveTag)
@@ -311,7 +312,7 @@ class ShipSchematicV1(): IShipSchematic {
         serializeGridDataInfo(saveTag)
         serializeExtraBlockData(saveTag)
 
-        return CompoundTagIFileWithTopVersion(saveTag, schematicVersion)
+        return CompoundSerializableWithTopVersion(saveTag, schematicVersion)
     }
 
     private fun deserializeShipData(tag: CompoundTag) {
@@ -350,7 +351,7 @@ class ShipSchematicV1(): IShipSchematic {
         extraData = extraDataTag.allKeys.map { name ->
             val byteArray = extraDataTag.getByteArray(name)
 
-            Pair(name, RawBytesIFile(byteArray))
+            Pair(name, RawBytesSerializable(byteArray))
         }
     }
 
@@ -396,8 +397,8 @@ class ShipSchematicV1(): IShipSchematic {
     }
 
     override fun loadFromByteBuffer(buf: ByteBuf): Boolean {
-        val file = CompoundTagIFile(CompoundTag())
-        file.fromBytes(buf)
+        val file = CompoundTagSerializable(CompoundTag())
+        file.deserialize(FriendlyByteBuf(buf))
 
         val saveTag = file.tag!!
 

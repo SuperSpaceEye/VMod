@@ -10,9 +10,9 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.events.AVSEvents
+import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.containers.CompoundTagIFile
-import net.spaceeye.vmod.schematic.icontainers.IFile
+import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
 import net.spaceeye.vmod.utils.PosMap
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.ServerLevelHolder
@@ -499,12 +499,12 @@ class ConstraintManager: SavedData() {
                 instance.saveDimensionIds(tag)
                 instance.saveSchema(tag)
 
-                CompoundTagIFile(tag)
-            }, {level: ServerLevel , loadedShips: List<Pair<ServerShip, Long>>, loadFile: IFile, unregister: () -> Unit ->
+                CompoundTagSerializable(tag)
+            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: Serializable, unregister: () -> Unit ->
                 val instance = getInstance()
 
-                val file = CompoundTagIFile(CompoundTag())
-                file.fromBytes(loadFile.toBytes())
+                val file = CompoundTagSerializable(CompoundTag())
+                file.deserialize(loadFile.serialize())
 
                 val tag = file.tag!!
                 val toInitConstraints = mutableListOf<MConstraint>()

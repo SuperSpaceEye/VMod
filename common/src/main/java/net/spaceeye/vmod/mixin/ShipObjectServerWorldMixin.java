@@ -1,6 +1,6 @@
 package net.spaceeye.vmod.mixin;
 
-import net.spaceeye.vmod.constraintsManaging.VSConstraintsKeeper;
+import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker;
 import net.spaceeye.vmod.events.AVSEvents;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,16 +31,16 @@ abstract public class ShipObjectServerWorldMixin {
 
     @Inject(method = "createNewConstraint", at = @At(value = "FIELD", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectServerWorld;constraints:Ljava/util/Map;"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD)
     void vmod_createNewConstraints(VSConstraint vsConstraint, CallbackInfoReturnable<Integer> cir, int var4) {
-        VSConstraintsKeeper.INSTANCE.addNewConstraint(vsConstraint, var4);
+        VSConstraintsTracker.INSTANCE.addNewConstraint(vsConstraint, var4);
     }
 
     @Inject(method = "removeConstraint", at = @At(value = "FIELD", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectServerWorld;constraintsDeletedThisTick:Ljava/util/List;"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD)
     void vmod_removeConstraint(int constraintId, CallbackInfoReturnable<Boolean> cir, VSConstraint var2) {
-        VSConstraintsKeeper.INSTANCE.removeConstraint(var2, constraintId);
+        VSConstraintsTracker.INSTANCE.removeConstraint(var2, constraintId);
     }
 
     @Inject(method = "updateConstraint", at = @At(value = "FIELD", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectServerWorld;constraintsUpdatedThisTick:Ljava/util/List;"), remap = false)
     void vmod_updateConstraint(int constraintId, VSConstraint updatedVSConstraint, CallbackInfoReturnable<Boolean> cir) {
-        VSConstraintsKeeper.INSTANCE.updateConstraint(updatedVSConstraint, constraintId);
+        VSConstraintsTracker.INSTANCE.updateConstraint(updatedVSConstraint, constraintId);
     }
 }

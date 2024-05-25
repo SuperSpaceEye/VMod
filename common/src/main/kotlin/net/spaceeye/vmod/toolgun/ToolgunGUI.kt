@@ -4,7 +4,7 @@ import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.WindowScreen
 import gg.essential.elementa.components.ScrollComponent
 import gg.essential.elementa.components.UIBlock
-import gg.essential.elementa.components.UIText
+import gg.essential.elementa.components.UIWrappedText
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
@@ -75,9 +75,11 @@ class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
                 ClientToolGunState.currentMode = component
             } childOf scrollComponent
 
-            UIText(component.itemName.get(), shadow = false).constrain {
+            UIWrappedText(component.itemName.get(), shadow = false).constrain {
                 x = 2.pixels()
                 y = CenterConstraint()
+
+                width = 100.percent()
 
                 textScale = 1.pixels()
 

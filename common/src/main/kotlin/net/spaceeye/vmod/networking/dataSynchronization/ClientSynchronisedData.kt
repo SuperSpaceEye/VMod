@@ -70,6 +70,7 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
                 pageIndicesToRemove.clear()
             }}}
         }
+        //TODO don't i need to also remove checksums?
         if (pagesToRemove.isNotEmpty()) {
             synchronized(pagesToRemove) {
                 for (pageNum in pagesToRemove) {
@@ -99,10 +100,9 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
         val clientPage = clientChecksums.getOrPut(page) { ConcurrentHashMap() }
 
         val serverIds = serverPage.keys
-        var clientIds = clientPage.keys
+        val clientIds = clientPage.keys
 
-        clientIds.filter { !clientIds.containsAll(serverIds) }.forEach {clientPage.remove(it)}
-        clientIds = clientPage.keys
+        clientIds.filter { !serverIds.contains(it) }.forEach {clientPage.remove(it)}
 
         val toUpdate = serverPage.filter { (k, v) -> !clientPage[k].contentEquals(v) }.map { it.key }.toMutableList()
 

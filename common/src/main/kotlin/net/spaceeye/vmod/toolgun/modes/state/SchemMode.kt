@@ -13,9 +13,16 @@ import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.DataStream
+import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.rendering.types.SchemOutlinesRenderer
+import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
+import net.spaceeye.vmod.schematic.containers.ShipInfo
+import net.spaceeye.vmod.schematic.containers.ShipSchematicInfo
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
+import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
@@ -24,16 +31,21 @@ import net.spaceeye.vmod.toolgun.modes.inputHandling.SchemCRIHandler
 import net.spaceeye.vmod.toolgun.modes.serializing.SchemSerializable
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
-import net.spaceeye.vmod.utils.Either
-import net.spaceeye.vmod.utils.RaycastFunctions
-import net.spaceeye.vmod.utils.ServerClosable
+import net.spaceeye.vmod.utils.*
+import org.joml.AxisAngle4d
 import org.joml.Quaterniond
+import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
+import org.valkyrienskies.core.util.readAABBi
+import org.valkyrienskies.core.util.readQuatd
+import org.valkyrienskies.core.util.writeAABBi
+import org.valkyrienskies.core.util.writeQuatd
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
 
@@ -69,7 +81,7 @@ object ClientPlayerSchematics {
         transmitterRequestProcessor = {loadRequest ->
             val res = ClientToolGunState.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
-                mode.schem?.let { SchemHolder(it.saveToFile().toBytes(), loadRequest.requestUUID) }
+                mode.schem?.let { SchemHolder(it.saveToFile().serialize(), loadRequest.requestUUID) }
             }
             if (res != null) { Either.Left(res) } else { Either.Right(DataStream.RequestFailurePkt()) }
         }
@@ -129,7 +141,7 @@ object ClientPlayerSchematics {
 
     fun saveSchematic(name: String, schematic: IShipSchematic): Boolean {
         try {
-            Files.write(Paths.get("VMod-Schematics/${name}"), schematic.saveToFile().toBytes().array())
+            Files.write(Paths.get("VMod-Schematics/${name}"), schematic.saveToFile().serialize().array())
         } catch (e: IOException) {return false}
         return true
     }
@@ -144,7 +156,7 @@ object ServerPlayerSchematics: ServerClosable() {
         ClientPlayerSchematics::SendSchemRequest,
         ClientPlayerSchematics::SchemHolder,
         transmitterRequestProcessor = {
-            val res = schematics[it.uuid] ?.let { SchemHolder(it.saveToFile().toBytes()) }
+            val res = schematics[it.uuid] ?.let { SchemHolder(it.saveToFile().serialize()) }
             if (res != null) { Either.Left(res) } else { Either.Right(DataStream.RequestFailurePkt()) }
         }
     )
@@ -159,8 +171,11 @@ object ServerPlayerSchematics: ServerClosable() {
         ::SchemHolder,
         receiverDataTransmitted = {_, data ->
             schematics[data!!.uuid] = ShipSchematic.getSchematicFromBytes(data.data.array())
+            loadRequests.remove(data.uuid)
         }
     )
+
+    val loadRequests = mutableMapOf<UUID, Long>()
 
     class SendLoadRequest(): Serializable {
         lateinit var requestUUID: UUID
@@ -184,11 +199,13 @@ object ServerPlayerSchematics: ServerClosable() {
 
     override fun close() {
         schematics.clear()
+        loadRequests.clear()
     }
 
     init {
         PlayerEvent.PLAYER_QUIT.register {
             schematics.remove(it.uuid)
+            loadRequests.remove(it.uuid)
         }
     }
 }
@@ -205,8 +222,63 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     val c2sLoadSchematic = "load_schematic" idWithConnc {
         object : C2SConnection<C2SLoadSchematic>(it, networkName) {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val lastReq = ServerPlayerSchematics.loadRequests[context.player.uuid]
+                if (lastReq != null && getNow_ms() - lastReq < 10000L) { return }
+
+                ServerPlayerSchematics.loadRequests[context.player.uuid] = getNow_ms()
                 ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(context, ServerPlayerSchematics.SendLoadRequest(context.player.uuid))
             }
+        }
+    }
+
+    val s2cSendShipInfo = "send_ship_info" idWithConns {
+        object : S2CConnection<S2CSendShipInfo>(it, networkName) {
+            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val mode = ClientToolGunState.currentMode ?: return
+                if (mode !is SchemMode) {return}
+                val pkt = S2CSendShipInfo(buf)
+                mode.shipInfo = pkt.shipInfo
+            }
+        }
+    }
+
+    class S2CSendShipInfo(): Serializable {
+        lateinit var shipInfo: IShipSchematicInfo
+
+        constructor(info: IShipSchematicInfo): this() {shipInfo = info}
+        constructor(buf: FriendlyByteBuf): this() {deserialize(buf)}
+
+        override fun serialize(): FriendlyByteBuf {
+            val buf = getBuffer()
+
+            buf.writeVector3d(Vector3d(shipInfo.maxObjectEdge))
+            buf.writeCollection(shipInfo.shipInfo) { buf, item ->
+                buf.writeVector3d(Vector3d(item.relPositionToCenter))
+                buf.writeAABBi(item.shipBounds)
+                buf.writeVector3d(Vector3d(item.posInShip))
+                buf.writeDouble(item.shipScale)
+                buf.writeQuatd(item.rotation)
+            }
+
+            return buf
+        }
+
+        override fun deserialize(buf: FriendlyByteBuf) {
+            val maxObjectEdge = buf.readVector3d().toJomlVector3d()
+            val data = buf.readCollection({mutableListOf<ShipInfo>()}) {
+                val relPositionToCenter = buf.readVector3d().toJomlVector3d()
+                val shipBounds = buf.readAABBi()
+                val posInShip = buf.readVector3d().toJomlVector3d()
+                val shipScale = buf.readDouble()
+                val rotation = buf.readQuatd()
+
+                ShipInfo(0, relPositionToCenter, shipBounds, posInShip, shipScale, rotation)
+            }
+
+            shipInfo = ShipSchematicInfo(
+                maxObjectEdge,
+                data
+            )
         }
     }
 
@@ -237,23 +309,98 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
     val conn_primary = register { object : C2SConnection<SchemMode>("schem_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
     val conn_secondary = register { object : C2SConnection<SchemMode>("schem_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
 
-    var schem: IShipSchematic? = null
+    var renderer: SchemOutlinesRenderer? = null
+
+    private var shipInfo_: IShipSchematicInfo? = null
+    var shipInfo: IShipSchematicInfo?
+        get() = shipInfo_
+        set(info) {
+            shipInfo_ = info
+            val rd = SynchronisedRenderingData.clientSynchronisedData
+            if (info == null) {
+                renderer = null
+                synchronized(rd.serverChecksums) {
+                synchronized(rd.clientChecksums) {
+                synchronized(rd.cachedDataToMerge) {
+                    rd.clientChecksums.getOrPut(-1) { ConcurrentHashMap() }.remove(-1)
+                    rd.serverChecksums.getOrPut(-1) { ConcurrentHashMap() }.remove(-1)
+
+                    rd.cachedData.getOrPut(-1) { mutableMapOf() }.remove(-1)
+                } } }
+
+                return
+            }
+
+
+            val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
+
+            val data = info.shipInfo.map {
+                Pair(ShipTransformImpl(
+                    it.relPositionToCenter,
+                    it.posInShip,
+                    it.rotation,
+                    JVector3d(it.shipScale, it.shipScale, it.shipScale)
+                ), it.shipBounds)
+            }
+
+            renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectEdge), rotationAngle, center, data)
+
+            synchronized(rd.serverChecksums) {
+            synchronized(rd.clientChecksums) {
+            synchronized(rd.cachedDataToMerge) {
+                rd.clientChecksums.getOrPut(-1) { ConcurrentHashMap() }.getOrPut(-1) { byteArrayOf() }
+                rd.serverChecksums.getOrPut(-1) { ConcurrentHashMap() }.getOrPut(-1) { byteArrayOf() }
+
+                rd.cachedData.getOrPut(-1) { mutableMapOf() }[-1] = renderer!!
+            } } }
+        }
+    private var schem_: IShipSchematic? = null
+    var schem: IShipSchematic?
+        get() = schem_
+        set(value) {schem_ = value; shipInfo = value?.getInfo()}
+
     var filename = ""
+
+    var rotationAngle = Ref(0.0)
+    var scrollAngle = Math.toRadians(10.0)
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {resetState(); return}
         player as ServerPlayer
+        // TODO
+        if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}
 
         val serverCaughtShip = level.getShipManagingPos(raycastResult.blockPosition) ?: return
         val schem = ShipSchematic.getSchematicConstructor().get()
-        schem.makeFrom(serverCaughtShip)
-        ServerPlayerSchematics.schematics[player.uuid] = schem
+        schem.makeFrom(player.level as ServerLevel, player.uuid, serverCaughtShip) {
+            SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
+            ServerPlayerSchematics.schematics[player.uuid] = schem
+        }
     }
 
+    //TODO make it create shit on server thread
     fun activateSecondaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         val schem = ServerPlayerSchematics.schematics[player.uuid] ?: return
         if (raycastResult.state.isAir) {return}
+        //TODO
+        if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}
 
-        schem.placeAt(level, raycastResult.worldCenteredHitPos!!.toJomlVector3d(), Quaterniond())
+        val info = schem.getInfo()
+
+        val hitPos = raycastResult.worldHitPos!!
+        val pos = hitPos + (raycastResult.worldNormalDirection!! * info.maxObjectEdge.y)
+
+        val rotation = Quaterniond()
+            .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))
+            .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
+            .normalize()
+
+        schem.placeAt(level, player.uuid, pos.toJomlVector3d(), rotation)
+    }
+
+    override fun resetState() {
+        schem = null
+        shipInfo = null
+        rotationAngle.it = 0.0
     }
 }

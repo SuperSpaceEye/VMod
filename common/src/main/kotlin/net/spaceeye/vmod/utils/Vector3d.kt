@@ -62,6 +62,9 @@ class Vector3d(x:Number, y:Number, z:Number) {
     inline fun sabs  (): Vector3d {return abs  (this)}
     inline fun sfloor(): Vector3d {return floor(this)}
 
+    inline fun set(x: Double, y: Double, z: Double) {this.x = x; this.y = y; this.z = z}
+    inline fun set(x: Number, y: Number, z: Number) {this.x = x.toDouble(); this.y = y.toDouble(); this.z = z.toDouble()}
+
     inline fun floorCompare(other: Vector3d): Boolean {
         return     kotlin.math.floor(x) == kotlin.math.floor(other.x)
                 && kotlin.math.floor(y) == kotlin.math.floor(other.y)

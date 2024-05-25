@@ -4,6 +4,7 @@
   "vmod.gui.hydraulics": "Hydraulics",
   "vmod.gui.axis": "Axis",
   "vmod.gui.phys_rope": "Physics Rope",
+  "vmod.gui.schematic": "Schematic",
 
   "vmod.gui.strip": "Strip",
   "vmod.gui.scale": "Scale",
@@ -42,6 +43,11 @@
   "vmod.gui.setting.strip_modes": "Strip Modes",
   "vmod.gui.setting.strip_all": "Strip All",
   "vmod.gui.setting.strip_in_radius": "Strip In Radius",
+
+  "vmod.gui.setting.save": "Save",
+  "vmod.gui.setting.cancel": "Cancel",
+  "vmod.gui.setting.filename": "Filename",
+  "vmod.gui.setting.load": "Load",
 
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
   "key.vmod.remove_top_constraint": "Remove Top Constraint",

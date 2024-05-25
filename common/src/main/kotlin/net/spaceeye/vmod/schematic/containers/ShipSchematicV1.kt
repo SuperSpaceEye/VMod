@@ -1,10 +1,6 @@
 package net.spaceeye.vmod.schematic.containers
 
 import io.netty.buffer.ByteBuf
-import io.netty.buffer.ByteBufInputStream
-import io.netty.buffer.ByteBufOutputStream
-import io.netty.buffer.Unpooled
-import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag

@@ -45,7 +45,7 @@ object SchematicActionsQueue: ServerClosable() {
 
         private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: SchemBlockData<BlockItem>, blockPalette: BlockPaletteHashMapV1, flatExtraData: List<CompoundTag>, offset: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
-                val pos = BlockPos(x + offset.x, y + offset.y, z + offset.z)
+                val pos = MVector3d(x + offset.x, y + offset.y, z + offset.z).toBlockPos()
                 val state = blockPalette.fromId(it.paletteId) ?: run {
                     throw RuntimeException("State under ID ${it.paletteId} is null.")
                 }

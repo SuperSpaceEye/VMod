@@ -111,7 +111,9 @@ class ClockworkSchemCompat(): SchemCompatItem {
 
                 val beShip = oldToShip[bearingShipId]!!
 
-                val newPos = Vector3d(item.bearingPosition!!) + getCenterPos(
+                val newPos = Vector3d(item.bearingPosition!!) - getCenterPos(
+                    item.bearingPosition!!.x().toInt(), item.bearingPosition!!.z().toInt()
+                ) + getCenterPos(
                     beShip.chunkClaim.xMiddle * 16,
                     beShip.chunkClaim.zMiddle * 16
                 )

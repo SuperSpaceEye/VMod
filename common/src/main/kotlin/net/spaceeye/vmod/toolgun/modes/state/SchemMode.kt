@@ -388,7 +388,7 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
         val info = schem.getInfo()
 
         val hitPos = raycastResult.worldHitPos!!
-        val pos = hitPos + (raycastResult.worldNormalDirection!! * Vector3d(info.maxObjectEdge))
+        val pos = hitPos + (raycastResult.worldNormalDirection!! * info.maxObjectEdge.y)
 
         val rotation = Quaterniond()
             .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))

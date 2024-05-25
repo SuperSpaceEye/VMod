@@ -111,7 +111,8 @@ class ShipSchematicV1(): IShipSchematic {
                 level.shipObjectWorld.teleportShip(it.first, ShipTeleportDataImpl(
                         toPos.toJomlVector3d(),
                         transform.shipToWorldRotation,
-                        newScale = MVector3d(it.first.transform.shipToWorldScaling).avg()
+                        JVector3d(),
+                        newScale = MVector3d(it.first.transform.shipToWorldScaling).avg(),
                 ))
                 it.first.isStatic = false
             }

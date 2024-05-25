@@ -43,8 +43,8 @@ class StripMode: BaseMode, StripSerializable, StripCRIHandler, StripGUIBuilder {
     private fun stripAll(level: ServerLevel, raycastResult: RaycastFunctions.RaycastResult) {
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return
 
-        level.shipObjectWorld.deleteShip(ship)
-        return
+//        level.shipObjectWorld.deleteShip(ship)
+//        return
 
         level.getAllManagedConstraintIdsOfShipId(ship.id).forEach { level.removeManagedConstraint(it) }
     }

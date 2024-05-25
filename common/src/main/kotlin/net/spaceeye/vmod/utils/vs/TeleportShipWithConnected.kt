@@ -12,7 +12,7 @@ import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-fun getMinScale(level: ServerLevel, traversedData: VSConstraintsTracker.TraversedData): Double {
+fun getMinScale(level: ServerLevel, traversedData: TraversedData): Double {
     return traversedData.traversedShipIds.mapNotNull {
         val ship = level.shipObjectWorld.allShips.getById(it) ?: return@mapNotNull null
         Vector3d(ship.transform.shipToWorldScaling).avg()
@@ -28,7 +28,7 @@ fun teleportShipWithConnected(
     scale: Double? = null,
     dimensionId: DimensionId? = null
 ) {
-    val traversed = VSConstraintsTracker.traverseGetConnectedShips(mainShip.id)
+    val traversed = traverseGetConnectedShips(mainShip.id)
 
     val minScale = getMinScale(level, traversed)
     val scale = scale ?: minScale

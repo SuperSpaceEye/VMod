@@ -27,6 +27,7 @@ import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
+import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ClientShip
@@ -233,7 +234,7 @@ interface PlacementAssistServer {
         if (raycastResult.state.isAir) {return handleFailure(player)}
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return handleFailure(player)
         paFirstResult = raycastResult
-        val traversed = VSConstraintsTracker.traverseGetConnectedShips(ship.id).traversedShipIds
+        val traversed = traverseGetConnectedShips(ship.id).traversedShipIds
         paNetworkingObject.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, S2CSendTraversalInfo(traversed))
     }
 

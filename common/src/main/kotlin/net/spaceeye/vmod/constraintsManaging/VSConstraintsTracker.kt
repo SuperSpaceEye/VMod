@@ -48,51 +48,6 @@ object VSConstraintsTracker: ServerClosable() {
         return shipToIds.getOrDefault(shipId, listOf())
     }
 
-    data class TraversedData(
-        val traversedShipIds: MutableSet<ShipId>,
-        val traversedMConstraintIds: MutableSet<Int>,
-        val traversedVSConstraintIds: MutableSet<Int>
-        )
-
-    //TODO move this somewhere else
-    fun traverseGetConnectedShips(shipId: ShipId): TraversedData {
-        val instance = ConstraintManager.getInstance()
-        val dimensionIds = ServerLevelHolder.server!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
-
-        val stack = mutableListOf<ShipId>(shipId)
-        val traversedShips = mutableSetOf<ShipId>()
-        traversedShips.addAll(dimensionIds)
-
-        val traversedMConstraints = mutableSetOf<Int>()
-        val traversedVSConstraints = mutableSetOf<Int>()
-
-        while (stack.isNotEmpty()) {
-            val shipId = stack.removeLast()
-            if (traversedShips.contains(shipId)) {continue}
-            traversedShips.add(shipId)
-
-            val vsIdsOfMConstraints = mutableSetOf<VSConstraintId>()
-            instance.getAllConstraintsIdOfId(shipId).forEach {
-                if (traversedMConstraints.contains(it)) { return@forEach }
-                traversedMConstraints.add(it)
-                val constraint = instance.getManagedConstraint(it) ?: return@forEach
-                stack.addAll(constraint.attachedToShips(dimensionIds).filter { !traversedShips.contains(it) })
-                vsIdsOfMConstraints.addAll(constraint.getVSIds())
-            }
-
-            val constraintIds = getIdsOfShip(shipId).filter { !traversedVSConstraints.contains(it) && !vsIdsOfMConstraints.contains(it) }
-            getVSConstraints(constraintIds).forEach {
-                val constraint = it.second ?: return@forEach
-                if (!traversedShips.contains(constraint.shipId0)) stack.add(constraint.shipId0)
-                if (!traversedShips.contains(constraint.shipId1)) stack.add(constraint.shipId1)
-            }
-            traversedVSConstraints.addAll(constraintIds)
-        }
-        traversedShips.removeAll(dimensionIds.toSet())
-
-        return TraversedData(traversedShips, traversedMConstraints, traversedVSConstraints)
-    }
-
     override fun close() {
         shipToIds.clear()
         idToShips.clear()

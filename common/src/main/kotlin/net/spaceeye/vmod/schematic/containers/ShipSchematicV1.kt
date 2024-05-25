@@ -7,7 +7,6 @@ import net.minecraft.nbt.NbtUtils
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.block.Blocks
 import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.schematic.icontainers.IFile
@@ -16,6 +15,7 @@ import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.transformProviders.FixedPositionTransformProvider
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
+import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.joml.Vector3d
@@ -41,6 +41,9 @@ class ShipSchematicV1(): IShipSchematic {
 
     val blockData = mutableMapOf<ShipId, SchemBlockData<BlockItem>>()
     var flatExtraData = mutableListOf<CompoundTag>()
+
+//    var worldEntityData = mutableMapOf<UUID, CompoundTag>()
+//    var shipyardEntityData = mutableMapOf<ShipId, MutableMap<UUID, CompoundTag>>()
 
     var extraData = listOf<Pair<String, IFile>>()
 
@@ -111,13 +114,23 @@ class ShipSchematicV1(): IShipSchematic {
                 ))
                 it.first.isStatic = false
             }
+//
+//            worldEntityData.forEach { (k, tag) ->
+//                val entityOpt = EntityType.create(tag, level) ?: return@forEach
+//                if (entityOpt.isEmpty) {return@forEach}
+//                val entity = entityOpt.get()
+//                val relPos = MVector3d(tag.getVector3d("VMOD_SCHEMATIC_REL_POS_DATA")!!)
+//                entity.setPos((relPos.sadd(pos.x, pos.y, pos.z)).toMCVec3())
+//                entity.uuid = UUID.randomUUID()
+//                level.addFreshEntity(entity)
+//            }
         }
 
         return true
     }
 
     // it will save ship data with origin ship unrotated
-    private fun saveShipData(ships: List<ServerShip>, originShip: ServerShip) {
+    private fun saveShipData(ships: List<ServerShip>, originShip: ServerShip): AABBd {
         val getWorldAABB = {it: ServerShip, newTransform: ShipTransform -> it.shipAABB!!.toAABBd(AABBd()).transform(newTransform.shipToWorld) }
 
         val invRotation = originShip.transform.shipToWorldRotation.invert(Quaterniond())
@@ -169,16 +182,39 @@ class ShipSchematicV1(): IShipSchematic {
             normalizedMaxObjectPos.toJomlVector3d(),
             sinfo
         )
+        return objectAABB
     }
 
-    override fun makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
-        val traversed = VSConstraintsTracker.traverseGetConnectedShips(originShip.id)
+//    fun saveEntityData(level: ServerLevel, ships: List<ServerShip>, objectAABB: AABBd) {
+//        val minPos = MVector3d(objectAABB.minX, objectAABB.minY, objectAABB.minZ)
+//        val maxPos = MVector3d(objectAABB.maxX, objectAABB.maxY, objectAABB.maxZ)
+//
+//        val normalizedMaxObjectPos = (maxPos - minPos) / 2
+//        val objectCenter = normalizedMaxObjectPos + minPos
+//
+//        ships
+//            .map { level.getEntities(null, it.worldAABB.toMinecraft()) }
+//            .reduce { acc, entities -> acc.addAll(entities); acc }
+//            .forEach {
+//                if (worldEntityData.containsKey(it.uuid)) {return@forEach}
+//                try {
+//                    val tag = CompoundTag()
+//                    it.save(tag)
+//                    tag.putVector3d("VMOD_SCHEMATIC_REL_POS_DATA", (MVector3d(it.position()) - objectCenter).toJomlVector3d())
+//                    worldEntityData[it.uuid] = tag
+//                } catch (_: Exception) {}
+//            }
+//    }
 
-        val ships = traversed.traversedShipIds.mapNotNull { level.shipObjectWorld.allShips.getById(it) }
+    override fun makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
+        val traversed = traverseGetAllTouchingShips(level, originShip.id)
+
+        val ships = traversed.mapNotNull { level.shipObjectWorld.allShips.getById(it) }
 
         extraData = ShipSchematic.onCopy(level, ships)
 
-        saveShipData(ships, originShip)
+        val objectAABB = saveShipData(ships, originShip)
+//        saveEntityData(level, ships, objectAABB)
         SchematicActionsQueue.queueShipsSavingEvent(level, uuid, ships, this, postSaveFn)
 
         return true

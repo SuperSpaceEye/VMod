@@ -88,7 +88,7 @@ private fun createShip(level: ServerLevel, originShip: ServerShip, posInShipOffs
     return newShip
 }
 
-private fun checkLimits(traversedData: VSConstraintsTracker.TraversedData, player: ServerPlayer?): Boolean {
+private fun checkLimits(traversedData: TraversedData, player: ServerPlayer?): Boolean {
     if (player == null) {return true}
 
     if (VMConfig.SERVER.TOOLGUN.MAX_SHIPS_ALLOWED_TO_COPY > 0 && traversedData.traversedShipIds.size > VMConfig.SERVER.TOOLGUN.MAX_SHIPS_ALLOWED_TO_COPY) {return false}
@@ -97,7 +97,7 @@ private fun checkLimits(traversedData: VSConstraintsTracker.TraversedData, playe
 }
 
 fun copyShipWithConnections(level: ServerLevel, originShip: ServerShip, toRaycastResult: RaycastFunctions.RaycastResult, player: ServerPlayer? = null) {
-    val traversed = VSConstraintsTracker.traverseGetConnectedShips(originShip.id)
+    val traversed = traverseGetConnectedShips(originShip.id)
     //why? phys entities exist
     traversed.traversedShipIds.removeAll(traversed.traversedShipIds.filter { !level.shipObjectWorld.loadedShips.contains(it) }.toSet())
 

@@ -67,7 +67,8 @@ object ShipSchematic {
         val toReturn = mutableListOf<Pair<String, Serializable>>()
         for ((name, fn) in copyEvents) {
             val file = try { fn(level, shipsToBeSaved) {toRemove.add(name)} ?: continue
-            } catch (e: Exception) {ELOG("Event $name failed onCopy with exception:\n${e.stackTraceToString()}"); continue}
+            } catch (e: Exception) { ELOG("Event $name failed onCopy with exception:\n${e.stackTraceToString()}"); continue
+            } catch (e: Error)     { ELOG("Event $name failed onCopy with exception:\n${e.stackTraceToString()}"); continue}
             toReturn.add(Pair(name, file))
         }
         toRemove.forEach { copyEvents.remove(it) }
@@ -77,20 +78,22 @@ object ShipSchematic {
 
     internal fun onPasteBeforeBlocksAreLoaded(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, Serializable>>) {
         val toRemove = mutableListOf<String>()
-        files.forEach { (name, file) ->
-            val event = pasteEventsBefore[name] ?: return@forEach
+        for ((name, file) in files) {
+            val event = pasteEventsBefore[name] ?: continue
             try { event(level, loadedShips, file) { toRemove.add(name) }
-            } catch (e: Exception) { ELOG("Event $name failed onPasteBeforeBlocksAreLoaded with exception:\n${e.stackTraceToString()}"); return@forEach }
+            } catch (e: Exception) { ELOG("Event $name failed onPasteBeforeBlocksAreLoaded with exception:\n${e.stackTraceToString()}"); continue
+            } catch (e: Error)     { ELOG("Event $name failed onPasteBeforeBlocksAreLoaded with exception:\n${e.stackTraceToString()}"); continue }
         }
         toRemove.forEach { pasteEventsBefore.remove(it) }
     }
 
     internal fun onPasteAfterBlocksAreLoaded(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, Serializable>>) {
         val toRemove = mutableListOf<String>()
-        files.forEach { (name, file) ->
-            val event = pasteEventsAfter[name] ?: return@forEach
+        for ((name, file) in files) {
+            val event = pasteEventsAfter[name] ?: continue
             try { event(level, loadedShips, file) { toRemove.add(name) }
-            } catch (e: Exception) { ELOG("Event $name failed onPasteAfterBlocksAreLoaded with exception:\n${e.stackTraceToString()}"); return@forEach }
+            } catch (e: Exception) { ELOG("Event $name failed onPasteAfterBlocksAreLoaded with exception:\n${e.stackTraceToString()}"); continue
+            } catch (e: Error)     { ELOG("Event $name failed onPasteAfterBlocksAreLoaded with exception:\n${e.stackTraceToString()}"); continue }
         }
         toRemove.forEach { pasteEventsAfter.remove(it) }
     }

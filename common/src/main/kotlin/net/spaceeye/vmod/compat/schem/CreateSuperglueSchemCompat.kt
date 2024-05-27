@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.compat.schem
 
 import com.simibubi.create.content.contraptions.glue.SuperGlueEntity
+import dev.architectury.injectables.annotations.ExpectPlatform
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.DoubleTag
@@ -20,7 +21,16 @@ import org.valkyrienskies.core.util.toAABBd
 import org.valkyrienskies.mod.common.util.toMinecraft
 import java.util.*
 
-class CreateSchemCompat: SchemCompatItem {
+object CreateSuperglueCompatPlatformUtils {
+    @ExpectPlatform
+    @JvmStatic
+    fun saveToTag(entity: SuperGlueEntity, tag: CompoundTag): Unit = throw AssertionError()
+    @ExpectPlatform
+    @JvmStatic
+    fun loadFromTag(entity: SuperGlueEntity, tag: CompoundTag): Unit = throw AssertionError()
+}
+
+class CreateSuperglueSchemCompat: SchemCompatItem {
     init {
         ShipSchematic.registerCopyPasteEvents("create_compat", ::onCopyEvent, ::onAfterPasteEvent)
     }
@@ -40,7 +50,7 @@ class CreateSchemCompat: SchemCompatItem {
             entities.forEach {entity ->
                 try {
                     val entityTag = CompoundTag()
-                    entity.save(entityTag)
+                    CreateSuperglueCompatPlatformUtils.saveToTag(entity, entityTag)
                     val offset = getCenterPos(entity.position().x.toInt(), entity.position().z.toInt())
                     val epos = Vector3d(entity.position()) - offset
 
@@ -75,7 +85,7 @@ class CreateSchemCompat: SchemCompatItem {
             (tag.get(shipIdStr)!! as ListTag).forEach {
                 it as CompoundTag
                 val entity = SuperGlueEntity(level, AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-                entity.load(it)
+                CreateSuperglueCompatPlatformUtils.loadFromTag(entity, it)
                 val npos = Vector3d(entity.position()) + getCenterPos(ship.transform.positionInShip.x().toInt(), ship.transform.positionInShip.z().toInt())
                 entity.setPos(npos.toMCVec3())
                 entity.uuid = UUID.randomUUID()

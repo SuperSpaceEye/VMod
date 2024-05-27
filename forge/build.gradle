@@ -56,6 +56,13 @@ repositories {
     maven {
         url = "https://repo.essential.gg/repository/maven-public"
     }
+    maven { // Create Forge and Registrate Forge
+        url = "https://maven.tterrag.com/"
+        content {
+            includeGroup("com.tterrag.registrate")
+            includeGroup("com.simibubi.create")
+        }
+    }
     mavenCentral()
 }
 
@@ -78,6 +85,11 @@ dependencies {
 
     shadow("gg.essential:elementa-1.18.1-forge:636") {transitive = false}
     shadow("gg.essential:universalcraft-1.18.1-forge:323") {transitive = false}
+
+    // Create and its dependencies
+    modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }
+    modCompileOnly("com.tterrag.registrate:Registrate:${registrate_forge_version}")
+    modCompileOnly("com.jozufozu.flywheel:flywheel-forge-${flywheel_forge_minecraft_version}:${flywheel_forge_version}")
 }
 
 processResources {

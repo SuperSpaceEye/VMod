@@ -25,6 +25,7 @@ repositories {
     maven {
         url = "https://repo.essential.gg/repository/maven-public"
     }
+    maven { url = "https://mvn.devos.one/snapshots/" } // Create Fabric, Porting Lib, Forge Tags, Milk Lib, Registrate Fabric
     mavenCentral()
 }
 
@@ -54,6 +55,8 @@ dependencies {
     implementation 'com.electronwill.night-config:core:3.6.3'
     implementation 'com.electronwill.night-config:toml:3.6.3'
     modCompileOnlyApi "curse.maven:forge-config-api-port-fabric-547434:3943250"
+
+    modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
 }
 
 processResources {

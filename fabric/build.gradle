@@ -29,6 +29,7 @@ repositories {
     maven {
         url = "https://repo.essential.gg/repository/maven-public"
     }
+    maven { url = "https://mvn.devos.one/snapshots/" } // Create Fabric, Porting Lib, Forge Tags, Milk Lib, Registrate Fabric
     mavenCentral()
 }
 
@@ -63,6 +64,8 @@ dependencies {
     modLocalRuntime "curse.maven:configured-fabric-667378:4166864"    // Configured version 2.0.2 for Minecraft 1.19.3
     // Mod Menu
     modLocalRuntime "com.terraformersmc:modmenu:5.0.2"
+
+    modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
 }
 
 processResources {
@@ -82,7 +85,7 @@ remapJar {
     inputFile.set shadowJar.archiveFile
     dependsOn shadowJar
     archiveClassifier.set(null)
-    archiveBaseName.set("${archiveBaseName.get()}-Fabric-1.20.1")
+    archiveBaseName.set("${archiveBaseName.get()}-Fabric-${minecraft_version}")
 }
 
 jar {

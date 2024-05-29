@@ -33,11 +33,8 @@ interface MRenderable {
             try {
                 tag.putString("rendererType", renderer!!.typeName)
                 tag.putByteArray("renderer", renderer!!.serialize().accessByteBufWithCorrectSize())
-            } catch (e: Exception) {
-                ELOG("FAILED TO SERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}")
-            } catch (e: Error) {
-                ELOG("FAILED TO SERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}")
-            }
+            } catch (e: Exception) { ELOG("FAILED TO SERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}")
+            } catch (e: Error) { ELOG("FAILED TO SERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}") }
         }
     }
 
@@ -47,11 +44,8 @@ interface MRenderable {
                 val type = tag.getString("rendererType")
                 renderer = RenderingTypes.typeToSupplier(type).get()
                 renderer!!.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(tag.getByteArray("renderer"))))
-            }catch (e: Exception) {
-                ELOG("FAILED TO DESERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}")
-            } catch (e: Error) {
-                ELOG("FAILED TO DESERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}")
-            }
+            } catch (e: Exception) { ELOG("FAILED TO DESERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}")
+            } catch (e: Error) { ELOG("FAILED TO DESERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}") }
         }
     }
 }
@@ -116,7 +110,13 @@ fun updateRenderer(
     mID: ManagedConstraintId
 ): BaseRenderer? {
     val renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) ?: return null
-    SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
+
+    val serverData = SynchronisedRenderingData.serverSynchronisedData
+    synchronized(serverData.data) {
+        val pageId = serverData.idToPage[mID] ?: return null
+        val page = serverData.data[pageId] ?: return null
+        page.remove(mID)
+    }
 
     when (renderer) {
         is RopeRenderer -> {

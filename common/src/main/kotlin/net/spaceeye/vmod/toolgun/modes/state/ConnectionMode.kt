@@ -6,14 +6,14 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.WeldMConstraint
+import net.spaceeye.vmod.constraintsManaging.types.ConnectionMConstraint
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
-import net.spaceeye.vmod.toolgun.modes.gui.WeldGUIBuilder
-import net.spaceeye.vmod.toolgun.modes.inputHandling.WeldCRIHandler
-import net.spaceeye.vmod.toolgun.modes.serializing.WeldSerializable
+import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUIBuilder
+import net.spaceeye.vmod.toolgun.modes.inputHandling.ConnectionCRIHandler
+import net.spaceeye.vmod.toolgun.modes.serializing.ConnectionSerializable
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.utils.*
 import org.valkyrienskies.core.api.ships.ClientShip
@@ -21,15 +21,15 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
-object WeldNetworking: PlacementAssistNetworking("weld_networking")
+object ConnectionNetworking: PlacementAssistNetworking("connection_networking")
 
-class WeldMode: BaseMode, WeldSerializable, WeldCRIHandler, WeldGUIBuilder, PlacementAssistServer, PANetworkingUnit {
+class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCRIHandler, ConnectionGUIBuilder, PlacementAssistServer, PANetworkingUnit {
     var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2
 
     var fixedDistance: Double = -1.0
-    var primaryFirstRaycast = false
+    var connectionMode = ConnectionMConstraint.ConnectionModes.FIXED_ORIENTATION
     override var posMode = PositionModes.NORMAL
 
     override var paDistanceFromBlock = 0.01
@@ -40,22 +40,24 @@ class WeldMode: BaseMode, WeldSerializable, WeldCRIHandler, WeldGUIBuilder, Plac
     override var paSecondResult: RaycastFunctions.RaycastResult? = null
     override var paCaughtShip: ClientShip? = null
     override var paCaughtShips: LongArray? = null
-    override val paNetworkingObject: PlacementAssistNetworking = WeldNetworking
+    override val paNetworkingObject: PlacementAssistNetworking = ConnectionNetworking
     override val paMConstraintBuilder =
         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult> ->
-            WeldMConstraint(
+            ConnectionMConstraint(
                 spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
-                compliance, maxForce, fixedDistance,
-                listOf(rresults.first.blockPosition, rresults.second.blockPosition), null
+                compliance, maxForce, fixedDistance, connectionMode,
+                listOf(rresults.first.blockPosition, rresults.second.blockPosition)
             )
         }
 
+    var primaryFirstRaycast = false
+
     override fun init(type: BaseNetworking.EnvType) {
-        WeldNetworking.init(this, type)
+        ConnectionNetworking.init(this, type)
     }
 
-    val conn_primary = register { object : C2SConnection<WeldMode>("weld_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<WeldMode>(context.player, buf, ::WeldMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
-    val conn_secondary = register { object : C2SConnection<WeldMode>("weld_mode_secondary",   "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<WeldMode>(context.player, buf, ::WeldMode) {
+    val conn_primary   = register { object : C2SConnection<ConnectionMode>("connection_mode_primary",   "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<ConnectionMode>(context.player, buf, ::ConnectionMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
+    val conn_secondary = register { object : C2SConnection<ConnectionMode>("connection_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<ConnectionMode>(context.player, buf, ::ConnectionMode) {
             item, serverLevel, player, raycastResult ->
         activateFunctionPA(serverLevel, player, raycastResult)
     } } }
@@ -65,17 +67,17 @@ class WeldMode: BaseMode, WeldSerializable, WeldCRIHandler, WeldGUIBuilder, Plac
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        level.makeManagedConstraint(WeldMConstraint(
+        level.makeManagedConstraint(ConnectionMConstraint(
             spoint1, spoint2, rpoint1, rpoint2,
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
-            fixedDistance,
+            fixedDistance, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,
                 ship2 != null,
                 spoint1, spoint2,
-                Color(62, 62, 62),
+                Color(0, 200, 0),
                 width
             )
         )).addFor(player)

@@ -5,12 +5,12 @@ import net.spaceeye.vmod.utils.Registry
 
 object MConstraintTypes: Registry<MConstraint>() {
     init {
-        register(::BasicMConstraint)
         register(::RopeMConstraint)
         register(::WeldMConstraint)
         register(::HydraulicsMConstraint)
         register(::AxisMConstraint)
         register(::PhysRopeMConstraint)
         register(::DisabledCollisionMConstraint)
+        register(::ConnectionMConstraint)
     }
 }

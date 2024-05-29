@@ -1,22 +1,23 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIBlock
+import net.minecraft.network.chat.TranslatableComponent
+import net.spaceeye.vmod.constraintsManaging.types.ConnectionMConstraint.ConnectionModes
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
-import net.spaceeye.vmod.toolgun.modes.state.WeldMode
+import net.spaceeye.vmod.toolgun.modes.state.ConnectionMode
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.translate.*
-import net.spaceeye.vmod.translate.get
 
-interface WeldGUIBuilder: GUIBuilder {
-    override val itemName get() = WELD
+interface ConnectionGUIBuilder: GUIBuilder {
+    override val itemName get() = TranslatableComponent("Connection")
 
     override fun makeGUISettings(parentWindow: UIBlock) {
-        this as WeldMode
+        this as ConnectionMode
         val offset = 2.0f
         val limits = ServerLimits.instance
 
@@ -26,7 +27,7 @@ interface WeldGUIBuilder: GUIBuilder {
         makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, limits.compliance)
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
 
-        makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow)
+        makeTextEntry(FIXED_DISTANCE.get(),     ::fixedDistance,     offset, offset, parentWindow)
 
         makeTextEntry(DISTANCE_FROM_BLOCK.get(), ::paDistanceFromBlock, offset, offset, parentWindow, limits.distanceFromBlock)
         makeDropDown(
@@ -34,6 +35,12 @@ interface WeldGUIBuilder: GUIBuilder {
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
             DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK },
+        ))
+
+        makeDropDown("Connection Modes", parentWindow, offset, offset, listOf(
+            DItem("Fixed Orientation", connectionMode == ConnectionModes.FIXED_ORIENTATION) { connectionMode = ConnectionModes.FIXED_ORIENTATION },
+            DItem("Hinge Orientation", connectionMode == ConnectionModes.HINGE_ORIENTATION) { connectionMode = ConnectionModes.HINGE_ORIENTATION },
+            DItem("Free Orientation",  connectionMode == ConnectionModes.FREE_ORIENTATION)  { connectionMode = ConnectionModes.FREE_ORIENTATION },
         ))
     }
 }

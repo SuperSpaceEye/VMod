@@ -3,15 +3,15 @@ package net.spaceeye.vmod.toolgun.modes.inputHandling
 import dev.architectury.event.EventResult
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.ClientRawInputsHandler
-import net.spaceeye.vmod.toolgun.modes.state.AxisMode
+import net.spaceeye.vmod.toolgun.modes.state.ConnectionMode
 import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistCRIHandler
 import net.spaceeye.vmod.toolgun.modes.util.ThreeClicksActivationSteps
 import org.lwjgl.glfw.GLFW
 
-interface AxisCRIHandler: ClientRawInputsHandler, PlacementAssistCRIHandler {
+interface ConnectionCRIHandler: ClientRawInputsHandler, PlacementAssistCRIHandler {
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
-        this as AxisMode
-        if (paStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !secondaryFirstRaycast) { return EventResult.pass() }
+        this as ConnectionMode
+        if (paStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !primaryFirstRaycast) { return EventResult.pass() }
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
@@ -21,14 +21,14 @@ interface AxisCRIHandler: ClientRawInputsHandler, PlacementAssistCRIHandler {
     }
 
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
-        this as AxisMode
+        this as ConnectionMode
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
-            clientHandleMouseClickPA()
+            clientHandlePrimary()
             conn_primary.sendToServer(this)
         }
 
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
-            clientHandleSecondary()
+            clientHandleMouseClickPA()
             conn_secondary.sendToServer(this)
         }
 
@@ -39,8 +39,8 @@ interface AxisCRIHandler: ClientRawInputsHandler, PlacementAssistCRIHandler {
         return clientHandleMouseEventPA(amount)
     }
 
-    private fun clientHandleSecondary() {
-        this as AxisMode
-        secondaryFirstRaycast = !secondaryFirstRaycast
+    private fun clientHandlePrimary() {
+        this as ConnectionMode
+        primaryFirstRaycast = !primaryFirstRaycast
     }
 }

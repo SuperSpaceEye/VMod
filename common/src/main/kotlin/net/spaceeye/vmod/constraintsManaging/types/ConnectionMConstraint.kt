@@ -65,7 +65,9 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
 
         _attachmentPoints: List<BlockPos>,
 
-        _renderer: BaseRenderer? = null
+        _renderer: BaseRenderer? = null,
+
+        _dir: Vector3d? = null
     ): this() {
         fixedLength = if (_fixedLength < 0) (rpoint1 - rpoint2).dist() else _fixedLength
         attachmentPoints_ = _attachmentPoints.toMutableList()
@@ -82,8 +84,9 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) { return }
 
         val dist1 = rpoint1 - rpoint2
-        val len = dist1.dist()
-        val dir = dist1.normalize() * ( if (len < 10 || len > 30) 20 else 40)
+        val len = (_dir ?: dist1).dist()
+
+        val dir = (_dir ?: run { dist1.normalize() }) * ( if (len < 10 || len > 30) 20 else 40)
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -170,25 +173,24 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
         return commonCopy(level, mapped, aconstraint1, attachmentPoints_, renderer) {
             nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer ->
 
-            if (connectionMode == ConnectionModes.FREE_ORIENTATION) {
-                val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
-                val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
+            val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
+            val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
 
+            if (connectionMode == ConnectionModes.FREE_ORIENTATION) {
                 return@commonCopy ConnectionMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, aconstraint1.fixedDistance, connectionMode, newAttachmentPoints, newRenderer)
             }
 
-            //TODO redo this
+            // Why? if the mode chosen is hinge and its points are very close to each other, due to inaccuracy the
+            // direction will be wrong after copy. So instead use supporting constraint to get the direction.
             commonCopy(level, mapped, aconstraint2, attachmentPoints_, null) {
                 _, _, _, _, slocalPos0, slocalPos1, _, _ ->
 
                 val srpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, slocalPos0) } else slocalPos0
                 val srpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, slocalPos1) } else slocalPos1
 
+                val dir = srpoint1 - srpoint2
 
-                val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
-                val rpoint2 = rpoint1 + (srpoint1 - srpoint2).normalize() * fixedLength
-
-                ConnectionMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, aconstraint1.fixedDistance, connectionMode, newAttachmentPoints, newRenderer)
+                ConnectionMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, aconstraint1.fixedDistance, connectionMode, newAttachmentPoints, newRenderer, dir)
             }
         }
     }

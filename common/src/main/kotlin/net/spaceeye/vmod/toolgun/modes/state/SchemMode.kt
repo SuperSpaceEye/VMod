@@ -365,12 +365,19 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
     var scrollAngle = Math.toRadians(10.0)
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
-        if (raycastResult.state.isAir) {resetState(); return}
+        if (raycastResult.state.isAir) {
+            resetState();
+            ServerPlayerSchematics.schematics.remove(player.uuid)
+            return}
         player as ServerPlayer
         // TODO
         if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}
 
-        val serverCaughtShip = level.getShipManagingPos(raycastResult.blockPosition) ?: return
+        val serverCaughtShip = level.getShipManagingPos(raycastResult.blockPosition) ?: run {
+            resetState();
+            ServerPlayerSchematics.schematics.remove(player.uuid)
+            null
+        } ?: return
         val schem = ShipSchematic.getSchematicConstructor().get()
         schem.makeFrom(player.level as ServerLevel, player.uuid, serverCaughtShip) {
             SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
@@ -399,8 +406,8 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
     }
 
     override fun resetState() {
-        schem = null
-        shipInfo = null
+//        schem = null
+//        shipInfo = null
         rotationAngle.it = 0.0
     }
 }

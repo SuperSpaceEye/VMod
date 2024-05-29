@@ -11,11 +11,9 @@ object ToolgunModes {
         PhysRopeMode(),
         DisableCollisionsMode(),
 
-        CopyMode(),
+        SchemMode(),
         ScaleMode(),
         StripMode(),
-
-        SchemMode()
     )
     var initialized = false
     init {

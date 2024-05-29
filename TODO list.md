@@ -23,6 +23,9 @@
 ## Sounds
 * Add sounds and shit
 
+## Toolgun Architecture 
+* Make "do" action and its "inverse", so that you can not only undo 
+
 ## Toolgun Modes
 * Remake them again to use events for CRI events, reset, etc for an easier additions of PA, etc.
 

@@ -47,7 +47,6 @@
 * Add the ability for server and clients to synchronise limits
 
 ## Schematic
-* Copy all ships that are in AABB of all connected (maybe recursive? idk)
 * Copy entities (maybe, idfk)
 * Copy phys entities (not very important rn)
 * Copy ship attachments (maybe, idk if i really need to do it)
@@ -57,7 +56,6 @@
 * Add more setting options
 
 ## Hydraulics
-* Add more options, like one to disable fixed orientation
 * Make it more stable
 * Fix the bug that crashes VS
 

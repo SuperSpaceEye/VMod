@@ -13,6 +13,7 @@ import net.spaceeye.vmod.utils.serializeBlockPositions
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
+import net.spaceeye.vmod.utils.vs.copy
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.joml.Quaterniond
@@ -149,21 +150,18 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
         )
         updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
 
-        aconstraint1 = VSAttachmentConstraint(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0], aconstraint1.maxForce, aconstraint1.fixedDistance)
+        aconstraint1 = aconstraint1.copy(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0])
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
 
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
         renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID)
 
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return}
-        aconstraint2 = VSAttachmentConstraint(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1], aconstraint2.maxForce, aconstraint2.fixedDistance)
+        aconstraint2 = aconstraint2.copy(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1])
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2)!!)
 
-        rconstraint = when (connectionMode) {
-            ConnectionModes.FIXED_ORIENTATION -> { VSFixedOrientationConstraint(shipIds[0], shipIds[1], rconstraint.compliance, rconstraint.localRot0, rconstraint.localRot1, rconstraint.maxTorque) }
-            ConnectionModes.HINGE_ORIENTATION -> { VSHingeOrientationConstraint(shipIds[0], shipIds[1], rconstraint.compliance, rconstraint.localRot0, rconstraint.localRot1, rconstraint.maxTorque) }
-            ConnectionModes.FREE_ORIENTATION -> throw AssertionError("can't happen")
-        }
+        rconstraint = rconstraint.copy(shipIds[0], shipIds[1])
+
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint)!!)
     }
 
@@ -194,13 +192,13 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
     }
 
     override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
-        aconstraint1 = VSAttachmentConstraint(aconstraint1.shipId0, aconstraint1.shipId1, aconstraint1.compliance, aconstraint1.localPos0, aconstraint1.localPos1, aconstraint1.maxForce, aconstraint1.fixedDistance * scaleBy)
+        aconstraint1 = aconstraint1.copy(fixedDistance = aconstraint1.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[0])
         cIDs[0] = level.shipObjectWorld.createNewConstraint(aconstraint1)!!
 
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return}
 
-        aconstraint2 = VSAttachmentConstraint(aconstraint2.shipId0, aconstraint2.shipId1, aconstraint2.compliance, aconstraint2.localPos0, aconstraint2.localPos1, aconstraint2.maxForce, aconstraint2.fixedDistance * scaleBy)
+        aconstraint2 = aconstraint1.copy(fixedDistance = aconstraint2.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[1])
         cIDs[1] = level.shipObjectWorld.createNewConstraint(aconstraint2)!!
     }

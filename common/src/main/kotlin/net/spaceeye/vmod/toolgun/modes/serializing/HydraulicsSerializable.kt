@@ -5,6 +5,8 @@ import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
 import net.spaceeye.vmod.toolgun.modes.state.HydraulicsMode
 import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistSerialize
+import net.spaceeye.vmod.utils.readColor
+import net.spaceeye.vmod.utils.writeColor
 
 interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
     override fun serialize(): FriendlyByteBuf {
@@ -20,6 +22,7 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
         buf.writeUtf(channel)
         buf.writeEnum(messageModes)
         buf.writeEnum(connectionMode)
+        buf.writeColor(color)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -39,6 +42,7 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
         channel = buf.readUtf()
         messageModes = buf.readEnum(messageModes.javaClass)
         connectionMode = buf.readEnum(connectionMode.javaClass)
+        color = buf.readColor()
 
         primaryFirstRaycast = buf.readBoolean()
 

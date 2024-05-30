@@ -78,7 +78,7 @@ class RopeMConstraint(): MConstraint, MRenderable {
         )
         updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
 
-        constraint = VSRopeConstraint(shipIds[0], shipIds[1], constraint.compliance, localPoints[0][0], localPoints[1][0], constraint.maxForce, constraint.ropeLength)
+        constraint = constraint.copy(shipIds[0], shipIds[1], constraint.compliance, localPoints[0][0], localPoints[1][0])
 
         vsId = level.shipObjectWorld.createNewConstraint(constraint)!!
 
@@ -94,7 +94,7 @@ class RopeMConstraint(): MConstraint, MRenderable {
     }
 
     override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
-        constraint = VSRopeConstraint(constraint.shipId0, constraint.shipId1, constraint.compliance, constraint.localPos0, constraint.localPos1, constraint.maxForce, constraint.ropeLength * scaleBy)
+        constraint = constraint.copy(ropeLength = constraint.ropeLength * scaleBy)
 
         level.shipObjectWorld.removeConstraint(vsId)
         vsId = level.shipObjectWorld.createNewConstraint(constraint)!!

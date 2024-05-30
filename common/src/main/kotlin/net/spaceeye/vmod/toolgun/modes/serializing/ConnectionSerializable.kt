@@ -1,11 +1,12 @@
 package net.spaceeye.vmod.toolgun.modes.serializing
 
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.constraintsManaging.types.ConnectionMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
 import net.spaceeye.vmod.toolgun.modes.state.ConnectionMode
 import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistSerialize
+import net.spaceeye.vmod.utils.readColor
+import net.spaceeye.vmod.utils.writeColor
 
 interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
     override fun serialize(): FriendlyByteBuf {
@@ -17,6 +18,7 @@ interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
         buf.writeEnum(posMode)
         buf.writeDouble(width)
         buf.writeEnum(connectionMode)
+        buf.writeColor(color)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -32,6 +34,7 @@ interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
         connectionMode = buf.readEnum(connectionMode.javaClass)
+        color = buf.readColor()
 
         primaryFirstRaycast = buf.readBoolean()
 

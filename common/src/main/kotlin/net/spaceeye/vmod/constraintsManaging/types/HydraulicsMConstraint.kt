@@ -12,6 +12,7 @@ import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
+import net.spaceeye.vmod.utils.vs.copy
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.joml.Quaterniond
@@ -130,16 +131,16 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
             maxForce, (minLength + addDist)
         )
 
-        when (connectionMode) {
+        rconstraint = when (connectionMode) {
             ConnectionMode.FIXED_ORIENTATION -> {
                 val frot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
                 val frot2 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
-                rconstraint = VSFixedOrientationConstraint(shipId0, shipId1, compliance, frot1.invert(Quaterniond()), frot2.invert(Quaterniond()), 1e300)
+                VSFixedOrientationConstraint(shipId0, shipId1, compliance, frot1.invert(Quaterniond()), frot2.invert(Quaterniond()), 1e300)
             }
             ConnectionMode.HINGE_ORIENTATION -> {
                 val hrot1 = getHingeRotation(ship1?.transform, dir.normalize())
                 val hrot2 = getHingeRotation(ship2?.transform, dir.normalize())
-                rconstraint = VSHingeOrientationConstraint(shipId0, shipId1, compliance, hrot1, hrot2, maxForce)
+                VSHingeOrientationConstraint(shipId0, shipId1, compliance, hrot1, hrot2, maxForce)
             }
             ConnectionMode.FREE_ORIENTATION -> throw AssertionError("can't happen")
         }
@@ -176,21 +177,17 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         )
         updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
 
-        aconstraint1 = VSAttachmentConstraint(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0], aconstraint1.maxForce, aconstraint1.fixedDistance)
+        aconstraint1 = aconstraint1.copy(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0])
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
 
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
         renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID)
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
-        aconstraint2 = VSAttachmentConstraint(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1], aconstraint2.maxForce, aconstraint2.fixedDistance)
+        aconstraint2 = aconstraint2.copy(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1])
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2)!!)
 
-        rconstraint = when (connectionMode) {
-            ConnectionMode.FIXED_ORIENTATION -> { VSFixedOrientationConstraint(shipIds[0], shipIds[1], rconstraint.compliance, rconstraint.localRot0, rconstraint.localRot1, rconstraint.maxTorque) }
-            ConnectionMode.HINGE_ORIENTATION -> { VSHingeOrientationConstraint(shipIds[0], shipIds[1], rconstraint.compliance, rconstraint.localRot0, rconstraint.localRot1, rconstraint.maxTorque) }
-            ConnectionMode.FREE_ORIENTATION -> throw AssertionError("can't happen")
-        }
+        rconstraint = rconstraint.copy(shipIds[0], shipIds[1])
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint)!!)
     }
 
@@ -233,13 +230,13 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         extendedDist *= scaleBy
         addDist *= scaleBy
 
-        aconstraint1 = VSAttachmentConstraint(aconstraint1.shipId0, aconstraint1.shipId1, aconstraint1.compliance, aconstraint1.localPos0, aconstraint1.localPos1, aconstraint1.maxForce, minLength + extendedDist)
+        aconstraint1 = aconstraint1.copy(fixedDistance = aconstraint1.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[0])
         cIDs[0] = level.shipObjectWorld.createNewConstraint(aconstraint1)!!
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
 
-        aconstraint2 = VSAttachmentConstraint(aconstraint2.shipId0, aconstraint2.shipId1, aconstraint2.compliance, aconstraint2.localPos0, aconstraint2.localPos1, aconstraint2.maxForce, minLength + addDist + extendedDist)
+        aconstraint2 = aconstraint1.copy(fixedDistance = aconstraint2.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[1])
         cIDs[1] = level.shipObjectWorld.createNewConstraint(aconstraint2)!!
     }
@@ -392,29 +389,13 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         val shipObjectWorld = server.shipObjectWorld
 
         if (!shipObjectWorld.removeConstraint(cIDs[0])) {return}
-        aconstraint1 = VSAttachmentConstraint(
-            aconstraint1.shipId0,
-            aconstraint1.shipId1,
-            aconstraint1.compliance,
-            aconstraint1.localPos0,
-            aconstraint1.localPos1,
-            aconstraint1.maxForce,
-            minLength + extendedDist
-        )
+        aconstraint1 = aconstraint1.copy(fixedDistance = minLength + extendedDist)
         cIDs[0] = shipObjectWorld.createNewConstraint(aconstraint1) ?: return
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
 
         if (!shipObjectWorld.removeConstraint(cIDs[1])) {return}
-        aconstraint2 = VSAttachmentConstraint(
-            aconstraint2.shipId0,
-            aconstraint2.shipId1,
-            aconstraint2.compliance,
-            aconstraint2.localPos0,
-            aconstraint2.localPos1,
-            aconstraint2.maxForce,
-            minLength + addDist + extendedDist
-        )
+        aconstraint2 = aconstraint2.copy(fixedDistance = minLength + addDist + extendedDist)
         cIDs[1] = shipObjectWorld.createNewConstraint(aconstraint2) ?: return
     }
 

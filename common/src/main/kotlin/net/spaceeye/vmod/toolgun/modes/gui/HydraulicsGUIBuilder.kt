@@ -1,7 +1,13 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIContainer
+import gg.essential.elementa.constraints.SiblingConstraint
+import gg.essential.elementa.dsl.childOf
+import gg.essential.elementa.dsl.constrain
+import gg.essential.elementa.dsl.pixels
+import gg.essential.elementa.dsl.plus
 import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint.ConnectionMode
+import net.spaceeye.vmod.guiElements.ColorPicker
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
@@ -53,5 +59,12 @@ interface HydraulicsGUIBuilder: GUIBuilder {
             DItem("Hinge Orientation", connectionMode == ConnectionMode.HINGE_ORIENTATION) { connectionMode = ConnectionMode.HINGE_ORIENTATION },
             DItem("Free Orientation",  connectionMode == ConnectionMode.FREE_ORIENTATION)  { connectionMode = ConnectionMode.FREE_ORIENTATION },
         ))
+
+        ColorPicker(color) {
+            color = it
+        } constrain {
+            x = offset.pixels()
+            y = SiblingConstraint() + offset.pixels()
+        } childOf parentWindow
     }
 }

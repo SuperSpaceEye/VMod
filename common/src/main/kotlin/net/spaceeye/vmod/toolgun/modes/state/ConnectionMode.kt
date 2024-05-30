@@ -28,6 +28,8 @@ class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCRIHandler, Co
     var maxForce: Double = 1e10
     var width: Double = .2
 
+    var color: Color = Color(62, 62, 62, 255)
+
     var fixedDistance: Double = -1.0
     var connectionMode = ConnectionMConstraint.ConnectionModes.FIXED_ORIENTATION
     override var posMode = PositionModes.NORMAL
@@ -77,8 +79,7 @@ class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCRIHandler, Co
                 ship1 != null,
                 ship2 != null,
                 spoint1, spoint2,
-                Color(0, 200, 0),
-                width
+                color, width
             )
         )).addFor(player)
 

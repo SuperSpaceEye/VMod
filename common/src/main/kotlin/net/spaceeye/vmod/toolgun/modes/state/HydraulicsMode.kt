@@ -38,6 +38,7 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
     var channel: String = "hydraulics"
 
     var messageModes = net.spaceeye.vmod.network.MessageModes.Toggle
+    var connectionMode = HydraulicsMConstraint.ConnectionMode.FIXED_ORIENTATION
 
     var primaryFirstRaycast = false
 
@@ -59,7 +60,7 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
                         spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
                         compliance, maxForce,
                         minLength, minLength + extensionDistance,
-                        extensionSpeed, channel, messageModes,
+                        extensionSpeed, channel, messageModes, connectionMode,
                         listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                         A2BRenderer(
                                 ship1 != null,
@@ -91,8 +92,7 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
             minLength, minLength + extensionDistance,
-            extensionSpeed,
-            channel, messageModes,
+            extensionSpeed, channel, messageModes, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,

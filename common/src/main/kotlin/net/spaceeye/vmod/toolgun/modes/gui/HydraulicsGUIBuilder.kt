@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
-import gg.essential.elementa.components.UIBlock
+import gg.essential.elementa.components.UIContainer
+import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint.ConnectionMode
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
@@ -14,7 +15,7 @@ import net.spaceeye.vmod.translate.*
 interface HydraulicsGUIBuilder: GUIBuilder {
     override val itemName get() = HYDRAULICS
 
-    override fun makeGUISettings(parentWindow: UIBlock) {
+    override fun makeGUISettings(parentWindow: UIContainer) {
         this as HydraulicsMode
         val offset = 2.0f
         val limits = ServerLimits.instance
@@ -45,6 +46,12 @@ interface HydraulicsGUIBuilder: GUIBuilder {
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
             DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
             DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK },
+        ))
+
+        makeDropDown("Connection Modes", parentWindow, offset, offset, listOf(
+            DItem("Fixed Orientation", connectionMode == ConnectionMode.FIXED_ORIENTATION) { connectionMode = ConnectionMode.FIXED_ORIENTATION },
+            DItem("Hinge Orientation", connectionMode == ConnectionMode.HINGE_ORIENTATION) { connectionMode = ConnectionMode.HINGE_ORIENTATION },
+            DItem("Free Orientation",  connectionMode == ConnectionMode.FREE_ORIENTATION)  { connectionMode = ConnectionMode.FREE_ORIENTATION },
         ))
     }
 }

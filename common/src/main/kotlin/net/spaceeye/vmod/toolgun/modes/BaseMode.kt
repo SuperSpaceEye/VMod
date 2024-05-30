@@ -2,7 +2,7 @@ package net.spaceeye.vmod.toolgun.modes
 
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
-import gg.essential.elementa.components.UIBlock
+import gg.essential.elementa.components.UIContainer
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.NetworkingRegisteringFunctions
@@ -10,7 +10,7 @@ import net.spaceeye.vmod.networking.Serializable
 
 interface GUIBuilder {
     val itemName: TranslatableComponent
-    fun makeGUISettings(parentWindow : UIBlock)
+    fun makeGUISettings(parentWindow: UIContainer)
 }
 
 interface ClientRawInputsHandler {

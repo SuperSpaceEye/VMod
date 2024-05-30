@@ -13,7 +13,6 @@ import net.spaceeye.vmod.utils.serializeBlockPositions
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
-import net.spaceeye.vmod.utils.vs.copy
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.joml.Quaterniond
@@ -85,7 +84,6 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
 
         val dist1 = rpoint1 - rpoint2
         val len = (_dir ?: dist1).dist()
-
         val dir = (_dir ?: run { dist1.normalize() }) * ( if (len < 10 || len > 30) 20 else 40)
 
         val rpoint1 = rpoint1 + dir
@@ -104,16 +102,16 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
             maxForce, fixedLength + addDist
         )
 
-        when (connectionMode) {
+        rconstraint = when (connectionMode) {
             ConnectionModes.FIXED_ORIENTATION -> {
                 val frot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
                 val frot2 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
-                rconstraint = VSFixedOrientationConstraint(shipId0, shipId1, compliance, frot1.invert(Quaterniond()), frot2.invert(Quaterniond()), 1e300)
+                VSFixedOrientationConstraint(shipId0, shipId1, compliance, frot1.invert(Quaterniond()), frot2.invert(Quaterniond()), 1e300)
             }
             ConnectionModes.HINGE_ORIENTATION -> {
                 val hrot1 = getHingeRotation(ship1?.transform, dir.normalize())
                 val hrot2 = getHingeRotation(ship2?.transform, dir.normalize())
-                rconstraint = VSHingeOrientationConstraint(shipId0, shipId1, compliance, hrot1, hrot2, maxForce)
+                VSHingeOrientationConstraint(shipId0, shipId1, compliance, hrot1, hrot2, maxForce)
             }
             ConnectionModes.FREE_ORIENTATION -> throw AssertionError("can't happen")
         }
@@ -161,9 +159,9 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
         aconstraint2 = VSAttachmentConstraint(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1], aconstraint2.maxForce, aconstraint2.fixedDistance)
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2)!!)
 
-        when (connectionMode) {
-            ConnectionModes.FIXED_ORIENTATION -> { rconstraint = VSFixedOrientationConstraint(shipIds[0], shipIds[1], rconstraint.compliance, rconstraint.localRot0, rconstraint.localRot1, rconstraint.maxTorque) }
-            ConnectionModes.HINGE_ORIENTATION -> { rconstraint = VSHingeOrientationConstraint(shipIds[0], shipIds[1], rconstraint.compliance, rconstraint.localRot0, rconstraint.localRot1, rconstraint.maxTorque) }
+        rconstraint = when (connectionMode) {
+            ConnectionModes.FIXED_ORIENTATION -> { VSFixedOrientationConstraint(shipIds[0], shipIds[1], rconstraint.compliance, rconstraint.localRot0, rconstraint.localRot1, rconstraint.maxTorque) }
+            ConnectionModes.HINGE_ORIENTATION -> { VSHingeOrientationConstraint(shipIds[0], shipIds[1], rconstraint.compliance, rconstraint.localRot0, rconstraint.localRot1, rconstraint.maxTorque) }
             ConnectionModes.FREE_ORIENTATION -> throw AssertionError("can't happen")
         }
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint)!!)

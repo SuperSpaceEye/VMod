@@ -1,6 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
-import gg.essential.elementa.components.UIBlock
+import gg.essential.elementa.components.UIContainer
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
@@ -17,7 +17,7 @@ import net.spaceeye.vmod.translate.get
 interface StripGUIBuilder: GUIBuilder {
     override val itemName get() = STRIP
 
-    override fun makeGUISettings(parentWindow: UIBlock) {
+    override fun makeGUISettings(parentWindow: UIContainer) {
         this as StripMode
 
         makeTextEntry(RADIUS.get(), ::radius, 2f, 2f, parentWindow, ServerLimits.instance.stripRadius)

@@ -4,6 +4,7 @@ import dev.architectury.event.events.common.PlayerEvent
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.ScrollComponent
 import gg.essential.elementa.components.UIBlock
+import gg.essential.elementa.components.UIContainer
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
@@ -290,7 +291,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
 
 class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
     override var itemsScroll: ScrollComponent? = null
-    override lateinit var parentWindow: UIBlock
+    override lateinit var parentWindow: UIContainer
 
     override fun init(type: BaseNetworking.EnvType) {
         SchemNetworking.init(this, type)

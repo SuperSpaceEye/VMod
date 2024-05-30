@@ -39,6 +39,14 @@ class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
         height = 100.percent() - 4.percent()
     } childOf mainWindow
 
+    val settingsScrollComponent = ScrollComponent().constrain {
+        x = 0.percent()
+        y = 0.percent()
+
+        width = 100.percent()
+        height = 100.percent()
+    } childOf settingsComponent
+
     fun makeScrollComponents(components: List<BaseMode>) {
         for ((i, component) in components.withIndex()) {
             val componentColor = if (i % 2 == 0) {
@@ -70,8 +78,8 @@ class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
                     )
                 }
             }.onMouseClick {
-                settingsComponent.clearChildren()
-                component.makeGUISettings(settingsComponent)
+                settingsScrollComponent.clearChildren()
+                component.makeGUISettings(settingsScrollComponent)
                 ClientToolGunState.currentMode = component
             } childOf scrollComponent
 

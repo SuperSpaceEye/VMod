@@ -1,6 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
-import gg.essential.elementa.components.UIBlock
+import gg.essential.elementa.components.UIContainer
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.constraintsManaging.types.ConnectionMConstraint.ConnectionModes
 import net.spaceeye.vmod.guiElements.DItem
@@ -16,7 +16,7 @@ import net.spaceeye.vmod.translate.*
 interface ConnectionGUIBuilder: GUIBuilder {
     override val itemName get() = TranslatableComponent("Connection")
 
-    override fun makeGUISettings(parentWindow: UIBlock) {
+    override fun makeGUISettings(parentWindow: UIContainer) {
         this as ConnectionMode
         val offset = 2.0f
         val limits = ServerLimits.instance

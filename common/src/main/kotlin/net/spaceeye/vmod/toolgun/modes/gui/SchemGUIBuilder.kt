@@ -5,7 +5,6 @@ import gg.essential.elementa.components.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import net.minecraft.client.Minecraft
-import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.StrLimit
@@ -55,7 +54,7 @@ interface SchemGUIBuilder: GUIBuilder {
     override val itemName get() = SCHEMATIC
 
     var itemsScroll: ScrollComponent?
-    var parentWindow: UIBlock
+    var parentWindow: UIContainer
 
     fun makeScroll() {
         this as SchemMode
@@ -115,7 +114,7 @@ interface SchemGUIBuilder: GUIBuilder {
         makeScrollItems()
     }
 
-    override fun makeGUISettings(parentWindow: UIBlock) {
+    override fun makeGUISettings(parentWindow: UIContainer) {
         this as SchemMode
         this.parentWindow = parentWindow
 

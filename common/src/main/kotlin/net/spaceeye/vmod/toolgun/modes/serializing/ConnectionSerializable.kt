@@ -16,7 +16,7 @@ interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
         buf.writeDouble(maxForce)
         buf.writeEnum(posMode)
         buf.writeDouble(width)
-        buf.writeInt(connectionMode.ordinal)
+        buf.writeEnum(connectionMode)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -31,7 +31,7 @@ interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
         maxForce = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
-        connectionMode = ConnectionMConstraint.ConnectionModes.values()[buf.readInt()]
+        connectionMode = buf.readEnum(connectionMode.javaClass)
 
         primaryFirstRaycast = buf.readBoolean()
 

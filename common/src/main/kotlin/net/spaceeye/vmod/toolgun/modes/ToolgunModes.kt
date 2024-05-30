@@ -5,19 +5,15 @@ import net.spaceeye.vmod.toolgun.modes.state.*
 // SHOULD BE INITIALIZED BEFORE OTHER OBJECTS
 object ToolgunModes {
     val modes = listOf(
-        WeldMode(),
+        ConnectionMode(),
         RopeMode(),
         HydraulicsMode(),
-        AxisMode(),
         PhysRopeMode(),
         DisableCollisionsMode(),
 
-
-        CopyMode(),
+        SchemMode(),
         ScaleMode(),
         StripMode(),
-
-        SchemMode()
     )
     var initialized = false
     init {

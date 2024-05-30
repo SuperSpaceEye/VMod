@@ -5,16 +5,25 @@ import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 
+fun VSForceConstraint.copy(shipId0_: ShipId? = null, shipId1_: ShipId? = null, compliance_: Double? = null, localPos0_: Vector3dc? = null, localPos1_: Vector3dc? = null, maxForce_: Double? = null): VSForceConstraint {
+    return when (this) {
+        is VSAttachmentConstraint -> this.copy(shipId0_, shipId1_, compliance_, localPos0_, localPos1_, maxForce_)
+        is VSPosDampingConstraint -> this.copy(shipId0_, shipId1_, compliance_, localPos0_, localPos1_, maxForce_)
+        is VSRopeConstraint       -> this.copy(shipId0_, shipId1_, compliance_, localPos0_, localPos1_, maxForce_)
+        is VSSlideConstraint      -> this.copy(shipId0_, shipId1_, compliance_, localPos0_, localPos1_, maxForce_)
+        else -> throw AssertionError("Impossible")
+    }
+}
 
-fun VSAttachmentConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localPos0_: Vector3dc?, localPos1_: Vector3dc?, maxForce_: Double?, fixedDistance_: Double?) = VSAttachmentConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localPos0_ ?: localPos0, localPos1_ ?: localPos1, maxForce_ ?: maxForce, fixedDistance_ ?: fixedDistance)
-fun VSPosDampingConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localPos0_: Vector3dc?, localPos1_: Vector3dc?, maxForce_: Double?, posDamping_: Double?) = VSPosDampingConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localPos0_ ?: localPos0, localPos1_ ?: localPos1, maxForce_ ?: maxForce, posDamping_ ?: posDamping)
-fun VSRopeConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localPos0_: Vector3dc?, localPos1_: Vector3dc?, maxForce_: Double?, ropeLength_: Double?) = VSPosDampingConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localPos0_ ?: localPos0, localPos1_ ?: localPos1, maxForce_ ?: maxForce, ropeLength_ ?: ropeLength)
-fun VSSlideConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localPos0_: Vector3dc?, localPos1_: Vector3dc?, maxForce_: Double?, localSlideAxis0_: Vector3dc?, maxDistBetweenPoints_: Double?) = VSSlideConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localPos0_ ?: localPos0, localPos1_ ?: localPos1, maxForce_ ?: maxForce, localSlideAxis0_ ?: localSlideAxis0, maxDistBetweenPoints_ ?: maxDistBetweenPoints)
-
-fun VSFixedOrientationConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localRot0_: Quaterniondc?, localRot1_: Quaterniondc?, maxTorque_: Double?) = VSFixedOrientationConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localRot0_ ?: localRot0, localRot1_ ?: localRot1, maxTorque_ ?: maxTorque)
-fun VSHingeOrientationConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localRot0_: Quaterniondc?, localRot1_: Quaterniondc?, maxTorque_: Double?) = VSHingeOrientationConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localRot0_ ?: localRot0, localRot1_ ?: localRot1, maxTorque_ ?: maxTorque)
-fun VSHingeSwingLimitsConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localRot0_: Quaterniondc?, localRot1_: Quaterniondc?, maxTorque_: Double?, minSwingAngle_: Double?, maxSwingAngle_: Double?) = VSHingeSwingLimitsConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localRot0_ ?: localRot0, localRot1_ ?: localRot1, maxTorque_ ?: maxTorque, minSwingAngle_ ?: minSwingAngle, maxSwingAngle_ ?: maxSwingAngle)
-fun VSHingeTargetAngleConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localRot0_: Quaterniondc?, localRot1_: Quaterniondc?, maxTorque_: Double?, targetAngle_: Double?, nextTargetAngle_: Double?) = VSHingeTargetAngleConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localRot0_ ?: localRot0, localRot1_ ?: localRot1, maxTorque_ ?: maxTorque, targetAngle_ ?: targetAngle, nextTargetAngle_ ?: nextTickTargetAngle)
-fun VSSphericalSwingLimitsConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localRot0_: Quaterniondc?, localRot1_: Quaterniondc?, maxTorque_: Double?, minSwingAngle_: Double?, maxSwingAngle_: Double?) = VSSphericalSwingLimitsConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localRot0_ ?: localRot0, localRot1_ ?: localRot1, maxTorque_ ?: maxTorque, minSwingAngle_ ?: minSwingAngle, maxSwingAngle_ ?: maxSwingAngle)
-fun VSSphericalTwistLimitsConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localRot0_: Quaterniondc?, localRot1_: Quaterniondc?, maxTorque_: Double?, minTwistAngle_: Double?, maxTwistAngle_: Double?) = VSSphericalTwistLimitsConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localRot0_ ?: localRot0, localRot1_ ?: localRot1, maxTorque_ ?: maxTorque, minTwistAngle_ ?: minTwistAngle, maxTwistAngle_ ?: maxTwistAngle)
-fun VSRotDampingConstraint.copy(shipId0_: ShipId?, shipId1_: ShipId?, compliance_: Double?, localRot0_: Quaterniondc?, localRot1_: Quaterniondc?, maxTorque_: Double?, rotDamping_: Double?, rotDampingAxes_: VSRotDampingAxes?) = VSRotDampingConstraint(shipId0_ ?: shipId0, shipId1_ ?: shipId1, compliance_ ?: compliance, localRot0_ ?: localRot0, localRot1_ ?: localRot1, maxTorque_ ?: maxTorque, rotDamping_ ?: rotDamping, rotDampingAxes_ ?: rotDampingAxes)
+fun VSTorqueConstraint.copy(shipId0_: ShipId? = null, shipId1_: ShipId? = null, compliance_: Double? = null, localRot0_: Quaterniondc? = null, localRot1_: Quaterniondc? = null, maxTorque_: Double? = null): VSTorqueConstraint {
+    return when (this) {
+        is VSFixedOrientationConstraint     -> this.copy(shipId0_, shipId1_, compliance_, localRot0_, localRot1_, maxTorque_)
+        is VSHingeOrientationConstraint     -> this.copy(shipId0_, shipId1_, compliance_, localRot0_, localRot1_, maxTorque_)
+        is VSHingeSwingLimitsConstraint     -> this.copy(shipId0_, shipId1_, compliance_, localRot0_, localRot1_, maxTorque_)
+        is VSHingeTargetAngleConstraint     -> this.copy(shipId0_, shipId1_, compliance_, localRot0_, localRot1_, maxTorque_)
+        is VSSphericalSwingLimitsConstraint -> this.copy(shipId0_, shipId1_, compliance_, localRot0_, localRot1_, maxTorque_)
+        is VSSphericalTwistLimitsConstraint -> this.copy(shipId0_, shipId1_, compliance_, localRot0_, localRot1_, maxTorque_)
+        is VSRotDampingConstraint           -> this.copy(shipId0_, shipId1_, compliance_, localRot0_, localRot1_, maxTorque_)
+        else -> throw AssertionError("Impossible")
+    }
+}

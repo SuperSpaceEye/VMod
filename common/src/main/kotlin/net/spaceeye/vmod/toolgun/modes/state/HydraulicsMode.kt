@@ -30,6 +30,8 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
     var maxForce: Double = 1e10
     var width: Double = .2
 
+    var color: Color = Color(62, 62, 200, 255)
+
     var extensionDistance: Double = 5.0
     var extensionSpeed: Double = 1.0
 
@@ -38,6 +40,7 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
     var channel: String = "hydraulics"
 
     var messageModes = net.spaceeye.vmod.network.MessageModes.Toggle
+    var connectionMode = HydraulicsMConstraint.ConnectionMode.FIXED_ORIENTATION
 
     var primaryFirstRaycast = false
 
@@ -54,19 +57,17 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
     override val paNetworkingObject: PlacementAssistNetworking = HydraulicsNetworking
     override val paMConstraintBuilder =
             { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult> ->
-                val minLength = if (fixedMinLength <= 0.0) (rpoint1 - rpoint2).dist() else fixedMinLength
                 HydraulicsMConstraint(
                         spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
                         compliance, maxForce,
-                        minLength, minLength + extensionDistance,
-                        extensionSpeed, channel, messageModes,
+                        paDistanceFromBlock, paDistanceFromBlock + extensionDistance,
+                        extensionSpeed, channel, messageModes, connectionMode,
                         listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                         A2BRenderer(
                                 ship1 != null,
                                 ship2 != null,
                                 spoint1, spoint2,
-                                Color(62, 62, 200),
-                                width
+                                color, width
                         )
                 )
             }
@@ -91,15 +92,13 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, Hy
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
             minLength, minLength + extensionDistance,
-            extensionSpeed,
-            channel, messageModes,
+            extensionSpeed, channel, messageModes, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,
                 ship2 != null,
                 spoint1, spoint2,
-                Color(62, 62, 200),
-                width
+                color, width
             )
         )).addFor(player)
 

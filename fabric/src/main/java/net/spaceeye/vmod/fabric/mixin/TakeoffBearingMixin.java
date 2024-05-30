@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.mixin;
+package net.spaceeye.vmod.fabric.mixin;
 
 import net.takeoff.blockentity.BearingBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;

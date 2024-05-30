@@ -1,6 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
-import gg.essential.elementa.components.UIBlock
+import gg.essential.elementa.components.UIContainer
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
@@ -13,7 +13,7 @@ import net.spaceeye.vmod.translate.*
 interface PhysRopeGUIBuilder: GUIBuilder {
     override val itemName get() = PHYS_ROPE
 
-    override fun makeGUISettings(parentWindow: UIBlock) {
+    override fun makeGUISettings(parentWindow: UIContainer) {
         this as PhysRopeMode
         val offset = 2.0f
         val limits = ServerLimits.instance

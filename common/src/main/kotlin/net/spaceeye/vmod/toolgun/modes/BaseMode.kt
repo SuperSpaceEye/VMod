@@ -2,15 +2,15 @@ package net.spaceeye.vmod.toolgun.modes
 
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
-import gg.essential.elementa.components.UIBlock
 import net.minecraft.network.chat.Component
+import gg.essential.elementa.components.Component
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.NetworkingRegisteringFunctions
 import net.spaceeye.vmod.networking.Serializable
 
 interface GUIBuilder {
     val itemName: Component
-    fun makeGUISettings(parentWindow : UIBlock)
+    fun makeGUISettings(parentWindow : UIContainer)
 }
 
 interface ClientRawInputsHandler {

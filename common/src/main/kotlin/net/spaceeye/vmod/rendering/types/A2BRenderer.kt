@@ -12,10 +12,8 @@ import net.minecraft.client.renderer.LightTexture
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.rendering.RenderingUtils
-import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
-import net.spaceeye.vmod.utils.readVector3d
-import net.spaceeye.vmod.utils.writeVector3d
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.mod.common.getShipManagingPos
@@ -68,8 +66,9 @@ open class A2BRenderer(): BaseRenderer {
         RenderSystem.depthFunc(GL11.GL_LEQUAL)
         RenderSystem.depthMask(true)
         RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.enableBlend()
 
-        val light = LightTexture.pack(level!!.getBrightness(LightLayer.BLOCK, point1.toBlockPos()), level.getBrightness(LightLayer.SKY, point1.toBlockPos()))
+        val light = Int.MAX_VALUE
 
         vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
 
@@ -95,7 +94,7 @@ open class A2BRenderer(): BaseRenderer {
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
 
-        buf.writeInt(color.rgb)
+        buf.writeColor(color)
         buf.writeBoolean(ship1isShip)
         buf.writeBoolean(ship2isShip)
 
@@ -108,7 +107,7 @@ open class A2BRenderer(): BaseRenderer {
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
-        color = Color(buf.readInt())
+        color = buf.readColor()
         ship1isShip = buf.readBoolean()
         ship2isShip = buf.readBoolean()
 

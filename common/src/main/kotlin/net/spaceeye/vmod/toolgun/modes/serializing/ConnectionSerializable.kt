@@ -3,19 +3,22 @@ package net.spaceeye.vmod.toolgun.modes.serializing
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
-import net.spaceeye.vmod.toolgun.modes.state.WeldMode
+import net.spaceeye.vmod.toolgun.modes.state.ConnectionMode
 import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistSerialize
+import net.spaceeye.vmod.utils.readColor
+import net.spaceeye.vmod.utils.writeColor
 
-interface WeldSerializable: MSerializable, PlacementAssistSerialize {
+interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
     override fun serialize(): FriendlyByteBuf {
-        this as WeldMode
+        this as ConnectionMode
         val buf = getBuffer()
 
         buf.writeDouble(compliance)
         buf.writeDouble(maxForce)
         buf.writeEnum(posMode)
         buf.writeDouble(width)
-        buf.writeDouble(fixedDistance)
+        buf.writeEnum(connectionMode)
+        buf.writeColor(color)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -25,12 +28,13 @@ interface WeldSerializable: MSerializable, PlacementAssistSerialize {
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
-        this as WeldMode
+        this as ConnectionMode
         compliance = buf.readDouble()
         maxForce = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
-        fixedDistance = buf.readDouble()
+        connectionMode = buf.readEnum(connectionMode.javaClass)
+        color = buf.readColor()
 
         primaryFirstRaycast = buf.readBoolean()
 
@@ -38,9 +42,8 @@ interface WeldSerializable: MSerializable, PlacementAssistSerialize {
     }
 
     override fun serverSideVerifyLimits() {
-        this as WeldMode
+        this as ConnectionMode
         val limits = ServerLimits.instance
-
         compliance = limits.compliance.get(compliance)
         maxForce = limits.maxForce.get(maxForce)
         fixedDistance = limits.fixedDistance.get(fixedDistance)

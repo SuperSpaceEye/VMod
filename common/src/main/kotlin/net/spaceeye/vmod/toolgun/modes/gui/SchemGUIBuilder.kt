@@ -54,7 +54,7 @@ interface SchemGUIBuilder: GUIBuilder {
     override val itemName get() = SCHEMATIC
 
     var itemsScroll: ScrollComponent?
-    var parentWindow: UIBlock
+    var parentWindow: UIContainer
 
     fun makeScroll() {
         this as SchemMode
@@ -114,7 +114,7 @@ interface SchemGUIBuilder: GUIBuilder {
         makeScrollItems()
     }
 
-    override fun makeGUISettings(parentWindow: UIBlock) {
+    override fun makeGUISettings(parentWindow: UIContainer) {
         this as SchemMode
         this.parentWindow = parentWindow
 

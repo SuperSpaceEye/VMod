@@ -30,7 +30,9 @@ import org.valkyrienskies.mod.common.networking.PacketRestartChunkUpdates
 import org.valkyrienskies.mod.common.networking.PacketStopChunkUpdates
 import org.valkyrienskies.mod.common.util.toJOML
 
-val AIR: BlockState = Blocks.AIR.defaultBlockState()
+//TODO remove this
+
+private val AIR: BlockState = Blocks.AIR.defaultBlockState()
 
 private fun copyShipBlock(level: ServerLevel, state: BlockState, ox: Int, oy: Int, oz: Int, newShipCenter: Vector3d, originCenter: Vector3d, mapped: Map<ShipId, ShipId>) {
     val from = BlockPos(ox, oy, oz)

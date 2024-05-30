@@ -109,7 +109,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         )
         updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
 
-        constraint = VSRopeConstraint(shipIds[0], shipIds[1], constraint.compliance, localPoints[0][0], localPoints[1][0], constraint.maxForce, constraint.ropeLength)
+        constraint = constraint.copy(shipIds[0], shipIds[1], constraint.compliance, localPoints[0][0], localPoints[1][0])
 
         val rpos = (Vector3d((if (first) 1 else -1), 0, 0) * (ropeLength / segments.toDouble() * 0.5)).toJomlVector3d()
         cIDs[if (first) 0 else {cIDs.size - 1}] = level.shipObjectWorld.createNewConstraint(

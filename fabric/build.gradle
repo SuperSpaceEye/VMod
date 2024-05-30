@@ -66,6 +66,9 @@ dependencies {
     modLocalRuntime "com.terraformersmc:modmenu:5.0.2"
 
     modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
+
+    //for mixin
+    modCompileOnlyApi(files("vs_jars/takeoff-fabric-1.0.0-beta1+308678c5c5.jar"))
 }
 
 processResources {

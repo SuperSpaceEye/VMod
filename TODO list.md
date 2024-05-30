@@ -1,7 +1,7 @@
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
 * Add clientside validation 
-* (kinda) ✅ Add effects for toolgun
+* Add effects for toolgun
 * Group rendering objects by types to elevate common operations and add shared data between rendering types
 * "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
@@ -22,6 +22,9 @@
 
 ## Sounds
 * Add sounds and shit
+
+## Toolgun Architecture 
+* Make "do" action and its "inverse", so that you can not only undo 
 
 ## Toolgun Modes
 * Remake them again to use events for CRI events, reset, etc for an easier additions of PA, etc.
@@ -44,25 +47,17 @@
 * Add the ability for server and clients to synchronise limits
 
 ## Schematic
-* Copy all ships that are in AABB of all connected (maybe recursive? idk)
 * Copy entities (maybe, idfk)
 * Copy phys entities (not very important rn)
 * Copy ship attachments (maybe, idk if i really need to do it)
-
-## Weld Constraint
-* Add texture for weld rendering
 
 ## Rope Constraint
 * Add ability to change rendering modes
 * Add more setting options
 
 ## Hydraulics
-* Add more options, like one to disable fixed orientation
 * Make it more stable
 * Fix the bug that crashes VS
-
-## Ball Socket Constraint
-Basically just one attachment constraint
 
 ## Elastic
 A rope that can stretch or push (if option is chosen)
@@ -71,7 +66,6 @@ A rope that can stretch or push (if option is chosen)
 
 ## Pulley
 A rope with connections to the ground through which it like moves. No idea on how to make it.
-Ig i can use attachments to do something, but i'm really not sure.
 
 ## Slider
 

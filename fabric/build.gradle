@@ -57,6 +57,9 @@ dependencies {
     modCompileOnlyApi "curse.maven:forge-config-api-port-fabric-547434:3943250"
 
     modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
+
+    //for mixin
+    modCompileOnlyApi(files("vs_jars/takeoff-fabric-1.0.0-beta1+308678c5c5.jar"))
 }
 
 processResources {

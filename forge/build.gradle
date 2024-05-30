@@ -79,7 +79,7 @@ dependencies {
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
 
     modApi("org.valkyrienskies:valkyrienskies-118-forge:${rootProject.vs2_version}") { transitive = false }
-    implementation("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
+    modImplementation("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
 
     implementation 'thedarkcolour:kotlinforforge:3.12.0'
 
@@ -90,6 +90,9 @@ dependencies {
     modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }
     modCompileOnly("com.tterrag.registrate:Registrate:${registrate_forge_version}")
     modCompileOnly("com.jozufozu.flywheel:flywheel-forge-${flywheel_forge_minecraft_version}:${flywheel_forge_version}")
+
+    //for mixin
+    modCompileOnlyApi(files("vs_jars/takeoff-forge-1.0.0-beta1+308678c5c5.jar"))
 }
 
 processResources {

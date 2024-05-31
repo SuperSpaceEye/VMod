@@ -20,7 +20,7 @@ import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.translate.*
 
 interface ConnectionGUIBuilder: GUIBuilder {
-    override val itemName get() = TranslatableComponent("Connection")
+    override val itemName get() = CONNECTION
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         this as ConnectionMode
@@ -43,10 +43,10 @@ interface ConnectionGUIBuilder: GUIBuilder {
             DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK },
         ))
 
-        makeDropDown("Connection Modes", parentWindow, offset, offset, listOf(
-            DItem("Fixed Orientation", connectionMode == ConnectionModes.FIXED_ORIENTATION) { connectionMode = ConnectionModes.FIXED_ORIENTATION },
-            DItem("Hinge Orientation", connectionMode == ConnectionModes.HINGE_ORIENTATION) { connectionMode = ConnectionModes.HINGE_ORIENTATION },
-            DItem("Free Orientation",  connectionMode == ConnectionModes.FREE_ORIENTATION)  { connectionMode = ConnectionModes.FREE_ORIENTATION },
+        makeDropDown(CONNECTION_MODES.get(), parentWindow, offset, offset, listOf(
+            DItem(FIXED_ORIENTATION.get(), connectionMode == ConnectionModes.FIXED_ORIENTATION) { connectionMode = ConnectionModes.FIXED_ORIENTATION },
+            DItem(HINGE_ORIENTATION.get(), connectionMode == ConnectionModes.HINGE_ORIENTATION) { connectionMode = ConnectionModes.HINGE_ORIENTATION },
+            DItem(FREE_ORIENTATION.get(),  connectionMode == ConnectionModes.FREE_ORIENTATION)  { connectionMode = ConnectionModes.FREE_ORIENTATION },
         ))
 
         ColorPicker(color) {

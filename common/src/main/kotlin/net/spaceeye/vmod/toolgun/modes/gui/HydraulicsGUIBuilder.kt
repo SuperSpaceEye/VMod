@@ -17,6 +17,7 @@ import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.HydraulicsMode
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.translate.*
+import org.joml.Quaterniond
 
 interface HydraulicsGUIBuilder: GUIBuilder {
     override val itemName get() = HYDRAULICS
@@ -54,10 +55,10 @@ interface HydraulicsGUIBuilder: GUIBuilder {
             DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK },
         ))
 
-        makeDropDown("Connection Modes", parentWindow, offset, offset, listOf(
-            DItem("Fixed Orientation", connectionMode == ConnectionMode.FIXED_ORIENTATION) { connectionMode = ConnectionMode.FIXED_ORIENTATION },
-            DItem("Hinge Orientation", connectionMode == ConnectionMode.HINGE_ORIENTATION) { connectionMode = ConnectionMode.HINGE_ORIENTATION },
-            DItem("Free Orientation",  connectionMode == ConnectionMode.FREE_ORIENTATION)  { connectionMode = ConnectionMode.FREE_ORIENTATION },
+        makeDropDown(CONNECTION_MODES.get(), parentWindow, offset, offset, listOf(
+            DItem(FIXED_ORIENTATION.get(), connectionMode == ConnectionMode.FIXED_ORIENTATION) { connectionMode = ConnectionMode.FIXED_ORIENTATION },
+            DItem(HINGE_ORIENTATION.get(), connectionMode == ConnectionMode.HINGE_ORIENTATION) { connectionMode = ConnectionMode.HINGE_ORIENTATION },
+            DItem(FREE_ORIENTATION.get(),  connectionMode == ConnectionMode.FREE_ORIENTATION)  { connectionMode = ConnectionMode.FREE_ORIENTATION },
         ))
 
         ColorPicker(color) {

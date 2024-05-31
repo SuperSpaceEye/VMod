@@ -20,7 +20,7 @@ import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.translate.*
 
 interface ConnectionGUIBuilder: GUIBuilder {
-    override val itemName get() = TranslatableComponent("Connection")
+    override val itemName get() = Component.translatable("Connection")
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         this as ConnectionMode

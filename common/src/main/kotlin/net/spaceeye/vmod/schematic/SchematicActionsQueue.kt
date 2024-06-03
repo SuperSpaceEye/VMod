@@ -14,10 +14,12 @@ import net.spaceeye.vmod.utils.getNow_ms
 import org.joml.primitives.AABBi
 import org.valkyrienskies.core.api.ships.ServerShip
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 object SchematicActionsQueue: ServerClosable() {
     private val placeData = mutableMapOf<UUID, SchemPlacementItem>()
     private val saveData = mutableMapOf<UUID, SchemSaveItem>()
+    private val unfreezeData = ConcurrentHashMap<UUID, SchemUnfreezeShips>()
 
     //why? If there are multiple schematics queued and there is a huge schematic it will not prevent other schematics
     // from being placed.
@@ -247,6 +249,17 @@ object SchematicActionsQueue: ServerClosable() {
         }
     }
 
+    fun queueShipsUnfreezeEvent(uuid: UUID, ships: List<ServerShip>, time: Int) {
+        unfreezeData[uuid] = SchemUnfreezeShips(ships, time)
+    }
+
+    data class SchemUnfreezeShips(
+        val ships: List<ServerShip>,
+        val waitFor: Int,
+    ) {
+        var time = 0
+    }
+
     init {
         TickEvent.SERVER_POST.register {
             if (placeData.isEmpty()) {return@register}
@@ -290,6 +303,16 @@ object SchematicActionsQueue: ServerClosable() {
 
                 saveLastPosition++
             }
+        }
+
+        TickEvent.SERVER_POST.register {
+            unfreezeData.mapNotNull {(uuid, item) ->
+                item.time++
+                if (item.time < item.waitFor) {return@mapNotNull null}
+
+                item.ships.forEach { it.isStatic = false }
+                uuid
+            }.forEach { unfreezeData.remove(it) }
         }
     }
 

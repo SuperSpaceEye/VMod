@@ -49,8 +49,80 @@ class ShipSchematicV1(): IShipSchematic {
 
     override fun getInfo(): IShipSchematicInfo = schemInfo
 
+    override fun makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
+        val traversed = traverseGetAllTouchingShips(level, originShip.id)
+
+        // this is needed so that schem doesn't try copying phys entities (TODO)
+        val ships = traversed.mapNotNull { level.shipObjectWorld.allShips.getById(it) }
+
+        extraData = ShipSchematic.onCopy(level, ships)
+
+        saveShipData(ships, originShip)
+        // copy ship blocks separately
+        SchematicActionsQueue.queueShipsSavingEvent(level, uuid, ships, this, true, postSaveFn)
+        return true
+    }
+
+    // it will save ship data with origin ship unrotated
+    private fun saveShipData(ships: List<ServerShip>, originShip: ServerShip): AABBd {
+        // idk why i've made it as lambda
+        val getWorldAABB = {it: ServerShip, newTransform: ShipTransform -> it.shipAABB!!.toAABBd(AABBd()).transform(newTransform.shipToWorld) }
+
+        val invRotation = originShip.transform.shipToWorldRotation.invert(Quaterniond())
+        val newTransforms = ships.map { rotateAroundCenter(originShip.transform, it.transform, invRotation) }
+
+        val objectAABB = getWorldAABB(ships[0], newTransforms[0])
+        ships.zip(newTransforms).forEach {(it, newTransform) ->
+            val b = getWorldAABB(it, newTransform)
+            if (b.minX() < objectAABB.minX) { objectAABB.minX = b.minX() }
+            if (b.maxX() > objectAABB.maxX) { objectAABB.maxX = b.maxX() }
+            if (b.minY() < objectAABB.minY) { objectAABB.minY = b.minY() }
+            if (b.maxY() > objectAABB.maxY) { objectAABB.maxY = b.maxY() }
+            if (b.minZ() < objectAABB.minZ) { objectAABB.minZ = b.minZ() }
+            if (b.maxZ() > objectAABB.maxZ) { objectAABB.maxZ = b.maxZ() }
+        }
+
+        val minPos = MVector3d(objectAABB.minX, objectAABB.minY, objectAABB.minZ)
+        val maxPos = MVector3d(objectAABB.maxX, objectAABB.maxY, objectAABB.maxZ)
+
+        val normalizedMaxObjectPos = (maxPos - minPos) / 2
+        val objectCenterInWorld = normalizedMaxObjectPos + minPos
+
+        val sinfo = ships.zip(newTransforms).map {(it, newTransform ) ->
+            val chunkMin = MVector3d(
+                it.chunkClaim.xStart * 16,
+                0,
+                it.chunkClaim.zStart * 16
+            )
+
+            val shipAABB = AABBi(
+                it.shipAABB!!.minX() - it.chunkClaim.xStart * 16,
+                it.shipAABB!!.minY(),
+                it.shipAABB!!.minZ() - it.chunkClaim.zStart * 16,
+                it.shipAABB!!.maxX() - it.chunkClaim.xStart * 16,
+                it.shipAABB!!.maxY(),
+                it.shipAABB!!.maxZ() - it.chunkClaim.zStart * 16
+            )
+
+            ShipInfo(
+                it.id,
+                (MVector3d(newTransform.positionInWorld) - objectCenterInWorld).toJomlVector3d(),
+                shipAABB,
+                Vector3d(newTransform.positionInShip).sub(chunkMin.toJomlVector3d(), Vector3d()),
+                MVector3d(newTransform.shipToWorldScaling).avg(),
+                Quaterniond(newTransform.shipToWorldRotation))
+        }
+
+        schemInfo = ShipSchematicInfo(
+            normalizedMaxObjectPos.toJomlVector3d(),
+            sinfo
+        )
+        return objectAABB
+    }
+
     private fun createShips(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<ShipTransform>): List<Pair<ServerShip, Long>> {
         val shipData = schemInfo.shipInfo
+        // during schem creation ship positions are normalized so that the center is at 0 0 0
         val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
 
         return shipData.map {
@@ -73,17 +145,6 @@ class ShipSchematicV1(): IShipSchematic {
                 newTransform.shipToWorldRotation,
                 newScale = it.shipScale
             ))
-
-            val chunkMin = Vector3d(
-                newShip.chunkClaim.xStart * 16,
-                0,
-                newShip.chunkClaim.zStart * 16
-            )
-
-            val posInShip = it.posInShip.add(chunkMin.toJomlVector3d(), Vector3d())
-
-            newShip.transformProvider = FixedPositionTransformProvider(toPos.toJomlVector3d(), posInShip)
-
             Pair(newShip, it.id)
         }
     }
@@ -118,7 +179,6 @@ class ShipSchematicV1(): IShipSchematic {
 
             ships.zip(newTransforms).forEach {
                 (it, transform) ->
-                it.first.transformProvider = null
                 val toPos = MVector3d(transform.positionInWorld) + MVector3d(pos)
                 level.shipObjectWorld.teleportShip(it.first, ShipTeleportDataImpl(
                         toPos.toJomlVector3d(),
@@ -126,78 +186,9 @@ class ShipSchematicV1(): IShipSchematic {
                         JVector3d(),
                         newScale = MVector3d(it.first.transform.shipToWorldScaling).avg(),
                 ))
-                it.first.isStatic = false
             }
+            SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, ships.map { it.first }, 10)
         }
-
-        return true
-    }
-
-    // it will save ship data with origin ship unrotated
-    private fun saveShipData(ships: List<ServerShip>, originShip: ServerShip): AABBd {
-        val getWorldAABB = {it: ServerShip, newTransform: ShipTransform -> it.shipAABB!!.toAABBd(AABBd()).transform(newTransform.shipToWorld) }
-
-        val invRotation = originShip.transform.shipToWorldRotation.invert(Quaterniond())
-        val newTransforms = ships.map { rotateAroundCenter(originShip.transform, it.transform, invRotation) }
-
-        val objectAABB = getWorldAABB(ships[0], newTransforms[0])
-        ships.zip(newTransforms).forEach {(it, newTransform) ->
-            val b = getWorldAABB(it, newTransform)
-            if (b.minX() < objectAABB.minX) { objectAABB.minX = b.minX() }
-            if (b.maxX() > objectAABB.maxX) { objectAABB.maxX = b.maxX() }
-            if (b.minY() < objectAABB.minY) { objectAABB.minY = b.minY() }
-            if (b.maxY() > objectAABB.maxY) { objectAABB.maxY = b.maxY() }
-            if (b.minZ() < objectAABB.minZ) { objectAABB.minZ = b.minZ() }
-            if (b.maxZ() > objectAABB.maxZ) { objectAABB.maxZ = b.maxZ() }
-        }
-
-        val minPos = MVector3d(objectAABB.minX, objectAABB.minY, objectAABB.minZ)
-        val maxPos = MVector3d(objectAABB.maxX, objectAABB.maxY, objectAABB.maxZ)
-
-        val normalizedMaxObjectPos = (maxPos - minPos) / 2
-        val objectCenter = normalizedMaxObjectPos + minPos
-
-        val sinfo = ships.zip(newTransforms).map {(it, newTransform ) ->
-            val chunkMin = MVector3d(
-                    it.chunkClaim.xStart * 16,
-                    0,
-                    it.chunkClaim.zStart * 16
-            )
-
-            val shipAABB = AABBi(
-                it.shipAABB!!.minX() - it.chunkClaim.xStart * 16,
-                it.shipAABB!!.minY(),
-                it.shipAABB!!.minZ() - it.chunkClaim.zStart * 16,
-                it.shipAABB!!.maxX() - it.chunkClaim.xStart * 16,
-                it.shipAABB!!.maxY(),
-                it.shipAABB!!.maxZ() - it.chunkClaim.zStart * 16
-            )
-
-            ShipInfo(
-                    it.id,
-                    (MVector3d(newTransform.positionInWorld) - objectCenter).toJomlVector3d(),
-                    shipAABB,
-                    Vector3d(newTransform.positionInShip).sub(chunkMin.toJomlVector3d(), Vector3d()),
-                    MVector3d(newTransform.shipToWorldScaling).avg(),
-                    Quaterniond(newTransform.shipToWorldRotation))
-        }
-
-        schemInfo = ShipSchematicInfo(
-            normalizedMaxObjectPos.toJomlVector3d(),
-            sinfo
-        )
-        return objectAABB
-    }
-
-    override fun makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
-        val traversed = traverseGetAllTouchingShips(level, originShip.id)
-
-        val ships = traversed.mapNotNull { level.shipObjectWorld.allShips.getById(it) }
-
-        extraData = ShipSchematic.onCopy(level, ships)
-
-        val objectAABB = saveShipData(ships, originShip)
-        SchematicActionsQueue.queueShipsSavingEvent(level, uuid, ships, this, true, postSaveFn)
 
         return true
     }
@@ -284,7 +275,7 @@ class ShipSchematicV1(): IShipSchematic {
         tag.put("gridData", gridDataTag)
     }
 
-    override fun saveToFile(): Serializable {
+    override fun serialize(): Serializable {
         val saveTag = CompoundTag()
 
         serializeShipData(saveTag)
@@ -377,7 +368,7 @@ class ShipSchematicV1(): IShipSchematic {
         }
     }
 
-    override fun loadFromByteBuffer(buf: ByteBuf): Boolean {
+    override fun deserialize(buf: ByteBuf): Boolean {
         val file = CompoundTagSerializable(CompoundTag())
         file.deserialize(FriendlyByteBuf(buf))
 

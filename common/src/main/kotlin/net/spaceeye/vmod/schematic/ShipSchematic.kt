@@ -44,7 +44,7 @@ object ShipSchematic {
         } catch (e: Error) { ELOG("Failed to load schematic with error:\n${e.stackTraceToString()}"); return null }
 
         try {
-            schematic.loadFromByteBuffer(buffer)
+            schematic.deserialize(buffer)
         } catch (e: AssertionError) {return null
         } catch (e: Exception) { ELOG("Failed to load schematic with exception:\n${e.stackTraceToString()}"); return null
         } catch (e: Error) { ELOG("Failed to load schematic with error:\n${e.stackTraceToString()}"); return null }
@@ -62,6 +62,7 @@ object ShipSchematic {
         pasteEventsAfter[name] = onPasteAfter
     }
 
+    // Is called on copy, before blocks were copied
     internal fun onCopy(level: ServerLevel, shipsToBeSaved: List<ServerShip>): List<Pair<String, Serializable>> {
         val toRemove = mutableListOf<String>()
         val toReturn = mutableListOf<Pair<String, Serializable>>()
@@ -76,17 +77,19 @@ object ShipSchematic {
         return toReturn
     }
 
-    internal fun onPasteBeforeBlocksAreLoaded(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, Serializable>>) {
+    // Is called after all ServerShips are created, but blocks haven't been placed yet, so VS didn't "create them"
+    internal fun onPasteBeforeBlocksAreLoaded(level: ServerLevel, emptyShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, Serializable>>) {
         val toRemove = mutableListOf<String>()
         for ((name, file) in files) {
             val event = pasteEventsBefore[name] ?: continue
-            try { event(level, loadedShips, file) { toRemove.add(name) }
+            try { event(level, emptyShips, file) { toRemove.add(name) }
             } catch (e: Exception) { ELOG("Event $name failed onPasteBeforeBlocksAreLoaded with exception:\n${e.stackTraceToString()}"); continue
             } catch (e: Error)     { ELOG("Event $name failed onPasteBeforeBlocksAreLoaded with exception:\n${e.stackTraceToString()}"); continue }
         }
         toRemove.forEach { pasteEventsBefore.remove(it) }
     }
 
+    // Is called after all ServerShips are created with blocks placed in shipyard
     internal fun onPasteAfterBlocksAreLoaded(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, Serializable>>) {
         val toRemove = mutableListOf<String>()
         for ((name, file) in files) {

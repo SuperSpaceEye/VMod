@@ -6,6 +6,7 @@ import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 
+// does quaternion magic to rotate object around a center by given rotation
 fun rotateAroundCenter(center: ShipTransform, obj: ShipTransform, rotation: Quaterniondc): ShipTransform {
     center as ShipTransformImpl
     obj as ShipTransformImpl

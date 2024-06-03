@@ -5,13 +5,10 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.RopeRenderer
-import net.spaceeye.vmod.utils.vs.DummyServerShip
-import net.spaceeye.vmod.transformProviders.FixedPositionTransformProvider
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
-import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.isChunkInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.lang.AssertionError
@@ -60,13 +57,5 @@ fun commonCopy(
             else -> {throw AssertionError() }
         }
     }
-
-    val cShip1 = if (nShip1 != null) { DummyServerShip(nShip1) } else null
-    val cShip2 = if (nShip2 != null) { DummyServerShip(nShip2) } else null
-
-    //TODO this is stupid
-    if (cShip1 != null) {cShip1.transform = (cShip1.transform as ShipTransformImpl).copy(positionInShip = (nShip1!!.transformProvider as FixedPositionTransformProvider).positionInShip)}
-    if (cShip2 != null) {cShip2.transform = (cShip2.transform as ShipTransformImpl).copy(positionInShip = (nShip2!!.transformProvider as FixedPositionTransformProvider).positionInShip)}
-
-    return constructor(nShip1Id, nShip2Id, cShip1, cShip2, localPos0, localPos1, newAttachmentPoints, newRenderer)
+    return constructor(nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer)
 }

@@ -3,7 +3,6 @@ package net.spaceeye.vmod.toolgun.modes.state
 import dev.architectury.event.events.common.PlayerEvent
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.ScrollComponent
-import gg.essential.elementa.components.UIBlock
 import gg.essential.elementa.components.UIContainer
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
@@ -82,7 +81,7 @@ object ClientPlayerSchematics {
         transmitterRequestProcessor = {loadRequest ->
             val res = ClientToolGunState.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
-                mode.schem?.let { SchemHolder(it.saveToFile().serialize(), loadRequest.requestUUID) }
+                mode.schem?.let { SchemHolder(it.serialize().serialize(), loadRequest.requestUUID) }
             }
             if (res != null) { Either.Left(res) } else { Either.Right(DataStream.RequestFailurePkt()) }
         }
@@ -142,7 +141,7 @@ object ClientPlayerSchematics {
 
     fun saveSchematic(name: String, schematic: IShipSchematic): Boolean {
         try {
-            Files.write(Paths.get("VMod-Schematics/${name}"), schematic.saveToFile().serialize().array())
+            Files.write(Paths.get("VMod-Schematics/${name}"), schematic.serialize().serialize().array())
         } catch (e: IOException) {return false}
         return true
     }
@@ -157,7 +156,7 @@ object ServerPlayerSchematics: ServerClosable() {
         ClientPlayerSchematics::SendSchemRequest,
         ClientPlayerSchematics::SchemHolder,
         transmitterRequestProcessor = {
-            val res = schematics[it.uuid] ?.let { SchemHolder(it.saveToFile().serialize()) }
+            val res = schematics[it.uuid] ?.let { SchemHolder(it.serialize().serialize()) }
             if (res != null) { Either.Left(res) } else { Either.Right(DataStream.RequestFailurePkt()) }
         }
     )

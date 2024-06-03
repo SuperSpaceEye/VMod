@@ -29,6 +29,12 @@ abstract public class ShipObjectServerWorldMixin {
         deletedShipObjects.forEach((data) -> AVSEvents.INSTANCE.getServerShipRemoveEvent().emit(new AVSEvents.ServerShipRemoveEvent(data)));
     }
 
+    //TODO this will silence "Ship with ID {} has a mass of 0.0, not creating a ShipObject"
+//    @Redirect(method = "postTick", at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V"), remap = false)
+//    void redirectLogger(Logger instance, String s) {
+//
+//    }
+
     @Inject(method = "createNewConstraint", at = @At(value = "FIELD", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectServerWorld;constraints:Ljava/util/Map;"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD)
     void vmod_createNewConstraints(VSConstraint vsConstraint, CallbackInfoReturnable<Integer> cir, int var4) {
         VSConstraintsTracker.INSTANCE.addNewConstraint(vsConstraint, var4);

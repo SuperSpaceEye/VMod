@@ -10,7 +10,7 @@ import org.valkyrienskies.core.api.ships.ServerShip
 
 interface SchemCompatItem {
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit)
-    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
+    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: () -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
 }
 
 object SchemCompatObj {
@@ -28,9 +28,9 @@ object SchemCompatObj {
         items.forEach { it.onCopy(level, pos, state, ships, be, tag) { cancel = true } }
         return cancel
     }
-    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState): ((BlockEntity?) -> Unit)? {
+    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: () -> Unit): ((BlockEntity?) -> Unit)? {
         val callbacks = mutableListOf<(BlockEntity?) -> Unit>()
-        items.forEach { it.onPaste(level, oldToNewId, tag, state) { cb -> callbacks.add (cb) } }
+        items.forEach { it.onPaste(level, oldToNewId, tag, state, delayLoading) { cb -> callbacks.add (cb) } }
         if (callbacks.isEmpty()) {return null}
         return {be -> callbacks.forEach {it(be)}}
     }

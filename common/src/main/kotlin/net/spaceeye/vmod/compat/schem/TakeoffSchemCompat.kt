@@ -18,15 +18,12 @@ class TakeoffSchemCompat: SchemCompatItem {
         if (   state.block != TakeoffBlocks.BEARING.get()
             && state.block != TakeoffBlocks.BEARING_TOP.get()
         ) { return }
-        if (tag == null) {
-            cancelBlockCopying()
-            return
-        }
+        if (tag == null) { return }
 
         tag.putLong("VMOD_INJECT_otherId", level.getShipManagingPos(BlockPos.of(tag.getLong("otherPos")))?.id ?: return)
     }
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: () -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (   state.block != TakeoffBlocks.BEARING.get()
             && state.block != TakeoffBlocks.BEARING_TOP.get()
             ) { return }

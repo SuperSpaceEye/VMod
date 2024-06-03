@@ -43,22 +43,17 @@ class ShipSchematicV1(): IShipSchematic {
     val blockData = mutableMapOf<ShipId, SchemBlockData<BlockItem>>()
     var flatExtraData = mutableListOf<CompoundTag>()
 
-//    var worldEntityData = mutableMapOf<UUID, CompoundTag>()
-//    var shipyardEntityData = mutableMapOf<ShipId, MutableMap<UUID, CompoundTag>>()
-
     var extraData = listOf<Pair<String, Serializable>>()
 
     lateinit var schemInfo: IShipSchematicInfo
 
     override fun getInfo(): IShipSchematicInfo = schemInfo
 
-    override fun placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc): Boolean {
+    private fun createShips(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<ShipTransform>): List<Pair<ServerShip, Long>> {
         val shipData = schemInfo.shipInfo
-
         val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
 
-        val newTransforms = mutableListOf<ShipTransform>()
-        val ships = shipData.map {
+        return shipData.map {
             val thisTransform = ShipTransformImpl(
                 it.relPositionToCenter,
                 it.posInShip,
@@ -88,19 +83,36 @@ class ShipSchematicV1(): IShipSchematic {
             val posInShip = it.posInShip.add(chunkMin.toJomlVector3d(), Vector3d())
 
             newShip.transformProvider = FixedPositionTransformProvider(toPos.toJomlVector3d(), posInShip)
+
             Pair(newShip, it.id)
         }
+    }
 
+    private fun verifyBlockDataIsValid(
+        ships: List<Pair<ServerShip, Long>>,
+        level: ServerLevel
+    ): Boolean {
         ships.forEach { (ship, id) ->
             blockData[id] ?: run {
-                ships.forEach {(ship, id) -> level.shipObjectWorld.deleteShip(ship) }
+                ships.forEach { (ship, id) -> level.shipObjectWorld.deleteShip(ship) }
                 ELOG("SHIP ID EXISTS BUT NO BLOCK DATA WAS SAVED. NOT PLACING A SCHEMATIC.")
                 return false
             }
         }
+        return true
+    }
+
+    override fun placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc): Boolean {
+        val newTransforms = mutableListOf<ShipTransform>()
+
+        val ships = createShips(level, pos, rotation, newTransforms)
+
+        if (!verifyBlockDataIsValid(ships, level)) {
+            ships.forEach { level.shipObjectWorld.deleteShip(it.first) }
+            return false
+        }
 
         ShipSchematic.onPasteBeforeBlocksAreLoaded(level, ships, extraData)
-
         SchematicActionsQueue.queueShipsCreationEvent(level, uuid, ships, this) {
             ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData)
 
@@ -116,16 +128,6 @@ class ShipSchematicV1(): IShipSchematic {
                 ))
                 it.first.isStatic = false
             }
-//
-//            worldEntityData.forEach { (k, tag) ->
-//                val entityOpt = EntityType.create(tag, level) ?: return@forEach
-//                if (entityOpt.isEmpty) {return@forEach}
-//                val entity = entityOpt.get()
-//                val relPos = MVector3d(tag.getVector3d("VMOD_SCHEMATIC_REL_POS_DATA")!!)
-//                entity.setPos((relPos.sadd(pos.x, pos.y, pos.z)).toMCVec3())
-//                entity.uuid = UUID.randomUUID()
-//                level.addFreshEntity(entity)
-//            }
         }
 
         return true
@@ -187,27 +189,6 @@ class ShipSchematicV1(): IShipSchematic {
         return objectAABB
     }
 
-//    fun saveEntityData(level: ServerLevel, ships: List<ServerShip>, objectAABB: AABBd) {
-//        val minPos = MVector3d(objectAABB.minX, objectAABB.minY, objectAABB.minZ)
-//        val maxPos = MVector3d(objectAABB.maxX, objectAABB.maxY, objectAABB.maxZ)
-//
-//        val normalizedMaxObjectPos = (maxPos - minPos) / 2
-//        val objectCenter = normalizedMaxObjectPos + minPos
-//
-//        ships
-//            .map { level.getEntities(null, it.worldAABB.toMinecraft()) }
-//            .reduce { acc, entities -> acc.addAll(entities); acc }
-//            .forEach {
-//                if (worldEntityData.containsKey(it.uuid)) {return@forEach}
-//                try {
-//                    val tag = CompoundTag()
-//                    it.save(tag)
-//                    tag.putVector3d("VMOD_SCHEMATIC_REL_POS_DATA", (MVector3d(it.position()) - objectCenter).toJomlVector3d())
-//                    worldEntityData[it.uuid] = tag
-//                } catch (_: Exception) {}
-//            }
-//    }
-
     override fun makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
         val traversed = traverseGetAllTouchingShips(level, originShip.id)
 
@@ -216,8 +197,7 @@ class ShipSchematicV1(): IShipSchematic {
         extraData = ShipSchematic.onCopy(level, ships)
 
         val objectAABB = saveShipData(ships, originShip)
-//        saveEntityData(level, ships, objectAABB)
-        SchematicActionsQueue.queueShipsSavingEvent(level, uuid, ships, this, postSaveFn)
+        SchematicActionsQueue.queueShipsSavingEvent(level, uuid, ships, this, true, postSaveFn)
 
         return true
     }
@@ -361,7 +341,7 @@ class ShipSchematicV1(): IShipSchematic {
 
         val newPalette = paletteTag.mapIndexed { i, it ->
             val state = NbtUtils.readBlockState(it as CompoundTag)
-            if (state.isAir) { ELOG("State under id $i is air. $state") }
+            if (state.isAir) { ELOG("State under id $i is air. $it") }
             Pair(i, state)
         }
 

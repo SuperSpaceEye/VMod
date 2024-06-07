@@ -95,16 +95,17 @@ interface PlacementAssistCRIHandler {
 
     private fun clientPlacementAssistSecond() {
         paStage = ThreeClicksActivationSteps.FINALIZATION
-        if (paCaughtShip == null) { paClientResetState(); return }
+        val paCaughtShip = paCaughtShip ?: run { paClientResetState(); return }
+        val paCaughtShips = paCaughtShips ?: run { paClientResetState(); return }
 
-        val placementTransform = paCaughtShip!!.transformProvider
+        val placementTransform = paCaughtShip.transformProvider
         if (placementTransform !is PlacementAssistTransformProvider) {paClientResetState(); return}
 
         paAngle.it = 0.0
-        paCaughtShip!!.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle)
+        paCaughtShip.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle)
 
         val shipObjectWorld = Minecraft.getInstance().shipObjectWorld
-        paCaughtShips!!.forEach {
+        paCaughtShips.forEach {
             val ship = shipObjectWorld.allShips.getById(it)
             ship?.transformProvider = CenteredAroundRotationAssistTransformProvider(ship!!.transformProvider as CenteredAroundPlacementAssistTransformProvider)
         }

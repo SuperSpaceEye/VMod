@@ -6,8 +6,7 @@ import gg.essential.elementa.dsl.childOf
 import gg.essential.elementa.dsl.constrain
 import gg.essential.elementa.dsl.pixels
 import gg.essential.elementa.dsl.plus
-import net.minecraft.network.chat.TranslatableComponent
-import net.spaceeye.vmod.constraintsManaging.types.ConnectionMConstraint.ConnectionModes
+import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint.ConnectionMode
 import net.spaceeye.vmod.guiElements.ColorPicker
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
@@ -15,15 +14,15 @@ import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
-import net.spaceeye.vmod.toolgun.modes.state.ConnectionMode
+import net.spaceeye.vmod.toolgun.modes.state.HydraulicsMode
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.translate.*
 
-interface ConnectionGUIBuilder: GUIBuilder {
-    override val itemName get() = CONNECTION
+interface HydraulicsGUI: GUIBuilder {
+    override val itemName get() = HYDRAULICS
 
     override fun makeGUISettings(parentWindow: UIContainer) {
-        this as ConnectionMode
+        this as HydraulicsMode
         val offset = 2.0f
         val limits = ServerLimits.instance
 
@@ -33,9 +32,21 @@ interface ConnectionGUIBuilder: GUIBuilder {
         makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, limits.compliance)
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
 
-        makeTextEntry(FIXED_DISTANCE.get(),     ::fixedDistance,     offset, offset, parentWindow)
+        makeTextEntry(FIXED_DISTANCE.get(), ::fixedMinLength, offset, offset, parentWindow)
+
+        makeTextEntry(EXTENSION_DISTANCE.get(), ::extensionDistance, offset, offset, parentWindow, DoubleLimit())
+        makeTextEntry(EXTENSION_SPEED.get(), ::extensionSpeed, offset, offset, parentWindow, limits.extensionSpeed)
 
         makeTextEntry(DISTANCE_FROM_BLOCK.get(), ::paDistanceFromBlock, offset, offset, parentWindow, limits.distanceFromBlock)
+
+        makeTextEntry(CHANNEL.get(), ::channel, offset, offset, parentWindow, limits.channelLength)
+
+        makeDropDown(
+            HYDRAULICS_INPUT_MODES.get(), parentWindow, offset, offset, listOf(
+            DItem(TOGGLE.get(), messageModes == net.spaceeye.vmod.network.MessageModes.Toggle) { messageModes = net.spaceeye.vmod.network.MessageModes.Toggle },
+            DItem(SIGNAL.get(), messageModes == net.spaceeye.vmod.network.MessageModes.Signal) { messageModes = net.spaceeye.vmod.network.MessageModes.Signal }
+        ))
+
         makeDropDown(
             HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
@@ -44,9 +55,9 @@ interface ConnectionGUIBuilder: GUIBuilder {
         ))
 
         makeDropDown(CONNECTION_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(FIXED_ORIENTATION.get(), connectionMode == ConnectionModes.FIXED_ORIENTATION) { connectionMode = ConnectionModes.FIXED_ORIENTATION },
-            DItem(HINGE_ORIENTATION.get(), connectionMode == ConnectionModes.HINGE_ORIENTATION) { connectionMode = ConnectionModes.HINGE_ORIENTATION },
-            DItem(FREE_ORIENTATION.get(),  connectionMode == ConnectionModes.FREE_ORIENTATION)  { connectionMode = ConnectionModes.FREE_ORIENTATION },
+            DItem(FIXED_ORIENTATION.get(), connectionMode == ConnectionMode.FIXED_ORIENTATION) { connectionMode = ConnectionMode.FIXED_ORIENTATION },
+            DItem(HINGE_ORIENTATION.get(), connectionMode == ConnectionMode.HINGE_ORIENTATION) { connectionMode = ConnectionMode.HINGE_ORIENTATION },
+            DItem(FREE_ORIENTATION.get(),  connectionMode == ConnectionMode.FREE_ORIENTATION)  { connectionMode = ConnectionMode.FREE_ORIENTATION },
         ))
 
         ColorPicker(color) {

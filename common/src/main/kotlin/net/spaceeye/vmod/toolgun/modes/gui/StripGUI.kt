@@ -14,7 +14,7 @@ import net.spaceeye.vmod.translate.STRIP_IN_RADIUS
 import net.spaceeye.vmod.translate.STRIP_MODES
 import net.spaceeye.vmod.translate.get
 
-interface StripGUIBuilder: GUIBuilder {
+interface StripGUI: GUIBuilder {
     override val itemName get() = STRIP
 
     override fun makeGUISettings(parentWindow: UIContainer) {

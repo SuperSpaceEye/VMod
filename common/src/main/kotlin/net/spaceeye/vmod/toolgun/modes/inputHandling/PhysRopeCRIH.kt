@@ -6,13 +6,14 @@ import net.spaceeye.vmod.toolgun.modes.ClientRawInputsHandler
 import net.spaceeye.vmod.toolgun.modes.state.PhysRopeMode
 import org.lwjgl.glfw.GLFW
 
-interface PhysRopeCRIHandler: ClientRawInputsHandler {
+interface PhysRopeCRIH: ClientRawInputsHandler {
     override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
         this as PhysRopeMode
         if (!primaryFirstRaycast) { return EventResult.pass() }
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
+            refreshHUD()
         }
 
         return EventResult.interruptFalse()
@@ -22,6 +23,7 @@ interface PhysRopeCRIHandler: ClientRawInputsHandler {
         this as PhysRopeMode
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
             clientHandlePrimary()
+            refreshHUD()
             conn_primary.sendToServer(this)
         }
 

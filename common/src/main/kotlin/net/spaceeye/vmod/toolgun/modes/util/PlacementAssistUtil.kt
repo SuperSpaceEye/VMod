@@ -9,7 +9,6 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.MConstraint
@@ -128,9 +127,9 @@ interface PlacementAssistCRIHandler {
     }
 }
 
-interface PANetworkingUnit: BaseMode, PlacementAssistServer, PlacementAssistCRIHandler
+interface PlacementAssistNetworkingUnit: BaseMode, PlacementAssistServerPart, PlacementAssistCRIHandler
 
-open class PlacementAssistNetworking(networkName: String): BaseNetworking<PANetworkingUnit>() {
+open class PlacementAssistNetworking(networkName: String): BaseNetworking<PlacementAssistNetworkingUnit>() {
     val s2cHandleFailure = "handle_failure" idWithConns {
         object : S2CConnection<S2CHandleFailurePacket>(it, networkName) {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
@@ -202,7 +201,7 @@ interface PlacementAssistSerialize {
     }
 }
 
-interface PlacementAssistServer {
+interface PlacementAssistServerPart {
     var paStage: ThreeClicksActivationSteps
     var posMode: PositionModes
 

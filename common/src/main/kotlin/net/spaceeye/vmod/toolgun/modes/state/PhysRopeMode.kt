@@ -9,8 +9,9 @@ import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.PhysRopeMConstraint
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.toolgun.modes.gui.PhysRopeGUIBuilder
-import net.spaceeye.vmod.toolgun.modes.inputHandling.PhysRopeCRIHandler
+import net.spaceeye.vmod.toolgun.modes.gui.PhysRopeGUI
+import net.spaceeye.vmod.toolgun.modes.hud.PhysRopeHUD
+import net.spaceeye.vmod.toolgun.modes.inputHandling.PhysRopeCRIH
 import net.spaceeye.vmod.toolgun.modes.serializing.PhysRopeSerializable
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePositions
@@ -23,7 +24,7 @@ import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCRIHandler, PhysRopeGUIBuilder {
+class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCRIH, PhysRopeGUI, PhysRopeHUD {
     var compliance = 1e-20
     var maxForce = 1e10
     var fixedDistance = -1.0

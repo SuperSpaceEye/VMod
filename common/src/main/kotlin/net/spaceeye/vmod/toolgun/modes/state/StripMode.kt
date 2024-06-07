@@ -12,15 +12,15 @@ import net.spaceeye.vmod.constraintsManaging.getAllManagedConstraintIdsOfShipId
 import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.toolgun.modes.gui.StripGUIBuilder
-import net.spaceeye.vmod.toolgun.modes.inputHandling.StripCRIHandler
+import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
+import net.spaceeye.vmod.toolgun.modes.hud.StripHUD
+import net.spaceeye.vmod.toolgun.modes.inputHandling.StripCRIH
 import net.spaceeye.vmod.toolgun.modes.serializing.StripSerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
-import org.valkyrienskies.mod.common.shipObjectWorld
 
-class StripMode: BaseMode, StripSerializable, StripCRIHandler, StripGUIBuilder {
+class StripMode: BaseMode, StripSerializable, StripCRIH, StripGUI, StripHUD {
     enum class StripModes {
         StripAll,
         StripInRadius

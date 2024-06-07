@@ -1,15 +1,12 @@
 {
-  "vmod.gui.weld": "Weld",
   "vmod.gui.rope": "Rope",
   "vmod.gui.hydraulics": "Hydraulics",
-  "vmod.gui.axis": "Axis",
   "vmod.gui.phys_rope": "Physics Rope",
   "vmod.gui.schematic": "Schematic",
   "vmod.gui.connection": "Connection",
 
   "vmod.gui.strip": "Strip",
   "vmod.gui.scale": "Scale",
-  "vmod.gui.copy": "Copy",
 
   "vmod.gui.setting.compliance": "Compliance",
   "vmod.gui.setting.max_force": "Max Force",
@@ -55,6 +52,21 @@
   "vmod.gui.setting.cancel": "Cancel",
   "vmod.gui.setting.filename": "Filename",
   "vmod.gui.setting.load": "Load",
+
+  "vmod.gui.text.common_hud_1": "lclick - main mode, rclick - secondary mode",
+  "vmod.gui.text.common_hud_2": "lclick on the other ship or the ground",
+  "vmod.gui.text.common_hud_3": "look at the target and press lclick again",
+  "vmod.gui.text.common_hud_4": "configure rotation with mouse wheel, press lclick to confirm",
+  "vmod.gui.text.common_hud_5": "lclick - main mode",
+
+  "vmod.gui.text.disable_collisions_hud_1": "lclick to disable collisions, rclick to enable all collisions",
+
+  "vmod.gui.text.scale_hud_1": "lclick - scale ship/s",
+
+  "vmod.gui.text.schem_hud_1": "lclick - save ship as schematic",
+  "vmod.gui.text.schem_hud_2": "lclick - save ship as schematic\nrclick - paste schematic\nmouse wheel - rotate schematic",
+
+  "vmod.gui.text.strip_hud_1": "lclick - strip constraints",
 
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
   "key.vmod.remove_top_constraint": "Remove Top Constraint",

@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.toolgun
 
 import dev.architectury.event.EventResult
+import dev.architectury.event.events.client.ClientGuiEvent
 import dev.architectury.event.events.client.ClientLifecycleEvent
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.event.events.client.ClientRawInputEvent
@@ -22,6 +23,12 @@ class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
         @JvmStatic
         fun makeEvents() {
             EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+
+            ClientGuiEvent.RENDER_HUD.register {
+                stack, delta ->
+                if (!playerIsUsingToolgun()) {return@register}
+                ClientToolGunState.onRenderHUD(stack, delta)
+            }
 
             ClientRawInputEvent.KEY_PRESSED.register {
                 client, keyCode, scanCode, action, modifiers ->

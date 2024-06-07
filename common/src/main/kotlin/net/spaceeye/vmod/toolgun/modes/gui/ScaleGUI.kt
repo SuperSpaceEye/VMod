@@ -7,7 +7,7 @@ import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.ScaleMode
 import net.spaceeye.vmod.translate.*
 
-interface ScaleGUIBuilder: GUIBuilder {
+interface ScaleGUI: GUIBuilder {
     override val itemName get() = SCALE
 
     override fun makeGUISettings(parentWindow: UIContainer) {

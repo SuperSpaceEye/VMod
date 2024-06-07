@@ -26,8 +26,9 @@ import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
-import net.spaceeye.vmod.toolgun.modes.gui.SchemGUIBuilder
-import net.spaceeye.vmod.toolgun.modes.inputHandling.SchemCRIHandler
+import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
+import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
+import net.spaceeye.vmod.toolgun.modes.inputHandling.SchemCRIH
 import net.spaceeye.vmod.toolgun.modes.serializing.SchemSerializable
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
@@ -288,7 +289,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     }
 }
 
-class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
+class SchemMode: BaseMode, SchemGUI, SchemCRIH, SchemSerializable, SchemHUD {
     override var itemsScroll: ScrollComponent? = null
     override lateinit var parentWindow: UIContainer
 
@@ -353,6 +354,8 @@ class SchemMode: BaseMode, SchemGUIBuilder, SchemCRIHandler, SchemSerializable {
 
                 rd.cachedData.getOrPut(-1) { mutableMapOf() }[-1] = renderer!!
             } } }
+
+            refreshHUD()
         }
     private var schem_: IShipSchematic? = null
     var schem: IShipSchematic?

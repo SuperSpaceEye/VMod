@@ -50,7 +50,7 @@ class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
     }
 }
 
-interface SchemGUIBuilder: GUIBuilder {
+interface SchemGUI: GUIBuilder {
     override val itemName get() = SCHEMATIC
 
     var itemsScroll: ScrollComponent?

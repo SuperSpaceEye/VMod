@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.toolgun
+package net.spaceeye.vmod.gui
 
 import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.WindowScreen
@@ -8,6 +8,7 @@ import gg.essential.elementa.components.UIWrappedText
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
+import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
@@ -78,8 +79,10 @@ class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
                     )
                 }
             }.onMouseClick {
+                //TODO this is not very good
                 settingsScrollComponent.clearChildren()
                 component.makeGUISettings(settingsScrollComponent)
+                ClientToolGunState.refreshHUD()
                 ClientToolGunState.currentMode = component
             } childOf scrollComponent
 

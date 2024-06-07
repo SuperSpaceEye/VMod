@@ -1,16 +1,24 @@
 package net.spaceeye.vmod.toolgun
 
 import com.mojang.blaze3d.platform.InputConstants
+import com.mojang.blaze3d.vertex.PoseStack
 import dev.architectury.event.EventResult
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
+import net.spaceeye.vmod.gui.ScreenWindow
+import net.spaceeye.vmod.gui.ToolgunGUI
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.utils.ClientClosable
 import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
+    var currentMode: BaseMode? = null
+
+    private var _refreshHUD = true
+    fun refreshHUD() { _refreshHUD = true }
+
     val GUI_MENU_OPEN_OR_CLOSE = register(
         KeyMapping(
         "key.vmod.gui_open_or_close",
@@ -37,14 +45,12 @@ object ClientToolGunState : ClientClosable() {
         )
     )
 
-    fun register(keyMapping: KeyMapping): KeyMapping {
+    private fun register(keyMapping: KeyMapping): KeyMapping {
         KeyMappingRegistry.register(keyMapping)
         return keyMapping
     }
 
-    var currentMode: BaseMode? = null
-
-    fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): EventResult {
+    internal fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): EventResult {
         val eventResult = if (currentMode == null) { EventResult.pass() } else { currentMode!!.handleKeyEvent(keyCode, scanCode, action, modifiers) }
         if (eventResult != EventResult.pass()) { return eventResult }
 
@@ -56,22 +62,44 @@ object ClientToolGunState : ClientClosable() {
         return EventResult.pass()
     }
 
-    fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {
+    internal fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {
         if (currentMode == null) {return EventResult.interruptFalse()}
         return currentMode!!.handleMouseButtonEvent(button, action, modifiers)
     }
 
-    fun handleMouseScrollEvent(amount: Double): EventResult {
+    internal fun handleMouseScrollEvent(amount: Double): EventResult {
         if (currentMode == null) { return EventResult.pass() }
         return currentMode!!.handleMouseScrollEvent(amount)
     }
 
-    lateinit var gui: ToolgunGUI
+    private var screenGui: ScreenWindow? = null
 
-    fun guiIsOpened() = Minecraft.getInstance().screen == gui
-    fun otherGuiIsOpened() = Minecraft.getInstance().screen != null && Minecraft.getInstance().screen != gui
+    internal fun onRenderHUD(stack: PoseStack, delta: Float) {
+        val currentMode = currentMode ?: return
 
-    fun init() {
+        val screenGui = screenGui ?: run {
+            val temp = ScreenWindow()
+            val minecraft = Minecraft.getInstance()
+            temp.init(minecraft, minecraft.window.guiScaledWidth, minecraft.window.guiScaledHeight)
+            screenGui = temp
+            temp
+        }
+
+        if (_refreshHUD) {
+            screenGui.screenContainer.clearChildren()
+            currentMode.makeHUD(screenGui.screenContainer)
+            _refreshHUD = false
+        }
+
+        screenGui.render(stack, 0, 0, delta)
+    }
+
+    internal lateinit var gui: ToolgunGUI
+
+    internal fun guiIsOpened() = Minecraft.getInstance().screen == gui
+    internal fun otherGuiIsOpened() = Minecraft.getInstance().screen != null && Minecraft.getInstance().screen != gui
+
+    internal fun init() {
         gui = ToolgunGUI()
         gui.makeScrollComponents(modes)
     }

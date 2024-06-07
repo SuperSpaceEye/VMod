@@ -11,8 +11,9 @@ import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
-import net.spaceeye.vmod.toolgun.modes.gui.HydraulicsGUIBuilder
-import net.spaceeye.vmod.toolgun.modes.inputHandling.HydraulicsCRIHandler
+import net.spaceeye.vmod.toolgun.modes.gui.HydraulicsGUI
+import net.spaceeye.vmod.toolgun.modes.hud.HydraulicsHUD
+import net.spaceeye.vmod.toolgun.modes.inputHandling.HydraulicsCRIH
 import net.spaceeye.vmod.toolgun.modes.serializing.HydraulicsSerializable
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -25,7 +26,7 @@ import java.awt.Color
 
 object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 
-class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIHandler, HydraulicsGUIBuilder, PlacementAssistServer, PANetworkingUnit {
+class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIH, HydraulicsGUI, HydraulicsHUD, PlacementAssistServerPart, PlacementAssistNetworkingUnit {
     var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2

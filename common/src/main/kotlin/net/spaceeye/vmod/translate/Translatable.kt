@@ -16,6 +16,7 @@ val HYDRAULICS = t("hydraulics")
 val PHYS_ROPE = t("phys_rope")
 val SCHEMATIC = t("schematic")
 val CONNECTION = t("connection")
+val WINCH = t("winch")
 
 val SCALE = t("scale")
 val STRIP = t("strip")

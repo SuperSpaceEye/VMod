@@ -50,6 +50,7 @@ object ClientToolGunState : ClientClosable() {
         return keyMapping
     }
 
+    //TODO events should also have try catches so that it doesn't ever crash
     internal fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): EventResult {
         val eventResult = if (currentMode == null) { EventResult.pass() } else { currentMode!!.handleKeyEvent(keyCode, scanCode, action, modifiers) }
         if (eventResult != EventResult.pass()) { return eventResult }

@@ -14,7 +14,7 @@
 * Redo them
 
 ## Synchronised Data
-* It spams too many packets, idk why
+* Redo everything
 
 ## HUD Rendering
 * Make system for HUD rendering

@@ -9,8 +9,9 @@ object ToolgunModes {
         RopeMode(),
         HydraulicsMode(),
         PhysRopeMode(),
-        DisableCollisionsMode(),
+        WinchMode(),
 
+        DisableCollisionsMode(),
         SchemMode(),
         ScaleMode(),
         StripMode(),

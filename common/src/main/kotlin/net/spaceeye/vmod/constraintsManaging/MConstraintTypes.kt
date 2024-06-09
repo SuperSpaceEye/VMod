@@ -12,5 +12,6 @@ object MConstraintTypes: Registry<MConstraint>() {
         register(::PhysRopeMConstraint)
         register(::DisabledCollisionMConstraint)
         register(::ConnectionMConstraint)
+        register(::WinchMConstraint)
     }
 }

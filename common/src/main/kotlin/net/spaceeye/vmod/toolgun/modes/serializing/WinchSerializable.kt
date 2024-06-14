@@ -3,14 +3,14 @@ package net.spaceeye.vmod.toolgun.modes.serializing
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
-import net.spaceeye.vmod.toolgun.modes.state.HydraulicsMode
+import net.spaceeye.vmod.toolgun.modes.state.WinchMode
 import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistSerialize
 import net.spaceeye.vmod.utils.readColor
 import net.spaceeye.vmod.utils.writeColor
 
-interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
+interface WinchSerializable: MSerializable, PlacementAssistSerialize {
     override fun serialize(): FriendlyByteBuf {
-        this as HydraulicsMode
+        this as WinchMode
         val buf = getBuffer()
 
         buf.writeDouble(compliance)
@@ -21,7 +21,6 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
         buf.writeDouble(extensionSpeed)
         buf.writeUtf(channel)
         buf.writeEnum(messageModes)
-        buf.writeEnum(connectionMode)
         buf.writeColor(color)
         buf.writeDouble(fixedMinLength)
 
@@ -33,7 +32,7 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
-        this as HydraulicsMode
+        this as WinchMode
         compliance = buf.readDouble()
         maxForce = buf.readDouble()
         posMode = buf.readEnum(posMode.javaClass)
@@ -42,7 +41,6 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
         extensionSpeed = buf.readDouble()
         channel = buf.readUtf()
         messageModes = buf.readEnum(messageModes.javaClass)
-        connectionMode = buf.readEnum(connectionMode.javaClass)
         color = buf.readColor()
         fixedMinLength = buf.readDouble()
 
@@ -52,7 +50,7 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
     }
 
     override fun serverSideVerifyLimits() {
-        this as HydraulicsMode
+        this as WinchMode
         val limits = ServerLimits.instance
 
         compliance = limits.compliance.get(compliance)

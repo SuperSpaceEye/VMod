@@ -9,17 +9,17 @@ inline fun Component.get(): String = I18n.get(this.string)
 private const val path = "vmod.gui."
 private inline fun t(s: String) = makeComponent(path+s)
 private inline fun s(s: String) = makeComponent(path+"setting."+s)
+private inline fun x(s: String) = makeComponent(path+"text."+s)
 
-val WELD = t("weld")
 val ROPE = t("rope")
 val HYDRAULICS = t("hydraulics")
-val AXIS = t("axis")
 val PHYS_ROPE = t("phys_rope")
 val SCHEMATIC = t("schematic")
+val CONNECTION = t("connection")
+val WINCH = t("winch")
 
 val SCALE = t("scale")
 val STRIP = t("strip")
-val COPY = t("copy")
 
 val COMPLIANCE = s("compliance")
 val MAX_FORCE = s("max_force")
@@ -56,7 +56,26 @@ val STRIP_MODES = s("strip_modes")
 val STRIP_ALL = s("strip_all")
 val STRIP_IN_RADIUS = s("strip_in_radius")
 
+val CONNECTION_MODES = s("connection_modes")
+val FIXED_ORIENTATION = s("fixed_orientation")
+val HINGE_ORIENTATION = s("hinge_orientation")
+val FREE_ORIENTATION = s("free_orientation")
+
 val SAVE = s("save")
 val CANCEL = s("cancel")
 val FILENAME = s("filename")
 val LOAD = s("load")
+
+val COMMON_HUD_1 = x("common_hud_1")
+val COMMON_HUD_2 = x("common_hud_2")
+val COMMON_HUD_3 = x("common_hud_3")
+val COMMON_HUD_4 = x("common_hud_4")
+val COMMON_HUD_5 = x("common_hud_5")
+
+val DISABLE_COLLISIONS_HUD_1 = x("disable_collisions_hud_1")
+val SCALE_HUD_1 = x("scale_hud_1")
+
+val SCHEM_HUD_1 = x("schem_hud_1")
+val SCHEM_HUD_2 = x("schem_hud_2")
+
+val STRIP_HUD_1 = x("strip_hud_1")

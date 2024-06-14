@@ -4,7 +4,7 @@ import gg.essential.elementa.components.UIContainer
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.translate.*
 
-interface DisableCollisionsGUIBuilder: GUIBuilder {
+interface DisableCollisionsGUI: GUIBuilder {
     override val itemName get() = DISABLE_COLLISIONS
 
     override fun makeGUISettings(parentWindow: UIContainer) {}

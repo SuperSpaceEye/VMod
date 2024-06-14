@@ -6,15 +6,15 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint
+import net.spaceeye.vmod.constraintsManaging.types.WinchMConstraint
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
-import net.spaceeye.vmod.toolgun.modes.gui.HydraulicsGUI
-import net.spaceeye.vmod.toolgun.modes.hud.HydraulicsHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.HydraulicsCRIH
-import net.spaceeye.vmod.toolgun.modes.serializing.HydraulicsSerializable
+import net.spaceeye.vmod.toolgun.modes.gui.WinchGUI
+import net.spaceeye.vmod.toolgun.modes.hud.WinchHUD
+import net.spaceeye.vmod.toolgun.modes.serializing.WinchSerializable
+import net.spaceeye.vmod.toolgun.modes.inputHandling.WinchCRIH
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Ref
@@ -24,24 +24,23 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
-object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
+object WinchNetworking: PlacementAssistNetworking("winch_networking")
 
-class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIH, HydraulicsGUI, HydraulicsHUD, PlacementAssistServerPart, PlacementAssistNetworkingUnit {
+class WinchMode: BaseMode, WinchSerializable, WinchCRIH, WinchGUI, WinchHUD, PlacementAssistServerPart, PlacementAssistNetworkingUnit {
     var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2
 
-    var color: Color = Color(62, 62, 200, 255)
+    var color: Color = Color(189, 94, 46, 255)
 
     var extensionDistance: Double = 5.0
     var extensionSpeed: Double = 1.0
 
     var fixedMinLength: Double = -1.0
 
-    var channel: String = "hydraulics"
+    var channel: String = "winch"
 
     var messageModes = net.spaceeye.vmod.network.MessageModes.Toggle
-    var connectionMode = HydraulicsMConstraint.ConnectionMode.FIXED_ORIENTATION
 
     var primaryFirstRaycast = false
 
@@ -58,27 +57,27 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIH, Hydrauli
     override val paNetworkingObject: PlacementAssistNetworking = HydraulicsNetworking
     override val paMConstraintBuilder =
             { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult> ->
-                HydraulicsMConstraint(
-                        spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
+                WinchMConstraint(
+                        spoint1, spoint2, shipId1, shipId2,
                         compliance, maxForce,
                         paDistanceFromBlock, paDistanceFromBlock + extensionDistance,
-                        extensionSpeed, channel, messageModes, connectionMode,
+                        extensionSpeed, channel, messageModes,
                         listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                         A2BRenderer(
-                                ship1 != null,
-                                ship2 != null,
-                                spoint1, spoint2,
-                                color, width
+                            ship1 != null,
+                            ship2 != null,
+                            spoint1, spoint2,
+                            color, width
                         )
                 )
             }
 
     override fun init(type: BaseNetworking.EnvType) {
-        HydraulicsNetworking.init(this, type)
+        WinchNetworking.init(this, type)
     }
 
-    val conn_primary = register { object : C2SConnection<HydraulicsMode>("hydraulics_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
-    val conn_secondary = register { object : C2SConnection<HydraulicsMode>("hydraulics_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode) {
+    val conn_primary = register { object : C2SConnection<WinchMode>("winch_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<WinchMode>(context.player, buf, ::WinchMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
+    val conn_secondary = register { object : C2SConnection<WinchMode>("winch_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<WinchMode>(context.player, buf, ::WinchMode) {
         item, serverLevel, player, raycastResult ->
         activateFunctionPA(serverLevel, player, raycastResult)
     } } }
@@ -88,12 +87,11 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIH, Hydrauli
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         val minLength = if (fixedMinLength <= 0.0) (rpoint1 - rpoint2).dist() else fixedMinLength
-        level.makeManagedConstraint(HydraulicsMConstraint(
-            spoint1, spoint2, rpoint1, rpoint2,
-            ship1, ship2, shipId1, shipId2,
+        level.makeManagedConstraint(WinchMConstraint(
+            spoint1, spoint2, shipId1, shipId2,
             compliance, maxForce,
             minLength, minLength + extensionDistance,
-            extensionSpeed, channel, messageModes, connectionMode,
+            extensionSpeed, channel, messageModes,
             listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,

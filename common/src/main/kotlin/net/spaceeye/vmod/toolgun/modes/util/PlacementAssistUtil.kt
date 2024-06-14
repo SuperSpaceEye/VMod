@@ -9,7 +9,6 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.MConstraint
@@ -96,16 +95,17 @@ interface PlacementAssistCRIHandler {
 
     private fun clientPlacementAssistSecond() {
         paStage = ThreeClicksActivationSteps.FINALIZATION
-        if (paCaughtShip == null) { paClientResetState(); return }
+        val paCaughtShip = paCaughtShip ?: run { paClientResetState(); return }
+        val paCaughtShips = paCaughtShips ?: run { paClientResetState(); return }
 
-        val placementTransform = paCaughtShip!!.transformProvider
+        val placementTransform = paCaughtShip.transformProvider
         if (placementTransform !is PlacementAssistTransformProvider) {paClientResetState(); return}
 
         paAngle.it = 0.0
-        paCaughtShip!!.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle)
+        paCaughtShip.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle)
 
         val shipObjectWorld = Minecraft.getInstance().shipObjectWorld
-        paCaughtShips!!.forEach {
+        paCaughtShips.forEach {
             val ship = shipObjectWorld.allShips.getById(it)
             ship?.transformProvider = CenteredAroundRotationAssistTransformProvider(ship!!.transformProvider as CenteredAroundPlacementAssistTransformProvider)
         }
@@ -128,9 +128,9 @@ interface PlacementAssistCRIHandler {
     }
 }
 
-interface PANetworkingUnit: BaseMode, PlacementAssistServer, PlacementAssistCRIHandler
+interface PlacementAssistNetworkingUnit: BaseMode, PlacementAssistServerPart, PlacementAssistCRIHandler
 
-open class PlacementAssistNetworking(networkName: String): BaseNetworking<PANetworkingUnit>() {
+open class PlacementAssistNetworking(networkName: String): BaseNetworking<PlacementAssistNetworkingUnit>() {
     val s2cHandleFailure = "handle_failure" idWithConns {
         object : S2CConnection<S2CHandleFailurePacket>(it, networkName) {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
@@ -202,7 +202,7 @@ interface PlacementAssistSerialize {
     }
 }
 
-interface PlacementAssistServer {
+interface PlacementAssistServerPart {
     var paStage: ThreeClicksActivationSteps
     var posMode: PositionModes
 

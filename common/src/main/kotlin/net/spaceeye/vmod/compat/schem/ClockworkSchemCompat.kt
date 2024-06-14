@@ -29,7 +29,7 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 
 class ClockworkSchemCompat(): SchemCompatItem {
     init {
-        ShipSchematic.registerCopyPasteEvents("vs_clockwork_compat", ::onCopyEvent, { _, _, _, _, -> }, ::onPasteEvent)
+        ShipSchematic.registerCopyPasteEvents("vs_clockwork_compat", ::onCopyEvent, { _, _, _, _, -> }, ::onPasteBeforeEvent)
     }
 
     fun getMapper(): ObjectMapper {
@@ -87,7 +87,7 @@ class ClockworkSchemCompat(): SchemCompatItem {
         return CompoundTagSerializable(tag)
     }
 
-    private fun onPasteEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable, unregister: () -> Unit) {
+    private fun onPasteBeforeEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable, unregister: () -> Unit) {
         val data = CompoundTagSerializable()
         data.deserialize(file.serialize())
         val tag = data.tag ?: return
@@ -144,10 +144,11 @@ class ClockworkSchemCompat(): SchemCompatItem {
 
     override fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit) {}
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: () -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (state.block != ClockworkBlocks.PHYS_BEARING.get()) {return}
         val id = tag.getLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID)
         val mapped = oldToNewId[id] ?: -1
         tag.putLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID, mapped)
+        delayLoading()
     }
 }

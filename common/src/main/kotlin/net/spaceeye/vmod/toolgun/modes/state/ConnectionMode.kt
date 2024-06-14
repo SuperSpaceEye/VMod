@@ -11,8 +11,9 @@ import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
-import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUIBuilder
-import net.spaceeye.vmod.toolgun.modes.inputHandling.ConnectionCRIHandler
+import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUI
+import net.spaceeye.vmod.toolgun.modes.hud.ConnectionHUD
+import net.spaceeye.vmod.toolgun.modes.inputHandling.ConnectionCRIH
 import net.spaceeye.vmod.toolgun.modes.serializing.ConnectionSerializable
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.utils.*
@@ -23,7 +24,7 @@ import java.awt.Color
 
 object ConnectionNetworking: PlacementAssistNetworking("connection_networking")
 
-class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCRIHandler, ConnectionGUIBuilder, PlacementAssistServer, PANetworkingUnit {
+class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCRIH, ConnectionGUI, ConnectionHUD, PlacementAssistServerPart, PlacementAssistNetworkingUnit {
     var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2

@@ -4,13 +4,14 @@ import net.spaceeye.vmod.toolgun.modes.state.*
 
 // SHOULD BE INITIALIZED BEFORE OTHER OBJECTS
 object ToolgunModes {
-    val modes = listOf(
+    val modes = listOf<BaseMode>(
         ConnectionMode(),
         RopeMode(),
         HydraulicsMode(),
         PhysRopeMode(),
-        DisableCollisionsMode(),
+//        WinchMode(),
 
+        DisableCollisionsMode(),
         SchemMode(),
         ScaleMode(),
         StripMode(),

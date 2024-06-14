@@ -57,7 +57,7 @@ class DataStream<
     streamName: String,
     transmitterSide: Side,
     currentSide: Side,
-    partByteAmount: Int = 2000000,
+    partByteAmount: Int = 1000000,
     requestPacketConstructor: () -> TRequest,
     dataPacketConstructor: () -> TData,
     transmitterRequestProcessor: (req: TRequest) -> Either<TData, RequestFailurePkt>? = { throw AssertionError("Invoked Transmitter code on Receiver side") },

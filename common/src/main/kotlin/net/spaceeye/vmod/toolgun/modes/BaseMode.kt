@@ -7,15 +7,20 @@ import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.NetworkingRegisteringFunctions
 import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.toolgun.ClientToolGunState
 
 interface GUIBuilder {
     val itemName: Component
     fun makeGUISettings(parentWindow : UIContainer)
 }
 
+interface HUDBuilder {
+    fun makeHUD(screen: UIContainer) {}
+}
+
 interface ClientRawInputsHandler {
-    fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int) : EventResult { return EventResult.pass() }
-    fun handleMouseButtonEvent(button: Int, action: Int, mods: Int) : EventResult { return EventResult.pass() }
+    fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
+    fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
     fun handleMouseScrollEvent(amount: Double): EventResult { return EventResult.pass() }
 }
 
@@ -23,10 +28,12 @@ interface MSerializable: Serializable {
     fun serverSideVerifyLimits()
 }
 
-interface BaseMode : MSerializable, GUIBuilder, ClientRawInputsHandler {
+interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientRawInputsHandler {
     fun resetState() {}
 
     fun init(type: BaseNetworking.EnvType) {}
+
+    fun refreshHUD() { ClientToolGunState.refreshHUD() }
 
     fun <T: Serializable> register(constructor: () -> C2SConnection<T>): C2SConnection<T> {
         val instance = constructor()

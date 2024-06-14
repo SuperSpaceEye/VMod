@@ -8,11 +8,12 @@ import net.spaceeye.vmod.toolgun.modes.state.SchemMode
 import org.lwjgl.glfw.GLFW
 import kotlin.math.sign
 
-interface SchemCRIHandler: ClientRawInputsHandler {
+interface SchemCRIH: ClientRawInputsHandler {
     override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         this as SchemMode
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
             shipInfo = null
+            refreshHUD()
             conn_primary.sendToServer(this)
         }
 

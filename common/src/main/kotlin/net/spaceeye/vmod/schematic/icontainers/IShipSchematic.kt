@@ -16,6 +16,6 @@ interface IShipSchematic {
     fun placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc): Boolean
     fun makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit = {}): Boolean
 
-    fun saveToFile(): Serializable
-    fun loadFromByteBuffer(buf: ByteBuf): Boolean
+    fun serialize(): Serializable
+    fun deserialize(buf: ByteBuf): Boolean
 }

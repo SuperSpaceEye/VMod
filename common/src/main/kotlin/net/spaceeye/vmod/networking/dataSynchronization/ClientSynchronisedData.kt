@@ -5,10 +5,12 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.utils.ClientClosable
+import net.spaceeye.vmod.utils.getNow_ms
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentSkipListSet
 
+//TODO whole system is stupid and needs to be reworked
 abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance: () -> ServerSynchronisedData<T>) : ClientClosable() {
     val serverRequestChecksumResponseConnection = id idWithConn ::ServerDataResponseConnection
     val serverDataUpdateRequestResponseConnection = id idWithConn ::ServerDataUpdateRequestResponseConnection
@@ -24,6 +26,10 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
     val pagesToRemove: MutableList<Long> = Collections.synchronizedList(mutableListOf<Long>())
     val pageIndicesToRemove = ConcurrentHashMap<Long, ConcurrentSkipListSet<Int>>()
     val cachedData = mutableMapOf<Long, MutableMap<Int, T>>()
+
+    var requestTimeLimit = 100L
+    var lastChecksumsUpdate = mutableMapOf<Long, Long>()
+    var lastDataUpdate = mutableMapOf<Long, Long>()
 
     override fun close() {
         serverChecksums.clear()
@@ -92,10 +98,16 @@ abstract class ClientSynchronisedData<T: DataUnit>(id: String, getServerInstance
     }
 
     fun requestChecksumsUpdate(page: Long) {
+        if (getNow_ms() - lastChecksumsUpdate.getOrPut(page) {0L} < requestTimeLimit) {return}
+        lastChecksumsUpdate[page] = getNow_ms()
+
         dataRequestChecksumConnection().sendToServer(ClientDataRequestPacket(page))
     }
 
     fun requestUpdateData(page: Long) {
+        if (getNow_ms() - lastDataUpdate.getOrPut(page) {0L} < requestTimeLimit) {return}
+        lastDataUpdate[page] = getNow_ms()
+
         val serverPage = serverChecksums[page]!!
         val clientPage = clientChecksums.getOrPut(page) { ConcurrentHashMap() }
 

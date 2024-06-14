@@ -11,12 +11,15 @@ import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.schematic.containers.*
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
+import org.joml.primitives.AABBi
 import org.valkyrienskies.core.api.ships.ServerShip
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 object SchematicActionsQueue: ServerClosable() {
     private val placeData = mutableMapOf<UUID, SchemPlacementItem>()
     private val saveData = mutableMapOf<UUID, SchemSaveItem>()
+    private val unfreezeData = ConcurrentHashMap<UUID, SchemUnfreezeShips>()
 
     //why? If there are multiple schematics queued and there is a huge schematic it will not prevent other schematics
     // from being placed.
@@ -42,6 +45,7 @@ object SchematicActionsQueue: ServerClosable() {
         var currentChunk = 0
 
         var afterPasteCallbacks = mutableListOf<() -> Unit>()
+        var delayedBlockEntityLoading = mutableListOf<() -> Unit>()
 
         private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: SchemBlockData<BlockItem>, blockPalette: BlockPaletteHashMapV1, flatExtraData: List<CompoundTag>, offset: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
@@ -56,12 +60,19 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.putInt("x", pos.x)
                     tag.putInt("y", pos.y)
                     tag.putInt("z", pos.z)
-                    val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state)
-                    val be = level.getChunkAt(pos).getBlockEntity(pos)
-                    be?.load(tag) ?: run {
-                        ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
+
+                    var delayLoading = false
+                    val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state) { delayLoading = true }
+                    val fn = {
+                        val be = level.getChunkAt(pos).getBlockEntity(pos)
+                        be?.load(tag) ?: run {
+                            ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
+                        }
+                        cb?.let { afterPasteCallbacks.add { cb(be) } }
+                        Unit
                     }
-                    cb?.let { afterPasteCallbacks.add { cb(be) } }
+                    if (!delayLoading) {fn(); return@chunkForEach}
+                    delayedBlockEntityLoading.add(fn)
                 }
             }
         }
@@ -93,6 +104,7 @@ object SchematicActionsQueue: ServerClosable() {
                 currentShip++
                 if (getNow_ms() - start > timeout) { return false }
             }
+            delayedBlockEntityLoading.forEach { it() }
             afterPasteCallbacks.forEach { it() }
 
             return true
@@ -104,15 +116,17 @@ object SchematicActionsQueue: ServerClosable() {
         uuid: UUID,
         ships: List<ServerShip>,
         schematicV1: ShipSchematicV1,
+        padBoundary: Boolean,
         postPlacementFn: () -> Unit) {
-        saveData[uuid] = SchemSaveItem(level, schematicV1, ships, postPlacementFn)
+        saveData[uuid] = SchemSaveItem(level, schematicV1, ships, postPlacementFn, padBoundary)
     }
 
     class SchemSaveItem(
         val level: ServerLevel,
         val schematicV1: ShipSchematicV1,
         val ships: List<ServerShip>,
-        val postCopyFn: () -> Unit
+        val postCopyFn: () -> Unit,
+        val padBoundary: Boolean
     ) {
         var currentShip = 0
         var currentChunk = 0
@@ -173,7 +187,16 @@ object SchematicActionsQueue: ServerClosable() {
                 val ship = ships[currentShip]
                 val data = blockData.getOrPut(ship.id) { SchemBlockData() }
 
-                val boundsAABB = ship.shipAABB!!
+                val boundsAABB = AABBi(ship.shipAABB!!)
+
+                if (padBoundary) {
+                    boundsAABB.minX -= 1
+                    boundsAABB.minY -= 1
+                    boundsAABB.minZ -= 1
+                    boundsAABB.maxX += 1
+                    boundsAABB.maxY += 1
+                    boundsAABB.maxZ += 1
+                }
 
                 val chunkMin = BlockPos(
                     ship.chunkClaim.xStart * 16,
@@ -226,6 +249,17 @@ object SchematicActionsQueue: ServerClosable() {
         }
     }
 
+    fun queueShipsUnfreezeEvent(uuid: UUID, ships: List<ServerShip>, time: Int) {
+        unfreezeData[uuid] = SchemUnfreezeShips(ships, time)
+    }
+
+    data class SchemUnfreezeShips(
+        val ships: List<ServerShip>,
+        val waitFor: Int,
+    ) {
+        var time = 0
+    }
+
     init {
         TickEvent.SERVER_POST.register {
             if (placeData.isEmpty()) {return@register}
@@ -269,6 +303,16 @@ object SchematicActionsQueue: ServerClosable() {
 
                 saveLastPosition++
             }
+        }
+
+        TickEvent.SERVER_POST.register {
+            unfreezeData.mapNotNull {(uuid, item) ->
+                item.time++
+                if (item.time < item.waitFor) {return@mapNotNull null}
+
+                item.ships.forEach { it.isStatic = false }
+                uuid
+            }.forEach { unfreezeData.remove(it) }
         }
     }
 

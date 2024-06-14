@@ -9,7 +9,7 @@ object ToolgunModes {
         RopeMode(),
         HydraulicsMode(),
         PhysRopeMode(),
-        WinchMode(),
+//        WinchMode(),
 
         DisableCollisionsMode(),
         SchemMode(),

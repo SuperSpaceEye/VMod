@@ -21,7 +21,7 @@ object VMConfig {
         class ClientToolgunSettings: ConfigSubDirectory() {
             var MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
 
-            val SCHEMATIC_PACKET_PART_SIZE: Int by CInt(2000000, "Reload the game for change to take the effect.", Pair(512, 2000000))
+            val SCHEMATIC_PACKET_PART_SIZE: Int by CInt(1000000, "Reload the game for change to take the effect.", Pair(512, 1000000))
         }
 
         class ClientRenderingSettings: ConfigSubDirectory() {

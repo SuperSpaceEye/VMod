@@ -66,7 +66,8 @@ class ShipSchematicV1(): IShipSchematic {
     // it will save ship data with origin ship unrotated
     private fun saveShipData(ships: List<ServerShip>, originShip: ServerShip): AABBd {
         // idk why i've made it as lambda
-        val getWorldAABB = {it: ServerShip, newTransform: ShipTransform -> it.shipAABB!!.toAABBd(AABBd()).transform(newTransform.shipToWorld) }
+        val getWorldAABB = {it: ServerShip, newTransform: ShipTransform -> it.worldAABB.transform(it.worldToShip, AABBd()).transform(newTransform.shipToWorld) }
+//        val getWorldAABB = {it: ServerShip, newTransform: ShipTransform -> it.shipAABB!!.toAABBd(AABBd()).transform(newTransform.shipToWorld) }
 
         val invRotation = originShip.transform.shipToWorldRotation.invert(Quaterniond())
         val newTransforms = ships.map { rotateAroundCenter(originShip.transform, it.transform, invRotation) }

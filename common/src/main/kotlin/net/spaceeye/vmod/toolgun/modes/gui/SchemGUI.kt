@@ -35,7 +35,7 @@ class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
         Button(Color.GRAY.brighter().brighter(), SAVE.get()) {
             parent.removeChild(this)
             mode.filename = filename
-            ClientPlayerSchematics.saveSchemStream.r2tRequestData.transmitData(FakePacketContext(), ClientPlayerSchematics.SendSchemRequest(Minecraft.getInstance().player!!))
+            ClientPlayerSchematics.saveSchemStream.r2tRequestData.transmitData(ClientPlayerSchematics.SendSchemRequest(Minecraft.getInstance().player!!))
         }.constrain {
             x = 2.pixels()
             y = SiblingConstraint() + 2.pixels()

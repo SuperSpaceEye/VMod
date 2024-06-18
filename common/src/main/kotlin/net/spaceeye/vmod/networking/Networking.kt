@@ -87,8 +87,8 @@ abstract class TRConnection<T : Serializable>(id: String, connectionName: String
     override fun getHandler(): NetworkReceiver = NetworkReceiver(::handlerFn)
     abstract fun handlerFn(buf: FriendlyByteBuf, context: PacketContext)
 
-    fun transmitData(context: PacketContext, packet: T) = when (invocationSide) {
-        Side.S2C -> NetworkManager.sendToPlayer(context.player as ServerPlayer, id, packet.serialize())
+    fun transmitData(packet: T, context: PacketContext? = null) = when (invocationSide) {
+        Side.S2C -> NetworkManager.sendToPlayer(context!!.player as ServerPlayer, id, packet.serialize())
         Side.C2S -> NetworkManager.sendToServer(id, packet.serialize())
     }
 }

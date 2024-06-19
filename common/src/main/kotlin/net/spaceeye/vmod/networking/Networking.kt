@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VM
+import java.security.MessageDigest
 
 interface Connection {
     val side: Side
@@ -24,6 +25,9 @@ interface Serializable {
 
     fun getBuffer() = FriendlyByteBuf(Unpooled.buffer(512))
 }
+
+private val hasher = MessageDigest.getInstance("MD5")
+fun Serializable.hash() = hasher.digest(serialize().accessByteBufWithCorrectSize())
 
 interface NetworkingRegisteringFunctions {
     infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {

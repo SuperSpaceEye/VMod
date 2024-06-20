@@ -38,6 +38,8 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
     lateinit var aconstraint2: VSAttachmentConstraint
     lateinit var rconstraint: VSTorqueConstraint
 
+    var rID: Int = -1
+
     var attachmentPoints_ = mutableListOf<BlockPos>()
 
     val cIDs = mutableListOf<ConstraintId>()
@@ -180,8 +182,8 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         aconstraint1 = aconstraint1.copy(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0])
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
 
-        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
-        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID)
+        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
+        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID)
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
         aconstraint2 = aconstraint2.copy(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1])
@@ -415,8 +417,8 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
             }
         }
 
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
+        if (renderer != null) { rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID) }
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return true}
@@ -429,6 +431,6 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
     override fun onDeleteMConstraint(level: ServerLevel) {
         wasDeleted = true
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
     }
 }

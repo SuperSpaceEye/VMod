@@ -1,78 +1,125 @@
 package net.spaceeye.vmod.rendering
 
+import dev.architectury.event.events.client.ClientTickEvent
 import dev.architectury.event.events.common.PlayerEvent
+import dev.architectury.event.events.common.TickEvent
 import dev.architectury.networking.NetworkManager
+import dev.architectury.utils.EnvExecutor
+import io.netty.buffer.Unpooled
+import net.fabricmc.api.EnvType
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.constraintsManaging.ConstraintManager
+import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.events.AVSEvents
-import net.spaceeye.vmod.networking.S2CConnection
-import net.spaceeye.vmod.networking.dataSynchronization.*
+import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.rendering.types.*
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
-import java.security.MessageDigest
-import java.util.ConcurrentModificationException
+import java.util.*
 
-class ClientSynchronisedRenderingData(getServerInstance: () -> ServerSynchronisedData<BaseRenderer>): ClientSynchronisedData<BaseRenderer>("rendering_data", getServerInstance) {
-    val setSchema = "rendering_data" idWithConn ::ServerSetRenderingSchemaConnection
+private fun serializeItem(buf: FriendlyByteBuf, item: Serializable) {
+    item as BaseRenderer
+    buf.writeInt(RenderingTypes.typeToIdx(item.typeName)!!)
+    buf.writeByteArray(item.serialize().array())
+}
 
-    class ServerSetRenderingSchemaConnection<T: DataUnit>(id: String, val clientInstance: ClientSynchronisedData<T>): S2CConnection<ServerSetRenderingSchemaPacket>("server_set_rendering_schema", id) {
-        override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-            val packet = ServerSetRenderingSchemaPacket(buf)
-            RenderingTypes.setSchema(packet.schema.map { Pair(it.value, it.key) }.toMap())
+private fun deserializeItem(buf: FriendlyByteBuf): Serializable {
+    val item = RenderingTypes.idxToSupplier(buf.readInt()).get()
+    item.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(buf.readByteArray())))
+    return item
+}
+
+class ClientSynchronisedRenderingData(val getServerInstance: () -> ServerSynchronisedRenderingData):
+    SynchronisedDataReceiver<BaseRenderer>(
+        "rendering_data",
+        NetworkManager.Side.S2C,
+        NetworkManager.Side.C2S,
+        1000000,
+        ::serializeItem,
+        ::deserializeItem,
+        ), NetworkingRegisteringFunctions {
+
+    init {
+        addCustomClient { clear() }
+        EnvExecutor.runInEnv(EnvType.CLIENT) {
+            Runnable {
+                ClientTickEvent.CLIENT_PRE.register {
+                    synchronizationTick()
+                }
+            }
         }
+    }
+
+    fun removeTimedRenderers(toRemove: List<Int>) {
+        toRemove.forEach { remove(ReservedRenderingPages.TimedRenderingObjects, it) }
+    }
+
+    fun addClientsideRenderer(renderer: BaseRenderer): Int {
+        return add(ReservedRenderingPages.ClientsideRenderingObjects, renderer)
+    }
+
+    fun removeClientsideRenderer(id: Int) {
+        remove(ReservedRenderingPages.ClientsideRenderingObjects, id)
+    }
+
+    val s2cSetSchema = "rendering_data" idWithConns {
+        object : S2CConnection<ServerSetRenderingSchemaPacket>(it, "client_synchronised") {
+            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val packet = ServerSetRenderingSchemaPacket(buf)
+                RenderingTypes.setSchema(packet.schema.map { Pair(it.value, it.key) }.toMap())
+            }
+        }
+    }
+
+    override fun sendRequestToServer(req: R2TSynchronizationTickData) {
+        getServerInstance().r2tSynchronizeData.transmitData(req)
     }
 }
-class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronisedData<BaseRenderer>): ServerSynchronisedData<BaseRenderer>("rendering_data", getClientInstance) {
-    var idToPage = mutableMapOf<Int, Long>()
+class ServerSynchronisedRenderingData(val getClientInstance: () -> ClientSynchronisedRenderingData):
+    SynchronisedDataTransmitter<BaseRenderer>(
+        "rendering_data",
+        NetworkManager.Side.C2S,
+        NetworkManager.Side.S2C,
+        1000000,
+        ::serializeItem,
+        ::deserializeItem
+        ) {
 
-    //TODO think of a better way to expose this
-    fun addRenderer(shipId1: Long, shipId2: Long, id: Int, renderer: BaseRenderer) {
-        synchronized(data) {
-        data.getOrPut(shipId2) { mutableMapOf() }
-        data.getOrPut(shipId1) { mutableMapOf() }
+    init {
+        addCustomServer { close(); idToPage.clear() }
+        TickEvent.SERVER_PRE.register {
+            synchronizationTick()
+        }
+    }
+
+    private var idToPage = mutableMapOf<Int, Long>()
+
+    fun setRenderer(shipId1: Long, shipId2: Long, id: Int, renderer: BaseRenderer): Int = lock {
         val idToUse = if (ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.containsValue(shipId1)) {shipId2} else {shipId1}
-        val page = data[idToUse]!!
-        page[id] = renderer
-
+        set(idToUse, id, renderer)
         idToPage[id] = idToUse
-
-        ConstraintManager.getInstance().setDirty()
-
-        serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
-            idToUse, mutableListOf(Pair(id, renderer.hash()))
-        ))
-        }
+        return id
     }
 
-    fun removeRenderer(id: Int): Boolean {
-        synchronized(data) {
+    fun addRenderer(shipId1: Long, shipId2: Long, renderer: BaseRenderer): Int = lock {
+        val idToUse = if (ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.containsValue(shipId1)) {shipId2} else {shipId1}
+        val id = add(idToUse, renderer)
+        idToPage[id] = idToUse
+        return id
+    }
+
+    fun removeRenderer(id: Int): Boolean = lock {
         val pageId = idToPage[id] ?: return false
-        val page = data[pageId] ?: return false
-        page.remove(id)
-
-        serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
-            pageId, mutableListOf(Pair(id, byteArrayOf()))
-        ))
-
-        return true
-        }
+        return remove(pageId, id)
     }
 
-    fun getRenderer(id: Int): BaseRenderer? {
-        synchronized(data) {
+    fun getRenderer(id: Int): BaseRenderer? = lock {
         val pageId = idToPage[id] ?: return null
-        val page = data[pageId] ?: return null
-        return page[id]
-        }
+        return get(pageId)?.get(id)
     }
 
-    var idCounter = 0
-
-    private fun trimTimedRenderers() {
-        synchronized(data) {
-        val page = data[ReservedRenderingPages.TimedRenderingObjects] ?: return
+    private fun trimTimedRenderers() = lock {
+        val page = get(ReservedRenderingPages.TimedRenderingObjects) ?: return
         if (page.isEmpty()) { return }
         val toRemove = mutableListOf<Int>()
         val current = getNow_ms()
@@ -83,29 +130,22 @@ class ServerSynchronisedRenderingData(getClientInstance: () -> ClientSynchronise
                     toRemove.add(k)
                 }
             }
-            toRemove.forEach { page.remove(it) }
+            toRemove.forEach { remove(ReservedRenderingPages.TimedRenderingObjects, it) }
         } catch (e: ConcurrentModificationException) {return}
-        }
+
     }
 
-    //TODO trim timed objects
-    fun addTimedRenderer(renderer: BaseRenderer) {
-        synchronized(data) {
+    fun addTimedRenderer(renderer: BaseRenderer) = lock {
         trimTimedRenderers()
-        val page = data.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { mutableMapOf() }
-        page[idCounter] = renderer
-
-        serverChecksumsUpdatedConnection().sendToClients(ServerLevelHolder.server!!.playerList.players, ServerChecksumsUpdatedPacket(
-            ReservedRenderingPages.TimedRenderingObjects, mutableListOf(Pair(idCounter, renderer.hash()))
-        ))
-        idCounter++
-        }
+        add(ReservedRenderingPages.TimedRenderingObjects, renderer)
     }
 
-    override fun close() {
-        super.close()
-        idCounter = 0
-        idToPage.clear()
+    fun subscribePlayerToReservedPages(player: ServerPlayer) {
+        ReservedRenderingPages.reservedPages.forEach {subscribeTo(player.uuid, player, it)}
+    }
+
+    override fun sendUpdateToSubscriber(ctx: NetworkManager.PacketContext, data: T2RSynchronizationTickData) {
+        getClientInstance().t2rSynchronizeData.transmitData(data, ctx)
     }
 }
 
@@ -113,32 +153,56 @@ object SynchronisedRenderingData {
     lateinit var clientSynchronisedData: ClientSynchronisedRenderingData
     lateinit var serverSynchronisedData: ServerSynchronisedRenderingData
 
-    //MD2, MD5, SHA-1, SHA-256, SHA-384, SHA-512
-    val hasher: MessageDigest = MessageDigest.getInstance("MD5")
-
     init {
         clientSynchronisedData = ClientSynchronisedRenderingData { serverSynchronisedData }
         serverSynchronisedData = ServerSynchronisedRenderingData { clientSynchronisedData }
         makeServerEvents()
+        makeClientEvents()
+    }
+
+    private fun makeClientEvents() {
+        EnvExecutor.runInEnv(EnvType.CLIENT) { Runnable {
+            VSEvents.shipLoadEventClient.on { (ship) ->
+                clientSynchronisedData.subscribeToPageUpdates(ship.id)
+            }
+            AVSEvents.clientShipUnloadEvent.on { (ship) ->
+                clientSynchronisedData.unsubscribeFromPageUpdates(ship?.id ?: return@on)
+            }
+        }}
     }
 
     private fun makeServerEvents() {
         AVSEvents.serverShipRemoveEvent.on {
             (shipData), handler ->
-            serverSynchronisedData.data.remove(shipData.id)
-            serverSynchronisedData.serverChecksumsUpdatedConnection()
-                .sendToClients(
-                    ServerLevelHolder.overworldServerLevel!!.server.playerList.players,
-                    ServerChecksumsUpdatedPacket(shipData.id, true)
-                )
-        }
-        VSEvents.shipLoadEvent.on {
-            (shipData), handler ->
-            serverSynchronisedData.data.getOrPut(shipData.id) { mutableMapOf() }
+            serverSynchronisedData.remove(shipData.id)
         }
 
         PlayerEvent.PLAYER_JOIN.register {
-            clientSynchronisedData.setSchema.sendToClient(it, ServerSetRenderingSchemaPacket(RenderingTypes.getSchema()))
+            clientSynchronisedData.s2cSetSchema.sendToClient(it, ServerSetRenderingSchemaPacket(RenderingTypes.getSchema()))
+            serverSynchronisedData.subscribePlayerToReservedPages(it)
         }
+        PlayerEvent.PLAYER_QUIT.register {
+            serverSynchronisedData.removeSubscriber(it.uuid)
+        }
+    }
+}
+
+class ServerSetRenderingSchemaPacket(): Serializable {
+    constructor(buf: FriendlyByteBuf) : this() { deserialize(buf) }
+    constructor(schema: Map<String, Int>) : this() {
+        this.schema = schema
+    }
+    var schema = mapOf<String, Int>()
+
+    override fun serialize(): FriendlyByteBuf {
+        val buf = getBuffer()
+
+        buf.writeCollection(schema.toList()) {buf, (key, idx) -> buf.writeUtf(key); buf.writeInt(idx) }
+
+        return buf
+    }
+
+    override fun deserialize(buf: FriendlyByteBuf) {
+        schema = buf.readCollection({mutableListOf<Pair<String, Int>>()}) {Pair(buf.readUtf(), buf.readInt())}.toMap()
     }
 }

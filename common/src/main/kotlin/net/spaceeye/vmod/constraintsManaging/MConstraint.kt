@@ -107,28 +107,21 @@ fun updateRenderer(
     localPos1: Vector3dc,
     shipId0: ShipId,
     shipId1: ShipId,
-    mID: ManagedConstraintId
+    id: Int
 ): BaseRenderer? {
-    val renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) ?: return null
-
-    val serverData = SynchronisedRenderingData.serverSynchronisedData
-    synchronized(serverData.data) {
-        val pageId = serverData.idToPage[mID] ?: return null
-        val page = serverData.data[pageId] ?: return null
-        page.remove(mID)
-    }
+    val renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(id) ?: return null
 
     when (renderer) {
         is RopeRenderer -> {
             renderer.point1 = Vector3d(localPos0)
             renderer.point2 = Vector3d(localPos1)
-            SynchronisedRenderingData.serverSynchronisedData.addRenderer(shipId0, shipId1, mID, renderer)
+            SynchronisedRenderingData.serverSynchronisedData.setRenderer(shipId0, shipId1, id, renderer)
         }
 
         is A2BRenderer -> {
             renderer.point1 = Vector3d(localPos0)
             renderer.point2 = Vector3d(localPos1)
-            SynchronisedRenderingData.serverSynchronisedData.addRenderer(shipId0, shipId1, mID, renderer)
+            SynchronisedRenderingData.serverSynchronisedData.setRenderer(shipId0, shipId1, id, renderer)
         }
     }
     return renderer

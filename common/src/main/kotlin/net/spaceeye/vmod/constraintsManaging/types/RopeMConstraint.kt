@@ -27,6 +27,7 @@ class RopeMConstraint(): MConstraint, MRenderable {
     var attachmentPoints_ = mutableListOf<BlockPos>()
 
     var vsId: ConstraintId = -1
+    var rID: Int = -1
 
     constructor(
         shipId0: ShipId,
@@ -82,7 +83,7 @@ class RopeMConstraint(): MConstraint, MRenderable {
 
         vsId = level.shipObjectWorld.createNewConstraint(constraint)!!
 
-        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
+        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
     }
 
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
@@ -127,13 +128,13 @@ class RopeMConstraint(): MConstraint, MRenderable {
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         vsId = level.shipObjectWorld.createNewConstraint(constraint) ?: return false
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, mID, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
+        if (renderer != null) { rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID) }
         return true
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
         level.shipObjectWorld.removeConstraint(vsId)
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
     }
 }

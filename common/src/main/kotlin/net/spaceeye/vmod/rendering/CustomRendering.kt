@@ -10,12 +10,12 @@ import net.spaceeye.vmod.rendering.types.TimedRenderer
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
 import org.valkyrienskies.mod.common.shipObjectWorld
-import java.util.concurrent.ConcurrentSkipListSet
 
 object ReservedRenderingPages {
     const val TimedRenderingObjects = -1L
+    const val ClientsideRenderingObjects = -2L
 
-    val reservedPagesList = mutableListOf(TimedRenderingObjects)
+    val reservedPages = listOf(TimedRenderingObjects, ClientsideRenderingObjects)
 }
 
 private object RenderingSettings {
@@ -30,16 +30,19 @@ fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft) {
     minecraft.profiler.push("vmod_rendering_timed_objects")
     renderTimedObjects(poseStack, camera)
     minecraft.profiler.pop()
+
+    minecraft.profiler.push("vmod_rendering_clientside_objects")
+    renderClientsideObjects(poseStack, camera)
+    minecraft.profiler.pop()
 }
 
 private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera) {
     val level = Minecraft.getInstance().level!!
-    SynchronisedRenderingData.clientSynchronisedData.mergeData()
 
     try {
     for (ship in level.shipObjectWorld.loadedShips) {
-        SynchronisedRenderingData.clientSynchronisedData.tryPoolDataUpdate(ship.id)
-        for ((_, render) in SynchronisedRenderingData.clientSynchronisedData.cachedData[ship.id] ?: continue) {
+        val data = SynchronisedRenderingData.clientSynchronisedData.getData()
+        for ((_, render) in data[ship.id] ?: continue) {
             render.renderData(poseStack, camera)
         }
     }
@@ -48,11 +51,10 @@ private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera) {
 }
 
 private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera) {
-    SynchronisedRenderingData.clientSynchronisedData.tryPoolDataUpdate(ReservedRenderingPages.TimedRenderingObjects)
     val cpos = Vector3d(Minecraft.getInstance().player!!.position())
     val now = getNow_ms()
     val toDelete = mutableListOf<Int>()
-    val page = SynchronisedRenderingData.clientSynchronisedData.cachedData[ReservedRenderingPages.TimedRenderingObjects] ?: return
+    val page = SynchronisedRenderingData.clientSynchronisedData.getData()[ReservedRenderingPages.TimedRenderingObjects] ?: return
     for ((idx, render) in page) {
         if (render !is TimedRenderer || render !is PositionDependentRenderer) { toDelete.add(idx); ELOG("FOUND RENDERING DATA ${render.javaClass.simpleName} IN renderTimedObjects THAT DIDN'T IMPLEMENT INTERFACE TimedRenderingData OR PositionDependentRenderingData."); continue }
         if (!render.wasActivated && render.activeFor_ms == -1L) { render.timestampOfBeginning = now }
@@ -64,5 +66,12 @@ private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera) {
     }
 
     if (toDelete.isEmpty()) {return}
-    SynchronisedRenderingData.clientSynchronisedData.pageIndicesToRemove.getOrPut(ReservedRenderingPages.TimedRenderingObjects) { ConcurrentSkipListSet(toDelete) }
+    SynchronisedRenderingData.clientSynchronisedData.removeTimedRenderers(toDelete)
+}
+
+private inline fun renderClientsideObjects(poseStack: PoseStack, camera: Camera) {
+    val page = SynchronisedRenderingData.clientSynchronisedData.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
+    for ((_, render) in page) {
+        render.renderData(poseStack, camera)
+    }
 }

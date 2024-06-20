@@ -325,6 +325,7 @@ class SchemMode: BaseMode, SchemGUI, SchemCRIH, SchemSerializable, SchemHUD {
 
     var renderer: SchemOutlinesRenderer? = null
 
+    private var rID = -1
     private var shipInfo_: IShipSchematicInfo? = null
     var shipInfo: IShipSchematicInfo?
         get() = shipInfo_
@@ -333,15 +334,7 @@ class SchemMode: BaseMode, SchemGUI, SchemCRIH, SchemSerializable, SchemHUD {
             val rd = SynchronisedRenderingData.clientSynchronisedData
             if (info == null) {
                 renderer = null
-                synchronized(rd.serverChecksums) {
-                synchronized(rd.clientChecksums) {
-                synchronized(rd.cachedDataToMerge) {
-                    rd.clientChecksums.getOrPut(-1) { ConcurrentHashMap() }.remove(-1)
-                    rd.serverChecksums.getOrPut(-1) { ConcurrentHashMap() }.remove(-1)
-
-                    rd.cachedData.getOrPut(-1) { mutableMapOf() }.remove(-1)
-                } } }
-
+                rd.removeClientsideRenderer(rID)
                 return
             }
 
@@ -359,14 +352,7 @@ class SchemMode: BaseMode, SchemGUI, SchemCRIH, SchemSerializable, SchemHUD {
 
             renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectEdge), rotationAngle, center, data)
 
-            synchronized(rd.serverChecksums) {
-            synchronized(rd.clientChecksums) {
-            synchronized(rd.cachedDataToMerge) {
-                rd.clientChecksums.getOrPut(-1) { ConcurrentHashMap() }.getOrPut(-1) { byteArrayOf() }
-                rd.serverChecksums.getOrPut(-1) { ConcurrentHashMap() }.getOrPut(-1) { byteArrayOf() }
-
-                rd.cachedData.getOrPut(-1) { mutableMapOf() }[-1] = renderer!!
-            } } }
+            rID = rd.addClientsideRenderer(renderer!!)
 
             refreshHUD()
         }

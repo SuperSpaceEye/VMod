@@ -5,7 +5,6 @@ import dev.architectury.networking.NetworkManager.Side
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
-import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.toolgun.modes.state.ConnectionNetworking.registerTR
 import net.spaceeye.vmod.utils.readVarLongArray
 import net.spaceeye.vmod.utils.writeVarLongArray

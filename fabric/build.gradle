@@ -45,7 +45,7 @@ dependencies {
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
-    modApi("org.valkyrienskies:valkyrienskies-1201-fabric:${rootProject.vs2_version}") { transitive = false }
+    modApi("org.valkyrienskies:valkyrienskies-120-fabric:${rootProject.vs2_version}") { transitive = false }
     modCompileOnlyApi("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
 
     // Kotlin

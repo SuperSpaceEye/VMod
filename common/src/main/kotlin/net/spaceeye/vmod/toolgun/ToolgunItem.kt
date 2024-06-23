@@ -27,7 +27,10 @@ class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
             ClientGuiEvent.RENDER_HUD.register {
                 stack, delta ->
                 if (!playerIsUsingToolgun()) {return@register}
-                ClientToolGunState.onRenderHUD(stack.pose(), delta)
+                try {
+                    ClientToolGunState.onRenderHUD(stack.pose(), delta)
+                } catch (e: Exception) {
+                } catch (e: Error) {}
             }
 
             ClientRawInputEvent.KEY_PRESSED.register {

@@ -10,11 +10,9 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.networking.DataStream
-import net.spaceeye.vmod.networking.S2CConnection
-import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
@@ -55,38 +53,46 @@ const val SCHEM_EXTENSION = "vschem"
 //TODO Add rate limit
 object ClientPlayerSchematics {
     //TODO add handling logic for receiverDataTransmissionFailed
-    var saveSchemStream = DataStream(
+    var saveSchemStream = object : DataStream<SendSchemRequest, SchemHolder>(
         "save_schem_stream",
         NetworkManager.Side.S2C,
         NetworkManager.Side.C2S,
-        0,
-        ::SendSchemRequest,
-        ::SchemHolder,
-        receiverDataTransmitted = {uuid, data ->
+        0
+    ) {
+        override fun requestPacketConstructor() = SendSchemRequest()
+        override fun dataPacketConstructor() = SchemHolder()
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun transmitterRequestProcessor(req: SendSchemRequest): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
+
+        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
             ClientToolGunState.currentMode?.let {
                 if (it !is SchemMode) {return@let}
                 it.schem = ShipSchematic.getSchematicFromBytes(data!!.data.array())
                 it.saveSchem(listSchematics())
                 it.reloadScrollItems()
             }
-        },
-    )
+        }
+    }
 
-    var loadSchemStream = DataStream(
+    var loadSchemStream = object : DataStream<ServerPlayerSchematics.SendLoadRequest, SchemHolder>(
         "load_schem_stream",
         NetworkManager.Side.C2S,
         NetworkManager.Side.C2S,
-        VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE,
-        ServerPlayerSchematics::SendLoadRequest,
-        ::SchemHolder,
-        transmitterRequestProcessor = {loadRequest ->
+        VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
+    ) {
+        override fun requestPacketConstructor() = ServerPlayerSchematics.SendLoadRequest()
+        override fun dataPacketConstructor() = SchemHolder()
+        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+
+        override fun transmitterRequestProcessor(req: ServerPlayerSchematics.SendLoadRequest): Either<SchemHolder, RequestFailurePkt>? {
             val res = ClientToolGunState.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
-                mode.schem?.let { SchemHolder(it.serialize().serialize(), loadRequest.requestUUID) }
+                mode.schem?.let { SchemHolder(it.serialize().serialize(), req.requestUUID) }
             }
-            if (res != null) { Either.Left(res) } else { Either.Right(DataStream.RequestFailurePkt()) }
+            return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
         }
-    )
+    }
 
     class SchemHolder(): Serializable {
         lateinit var data: ByteBuf
@@ -149,32 +155,39 @@ object ClientPlayerSchematics {
 }
 
 object ServerPlayerSchematics: ServerClosable() {
-    var saveSchemStream = DataStream(
+    var saveSchemStream = object : DataStream<ClientPlayerSchematics.SendSchemRequest, SchemHolder>(
         "save_schem_stream",
         NetworkManager.Side.S2C,
         NetworkManager.Side.S2C,
-        VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE,
-        ClientPlayerSchematics::SendSchemRequest,
-        ClientPlayerSchematics::SchemHolder,
-        transmitterRequestProcessor = {
-            val res = schematics[it.uuid] ?.let { SchemHolder(it.serialize().serialize()) }
-            if (res != null) { Either.Left(res) } else { Either.Right(DataStream.RequestFailurePkt()) }
-        }
-    )
+        VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
+    ) {
+        override fun requestPacketConstructor() = ClientPlayerSchematics.SendSchemRequest()
+        override fun dataPacketConstructor() = SchemHolder()
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
 
-    //TODO add handling logic for receiverDataTransmissionFailed
-    var loadSchemStream = DataStream(
+        override fun transmitterRequestProcessor(req: ClientPlayerSchematics.SendSchemRequest): Either<SchemHolder, RequestFailurePkt>? {
+            val res = schematics[req.uuid] ?.let { SchemHolder(it.serialize().serialize()) }
+            return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
+        }
+    }
+
+    var loadSchemStream = object : DataStream<SendLoadRequest, SchemHolder>(
         "load_schem_stream",
         NetworkManager.Side.C2S,
         NetworkManager.Side.S2C,
-        0,
-        ::SendLoadRequest,
-        ::SchemHolder,
-        receiverDataTransmitted = {_, data ->
+        0
+    ) {
+        override fun requestPacketConstructor() = SendLoadRequest()
+        override fun dataPacketConstructor() = SchemHolder()
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun transmitterRequestProcessor(req: SendLoadRequest): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
+
+        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
             schematics[data!!.uuid] = ShipSchematic.getSchematicFromBytes(data.data.array())
             loadRequests.remove(data.uuid)
         }
-    )
+    }
 
     val loadRequests = mutableMapOf<UUID, Long>()
 
@@ -227,7 +240,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
                 if (lastReq != null && getNow_ms() - lastReq < 10000L) { return }
 
                 ServerPlayerSchematics.loadRequests[context.player.uuid] = getNow_ms()
-                ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(context, ServerPlayerSchematics.SendLoadRequest(context.player.uuid))
+                ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(ServerPlayerSchematics.SendLoadRequest(context.player.uuid), context)
             }
         }
     }
@@ -312,6 +325,7 @@ class SchemMode: BaseMode, SchemGUI, SchemCRIH, SchemSerializable, SchemHUD {
 
     var renderer: SchemOutlinesRenderer? = null
 
+    private var rID = -1
     private var shipInfo_: IShipSchematicInfo? = null
     var shipInfo: IShipSchematicInfo?
         get() = shipInfo_
@@ -320,15 +334,7 @@ class SchemMode: BaseMode, SchemGUI, SchemCRIH, SchemSerializable, SchemHUD {
             val rd = SynchronisedRenderingData.clientSynchronisedData
             if (info == null) {
                 renderer = null
-                synchronized(rd.serverChecksums) {
-                synchronized(rd.clientChecksums) {
-                synchronized(rd.cachedDataToMerge) {
-                    rd.clientChecksums.getOrPut(-1) { ConcurrentHashMap() }.remove(-1)
-                    rd.serverChecksums.getOrPut(-1) { ConcurrentHashMap() }.remove(-1)
-
-                    rd.cachedData.getOrPut(-1) { mutableMapOf() }.remove(-1)
-                } } }
-
+                rd.removeClientsideRenderer(rID)
                 return
             }
 
@@ -346,14 +352,7 @@ class SchemMode: BaseMode, SchemGUI, SchemCRIH, SchemSerializable, SchemHUD {
 
             renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectEdge), rotationAngle, center, data)
 
-            synchronized(rd.serverChecksums) {
-            synchronized(rd.clientChecksums) {
-            synchronized(rd.cachedDataToMerge) {
-                rd.clientChecksums.getOrPut(-1) { ConcurrentHashMap() }.getOrPut(-1) { byteArrayOf() }
-                rd.serverChecksums.getOrPut(-1) { ConcurrentHashMap() }.getOrPut(-1) { byteArrayOf() }
-
-                rd.cachedData.getOrPut(-1) { mutableMapOf() }[-1] = renderer!!
-            } } }
+            rID = rd.addClientsideRenderer(renderer!!)
 
             refreshHUD()
         }

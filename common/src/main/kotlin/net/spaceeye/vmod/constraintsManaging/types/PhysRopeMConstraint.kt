@@ -42,6 +42,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
     var entitiesUUIDs = mutableListOf<UUID>()
     var entities = mutableListOf<PhysRopeComponentEntity>()
     var cIDs = mutableListOf<Int>()
+    var rID: Int = -1
 
 //    var firstRotation: Quaterniond? = null
 //    var middleRotation: Quaterniond? = null
@@ -279,8 +280,8 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         if (length < radius) { radius = length / 2 }
         if (length > radius * 4) { radius = length / 4 } // capsule constraint is actually just 4 balls in a row so
 
-        SynchronisedRenderingData.serverSynchronisedData.addRenderer(
-            constraint.shipId0, constraint.shipId1, mID, PhysRopeRenderer(
+        rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(
+            constraint.shipId0, constraint.shipId1, PhysRopeRenderer(
                 constraint.shipId0, constraint.shipId1, Vector3d(constraint.localPos0), Vector3d(constraint.localPos1),
                 Color(120, 0, 120),  radius, length * 2, entities.map { it.id }
             )
@@ -395,6 +396,6 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
             (server), handler ->
             entities.forEach { it.kill() }
         }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
     }
 }

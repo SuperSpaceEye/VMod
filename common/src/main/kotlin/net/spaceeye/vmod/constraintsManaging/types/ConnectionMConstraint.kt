@@ -39,6 +39,7 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
     override var mID: ManagedConstraintId = -1
     override var saveCounter: Int = -1
     override val typeName: String = "ConnectionMConstraint"
+    var rID: Int = -1
 
     val cIDs = mutableListOf<ConstraintId>()
     var attachmentPoints_ = mutableListOf<BlockPos>()
@@ -153,8 +154,8 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
         aconstraint1 = aconstraint1.copy(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0])
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
 
-        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
-        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID)
+        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
+        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID)
 
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return}
         aconstraint2 = aconstraint2.copy(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1])
@@ -243,8 +244,8 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
     }
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, mID, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
+        if (renderer != null) { rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID) }
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) { return true }
@@ -256,6 +257,6 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
 
     override fun onDeleteMConstraint(level: ServerLevel) {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
     }
 }

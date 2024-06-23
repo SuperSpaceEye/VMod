@@ -10,6 +10,7 @@ import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ToolgunGUI
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.DefaultHUD
 import net.spaceeye.vmod.utils.ClientClosable
 import org.lwjgl.glfw.GLFW
 
@@ -74,9 +75,10 @@ object ClientToolGunState : ClientClosable() {
     }
 
     private var screenGui: ScreenWindow? = null
+    private var defaultHUD = DefaultHUD()
 
     internal fun onRenderHUD(stack: PoseStack, delta: Float) {
-        val currentMode = currentMode ?: return
+        val currentMode = currentMode ?: defaultHUD
 
         val screenGui = screenGui ?: run {
             val temp = ScreenWindow()

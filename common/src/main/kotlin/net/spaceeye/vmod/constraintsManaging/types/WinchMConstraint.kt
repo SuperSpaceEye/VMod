@@ -31,6 +31,7 @@ class WinchMConstraint(): MConstraint, MRenderable, Tickable {
     var attachmentPoints_ = mutableListOf<BlockPos>()
 
     val cIDs = mutableListOf<ConstraintId>()
+    var rID: Int = -1
 
     var minLength: Double = -1.0
     var maxLength: Double = -1.0
@@ -119,8 +120,8 @@ class WinchMConstraint(): MConstraint, MRenderable, Tickable {
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(constraint)!!)
 
-        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], mID)
-        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID)
+        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
+        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID)
     }
 
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
@@ -300,8 +301,8 @@ class WinchMConstraint(): MConstraint, MRenderable, Tickable {
             }
         }
 
-        if (renderer != null) { SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, mID, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(mID) }
+        if (renderer != null) { rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, renderer!!)
+        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID) }
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(constraint) ?: clean(level) ?: return false)
         return true
@@ -310,6 +311,6 @@ class WinchMConstraint(): MConstraint, MRenderable, Tickable {
     override fun onDeleteMConstraint(level: ServerLevel) {
         wasDeleted = true
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(mID)
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
     }
 }

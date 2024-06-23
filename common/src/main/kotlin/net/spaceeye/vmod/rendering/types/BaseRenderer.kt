@@ -2,14 +2,12 @@ package net.spaceeye.vmod.rendering.types
 
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
-import net.spaceeye.vmod.networking.dataSynchronization.DataUnit
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.utils.RegistryObject
 import net.spaceeye.vmod.utils.Vector3d
 
-interface BaseRenderer: DataUnit {
+interface BaseRenderer: Serializable, RegistryObject {
     fun renderData(poseStack: PoseStack, camera: Camera)
-
-    override fun hash(): ByteArray = SynchronisedRenderingData.hasher.digest(serialize().accessByteBufWithCorrectSize())
 }
 
 interface PositionDependentRenderer: BaseRenderer {

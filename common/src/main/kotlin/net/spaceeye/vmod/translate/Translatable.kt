@@ -11,13 +11,15 @@ private inline fun t(s: String) = makeComponent(path+s)
 private inline fun s(s: String) = makeComponent(path+"setting."+s)
 private inline fun x(s: String) = makeComponent(path+"text."+s)
 
+val CONNECTION = t("connection")
 val ROPE = t("rope")
 val HYDRAULICS = t("hydraulics")
 val PHYS_ROPE = t("phys_rope")
-val SCHEMATIC = t("schematic")
-val CONNECTION = t("connection")
 val WINCH = t("winch")
 
+val GRAVITY_CHANGER = t("gravity_changer")
+val DISABLE_COLLISIONS = s("disable_collisions")
+val SCHEMATIC = t("schematic")
 val SCALE = t("scale")
 val STRIP = t("strip")
 
@@ -34,7 +36,6 @@ val ACTIVATE = s("activate")
 val DEACTIVATE = s("deactivate")
 val APPLY_CHANGES = s("apply_changes")
 val REMOVED = s("removed")
-val DISABLE_COLLISIONS = s("disable_collisions")
 val DISTANCE_FROM_BLOCK = s("distance_from_block")
 val RADIUS = s("radius")
 val MASS_PER_SEGMENT = s("mass_per_segment")
@@ -66,6 +67,16 @@ val CANCEL = s("cancel")
 val FILENAME = s("filename")
 val LOAD = s("load")
 
+val X_GRAVITY = s("x_gravity")
+val Y_GRAVITY = s("y_gravity")
+val Z_GRAVITY = s("z_gravity")
+
+val SAMPLING_MODES = s("sampling_modes")
+
+val INDIVIDUAL = s("individual")
+val ALL_CONNECTED = s("all_connected")
+val ALL_CONNECTED_AND_TOUCHING = s("all_connected_and_touching")
+
 val COMMON_HUD_1 = x("common_hud_1")
 val COMMON_HUD_2 = x("common_hud_2")
 val COMMON_HUD_3 = x("common_hud_3")
@@ -79,3 +90,5 @@ val SCHEM_HUD_1 = x("schem_hud_1")
 val SCHEM_HUD_2 = x("schem_hud_2")
 
 val STRIP_HUD_1 = x("strip_hud_1")
+
+val GRAV_CHANGER_HUD_1 = x("grav_changer_hud_1")

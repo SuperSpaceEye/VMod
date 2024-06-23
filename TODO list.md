@@ -19,6 +19,7 @@
 ## HUD Rendering
 * Make system for HUD rendering
 * Use it to make clearer to player that they are in the middle of making a constraint, etc.
+* Add info window for like part weight, total weight, connections, etc
 
 ## Sounds
 * Add sounds and shit

@@ -6,6 +6,8 @@ import dev.architectury.event.EventResult
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.screens.Screen
 import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ToolgunGUI
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
@@ -77,7 +79,7 @@ object ClientToolGunState : ClientClosable() {
     private var screenGui: ScreenWindow? = null
     private var defaultHUD = DefaultHUD()
 
-    internal fun onRenderHUD(stack: PoseStack, delta: Float) {
+    internal fun onRenderHUD(stack: GuiGraphics, delta: Float) {
         val currentMode = currentMode ?: defaultHUD
 
         val screenGui = screenGui ?: run {
@@ -94,7 +96,7 @@ object ClientToolGunState : ClientClosable() {
             _refreshHUD = false
         }
 
-        screenGui.render(stack, 0, 0, delta)
+        (screenGui as Screen).render(stack, 0, 0, delta)
     }
 
     internal lateinit var gui: ToolgunGUI

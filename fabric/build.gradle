@@ -53,7 +53,7 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21"
     api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
 
-    include (modImplementation("gg.essential:elementa-1.18.1-fabric:622"))
+    include (modImplementation("gg.essential:elementa-1.18.1-fabric:649"))
     include (modImplementation("gg.essential:universalcraft-1.20.1-fabric:323"))
 
 //    implementation 'com.electronwill.night-config:core:3.6.3'

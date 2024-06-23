@@ -2,10 +2,11 @@
   "vmod.gui.rope": "Rope",
   "vmod.gui.hydraulics": "Hydraulics",
   "vmod.gui.phys_rope": "Physics Rope",
-  "vmod.gui.schematic": "Schematic",
   "vmod.gui.connection": "Connection",
   "vmod.gui.winch": "Winch",
 
+  "vmod.gui.gravity_changer": "Gravity Changer",
+  "vmod.gui.schematic": "Schematic",
   "vmod.gui.strip": "Strip",
   "vmod.gui.scale": "Scale",
 
@@ -54,6 +55,17 @@
   "vmod.gui.setting.filename": "Filename",
   "vmod.gui.setting.load": "Load",
 
+  "vmod.gui.setting.x_gravity": "X Gravity",
+  "vmod.gui.setting.y_gravity": "Y Gravity",
+  "vmod.gui.setting.z_gravity": "Z Gravity",
+
+  "vmod.gui.setting.sampling_modes": "Sampling Modes",
+
+  "vmod.gui.setting.individual": "Individual",
+  "vmod.gui.setting.all_connected": "All Connected",
+  "vmod.gui.setting.all_connected_and_touching": "All Connected And Touching",
+
+
   "vmod.gui.text.common_hud_1": "lclick - main mode, rclick - secondary mode",
   "vmod.gui.text.common_hud_2": "lclick on the other ship or the ground",
   "vmod.gui.text.common_hud_3": "look at the target and press lclick again",
@@ -68,6 +80,8 @@
   "vmod.gui.text.schem_hud_2": "lclick - save ship as schematic\nrclick - paste schematic\nmouse wheel - rotate schematic",
 
   "vmod.gui.text.strip_hud_1": "lclick - strip constraints",
+
+  "vmod.gui.text.grav_changer_hud_1": "lclick - set gravity. rclick - reset gravity",
 
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
   "key.vmod.remove_top_constraint": "Remove Top Constraint",

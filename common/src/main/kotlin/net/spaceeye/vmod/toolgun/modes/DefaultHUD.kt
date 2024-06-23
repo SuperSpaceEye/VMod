@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.toolgun.modes.hud
+package net.spaceeye.vmod.toolgun.modes
 
 import gg.essential.elementa.components.GradientComponent
 import gg.essential.elementa.components.UIContainer
@@ -9,7 +9,6 @@ import gg.essential.elementa.constraints.ChildBasedSizeConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.modes.HUDBuilder
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 

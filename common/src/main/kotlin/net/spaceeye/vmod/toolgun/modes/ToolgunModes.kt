@@ -11,6 +11,7 @@ object ToolgunModes {
         PhysRopeMode(),
 //        WinchMode(),
 
+        GravChangerMode(),
         DisableCollisionsMode(),
         SchemMode(),
         ScaleMode(),

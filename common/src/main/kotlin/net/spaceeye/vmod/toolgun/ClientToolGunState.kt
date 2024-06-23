@@ -10,7 +10,7 @@ import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ToolgunGUI
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
 import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.toolgun.modes.hud.DefaultHUD
+import net.spaceeye.vmod.toolgun.modes.DefaultHUD
 import net.spaceeye.vmod.utils.ClientClosable
 import org.lwjgl.glfw.GLFW
 

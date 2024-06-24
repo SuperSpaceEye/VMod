@@ -8,8 +8,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import net.minecraft.commands.CommandSourceStack
+import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -82,6 +84,26 @@ object VMCommands {
         return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem()
     }
 
+
+    private fun allowPlayerToUseToolgun(cc: CommandContext<CommandSourceStack>): Int {
+        val uuid = EntityArgument.getPlayer(cc, "player").uuid
+        ToolgunPermissionManager.allowedPlayersAdd(uuid)
+        return 0
+    }
+
+    private fun disallowPlayerFromUsingToolgun(cc: CommandContext<CommandSourceStack>): Int {
+        val uuid = EntityArgument.getPlayer(cc, "player").uuid
+        ToolgunPermissionManager.disallowedPlayersAdd(uuid)
+        return 0
+    }
+
+    private fun clearPlayerFromSpecialPermission(cc: CommandContext<CommandSourceStack>): Int {
+        val uuid = EntityArgument.getPlayer(cc, "player").uuid
+        ToolgunPermissionManager.allowedPlayersRemove(uuid)
+        ToolgunPermissionManager.disallowedPlayersRemove(uuid)
+        return 0
+    }
+
     fun registerServerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
                 lt("vmod")
@@ -109,12 +131,30 @@ object VMCommands {
                 lt("vs-delete-massless-ships").executes { vsDeleteMasslessShips(it) }
             ).then(
                 lt("op")
-                .requires { it.hasPermission(4) }
+                .requires { it.hasPermission(VMConfig.SERVER.PERMISSIONS.VMOD_OP_COMMANDS_PERMISSION_LEVEL) }
                     .then(
                         lt("set-command-permission-level").then(
                             arg("level", IntegerArgumentType.integer(0, 4)).executes {
                                 permissionLevel = IntegerArgumentType.getInteger(it, "level")
                                 0
+                            }
+                        )
+                    ).then(
+                        lt("allow-player-to-use-toolgun").then(
+                            arg("player", EntityArgument.player()).executes {
+                                allowPlayerToUseToolgun(it)
+                            }
+                        )
+                    ).then(
+                        lt("disallow-player-from-using-toolgun").then(
+                            arg("player", EntityArgument.player()).executes {
+                                disallowPlayerFromUsingToolgun(it)
+                            }
+                        )
+                    ).then(
+                        lt("clear-player-from-special-permissions").then(
+                            arg("player", EntityArgument.player()).executes {
+                                clearPlayerFromSpecialPermission(it)
                             }
                         )
                     )

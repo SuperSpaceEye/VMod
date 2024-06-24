@@ -22,6 +22,7 @@ import net.spaceeye.vmod.schematic.containers.ShipSchematicInfo
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
@@ -165,6 +166,7 @@ object ServerPlayerSchematics: ServerClosable() {
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
+        override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
         override fun transmitterRequestProcessor(req: ClientPlayerSchematics.SendSchemRequest): Either<SchemHolder, RequestFailurePkt>? {
             val res = schematics[req.uuid] ?.let { SchemHolder(it.serialize().serialize()) }
@@ -182,6 +184,7 @@ object ServerPlayerSchematics: ServerClosable() {
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
         override fun transmitterRequestProcessor(req: SendLoadRequest): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
+        override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
             schematics[data!!.uuid] = ShipSchematic.getSchematicFromBytes(data.data.array())

@@ -241,7 +241,6 @@ class ConstraintManager: SavedData() {
         createConstraints()
     }
 
-    // TODO redo this later
     private fun tryMakeConstraint(mCon: MConstraint, level: ServerLevel): Boolean {
         for (i in 0 until 1000) {
             if (mCon.onMakeMConstraint(level)) {return true}

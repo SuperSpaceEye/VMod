@@ -13,7 +13,6 @@ import org.valkyrienskies.mod.common.isChunkInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.lang.AssertionError
 
-//TODO extremely sus math
 //it's needed to not use ship's chunk claim
 inline fun getCenterPos(x: Int, z: Int) = Vector3d(((x / 16 / 256 - 1) * 256 + 128) * 16, 0, ((z / 16 / 256) * 256 + 128) * 16)
 

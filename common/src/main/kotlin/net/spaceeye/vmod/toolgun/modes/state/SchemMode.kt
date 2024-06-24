@@ -390,7 +390,6 @@ class SchemMode: BaseMode, SchemGUI, SchemCRIH, SchemSerializable, SchemHUD {
         }
     }
 
-    //TODO make it create shit on server thread
     fun activateSecondaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         val schem = ServerPlayerSchematics.schematics[player.uuid] ?: return
         if (raycastResult.state.isAir) {return}

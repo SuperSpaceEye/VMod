@@ -19,7 +19,6 @@ fun getMinScale(level: ServerLevel, traversedData: TraversedData): Double {
     }.min()
 }
 
-//TODO scaling is a bit fucky
 fun teleportShipWithConnected(
     level: ServerLevel,
     mainShip: ServerShip,

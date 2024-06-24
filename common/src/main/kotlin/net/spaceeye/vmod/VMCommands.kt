@@ -4,22 +4,29 @@ import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
+import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.commands.arguments.coordinates.Vec3Argument
+import net.minecraft.network.chat.TextComponent
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
+import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
+import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
+import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.command.RelativeVector3Argument
 import org.valkyrienskies.mod.common.command.ShipArgument
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.mod.mixinducks.feature.command.VSCommandSource
+import java.nio.file.Paths
+import java.util.UUID
 
 typealias VSCS = CommandContext<VSCommandSource>
 typealias MCS = CommandContext<CommandSourceStack>
@@ -84,6 +91,62 @@ object VMCommands {
         return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem()
     }
 
+    private fun saveSchemToServer(cc: CommandContext<CommandSourceStack>): Int {
+        val name = StringArgumentType.getString(cc, "name")
+        val uuid = try { cc.source.playerOrException.uuid } catch (e: Exception) { ELOG("Failed to save schematic to server because user is not a player"); return 1 }
+
+        val schem = ServerPlayerSchematics.schematics[uuid] ?: run {
+            cc.source.playerOrException.sendMessage(TextComponent("Failed to save schematic to sever because player has no schematic chosen. Choose schematic with a toolgun and try again."), uuid)
+            return 1
+        }
+        ClientPlayerSchematics.saveSchematic(name, schem)
+
+        return 0
+    }
+
+    private var lastName = "a"
+
+    private fun loadSchemFromServer(cc: CommandContext<CommandSourceStack>): Int {
+        val name = StringArgumentType.getString(cc, "name")
+        val uuid = UUID(0L, 0L)
+
+        val schem = ClientPlayerSchematics.loadSchematic(Paths.get("VMod-Schematics/$name")) ?: run {
+            ELOG("Failed to load schematic because name doesn't exist.")
+            return 1
+        }
+
+        ServerPlayerSchematics.schematics[uuid] = schem
+        lastName = name
+
+        return 0
+    }
+
+    private fun placeServerSchematic(cc: CommandContext<CommandSourceStack>): Int {
+        val uuid = UUID(0L, 0L)
+
+        val position = Vec3Argument.getVec3(cc, "position")
+        val rotation = try {RelativeVector3Argument.getRelativeVector3(cc as MCSN, "euler-angles").toEulerRotation(0.0, 0.0, 0.0)} catch (e: Exception) {Quaterniond()}
+        val name = try {StringArgumentType.getString(cc, "name")} catch (e: Exception) {lastName}
+
+        val schem = ServerPlayerSchematics.schematics[uuid] ?: run {
+            ELOG("failed to place schematic because it's null.")
+            return 1
+        }
+
+        schem.placeAt(cc.source.level, uuid, Vector3d(position).toJomlVector3d(), rotation) { ships ->
+            if (ships.size == 1) {
+                ships[0].slug = name
+                return@placeAt
+            }
+
+            ships.forEachIndexed { i, it ->
+                it.slug = name + i
+            }
+        }
+
+        return 0
+    }
+
 
     private fun allowPlayerToUseToolgun(cc: CommandContext<CommandSourceStack>): Int {
         val uuid = EntityArgument.getPlayer(cc, "player").uuid
@@ -129,6 +192,22 @@ object VMCommands {
                 )
             ).then(
                 lt("vs-delete-massless-ships").executes { vsDeleteMasslessShips(it) }
+            ).then(
+                lt("save-schem-to-sever").then(
+                    arg("name", StringArgumentType.string()).executes { saveSchemToServer(it) }
+                )
+            ).then(
+                lt("load-schem-from-sever").then(
+                    arg("name", StringArgumentType.string()).executes { loadSchemFromServer(it) }
+                )
+            ).then(
+                lt("place-server-schem").then(
+                    arg("position", Vec3Argument.vec3()).executes { placeServerSchematic(it) }.then(
+                        arg("rotation", RelativeVector3Argument.relativeVector3()).executes { placeServerSchematic(it) }.then(
+                            arg("name", StringArgumentType.string()).executes { placeServerSchematic(it) }
+                        )
+                    )
+                )
             ).then(
                 lt("op")
                 .requires { it.hasPermission(VMConfig.SERVER.PERMISSIONS.VMOD_OP_COMMANDS_PERMISSION_LEVEL) }

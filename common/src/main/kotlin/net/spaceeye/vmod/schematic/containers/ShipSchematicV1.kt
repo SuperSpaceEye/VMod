@@ -162,7 +162,7 @@ class ShipSchematicV1(): IShipSchematic {
         return true
     }
 
-    override fun placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc): Boolean {
+    override fun placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc, postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
         val newTransforms = mutableListOf<ShipTransform>()
 
         val ships = createShips(level, pos, rotation, newTransforms)
@@ -176,17 +176,19 @@ class ShipSchematicV1(): IShipSchematic {
         SchematicActionsQueue.queueShipsCreationEvent(level, uuid, ships, this) {
             ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData)
 
+            val ships = ships.map { it.first }
             ships.zip(newTransforms).forEach {
                 (it, transform) ->
                 val toPos = MVector3d(transform.positionInWorld) + MVector3d(pos)
-                level.shipObjectWorld.teleportShip(it.first, ShipTeleportDataImpl(
+                level.shipObjectWorld.teleportShip(it, ShipTeleportDataImpl(
                         toPos.toJomlVector3d(),
                         transform.shipToWorldRotation,
                         JVector3d(),
-                        newScale = MVector3d(it.first.transform.shipToWorldScaling).avg(),
+                        newScale = MVector3d(it.transform.shipToWorldScaling).avg(),
                 ))
             }
-            SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, ships.map { it.first }, 10)
+            postPlaceFn(ships)
+            SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, ships, 10)
         }
 
         return true

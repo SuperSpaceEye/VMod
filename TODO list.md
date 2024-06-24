@@ -8,7 +8,7 @@
 
 ## General Code Structure
 * Extract more code from Placement Assist for an easier use
-* Extract more common code (weld/axis/hydraulics)
+* Extract more common code (connection/hydraulics)
 
 ## Ticking Constraints
 * Redo them
@@ -17,9 +17,8 @@
 * Redo everything
 
 ## HUD Rendering
-* Make system for HUD rendering
-* Use it to make clearer to player that they are in the middle of making a constraint, etc.
 * Add info window for like part weight, total weight, connections, etc
+* Add popup messages things
 
 ## Sounds
 * Add sounds and shit
@@ -36,7 +35,7 @@
 
 ## Custom Access Levels
 * Allow op users to change server settings of VMod from toolgun menu.
-* Add accessibility levels that op users can modify
+* Add different access levels
 * Make special commands for op users
     * Clean every mconstraint of acc level.
     * Set limit for total mconstraints of acc level.
@@ -50,7 +49,6 @@
 ## Schematic
 * Copy entities (maybe, idfk)
 * Copy phys entities (not very important rn)
-* Copy ship attachments (maybe, idk if i really need to do it)
 
 ## Rope Constraint
 * Add ability to change rendering modes

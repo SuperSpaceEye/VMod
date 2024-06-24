@@ -229,7 +229,7 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
 
     protected fun add(page: Long, item: T): Int = lock {
         val pageData = cachedData[page]
-        val key = pageData?.keys?.max() ?: 0
+        val key = pageData?.keys?.maxOrNull() ?: 0
         set(page, key, item)
         return key
     }

@@ -79,7 +79,6 @@ class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
                     )
                 }
             }.onMouseClick {
-                //TODO this is not very good
                 settingsScrollComponent.clearChildren()
                 component.makeGUISettings(settingsScrollComponent)
                 ClientToolGunState.refreshHUD()

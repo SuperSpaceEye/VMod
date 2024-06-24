@@ -2,12 +2,14 @@ package net.spaceeye.vmod.toolgun.modes.util
 
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.rendering.Effects
 import net.spaceeye.vmod.toolgun.PlayerToolgunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.ServerToolGunState.verifyPlayerAccessLevel
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -17,7 +19,7 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
     player: Player,
     buf: FriendlyByteBuf,
     constructor: () -> BaseMode,
-    noinline fn: (item: T, ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) {
+    noinline fn: (item: T, ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) = verifyPlayerAccessLevel(player as ServerPlayer) {
     val level = player.level() as ServerLevel
 
     var serverMode = ServerToolGunState.playersStates.getOrPut(player.uuid) { PlayerToolgunState(constructor()) }

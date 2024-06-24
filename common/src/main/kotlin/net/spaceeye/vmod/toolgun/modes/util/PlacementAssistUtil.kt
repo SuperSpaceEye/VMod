@@ -202,6 +202,7 @@ interface PlacementAssistSerialize {
     }
 }
 
+//TODO add checks for if functions are actually invoked on server
 interface PlacementAssistServerPart {
     var paStage: ThreeClicksActivationSteps
     var posMode: PositionModes

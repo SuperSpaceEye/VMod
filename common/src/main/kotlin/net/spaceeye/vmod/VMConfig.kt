@@ -1,9 +1,6 @@
 package net.spaceeye.vmod
 
-import net.spaceeye.vmod.config.AbstractConfigBuilder
-import net.spaceeye.vmod.config.CDouble
-import net.spaceeye.vmod.config.CInt
-import net.spaceeye.vmod.config.ConfigSubDirectory
+import net.spaceeye.vmod.config.*
 
 object VMConfig {
     lateinit var server_config_holder: AbstractConfigBuilder
@@ -21,7 +18,7 @@ object VMConfig {
         class ClientToolgunSettings: ConfigSubDirectory() {
             var MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
 
-            val SCHEMATIC_PACKET_PART_SIZE: Int by CInt(1000000, "Reload the game for change to take the effect.", Pair(512, 1000000))
+            val SCHEMATIC_PACKET_PART_SIZE: Int by CInt(30000, "Reload the game for change to take the effect.", Pair(512, 1000000))
         }
 
         class ClientRenderingSettings: ConfigSubDirectory() {
@@ -37,13 +34,20 @@ object VMConfig {
         class ServerToolgunSettings: ConfigSubDirectory() {
             val MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
 
+            //TODO use this
             val MAX_SHIPS_ALLOWED_TO_COPY: Int by CInt(-1, "Number of connected ships a player can copy in one request. <=0 for unlimited.")
 
-            val SCHEMATIC_PACKET_PART_SIZE: Int by CInt(1000000, "Reload the game for change to take the effect.", Pair(512, 1000000))
+            val SCHEMATIC_PACKET_PART_SIZE: Int by CInt(30000, "Reload the game for change to take the effect.", Pair(512, 1000000))
         }
 
         class Permissions: ConfigSubDirectory() {
-            var VMOD_COMMANDS_PERMISSION_LEVEL: Int by CInt(4, "", Pair(0, 4))
+            var VMOD_COMMANDS_PERMISSION_LEVEL: Int by CInt(2, "", Pair(0, 4))
+            var VMOD_OP_COMMANDS_PERMISSION_LEVEL: Int by CInt(4, "", Pair(0, 4))
+            var VMOD_TOOLGUN_PERMISSION_LEVEL: Int by CInt(2, "", Pair(0, 4))
+
+            //using config to store shit
+            var ALWAYS_ALLOWED: String by CString("", "DO NOT CHANGE")
+            var ALWAYS_DISALLOWED: String by CString("", "DO NOT CHANGE")
         }
 
         class Schematics: ConfigSubDirectory() {

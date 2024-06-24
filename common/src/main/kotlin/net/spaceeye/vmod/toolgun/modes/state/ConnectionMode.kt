@@ -62,7 +62,7 @@ class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCRIH, Connecti
     val conn_primary   = register { object : C2SConnection<ConnectionMode>("connection_mode_primary",   "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<ConnectionMode>(context.player, buf, ::ConnectionMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
     val conn_secondary = register { object : C2SConnection<ConnectionMode>("connection_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<ConnectionMode>(context.player, buf, ::ConnectionMode) {
             item, serverLevel, player, raycastResult ->
-        activateFunctionPA(serverLevel, player, raycastResult)
+        item.activateFunctionPA(serverLevel, player, raycastResult)
     } } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null

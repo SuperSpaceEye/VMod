@@ -1,8 +1,7 @@
 package net.spaceeye.vmod.limits
 
 class ClientLimitsInstance {
-    //TODO implement this
-    val renderingArea = DoubleLimit()
+    //TODO add client limits
 }
 
 class ClientLimits {

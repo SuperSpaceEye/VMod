@@ -11,7 +11,7 @@ import com.mojang.brigadier.context.CommandContext
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.commands.arguments.coordinates.Vec3Argument
-import net.minecraft.network.chat.TextComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
@@ -96,7 +96,7 @@ object VMCommands {
         val uuid = try { cc.source.playerOrException.uuid } catch (e: Exception) { ELOG("Failed to save schematic to server because user is not a player"); return 1 }
 
         val schem = ServerPlayerSchematics.schematics[uuid] ?: run {
-            cc.source.playerOrException.sendMessage(TextComponent("Failed to save schematic to sever because player has no schematic chosen. Choose schematic with a toolgun and try again."), uuid)
+            cc.source.playerOrException.sendSystemMessage(Component.literal("Failed to save schematic to sever because player has no schematic chosen. Choose schematic with a toolgun and try again."))
             return 1
         }
         ClientPlayerSchematics.saveSchematic(name, schem)

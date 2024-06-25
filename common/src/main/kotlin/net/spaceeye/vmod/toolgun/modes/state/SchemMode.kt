@@ -45,7 +45,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
 
@@ -63,7 +62,7 @@ object ClientPlayerSchematics {
         override fun requestPacketConstructor() = SendSchemRequest()
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
-        override fun transmitterRequestProcessor(req: SendSchemRequest): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
+        override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
 
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
             ClientToolGunState.currentMode?.let {
@@ -86,7 +85,7 @@ object ClientPlayerSchematics {
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
 
-        override fun transmitterRequestProcessor(req: ServerPlayerSchematics.SendLoadRequest): Either<SchemHolder, RequestFailurePkt>? {
+        override fun transmitterRequestProcessor(req: ServerPlayerSchematics.SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = ClientToolGunState.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
                 mode.schem?.let { SchemHolder(it.serialize().serialize(), req.requestUUID) }
@@ -168,7 +167,7 @@ object ServerPlayerSchematics: ServerClosable() {
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
-        override fun transmitterRequestProcessor(req: ClientPlayerSchematics.SendSchemRequest): Either<SchemHolder, RequestFailurePkt>? {
+        override fun transmitterRequestProcessor(req: ClientPlayerSchematics.SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = schematics[req.uuid] ?.let { SchemHolder(it.serialize().serialize()) }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
         }
@@ -183,7 +182,7 @@ object ServerPlayerSchematics: ServerClosable() {
         override fun requestPacketConstructor() = SendLoadRequest()
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
-        override fun transmitterRequestProcessor(req: SendLoadRequest): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
+        override fun transmitterRequestProcessor(req: SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {

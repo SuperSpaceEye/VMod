@@ -9,6 +9,7 @@ object ToolgunModes {
         RopeMode(),
         HydraulicsMode(),
         PhysRopeMode(),
+        SliderMode(),
 //        WinchMode(),
 
         GravChangerMode(),

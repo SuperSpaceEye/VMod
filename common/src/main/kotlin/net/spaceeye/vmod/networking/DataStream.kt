@@ -17,17 +17,20 @@ abstract class DataStream<
     streamName: String,
     transmitterSide: NetworkManager.Side,
     currentSide: NetworkManager.Side,
-    partByteAmount: Int = 1000000,
+    val partByteAmount: Int = 30000,
     ): NetworkingRegisteringFunctions {
 
     abstract fun requestPacketConstructor(): TRequest
     abstract fun dataPacketConstructor(): TData
 
-    abstract fun transmitterRequestProcessor(req: TRequest): Either<TData, RequestFailurePkt>?
+    // if returns null, then will do nothing
+    // if not null, will either start transmitting or send transmission failed pkt
+    abstract fun transmitterRequestProcessor(req: TRequest, ctx: PacketContext): Either<TData, RequestFailurePkt>?
 
     abstract fun receiverDataTransmitted(uuid: UUID, data: TData?)
     abstract fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt)
 
+    // for when you need to restrict access to some receivers
     open fun uuidHasAccess(uuid: UUID): Boolean {return true}
 
     private val transmitterData = DataStreamTransmitterDataHolder()
@@ -51,21 +54,24 @@ abstract class DataStream<
         t2rSendPart.transmitData(DataPartPkt(part, req.numParts, uuid, partData.toByteArray()), context)
     }
 
+    fun startSendingDataToReceiver(data: TData, context: PacketContext) {
+        val dataBuf = data.serialize()
+        val length = dataBuf.array().size / partByteAmount + 1
+        val uuid = transmitterData.addRequest(DataStreamTransmitterDataHolder.RequestItem(dataBuf, partByteAmount, length))
+        sendPart(context, uuid, 1)
+    }
+
     // is invoked on the receiver, handler is registered on the transmitter
     val r2tRequestData = registerTR("request_data", currentSide) {
         object : TRConnection<TRequest>(it, streamName, transmitterSide.opposite()) {
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) = verifyUUIDHasAccess(context) {
                 val pkt = requestPacketConstructor()
                 pkt.deserialize(buf)
-                val data = transmitterRequestProcessor(pkt)
+                val data = transmitterRequestProcessor(pkt, context) ?: return
 
-                if (data == null) { t2rRequestFailure.transmitData(RequestFailurePkt(), context); return }
                 if (data is Either.Right){ t2rRequestFailure.transmitData(data.b, context); return }
 
-                val dataBuf = (data as Either.Left).a.serialize()
-                val length = dataBuf.array().size / partByteAmount + 1
-                val uuid = transmitterData.addRequest(DataStreamTransmitterDataHolder.RequestItem(dataBuf, partByteAmount, length))
-                sendPart(context, uuid, 1)
+                startSendingDataToReceiver((data as Either.Left).a, context)
             }
         }
     }

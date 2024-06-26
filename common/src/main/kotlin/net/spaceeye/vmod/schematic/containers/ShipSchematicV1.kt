@@ -12,6 +12,7 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
+import net.spaceeye.vmod.VSMasslessShipsProcessor
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.utils.*
@@ -167,6 +168,7 @@ class ShipSchematicV1(): IShipSchematic {
         val newTransforms = mutableListOf<ShipTransform>()
 
         val ships = createShips(level, pos, rotation, newTransforms)
+        ships.forEach { VSMasslessShipsProcessor.shipsToBeCreated.add(it.first.id) }
 
         if (!verifyBlockDataIsValid(ships, level)) {
             ships.forEach { level.shipObjectWorld.deleteShip(it.first) }
@@ -188,6 +190,7 @@ class ShipSchematicV1(): IShipSchematic {
                         newScale = MVector3d(it.transform.shipToWorldScaling).avg(),
                 ))
             }
+            ships.forEach { VSMasslessShipsProcessor.shipsToBeCreated.remove(it.id) }
             postPlaceFn(ships)
             SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, ships, 10)
         }

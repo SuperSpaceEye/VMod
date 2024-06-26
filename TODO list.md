@@ -6,15 +6,17 @@
 * "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
 
+# Constraint disabler
+* A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
+
+# Toolgun settings presets menu
+
 ## General Code Structure
 * Extract more code from Placement Assist for an easier use
 * Extract more common code (connection/hydraulics)
 
 ## Ticking Constraints
 * Redo them
-
-## Synchronised Data
-* Redo everything
 
 ## HUD Rendering
 * Add info window for like part weight, total weight, connections, etc

@@ -121,11 +121,13 @@ object VMCommands {
         return 0
     }
 
+    private var placeUUID = UUID(0L, 0L)
+
     private fun placeServerSchematic(cc: CommandContext<CommandSourceStack>): Int {
         val uuid = UUID(0L, 0L)
 
         val position = Vec3Argument.getVec3(cc, "position")
-        val rotation = try {RelativeVector3Argument.getRelativeVector3(cc as MCSN, "euler-angles").toEulerRotation(0.0, 0.0, 0.0)} catch (e: Exception) {Quaterniond()}
+        val rotation = try {RelativeVector3Argument.getRelativeVector3(cc as MCSN, "rotation").toEulerRotation(0.0, 0.0, 0.0)} catch (e: Exception) {Quaterniond()}
         val name = try {StringArgumentType.getString(cc, "name")} catch (e: Exception) {lastName}
 
         val schem = ServerPlayerSchematics.schematics[uuid] ?: run {
@@ -133,7 +135,9 @@ object VMCommands {
             return 1
         }
 
-        schem.placeAt(cc.source.level, uuid, Vector3d(position).toJomlVector3d(), rotation) { ships ->
+        placeUUID = UUID(placeUUID.mostSignificantBits, placeUUID.leastSignificantBits + 1)
+
+        schem.placeAt(cc.source.level, placeUUID, Vector3d(position).toJomlVector3d(), rotation) { ships ->
             if (ships.size == 1) {
                 ships[0].slug = name
                 return@placeAt

@@ -5,7 +5,9 @@ import dev.architectury.networking.NetworkManager.Side
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
-import net.spaceeye.vmod.toolgun.modes.state.ConnectionNetworking.registerTR
+import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.toolgun.modes.state.SchemNetworking.opposite
+import net.spaceeye.vmod.utils.Either
 import net.spaceeye.vmod.utils.readVarLongArray
 import net.spaceeye.vmod.utils.writeVarLongArray
 import java.lang.IllegalStateException
@@ -15,6 +17,7 @@ import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.max
 
+//TODO make more abstract
 abstract class SynchronisedDataTransmitter<T: Serializable> (
     streamName: String,
     receiverSide: Side,
@@ -42,7 +45,7 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
         counter = 0
     }
 
-    abstract fun sendUpdateToSubscriber(ctx: NetworkManager.PacketContext, data: T2RSynchronizationTickData)
+//    abstract fun sendUpdateToSubscriber(ctx: NetworkManager.PacketContext, data: T2RSynchronizationTickData)
 
     inline fun <T>lock(fn: () -> T): T {
         synchronized(lock) {
@@ -116,13 +119,13 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
         }.toMap().toMutableMap(), newData)
     }
 
-    private fun updateSubscriber(
+    private fun compileUpdateDataForSubscriber(
         origin: MutableMap<Long, MutableMap<Int, T?>?>,
         checksums: MutableMap<Long, MutableMap<Int, ByteArray>>,
         sub: UUID
-    ): Boolean {
+    ): T2RSynchronizationTickData? {
         val (diff, data) = compileDifferences(origin, checksums)
-        if (diff.isEmpty() && data.isEmpty()) { return false }
+        if (diff.isEmpty() && data.isEmpty()) { return null }
         diff.forEach { (page, updates) ->
             if (updates == null) { checksums.remove(page); return@forEach }
             val line = checksums.getOrPut(page) { mutableMapOf() }
@@ -133,49 +136,58 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
         }
         val flatCsms = diff.toList().map { (k, v) -> Pair(k, v?.toList()?.toMutableList()) }.toMutableList()
         val flatData = data.toList().map { (k, v) -> Pair(k, v.toList().toMutableList<Pair<Int, Serializable>>()) }.toMutableList()
-        sendUpdateToSubscriber(FakePacketContext(uuidToPlayer[sub]?.let { it as ServerPlayer }), T2RSynchronizationTickData(itemWriter, itemReader, flatCsms, flatData))
-        return true
+        return T2RSynchronizationTickData(itemWriter, itemReader, flatCsms, flatData)
     }
 
     fun synchronizationTick() {
         if (dataUpdates.isEmpty()) {return}
         lock {
-            subscribersSavedChecksums.forEach { (sub, checksums) -> if (!updateSubscriber(dataUpdates, checksums, sub)) return@forEach }
+            subscribersSavedChecksums.forEach { (sub, checksums) ->
+                val res = compileUpdateDataForSubscriber(dataUpdates, checksums, sub) ?: return@forEach
+                trSynchronizeData.startSendingDataToReceiver(res, FakePacketContext((uuidToPlayer[sub] ?: return@forEach) as ServerPlayer))
+            }
             dataUpdates.clear()
         }
     }
 
-    internal val r2tSynchronizeData = registerTR("r2t_sync_data", currentSide) {
-        object : TRConnection<R2TSynchronizationTickData>(it, streamName, receiverSide) {
-            override fun handlerFn(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val pkt = R2TSynchronizationTickData()
-                pkt.deserialize(buf)
+    internal val trSynchronizeData = object : DataStream<R2TSynchronizationTickData, T2RSynchronizationTickData>(
+        streamName,
+        receiverSide.opposite(),
+        currentSide,
+        partByteMaxAmount
+    ) {
+        override fun requestPacketConstructor(): R2TSynchronizationTickData = R2TSynchronizationTickData()
+        override fun dataPacketConstructor(): T2RSynchronizationTickData = T2RSynchronizationTickData(itemWriter, itemReader)
 
-                val uuid = context.player.uuid
-                uuidToPlayer[uuid] = context.player
-                val checksums = subscribersSavedChecksums.getOrPut(uuid) {mutableMapOf()}
-                val tempData = (data as MutableMap<Long, MutableMap<Int, T?>?>).toMutableMap()
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { throw AssertionError() }
+        override fun receiverDataTransmitted(uuid: UUID, data: T2RSynchronizationTickData?) { throw AssertionError() }
 
-                pkt.checksumsToUpdate.forEach { checksums[it] = mutableMapOf() }
-                pkt.pageDataToUpdate.forEach { (page, line) ->
-                    val dataLine = checksums.getOrPut(page) {mutableMapOf()}
-                    line.forEach { idx ->
-                        dataLine[idx] = byteArrayOf()
-                    }
+        override fun transmitterRequestProcessor(pkt: R2TSynchronizationTickData, ctx: NetworkManager.PacketContext): Either<T2RSynchronizationTickData, RequestFailurePkt>? {
+            val uuid = ctx.player.uuid
+            uuidToPlayer[uuid] = ctx.player
+            val checksums = subscribersSavedChecksums.getOrPut(uuid) {mutableMapOf()}
+            val tempData = (data as MutableMap<Long, MutableMap<Int, T?>?>).toMutableMap()
+
+            pkt.checksumsToUpdate.forEach { checksums[it] = mutableMapOf() }
+            pkt.pageDataToUpdate.forEach { (page, line) ->
+                val dataLine = checksums.getOrPut(page) {mutableMapOf()}
+                line.forEach { idx ->
+                    dataLine[idx] = byteArrayOf()
                 }
-                pkt.subscriptions.forEach { (page, subscribe) ->
-                    when (subscribe) {
-                        true -> checksums[page] = mutableMapOf()
-                        false -> {
-                            checksums.remove(page)
-                            tempData.remove(page)
-                            subscribersSavedChecksums[uuid]?.remove(page)
-                        }
-                    }
-                }
-
-                updateSubscriber(tempData, subscribersSavedChecksums[uuid]!!, uuid)
             }
+            pkt.subscriptions.forEach { (page, subscribe) ->
+                when (subscribe) {
+                    true -> checksums[page] = mutableMapOf()
+                    false -> {
+                        checksums.remove(page)
+                        tempData.remove(page)
+                        subscribersSavedChecksums[uuid]?.remove(page)
+                    }
+                }
+            }
+
+            val res = compileUpdateDataForSubscriber(tempData, subscribersSavedChecksums[uuid]!!, uuid) ?: return null
+            return Either.Left(res)
         }
     }
 }
@@ -260,7 +272,7 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
         return cachedData
     }
 
-    abstract fun sendRequestToServer(req: R2TSynchronizationTickData)
+//    abstract fun sendRequestToServer(req: R2TSynchronizationTickData)
 
     private val pageChecksumsToUpdate = ConcurrentLinkedDeque<Long>()
     private val pageDataToUpdate = ConcurrentHashMap<Long, MutableSet<Int>>()
@@ -285,7 +297,7 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
         }
 
         try {
-        sendRequestToServer(R2TSynchronizationTickData(
+        trSynchronizeData.r2tRequestData.transmitData(R2TSynchronizationTickData(
             pagesToUpdateSubscriptionTo.toMutableList(),
             pageChecksumsToUpdate.toMutableList(),
             pageDataToUpdate.toList().map {Pair(it.first, it.second.toMutableList())}.toMutableList()
@@ -298,13 +310,20 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
         }}}
     }
 
-    internal val t2rSynchronizeData = registerTR("t2r_sync_data", currentSide) {
-        object : TRConnection<T2RSynchronizationTickData>(it, streamName, transmitterSide) {
-            override fun handlerFn(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val pkt = T2RSynchronizationTickData(itemWriter, itemReader)
-                pkt.deserialize(buf)
+    internal val trSynchronizeData = object : DataStream<R2TSynchronizationTickData, T2RSynchronizationTickData>(
+        streamName,
+        transmitterSide,
+        currentSide,
+        partByteMaxAmount
+    ) {
+        override fun requestPacketConstructor(): R2TSynchronizationTickData = R2TSynchronizationTickData()
+        override fun dataPacketConstructor(): T2RSynchronizationTickData = T2RSynchronizationTickData(itemWriter, itemReader)
+        override fun transmitterRequestProcessor(req: R2TSynchronizationTickData, ctx: NetworkManager.PacketContext): Either<T2RSynchronizationTickData, RequestFailurePkt>? { throw AssertionError() }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("IT SHOULDN'T BE POSSIBLE TO REACH THIS. HOW DID YOU DO THIS.") }
 
-                lock {
+        override fun receiverDataTransmitted(uuid: UUID, pkt: T2RSynchronizationTickData?) {
+            if (pkt == null) {return}
+            lock {
                 pkt.dataUpdates.forEach { (page, updates) ->
                     val dataPage = newData  .getOrPut(page) {mutableMapOf()}!!
                     val sc = serverChecksums.getOrPut(page) {mutableMapOf()}
@@ -340,7 +359,6 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
                     }
                 }
                 dataChanged = true
-                }
             }
         }
     }

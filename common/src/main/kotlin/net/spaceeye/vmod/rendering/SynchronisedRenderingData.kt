@@ -70,10 +70,6 @@ class ClientSynchronisedRenderingData(val getServerInstance: () -> ServerSynchro
             }
         }
     }
-
-    override fun sendRequestToServer(req: R2TSynchronizationTickData) {
-        getServerInstance().r2tSynchronizeData.transmitData(req)
-    }
 }
 class ServerSynchronisedRenderingData(val getClientInstance: () -> ClientSynchronisedRenderingData):
     SynchronisedDataTransmitter<BaseRenderer>(
@@ -142,10 +138,6 @@ class ServerSynchronisedRenderingData(val getClientInstance: () -> ClientSynchro
 
     fun subscribePlayerToReservedPages(player: ServerPlayer) {
         ReservedRenderingPages.reservedPages.forEach {subscribeTo(player.uuid, player, it)}
-    }
-
-    override fun sendUpdateToSubscriber(ctx: NetworkManager.PacketContext, data: T2RSynchronizationTickData) {
-        getClientInstance().t2rSynchronizeData.transmitData(data, ctx)
     }
 }
 

@@ -9,6 +9,7 @@ import gg.essential.elementa.components.UIText
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
+import net.minecraft.client.gui.GuiGraphics
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.DefaultHUD
 import net.spaceeye.vmod.utils.LimitDeque
@@ -143,7 +144,7 @@ class ScreenWindow: WindowScreen(ElementaVersion.V5, drawDefaultBackground = fal
         animateMoveUp()
     }
 
-    fun onRenderHUD(stack: PoseStack, delta: Float) {
+    fun onRenderHUD(stack: GuiGraphics, delta: Float) {
         val currentMode = ClientToolGunState.currentMode ?: defaultHUD
 
         checkErrorWindows()

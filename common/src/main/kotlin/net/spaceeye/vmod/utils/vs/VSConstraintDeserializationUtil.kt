@@ -60,7 +60,7 @@ object VSConstraintDeserializationUtil {
             SPHERICAL_TWIST_LIMITS -> TorqueConstraintData()
 
             FIXED_ATTACHMENT_ORIENTATION -> null
-            else -> {WLOG("UNKNOWN VS CONSTRAINT TYPE ${type}"); null}
+            else -> {WLOG("Unknown VS constraint type $type"); null}
         }
     }
 
@@ -115,10 +115,10 @@ object VSConstraintDeserializationUtil {
                 SPHERICAL_TWIST_LIMITS -> { cdata as TorqueConstraintData; VSSphericalTwistLimitsConstraint(cdata.shipId0, cdata.shipId1, cdata.compliance, cdata.localRot0, cdata.localRot1, cdata.maxTorque, cTag.getDouble("minTwistAngle"), cTag.getDouble("maxTwistAngle"))}
 
                 FIXED_ATTACHMENT_ORIENTATION -> null
-                else -> {WLOG("UNKNOWN VS CONSTRAINT TYPE ${cdata.constraintType}"); null}
+                else -> {WLOG("Unknown VS constraint type ${cdata.constraintType}"); null}
             }
         } catch (e: Exception) {
-            WLOG("SOMETHING WENT WRONG, NOT DESERIALIZING TAG ${cTag}")
+            WLOG("An exception has occurred, not deserializing tag ${cTag}\n${e.stackTraceToString()}")
             return null
         }
     }

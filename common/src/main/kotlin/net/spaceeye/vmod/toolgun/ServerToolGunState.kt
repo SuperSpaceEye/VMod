@@ -16,10 +16,22 @@ import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.translate.REMOVED
 import net.spaceeye.vmod.utils.ServerClosable
+import net.spaceeye.vmod.utils.ServerLevelHolder
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 class PlayerToolgunState(var mode: BaseMode)
+
+fun sendHUDErrorToPlayer(player: ServerPlayer, error: String) {
+    ServerToolGunState.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(error))
+}
+
+fun sendHUDErrorToOperators(error: String) {
+    ServerLevelHolder.server!!.playerList.players.forEach {
+        if (!it.hasPermissions(4)) {return@forEach}
+        sendHUDErrorToPlayer(it, error)
+    }
+}
 
 object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
     val playersStates = ConcurrentHashMap<UUID, PlayerToolgunState>()
@@ -80,6 +92,35 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
                 }
 
                 context.player.sendMessage(REMOVED, context.player.uuid)
+            }
+        }
+    }
+
+    class S2CErrorHappened(): Serializable {
+        var errorStr: String = ""
+
+        constructor(s: String): this() {errorStr = s}
+
+        override fun serialize(): FriendlyByteBuf {
+            val buf = getBuffer()
+
+            buf.writeUtf(errorStr)
+
+            return buf
+        }
+
+        override fun deserialize(buf: FriendlyByteBuf) {
+            errorStr = buf.readUtf()
+        }
+    }
+
+    val s2cErrorHappened = "error_happened" idWithConns {
+        object : S2CConnection<S2CErrorHappened>(it, "toolgun") {
+            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val pkt = S2CErrorHappened()
+                pkt.deserialize(buf)
+
+                ClientToolGunState.addHUDError(pkt.errorStr)
             }
         }
     }

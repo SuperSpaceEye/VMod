@@ -10,15 +10,13 @@ import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ToolgunGUI
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
 import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.toolgun.modes.DefaultHUD
 import net.spaceeye.vmod.utils.ClientClosable
 import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
     var currentMode: BaseMode? = null
 
-    private var _refreshHUD = true
-    fun refreshHUD() { _refreshHUD = true }
+    fun refreshHUD() { screen?.refreshHUD() }
 
     val GUI_MENU_OPEN_OR_CLOSE = register(
         KeyMapping(
@@ -74,27 +72,20 @@ object ClientToolGunState : ClientClosable() {
         return currentMode!!.handleMouseScrollEvent(amount)
     }
 
-    private var screenGui: ScreenWindow? = null
-    private var defaultHUD = DefaultHUD()
+    private var screen: ScreenWindow? = null
+
+    internal fun addHUDError(str: String) {
+        screen?.addError(str)
+    }
 
     internal fun onRenderHUD(stack: PoseStack, delta: Float) {
-        val currentMode = currentMode ?: defaultHUD
-
-        val screenGui = screenGui ?: run {
+        (screen ?: run {
             val temp = ScreenWindow()
             val minecraft = Minecraft.getInstance()
             temp.init(minecraft, minecraft.window.guiScaledWidth, minecraft.window.guiScaledHeight)
-            screenGui = temp
+            screen = temp
             temp
-        }
-
-        if (_refreshHUD) {
-            screenGui.screenContainer.clearChildren()
-            currentMode.makeHUD(screenGui.screenContainer)
-            _refreshHUD = false
-        }
-
-        screenGui.render(stack, 0, 0, delta)
+        }).onRenderHUD(stack, delta)
     }
 
     internal lateinit var gui: ToolgunGUI

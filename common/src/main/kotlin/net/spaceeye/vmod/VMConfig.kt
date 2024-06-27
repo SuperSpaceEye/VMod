@@ -27,7 +27,7 @@ object VMConfig {
     }
     class Common: ConfigSubDirectory()
     class Server: ConfigSubDirectory() {
-        val AUTOREMOVE_MASSLESS_SHIPS: Boolean by CBool(false, "MAY BREAK SOMETHING. if true, will automatically remove massless ships if they appear.")
+        val AUTOREMOVE_MASSLESS_SHIPS: Boolean by CBool(true, "MAY BREAK SOMETHING. if true, will automatically remove massless ships if they appear.")
 
         val TOOLGUN = ServerToolgunSettings()
         val PERMISSIONS = Permissions()

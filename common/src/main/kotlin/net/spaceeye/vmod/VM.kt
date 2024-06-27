@@ -2,7 +2,6 @@ package net.spaceeye.vmod
 
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.event.events.common.LifecycleEvent
-import dev.architectury.platform.Platform
 import dev.architectury.utils.Env
 import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
@@ -16,6 +15,7 @@ import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.sendHUDErrorToOperators
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
@@ -27,16 +27,18 @@ fun WLOG(s: String) = VM.logger.warn(s)
 fun DLOG(s: String) = VM.logger.debug(s)
 fun ELOG(s: String) = VM.logger.error(s)
 
+// B is for broadcast
+fun BWLOG(main: String, toBroadcast: String) {
+    WLOG(main)
+    sendHUDErrorToOperators(toBroadcast)
+}
+
 object VM {
     const val MOD_ID = "valkyrien_mod"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!
 
     @JvmStatic
     fun init() {
-        if (!Platform.isModLoaded("valkyrienskies")) {
-            WLOG("VALKYRIEN SKIES IS NOT INSTALLED. NOT INITIALIZING THE MOD.")
-            return
-        }
         ConfigDelegateRegister.initConfig()
 
         SynchronisedRenderingData

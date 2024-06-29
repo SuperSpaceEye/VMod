@@ -6,10 +6,12 @@
 * "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
 
-# Constraint disabler
+## Constraint disabler
 * A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
 
-# Toolgun settings presets menu
+## Toolgun settings presets menu
+
+## Add a "wire" thing maybe as an addon to vmod
 
 ## General Code Structure
 * Extract more code from Placement Assist for an easier use

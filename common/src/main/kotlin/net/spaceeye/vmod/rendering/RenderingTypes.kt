@@ -9,5 +9,6 @@ object RenderingTypes: Registry<BaseRenderer>() {
         register(::A2BRenderer)
         register(::TimedA2BRenderer)
         register(::PhysRopeRenderer)
+        register(::ConeBlockRenderer)
     }
 }

@@ -49,8 +49,9 @@ class ConeBlockRenderer(): BlockRenderer {
         RenderSystem.setShader(GameRenderer::getPositionShader)
         RenderSystem.enableBlend()
 
-        val ship = level.getShipManagingPos(pos.toBlockPos())
-        val rpoint = posShipToWorldRender(ship as ClientShip, pos)
+        val ship = (level.getShipManagingPos(pos.toBlockPos()) ?: return) as ClientShip
+        val shipScale = ship.renderTransform.shipToWorldScaling.x()
+        val rpoint = posShipToWorldRender(ship, pos)
 
         poseStack.pushPose()
 
@@ -67,7 +68,7 @@ class ConeBlockRenderer(): BlockRenderer {
         )
 
         poseStack.scale(scale, scale, scale)
-        poseStack.translate(-0.5, -0.5 / scale, -0.5)
+        poseStack.translate(-0.5, -0.5 / scale * shipScale, -0.5)
 
         val combinedLightIn = LightTexture.pack(0, level.getBrightness(LightLayer.SKY, rpoint.toBlockPos()))
         val combinedOverlayIn = OverlayTexture.NO_OVERLAY

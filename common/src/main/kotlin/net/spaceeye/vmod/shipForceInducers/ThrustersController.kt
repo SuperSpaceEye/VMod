@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.*
+import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 import java.util.concurrent.locks.ReentrantLock
 
 data class ThrusterData(
@@ -66,6 +67,7 @@ class ThrustersController: ShipForcesInducer {
     private var id = 0
 
     override fun applyForces(physShip: PhysShip) {
+        physShip as PhysShipImpl
         synchronized(lock) {
             thrustersData.values.forEach {
                 if (it.percentage <= 0.0) {return@forEach}
@@ -93,7 +95,9 @@ class ThrustersController: ShipForcesInducer {
         synchronized(lock) {
             if (data.id != id) { return false }
             thrustersData[id] ?: return false
-            thrustersData[id] = data.deepCopy()
+            val copy = data.deepCopy()
+            copy.compiledForce = copy.forceDir.mul(copy.force * copy.percentage, JVector3d())
+            thrustersData[id] = copy
             return true
         }
     }

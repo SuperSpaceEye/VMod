@@ -44,6 +44,18 @@ object VMCommands {
             VMConfig.SERVER.PERMISSIONS.VMOD_COMMANDS_PERMISSION_LEVEL = value
         }
 
+    private fun isHoldingToolgun(it: CommandSourceStack): Boolean {
+        val player = try {
+            it.playerOrException
+        } catch (e: Exception) {
+            return false
+        }
+
+        return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem()
+    }
+
+    //==========//==========//==========//==========//==========//==========//==========//==========//==========//==========
+
     private fun teleportCommand(cc: CommandContext<CommandSourceStack>): Int {
         val source = cc.source as CommandSourceStack
 
@@ -79,16 +91,6 @@ object VMCommands {
             .forEach { shipObjectWorld.deleteShip(it) }
 
         return 0
-    }
-
-    private fun isHoldingToolgun(it: CommandSourceStack): Boolean {
-        val player = try {
-            it.playerOrException
-        } catch (e: Exception) {
-            return false
-        }
-
-        return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem()
     }
 
     private fun saveSchemToServer(cc: CommandContext<CommandSourceStack>): Int {
@@ -151,24 +153,25 @@ object VMCommands {
         return 0
     }
 
+    private object OP {
+        fun allowPlayerToUseToolgun(cc: CommandContext<CommandSourceStack>): Int {
+            val uuid = EntityArgument.getPlayer(cc, "player").uuid
+            ToolgunPermissionManager.allowedPlayersAdd(uuid)
+            return 0
+        }
 
-    private fun allowPlayerToUseToolgun(cc: CommandContext<CommandSourceStack>): Int {
-        val uuid = EntityArgument.getPlayer(cc, "player").uuid
-        ToolgunPermissionManager.allowedPlayersAdd(uuid)
-        return 0
-    }
+        fun disallowPlayerFromUsingToolgun(cc: CommandContext<CommandSourceStack>): Int {
+            val uuid = EntityArgument.getPlayer(cc, "player").uuid
+            ToolgunPermissionManager.disallowedPlayersAdd(uuid)
+            return 0
+        }
 
-    private fun disallowPlayerFromUsingToolgun(cc: CommandContext<CommandSourceStack>): Int {
-        val uuid = EntityArgument.getPlayer(cc, "player").uuid
-        ToolgunPermissionManager.disallowedPlayersAdd(uuid)
-        return 0
-    }
-
-    private fun clearPlayerFromSpecialPermission(cc: CommandContext<CommandSourceStack>): Int {
-        val uuid = EntityArgument.getPlayer(cc, "player").uuid
-        ToolgunPermissionManager.allowedPlayersRemove(uuid)
-        ToolgunPermissionManager.disallowedPlayersRemove(uuid)
-        return 0
+        fun clearPlayerFromSpecialPermission(cc: CommandContext<CommandSourceStack>): Int {
+            val uuid = EntityArgument.getPlayer(cc, "player").uuid
+            ToolgunPermissionManager.allowedPlayersRemove(uuid)
+            ToolgunPermissionManager.disallowedPlayersRemove(uuid)
+            return 0
+        }
     }
 
     fun registerServerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
@@ -213,6 +216,16 @@ object VMCommands {
                     )
                 )
             ).then(
+                lt("prevent-assembly-inside").then(
+                    arg("name", StringArgumentType.string()).then(
+                        arg("pos1", Vec3Argument.vec3()).then(
+                            arg("pos2", Vec3Argument.vec3()).executes {
+                                0
+                            }
+                        )
+                    )
+                )
+            ) .then(
                 lt("op")
                 .requires { it.hasPermission(VMConfig.SERVER.PERMISSIONS.VMOD_OP_COMMANDS_PERMISSION_LEVEL) }
                     .then(
@@ -225,19 +238,19 @@ object VMCommands {
                     ).then(
                         lt("allow-player-to-use-toolgun").then(
                             arg("player", EntityArgument.player()).executes {
-                                allowPlayerToUseToolgun(it)
+                                OP.allowPlayerToUseToolgun(it)
                             }
                         )
                     ).then(
                         lt("disallow-player-from-using-toolgun").then(
                             arg("player", EntityArgument.player()).executes {
-                                disallowPlayerFromUsingToolgun(it)
+                                OP.disallowPlayerFromUsingToolgun(it)
                             }
                         )
                     ).then(
                         lt("clear-player-from-special-permissions").then(
                             arg("player", EntityArgument.player()).executes {
-                                clearPlayerFromSpecialPermission(it)
+                                OP.clearPlayerFromSpecialPermission(it)
                             }
                         )
                     )

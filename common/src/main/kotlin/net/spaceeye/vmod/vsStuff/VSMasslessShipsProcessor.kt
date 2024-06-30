@@ -1,6 +1,7 @@
-package net.spaceeye.vmod
+package net.spaceeye.vmod.vsStuff
 
 import dev.architectury.event.events.common.TickEvent
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.utils.ServerClosable
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld

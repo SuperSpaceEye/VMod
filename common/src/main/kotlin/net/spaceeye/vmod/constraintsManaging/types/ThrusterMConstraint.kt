@@ -4,16 +4,19 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.network.Message
 import net.spaceeye.vmod.network.MessagingNetwork
 import net.spaceeye.vmod.network.Signal
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
+import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
 import net.spaceeye.vmod.shipForceInducers.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getVector3d
 import net.spaceeye.vmod.utils.putVector3d
+import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -61,12 +64,33 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
 
     override fun getAttachmentPoints(): List<BlockPos> = listOf(bpos)
     override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
-        throw AssertionError()
+        (renderer!! as ConeBlockRenderer).scale *= scaleBy.toFloat()
+        SynchronisedRenderingData.serverSynchronisedData.setRenderer(shipId, shipId, rID, renderer!!)
+
+        if (!VMConfig.SERVER.SCALE_THRUSTERS_THRUST) {return}
+
+        val ship = level.shipObjectWorld.loadedShips.getById(shipId)!!
+        val controller = ThrustersController.getOrCreate(ship)
+
+        val thruster = controller.getThruster(thrusterId)!!
+        controller.updateThruster(thrusterId, thruster.copy(force = thruster.force * scaleBy * scaleBy))
     }
     override fun getVSIds(): Set<VSConstraintId> = setOf()
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        throw AssertionError()
-//        return ThrusterMConstraint(mapped[shipId] ?: return null, Vector3d(pos), bpos, Vector3d(forceDir), force, channel)
+        val nId = mapped[shipId] ?: return null
+
+        val nShip = level.shipObjectWorld.loadedShips.getById(nId) ?: level.shipObjectWorld.allShips.getById(nId) ?: return null
+
+        val oCentered = getCenterPos(pos.x.toInt(), pos.z.toInt())
+        val nCentered = getCenterPos(nShip.transform.positionInShip.x().toInt(), nShip.transform.positionInShip.z().toInt())
+
+        val nPos = pos - oCentered + nCentered
+        val nBPos = (Vector3d(bpos) - oCentered + nCentered).toBlockPos()
+
+        val renderer = (renderer as ConeBlockRenderer)
+        val nRenderer = ConeBlockRenderer(Vector3d(nPos), Quaterniond(renderer.rot), renderer.scale)
+
+        return ThrusterMConstraint(nShip.id, nPos, nBPos, Vector3d(forceDir), force, channel, nRenderer)
     }
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
@@ -99,7 +123,26 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
     }
 
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        throw AssertionError()
+        if (previous != bpos) {return}
+
+        val oShip = level.shipObjectWorld.loadedShips.getById(shipId) ?: return
+        val oController = ThrustersController.getOrCreate(oShip)
+        oController.removeThruster(thrusterId)
+
+        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
+
+        shipId = newShipId
+        pos = (pos - Vector3d(bpos) + Vector3d(new))
+        bpos = new
+
+        val nShip = level.shipObjectWorld.loadedShips.getById(newShipId) ?: level.shipObjectWorld.allShips.getById(newShipId) ?: return
+        val nController = ThrustersController.getOrCreate(nShip)
+        thrusterId = nController.newThruster(pos, forceDir, force)
+
+        val temp = (renderer as ConeBlockRenderer)
+        renderer = ConeBlockRenderer(pos, temp.rot, temp.scale)
+
+        rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(shipId, shipId, renderer!!)
     }
 
     override fun nbtSerialize(): CompoundTag? {

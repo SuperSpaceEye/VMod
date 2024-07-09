@@ -11,8 +11,9 @@ import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.PhysRopeGUI
 import net.spaceeye.vmod.toolgun.modes.hud.PhysRopeHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.PhysRopeCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.PhysRopeCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.PhysRopeSerializable
+import net.spaceeye.vmod.toolgun.modes.util.PlacementModesState
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePositions
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
@@ -24,12 +25,14 @@ import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCRIH, PhysRopeGUI, PhysRopeHUD {
+class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCEH, PhysRopeGUI, PhysRopeHUD, PlacementModesState {
+    override var posMode = PositionModes.NORMAL
+    override var precisePlacementAssistSideNum: Int = 3
+    override var precisePlacementAssistRendererId: Int = -1
+
     var compliance = 1e-20
     var maxForce = 1e10
     var fixedDistance = -1.0
-
-    var posMode = PositionModes.NORMAL
 
     var segments: Int = 16
     var massPerSegment: Double = 1000.0

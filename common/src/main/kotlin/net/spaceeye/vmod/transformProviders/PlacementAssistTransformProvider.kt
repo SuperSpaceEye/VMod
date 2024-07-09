@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
+import net.spaceeye.vmod.toolgun.modes.util.getModePosition
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import net.spaceeye.vmod.utils.vs.posWorldToShipRender
@@ -18,7 +19,8 @@ import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 class PlacementAssistTransformProvider(
     var firstResult: RaycastFunctions.RaycastResult,
     var mode: PositionModes,
-    var ship1: ClientShip
+    var ship1: ClientShip,
+    var precisePlacementAssistSideNum: Int
 ): ClientShipTransformProvider {
     val level = Minecraft.getInstance().level!!
     val player = Minecraft.getInstance().cameraEntity!!
@@ -76,9 +78,9 @@ class PlacementAssistTransformProvider(
                 .normalize()
         }
 
-        spoint1 = if (mode == PositionModes.NORMAL) {firstResult.globalHitPos!!} else {firstResult.globalCenteredHitPos!!}
-        spoint2 = if (mode == PositionModes.NORMAL) {secondResult.globalHitPos!!} else {secondResult.globalCenteredHitPos!!}
-        val rpoint2 = if (mode == PositionModes.NORMAL) {secondResult.worldHitPos!!} else {secondResult.worldCenteredHitPos!!}
+        spoint1 = getModePosition(mode, firstResult, precisePlacementAssistSideNum)
+        spoint2 = getModePosition(mode, secondResult, precisePlacementAssistSideNum)
+        val rpoint2 = secondResult.ship?.let {posShipToWorldRender(secondResult.ship as ClientShip, spoint2)} ?: Vector3d(spoint2)
 
         // ship transform modifies both position in world AND rotation, but while we don't care about position in world,
         // rotation is incredibly important

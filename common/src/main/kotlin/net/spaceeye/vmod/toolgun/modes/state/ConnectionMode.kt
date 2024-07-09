@@ -13,7 +13,7 @@ import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ConnectionHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.ConnectionCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.ConnectionCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.ConnectionSerializable
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.utils.*
@@ -24,7 +24,7 @@ import java.awt.Color
 
 object ConnectionNetworking: PlacementAssistNetworking("connection_networking")
 
-class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCRIH, ConnectionGUI, ConnectionHUD, PlacementAssistServerPart, PlacementAssistNetworkingUnit {
+class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCEH, ConnectionGUI, ConnectionHUD, PlacementAssistServerPart, PlacementAssistNetworkingUnit {
     var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2
@@ -33,7 +33,10 @@ class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCRIH, Connecti
 
     var fixedDistance: Double = -1.0
     var connectionMode = ConnectionMConstraint.ConnectionModes.FIXED_ORIENTATION
+
     override var posMode = PositionModes.NORMAL
+    override var precisePlacementAssistSideNum: Int = 3
+    override var precisePlacementAssistRendererId: Int = -1
 
     override var paDistanceFromBlock = 0.01
     override var paStage: ThreeClicksActivationSteps = ThreeClicksActivationSteps.FIRST_RAYCAST
@@ -67,7 +70,7 @@ class ConnectionMode: BaseMode, ConnectionSerializable, ConnectionCRIH, Connecti
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         level.makeManagedConstraint(ConnectionMConstraint(

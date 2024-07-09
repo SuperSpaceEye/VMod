@@ -12,14 +12,21 @@ import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.ThrusterGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ThrusterHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.ThrusterCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.ThrusterCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.ThrusterSerializable
+import net.spaceeye.vmod.toolgun.modes.util.PlacementModesState
+import net.spaceeye.vmod.toolgun.modes.util.PositionModes
+import net.spaceeye.vmod.toolgun.modes.util.getModePosition
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.getQuatFromDir
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class ThrusterMode: BaseMode, ThrusterSerializable, ThrusterCRIH, ThrusterHUD, ThrusterGUI {
+class ThrusterMode: BaseMode, ThrusterSerializable, ThrusterCEH, ThrusterHUD, ThrusterGUI, PlacementModesState {
+    override var posMode = PositionModes.NORMAL
+    override var precisePlacementAssistSideNum: Int = 3
+    override var precisePlacementAssistRendererId: Int = -1
+
     var force = 10000.0
     var channel = "thruster"
 
@@ -32,7 +39,8 @@ class ThrusterMode: BaseMode, ThrusterSerializable, ThrusterCRIH, ThrusterHUD, T
 
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return
 
-        val basePos = raycastResult.globalHitPos!! + raycastResult.globalNormalDirection!! * 0.5
+        val pos = getModePosition(posMode, raycastResult, precisePlacementAssistSideNum)
+        val basePos = pos + raycastResult.globalNormalDirection!! * 0.5
 
         level.makeManagedConstraint(ThrusterMConstraint(
             ship.id,

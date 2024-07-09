@@ -33,7 +33,6 @@ abstract public class ShipObjectServerWorldMixin {
         deletedShipObjects.forEach((data) -> AVSEvents.INSTANCE.getServerShipRemoveEvent().emit(new AVSEvents.ServerShipRemoveEvent(data)));
     }
 
-    //TODO this will silence "Ship with ID {} has a mass of 0.0, not creating a ShipObject"
     @Redirect(
             method = "postTick",
             at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V"),

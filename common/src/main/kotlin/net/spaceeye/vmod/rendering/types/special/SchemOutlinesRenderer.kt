@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.rendering.types
+package net.spaceeye.vmod.rendering.types.special
 
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.rendering.RenderingUtils
+import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
@@ -33,12 +34,8 @@ class SchemOutlinesRenderer(
     val rotationAngle: Ref<Double>,
     val center: ShipTransformImpl,
     val ships: List<Pair<ShipTransform, AABBic>>
-): BaseRenderer, TimedRenderer, PositionDependentRenderer {
+): BaseRenderer {
     override val typeName get() = "SchemOutlinesRenderer"
-    override var timestampOfBeginning: Long = -1
-    override var activeFor_ms: Long = Long.MAX_VALUE / 2
-    override var wasActivated: Boolean = false
-    override val renderingPosition get() = Vector3d(Minecraft.getInstance().cameraEntity!!.position())
 
     val aabbPoints = mutableListOf(Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d())
 

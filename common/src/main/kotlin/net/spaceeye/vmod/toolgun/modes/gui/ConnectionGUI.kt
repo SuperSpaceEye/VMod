@@ -15,10 +15,10 @@ import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.ConnectionMode
-import net.spaceeye.vmod.toolgun.modes.util.PositionModes
+import net.spaceeye.vmod.toolgun.modes.util.PlacementModesGUI
 import net.spaceeye.vmod.translate.*
 
-interface ConnectionGUI: GUIBuilder {
+interface ConnectionGUI: GUIBuilder, PlacementModesGUI {
     override val itemName get() = CONNECTION
 
     override fun makeGUISettings(parentWindow: UIContainer) {
@@ -35,12 +35,8 @@ interface ConnectionGUI: GUIBuilder {
         makeTextEntry(FIXED_DISTANCE.get(),     ::fixedDistance,     offset, offset, parentWindow)
 
         makeTextEntry(DISTANCE_FROM_BLOCK.get(), ::paDistanceFromBlock, offset, offset, parentWindow, limits.distanceFromBlock)
-        makeDropDown(
-            HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
-            DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
-            DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK },
-        ))
+
+        pmMakePlacementModesGUIPart(parentWindow, offset)
 
         makeDropDown(CONNECTION_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(FIXED_ORIENTATION.get(), connectionMode == ConnectionModes.FIXED_ORIENTATION) { connectionMode = ConnectionModes.FIXED_ORIENTATION },

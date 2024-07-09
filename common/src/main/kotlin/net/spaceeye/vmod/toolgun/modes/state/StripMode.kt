@@ -14,13 +14,13 @@ import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
 import net.spaceeye.vmod.toolgun.modes.hud.StripHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.StripCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.StripCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.StripSerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class StripMode: BaseMode, StripSerializable, StripCRIH, StripGUI, StripHUD {
+class StripMode: BaseMode, StripSerializable, StripCEH, StripGUI, StripHUD {
     enum class StripModes {
         StripAll,
         StripInRadius

@@ -15,10 +15,10 @@ import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.HydraulicsMode
-import net.spaceeye.vmod.toolgun.modes.util.PositionModes
+import net.spaceeye.vmod.toolgun.modes.util.PlacementModesGUI
 import net.spaceeye.vmod.translate.*
 
-interface HydraulicsGUI: GUIBuilder {
+interface HydraulicsGUI: GUIBuilder, PlacementModesGUI {
     override val itemName get() = HYDRAULICS
 
     override fun makeGUISettings(parentWindow: UIContainer) {
@@ -47,12 +47,7 @@ interface HydraulicsGUI: GUIBuilder {
             DItem(SIGNAL.get(), messageModes == net.spaceeye.vmod.network.MessageModes.Signal) { messageModes = net.spaceeye.vmod.network.MessageModes.Signal }
         ))
 
-        makeDropDown(
-            HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
-            DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
-            DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK },
-        ))
+        pmMakePlacementModesGUIPart(parentWindow, offset)
 
         makeDropDown(CONNECTION_MODES.get(), parentWindow, offset, offset, listOf(
             DItem(FIXED_ORIENTATION.get(), connectionMode == ConnectionMode.FIXED_ORIENTATION) { connectionMode = ConnectionMode.FIXED_ORIENTATION },

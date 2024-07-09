@@ -7,8 +7,9 @@ import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.StrLimit
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.ThrusterMode
+import net.spaceeye.vmod.toolgun.modes.util.PlacementModesGUI
 
-interface ThrusterGUI: GUIBuilder {
+interface ThrusterGUI: GUIBuilder, PlacementModesGUI {
     override val itemName get() = TranslatableComponent("Thruster")
 
     override fun makeGUISettings(parentWindow: UIContainer) {
@@ -16,5 +17,7 @@ interface ThrusterGUI: GUIBuilder {
 
         makeTextEntry("Channel", ::channel, 2f, 2f, parentWindow, StrLimit(50))
         makeTextEntry("Force", ::force, 2f, 2f, parentWindow, DoubleLimit(1.0))
+
+        pmMakePlacementModesNoCenteredInBlockGUIPart(parentWindow, 2f)
     }
 }

@@ -9,7 +9,7 @@ import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.ScaleGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ScaleHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.ScaleCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.ScaleCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.ScaleSerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -18,7 +18,7 @@ import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
 import org.joml.Quaterniond
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class ScaleMode: BaseMode, ScaleCRIH, ScaleSerializable, ScaleGUI, ScaleHUD {
+class ScaleMode: BaseMode, ScaleCEH, ScaleSerializable, ScaleGUI, ScaleHUD {
     var scale = 1.0
 
 

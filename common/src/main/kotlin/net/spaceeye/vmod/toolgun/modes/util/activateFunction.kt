@@ -5,6 +5,7 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.createSpacedPoints
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -16,18 +17,54 @@ enum class PositionModes {
     NORMAL,
     CENTERED_ON_SIDE,
     CENTERED_IN_BLOCK,
+    PRECISE_PLACEMENT,
 }
 
-inline fun getModePositions(mode: PositionModes, prevPos: RaycastFunctions.RaycastResult, pos: RaycastFunctions.RaycastResult): Pair<Vector3d, Vector3d> {
+inline fun getModePosition(mode: PositionModes, pos: RaycastFunctions.RaycastResult, precisePlacementSideNum: Int = 3): Vector3d {
+    return when(mode) {
+        PositionModes.NORMAL -> pos.globalHitPos!!
+        PositionModes.CENTERED_ON_SIDE -> pos.globalCenteredHitPos!!
+        PositionModes.CENTERED_IN_BLOCK ->  Vector3d(pos.blockPosition) + 0.5
+        PositionModes.PRECISE_PLACEMENT -> calculatePrecise(pos, precisePlacementSideNum)
+    }
+}
+
+inline fun getModePositions(mode: PositionModes, prevPos: RaycastFunctions.RaycastResult, pos: RaycastFunctions.RaycastResult, precisePlacementSideNum: Int = 3): Pair<Vector3d, Vector3d> {
     return when(mode) {
         PositionModes.NORMAL -> Pair(prevPos.globalHitPos!!, pos.globalHitPos!!)
         PositionModes.CENTERED_ON_SIDE -> Pair(prevPos.globalCenteredHitPos!!, pos.globalCenteredHitPos!!)
         PositionModes.CENTERED_IN_BLOCK -> Pair(Vector3d(prevPos.blockPosition) + 0.5, Vector3d(pos.blockPosition) + 0.5)
+        PositionModes.PRECISE_PLACEMENT -> Pair(calculatePrecise(prevPos, precisePlacementSideNum), calculatePrecise(pos, precisePlacementSideNum))
     }
+}
+
+fun calculatePrecise(raycastResult: RaycastFunctions.RaycastResult, precisePlacementSideNum: Int = 3): Vector3d {
+    val centered = raycastResult.globalCenteredHitPos!!
+    val globalNormal = raycastResult.globalNormalDirection!!
+    val point = raycastResult.globalHitPos!!
+
+    val up = when {
+        globalNormal.x > 0.5 || globalNormal.x < -0.5 -> Vector3d(0, 1, 0)
+        globalNormal.y > 0.5 || globalNormal.y < -0.5 -> Vector3d(1, 0, 0)
+        globalNormal.z > 0.5 || globalNormal.z < -0.5 -> Vector3d(0, 1, 0)
+        else -> throw AssertionError("impossible")
+    }
+
+    val right = when {
+        globalNormal.x > 0.5 || globalNormal.x < -0.5 -> Vector3d(0, 0, 1)
+        globalNormal.y > 0.5 || globalNormal.y < -0.5 -> Vector3d(0, 0, 1)
+        globalNormal.z > 0.5 || globalNormal.z < -0.5 -> Vector3d(1, 0, 0)
+        else -> throw AssertionError("impossible")
+    }
+
+    val points = createSpacedPoints(centered, up, right, 1.0, precisePlacementSideNum).reduce { acc, vector3ds -> acc.addAll(vector3ds); acc }
+
+    return points.minBy { (it - point).sqrDist() }
 }
 
 fun BaseMode.serverRaycast2PointsFnActivation(
     mode: PositionModes,
+    precisePlacementAssistSideNum: Int,
     level: Level,
     raycastResult: RaycastFunctions.RaycastResult,
     processNewResult: (RaycastFunctions.RaycastResult) -> Pair<Boolean, RaycastFunctions.RaycastResult?>,
@@ -59,7 +96,7 @@ fun BaseMode.serverRaycast2PointsFnActivation(
     val shipId1: ShipId = ship1?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
     val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
-    val (spoint1, spoint2) = getModePositions(mode, previousResult, raycastResult)
+    val (spoint1, spoint2) = getModePositions(mode, previousResult, raycastResult, precisePlacementAssistSideNum)
 
     val rpoint1 = if (ship1 == null) spoint1 else posShipToWorld(ship1, Vector3d(spoint1))
     val rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))

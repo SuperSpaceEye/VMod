@@ -14,7 +14,7 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.rendering.SynchronisedRenderingData
-import net.spaceeye.vmod.rendering.types.SchemOutlinesRenderer
+import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.schematic.containers.ShipInfo
@@ -27,7 +27,7 @@ import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.SchemCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.SchemCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.SchemSerializable
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
@@ -304,7 +304,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     }
 }
 
-class SchemMode: BaseMode, SchemGUI, SchemCRIH, SchemSerializable, SchemHUD {
+class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
     override var itemsScroll: ScrollComponent? = null
     override lateinit var parentWindow: UIContainer
 

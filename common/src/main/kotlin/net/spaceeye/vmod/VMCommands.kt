@@ -21,9 +21,12 @@ import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
 import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
+import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
+import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
+import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.command.RelativeVector3Argument
 import org.valkyrienskies.mod.common.command.ShipArgument
 import org.valkyrienskies.mod.common.command.shipWorld
@@ -175,6 +178,52 @@ object VMCommands {
         return 0
     }
 
+    private fun setGravityForConnected(cc: CommandContext<CommandSourceStack>): Int {
+        val ships = ShipArgument.getShips(cc as VSCS, "ships")
+
+        val all = cc.source.shipWorld.allShips
+        val loaded = cc.source.shipWorld.loadedShips
+
+        val traversed = mutableSetOf<ShipId>()
+        ships.forEach {
+            if (traversed.contains(it.id)) {return@forEach}
+            traversed.addAll(traverseGetConnectedShips(it.id, traversed).traversedShipIds)
+        }
+
+        val x = DoubleArgumentType.getDouble(cc, "x")
+        val y = DoubleArgumentType.getDouble(cc, "y")
+        val z = DoubleArgumentType.getDouble(cc, "z")
+
+        traversed
+            .mapNotNull { loaded.getById(it) ?: all.getById(it) }
+            .forEach { GravityController.getOrCreate(it as ServerShip).gravityVector = Vector3d(x, y, z) }
+
+        return 0
+    }
+
+    private fun setGravityForConnectedAndTouching(cc: CommandContext<CommandSourceStack>): Int {
+        val ships = ShipArgument.getShips(cc as VSCS, "ships")
+
+        val all = cc.source.shipWorld.allShips
+        val loaded = cc.source.shipWorld.loadedShips
+
+        val traversed = mutableSetOf<ShipId>()
+        ships.forEach {
+            if (traversed.contains(it.id)) {return@forEach}
+            traversed.addAll(traverseGetAllTouchingShips((cc as MCS).source.level, it.id, traversed))
+        }
+
+        val x = DoubleArgumentType.getDouble(cc, "x")
+        val y = DoubleArgumentType.getDouble(cc, "y")
+        val z = DoubleArgumentType.getDouble(cc, "z")
+
+        traversed
+            .mapNotNull { loaded.getById(it) ?: all.getById(it) }
+            .forEach { GravityController.getOrCreate(it as ServerShip).gravityVector = Vector3d(x, y, z) }
+
+        return 0
+    }
+
     private fun resetGravityFor(cc: CommandContext<CommandSourceStack>): Int {
         val ships = ShipArgument.getShips(cc as VSCS, "ships")
 
@@ -284,6 +333,30 @@ object VMCommands {
                                 arg("y", DoubleArgumentType.doubleArg()).then(
                                     arg("z", DoubleArgumentType.doubleArg()).executes {
                                         setGravityFor(it)
+                                    }
+                                )
+                            )
+                        )
+                    )
+                ).then(
+                    lt("set-for-connected").then(
+                        arg("ships", ShipArgument.ships()).then(
+                            arg("x", DoubleArgumentType.doubleArg()).then(
+                                arg("y", DoubleArgumentType.doubleArg()).then(
+                                    arg("z", DoubleArgumentType.doubleArg()).executes {
+                                        setGravityForConnected(it)
+                                    }
+                                )
+                            )
+                        )
+                    )
+                ).then(
+                    lt("set-for-connected-and-touching").then(
+                        arg("ships", ShipArgument.ships()).then(
+                            arg("x", DoubleArgumentType.doubleArg()).then(
+                                arg("y", DoubleArgumentType.doubleArg()).then(
+                                    arg("z", DoubleArgumentType.doubleArg()).executes {
+                                        setGravityForConnectedAndTouching(it)
                                     }
                                 )
                             )

@@ -9,19 +9,24 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import net.minecraft.commands.CommandSourceStack
+import net.minecraft.commands.arguments.DimensionArgument
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.minecraft.network.chat.TextComponent
 import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.shipForceInducers.GravityController
+import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
 import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
+import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.command.RelativeVector3Argument
 import org.valkyrienskies.mod.common.command.ShipArgument
+import org.valkyrienskies.mod.common.command.shipWorld
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.mod.mixinducks.feature.command.VSCommandSource
@@ -51,7 +56,7 @@ object VMCommands {
             return false
         }
 
-        return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem()
+        return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem() && ServerToolGunState.playerHasAccess(player)
     }
 
     //==========//==========//==========//==========//==========//==========//==========//==========//==========//==========
@@ -153,6 +158,46 @@ object VMCommands {
         return 0
     }
 
+    private fun setGravityFor(cc: CommandContext<CommandSourceStack>): Int {
+        val ships = ShipArgument.getShips(cc as VSCS, "ships")
+
+        val all = cc.source.shipWorld.allShips
+        val loaded = cc.source.shipWorld.loadedShips
+
+        val x = DoubleArgumentType.getDouble(cc, "x")
+        val y = DoubleArgumentType.getDouble(cc, "y")
+        val z = DoubleArgumentType.getDouble(cc, "z")
+
+        ships
+            .mapNotNull { loaded.getById(it.id) ?: all.getById(it.id) }
+            .forEach { GravityController.getOrCreate(it as ServerShip).gravityVector = Vector3d(x, y, z) }
+
+        return 0
+    }
+
+    private fun resetGravityFor(cc: CommandContext<CommandSourceStack>): Int {
+        val ships = ShipArgument.getShips(cc as VSCS, "ships")
+
+        val all = cc.source.shipWorld.allShips
+        val loaded = cc.source.shipWorld.loadedShips
+
+        ships
+            .mapNotNull { loaded.getById(it.id) ?: all.getById(it.id) }
+            .forEach { GravityController.getOrCreate(it as ServerShip).reset() }
+
+        return 0
+    }
+
+    private fun resetGravityForEveryShipIn(cc: CommandContext<CommandSourceStack>): Int {
+        val loaded = cc.source.shipWorld.loadedShips
+        val all = cc.source.shipWorld.allShips
+
+        all.forEach { GravityController.getOrCreate(it as ServerShip).reset() }
+        loaded.forEach { GravityController.getOrCreate(it as ServerShip).reset() }
+
+        return 0
+    }
+
     private object OP {
         fun allowPlayerToUseToolgun(cc: CommandContext<CommandSourceStack>): Int {
             val uuid = EntityArgument.getPlayer(cc, "player").uuid
@@ -172,11 +217,23 @@ object VMCommands {
             ToolgunPermissionManager.disallowedPlayersRemove(uuid)
             return 0
         }
+
+        fun changeDimensionGravity(cc: CommandContext<CommandSourceStack>): Int {
+            val dimension = DimensionArgument.getDimension(cc, "dimension")
+
+            val x = DoubleArgumentType.getDouble(cc, "x")
+            val y = DoubleArgumentType.getDouble(cc, "y")
+            val z = DoubleArgumentType.getDouble(cc, "z")
+
+            VSGravityManager.setGravity(dimension, Vector3d(x, y, z))
+
+            return 0
+        }
     }
 
     fun registerServerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
-                lt("vmod")
+            lt("vmod")
             .requires { it.hasPermission(permissionLevel) || isHoldingToolgun(it) }
             .then(
                 lt("teleport").then(
@@ -200,60 +257,92 @@ object VMCommands {
             ).then(
                 lt("vs-delete-massless-ships").executes { vsDeleteMasslessShips(it) }
             ).then(
-                lt("save-schem-to-sever").then(
-                    arg("name", StringArgumentType.string()).executes { saveSchemToServer(it) }
-                )
-            ).then(
-                lt("load-schem-from-sever").then(
-                    arg("name", StringArgumentType.string()).executes { loadSchemFromServer(it) }
-                )
-            ).then(
-                lt("place-server-schem").then(
-                    arg("position", Vec3Argument.vec3()).executes { placeServerSchematic(it) }.then(
-                        arg("rotation", RelativeVector3Argument.relativeVector3()).executes { placeServerSchematic(it) }.then(
-                            arg("name", StringArgumentType.string()).executes { placeServerSchematic(it) }
+                lt("schem")
+                .then(
+                    lt("save-to-sever").then(
+                        arg("name", StringArgumentType.string()).executes { saveSchemToServer(it) }
+                    )
+                ).then(
+                    lt("load-from-sever").then(
+                        arg("name", StringArgumentType.string()).executes { loadSchemFromServer(it) }
+                    )
+                ).then(
+                    lt("place").then(
+                        arg("position", Vec3Argument.vec3()).executes { placeServerSchematic(it) }.then(
+                            arg("rotation", RelativeVector3Argument.relativeVector3()).executes { placeServerSchematic(it) }.then(
+                                arg("name", StringArgumentType.string()).executes { placeServerSchematic(it) }
+                            )
                         )
                     )
                 )
             ).then(
-                lt("prevent-assembly-inside").then(
-                    arg("name", StringArgumentType.string()).then(
-                        arg("pos1", Vec3Argument.vec3()).then(
-                            arg("pos2", Vec3Argument.vec3()).executes {
-                                0
-                            }
+                lt("gravity")
+                .then(
+                    lt("set-for").then(
+                        arg("ships", ShipArgument.ships()).then(
+                            arg("x", DoubleArgumentType.doubleArg()).then(
+                                arg("y", DoubleArgumentType.doubleArg()).then(
+                                    arg("z", DoubleArgumentType.doubleArg()).executes {
+                                        setGravityFor(it)
+                                    }
+                                )
+                            )
                         )
                     )
+                ).then(
+                    lt("reset-for").then(
+                        arg("ships", ShipArgument.ships()).executes {
+                            resetGravityFor(it)
+                        }
+                    )
+                ).then(
+                    lt("reset-for-every-ship-in").then(
+                        arg("dimension", DimensionArgument.dimension()).executes {
+                            resetGravityForEveryShipIn(it)
+                        }
+                    )
                 )
-            ) .then(
+            ).then(
                 lt("op")
                 .requires { it.hasPermission(VMConfig.SERVER.PERMISSIONS.VMOD_OP_COMMANDS_PERMISSION_LEVEL) }
-                    .then(
-                        lt("set-command-permission-level").then(
-                            arg("level", IntegerArgumentType.integer(0, 4)).executes {
-                                permissionLevel = IntegerArgumentType.getInteger(it, "level")
-                                0
-                            }
-                        )
-                    ).then(
-                        lt("allow-player-to-use-toolgun").then(
-                            arg("player", EntityArgument.player()).executes {
-                                OP.allowPlayerToUseToolgun(it)
-                            }
-                        )
-                    ).then(
-                        lt("disallow-player-from-using-toolgun").then(
-                            arg("player", EntityArgument.player()).executes {
-                                OP.disallowPlayerFromUsingToolgun(it)
-                            }
-                        )
-                    ).then(
-                        lt("clear-player-from-special-permissions").then(
-                            arg("player", EntityArgument.player()).executes {
-                                OP.clearPlayerFromSpecialPermission(it)
-                            }
+                .then(
+                    lt("set-command-permission-level").then(
+                        arg("level", IntegerArgumentType.integer(0, 4)).executes {
+                            permissionLevel = IntegerArgumentType.getInteger(it, "level")
+                            0
+                        }
+                    )
+                ).then(
+                    lt("allow-player-to-use-toolgun").then(
+                        arg("player", EntityArgument.player()).executes {
+                            OP.allowPlayerToUseToolgun(it)
+                        }
+                    )
+                ).then(
+                    lt("disallow-player-from-using-toolgun").then(
+                        arg("player", EntityArgument.player()).executes {
+                            OP.disallowPlayerFromUsingToolgun(it)
+                        }
+                    )
+                ).then(
+                    lt("clear-player-from-special-permissions").then(
+                        arg("player", EntityArgument.player()).executes {
+                            OP.clearPlayerFromSpecialPermission(it)
+                        }
+                    )
+                ).then(
+                    lt("set-dimension-gravity").then(
+                        arg("dimension", DimensionArgument.dimension()).then(
+                            arg("x", DoubleArgumentType.doubleArg()).then(
+                                arg("y", DoubleArgumentType.doubleArg()).then(
+                                    arg("z", DoubleArgumentType.doubleArg()).executes {
+                                        OP.changeDimensionGravity(it)
+                                    }
+                                )
+                            )
                         )
                     )
+                )
             )
         )
     }

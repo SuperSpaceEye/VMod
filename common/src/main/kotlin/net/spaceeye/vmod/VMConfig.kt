@@ -31,6 +31,8 @@ object VMConfig {
 
         val SCALE_THRUSTERS_THRUST: Boolean by CBool(true)
 
+        var DIMENSION_GRAVITY_VALUES: String by CString("", "DO NOT CHANGE")
+
         val TOOLGUN = ServerToolgunSettings()
         val PERMISSIONS = Permissions()
         val SCHEMATICS = Schematics()

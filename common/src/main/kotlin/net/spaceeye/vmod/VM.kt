@@ -19,6 +19,7 @@ import net.spaceeye.vmod.toolgun.sendHUDErrorToOperators
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
+import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
@@ -41,6 +42,7 @@ object VM {
     fun init() {
         ConfigDelegateRegister.initConfig()
 
+        VSGravityManager
         SynchronisedRenderingData
         SimpleMessagerNetworking
         ToolgunModes

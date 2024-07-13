@@ -9,6 +9,7 @@ import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.ThrusterMode
 import net.spaceeye.vmod.toolgun.modes.util.PlacementModesGUI
 
+//TODO move to translatable some day in the future
 interface ThrusterGUI: GUIBuilder, PlacementModesGUI {
     override val itemName get() = TranslatableComponent("Thruster")
 

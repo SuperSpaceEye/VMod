@@ -8,7 +8,7 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.rendering.RenderingTypes
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.RopeRenderer
@@ -109,19 +109,19 @@ fun updateRenderer(
     shipId1: ShipId,
     id: Int
 ): BaseRenderer? {
-    val renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(id) ?: return null
+    val renderer = ServerRenderingData.getRenderer(id) ?: return null
 
     when (renderer) {
         is RopeRenderer -> {
             renderer.point1 = Vector3d(localPos0)
             renderer.point2 = Vector3d(localPos1)
-            SynchronisedRenderingData.serverSynchronisedData.setRenderer(shipId0, shipId1, id, renderer)
+            ServerRenderingData.setRenderer(shipId0, shipId1, id, renderer)
         }
 
         is A2BRenderer -> {
             renderer.point1 = Vector3d(localPos0)
             renderer.point2 = Vector3d(localPos1)
-            SynchronisedRenderingData.serverSynchronisedData.setRenderer(shipId0, shipId1, id, renderer)
+            ServerRenderingData.setRenderer(shipId0, shipId1, id, renderer)
         }
     }
     return renderer

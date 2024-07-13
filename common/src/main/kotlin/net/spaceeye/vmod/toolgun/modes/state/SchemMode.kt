@@ -13,7 +13,7 @@ import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.*
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
@@ -333,10 +333,9 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
         get() = shipInfo_
         set(info) {
             shipInfo_ = info
-            val rd = SynchronisedRenderingData.clientSynchronisedData
             if (info == null) {
                 renderer = null
-                rd.removeClientsideRenderer(rID)
+                ClientRenderingData.removeClientsideRenderer(rID)
                 return
             }
 
@@ -354,7 +353,7 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
 
             renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectEdge), rotationAngle, center, data)
 
-            rID = rd.addClientsideRenderer(renderer!!)
+            rID = ClientRenderingData.addClientsideRenderer(renderer!!)
 
             refreshHUD()
         }

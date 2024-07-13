@@ -9,7 +9,7 @@ import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.network.Message
 import net.spaceeye.vmod.network.MessagingNetwork
 import net.spaceeye.vmod.network.Signal
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
 import net.spaceeye.vmod.shipForceInducers.ThrustersController
@@ -65,7 +65,7 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
     override fun getAttachmentPoints(): List<BlockPos> = listOf(bpos)
     override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         (renderer!! as ConeBlockRenderer).scale *= scaleBy.toFloat()
-        SynchronisedRenderingData.serverSynchronisedData.setRenderer(shipId, shipId, rID, renderer!!)
+        ServerRenderingData.setRenderer(shipId, shipId, rID, renderer!!)
 
         if (!VMConfig.SERVER.SCALE_THRUSTERS_THRUST) {return}
 
@@ -106,15 +106,15 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
 
         thrusterId = controller.newThruster(pos, forceDir, force)
 
-        if (renderer != null) { rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(shipId, shipId, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID) }
+        if (renderer != null) { rID = ServerRenderingData.addRenderer(shipId, shipId, renderer!!)
+        } else { renderer = ServerRenderingData.getRenderer(rID) }
 
         return true
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
         wasRemoved = true
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
+        ServerRenderingData.removeRenderer(rID)
         val ship = level.shipObjectWorld.allShips.getById(shipId) ?: return
 
         val controller = ThrustersController.getOrCreate(ship)
@@ -129,7 +129,7 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         val oController = ThrustersController.getOrCreate(oShip)
         oController.removeThruster(thrusterId)
 
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
+        ServerRenderingData.removeRenderer(rID)
 
         shipId = newShipId
         pos = (pos - Vector3d(bpos) + Vector3d(new))
@@ -142,7 +142,7 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         val temp = (renderer as ConeBlockRenderer)
         renderer = ConeBlockRenderer(pos, temp.rot, temp.scale)
 
-        rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(shipId, shipId, renderer!!)
+        rID = ServerRenderingData.addRenderer(shipId, shipId, renderer!!)
     }
 
     override fun nbtSerialize(): CompoundTag? {

@@ -4,8 +4,8 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.deserializeBlockPositions
 import net.spaceeye.vmod.utils.serializeBlockPositions
@@ -128,13 +128,13 @@ class RopeMConstraint(): MConstraint, MRenderable {
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         vsId = level.shipObjectWorld.createNewConstraint(constraint) ?: return false
-        if (renderer != null) { rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID) }
+        if (renderer != null) { rID = ServerRenderingData.addRenderer(constraint.shipId0, constraint.shipId1, renderer!!)
+        } else { renderer = ServerRenderingData.getRenderer(rID) }
         return true
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {
         level.shipObjectWorld.removeConstraint(vsId)
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
+        ServerRenderingData.removeRenderer(rID)
     }
 }

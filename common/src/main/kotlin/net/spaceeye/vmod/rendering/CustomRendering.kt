@@ -53,7 +53,7 @@ private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera, rende
 
     try {
     for (ship in level.shipObjectWorld.loadedShips) {
-        val data = SynchronisedRenderingData.clientSynchronisedData.getData()
+        val data = ClientRenderingData.getData()
         for ((_, render) in data[ship.id] ?: continue) {
             when (render) {
                 is BlockRenderer -> if (renderBlockRenderers) render.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer)
@@ -72,7 +72,7 @@ private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera, rend
     val cpos = Vector3d(Minecraft.getInstance().player!!.position())
     val now = getNow_ms()
     val toDelete = mutableListOf<Int>()
-    val page = SynchronisedRenderingData.clientSynchronisedData.getData()[ReservedRenderingPages.TimedRenderingObjects] ?: return
+    val page = ClientRenderingData.getData()[ReservedRenderingPages.TimedRenderingObjects] ?: return
     for ((idx, render) in page) {
         if (render !is TimedRenderer || render !is PositionDependentRenderer) { toDelete.add(idx); ELOG("FOUND RENDERING DATA ${render.javaClass.simpleName} IN renderTimedObjects THAT DIDN'T IMPLEMENT INTERFACE TimedRenderingData OR PositionDependentRenderingData."); continue }
         if (!render.wasActivated && render.activeFor_ms == -1L) { render.timestampOfBeginning = now }
@@ -84,12 +84,12 @@ private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera, rend
     }
 
     if (toDelete.isEmpty()) {return}
-    SynchronisedRenderingData.clientSynchronisedData.removeTimedRenderers(toDelete)
+    ClientRenderingData.removeTimedRenderers(toDelete)
 }
 
 private inline fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean) {
     if (renderBlockRenderers) {return}
-    val page = SynchronisedRenderingData.clientSynchronisedData.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
+    val page = ClientRenderingData.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
     for ((_, render) in page) {
         render.renderData(poseStack, camera)
     }

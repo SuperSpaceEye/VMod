@@ -10,6 +10,8 @@
 ## Constraint disabler
 * A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
 
+## java.awt.Color doesn't exist in headless mode
+
 ## Redo ConstraintManager's tryMakeConstraint
 
 ## Toolgun settings presets menu

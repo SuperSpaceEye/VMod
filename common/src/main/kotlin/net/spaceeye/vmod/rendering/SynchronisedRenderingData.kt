@@ -29,7 +29,7 @@ private fun deserializeItem(buf: FriendlyByteBuf): Serializable {
     return item
 }
 
-class ClientSynchronisedRenderingData(val getServerInstance: () -> ServerSynchronisedRenderingData):
+class ClientSynchronisedRenderingData:
     SynchronisedDataReceiver<BaseRenderer>(
         "rendering_data",
         NetworkManager.Side.S2C,
@@ -71,7 +71,7 @@ class ClientSynchronisedRenderingData(val getServerInstance: () -> ServerSynchro
         }
     }
 }
-class ServerSynchronisedRenderingData(val getClientInstance: () -> ClientSynchronisedRenderingData):
+class ServerSynchronisedRenderingData:
     SynchronisedDataTransmitter<BaseRenderer>(
         "rendering_data",
         NetworkManager.Side.C2S,
@@ -141,13 +141,11 @@ class ServerSynchronisedRenderingData(val getClientInstance: () -> ClientSynchro
     }
 }
 
-object SynchronisedRenderingData {
-    lateinit var clientSynchronisedData: ClientSynchronisedRenderingData
-    lateinit var serverSynchronisedData: ServerSynchronisedRenderingData
+private object SynchronisedRenderingData {
+    var clientSynchronisedData = ClientSynchronisedRenderingData()
+    var serverSynchronisedData = ServerSynchronisedRenderingData()
 
     init {
-        clientSynchronisedData = ClientSynchronisedRenderingData { serverSynchronisedData }
-        serverSynchronisedData = ServerSynchronisedRenderingData { clientSynchronisedData }
         makeServerEvents()
         makeClientEvents()
     }
@@ -177,6 +175,16 @@ object SynchronisedRenderingData {
             serverSynchronisedData.removeSubscriber(it.uuid)
         }
     }
+}
+
+val ClientRenderingData: ClientSynchronisedRenderingData
+    get() = SynchronisedRenderingData.clientSynchronisedData
+
+val ServerRenderingData: ServerSynchronisedRenderingData
+    get() = SynchronisedRenderingData.serverSynchronisedData
+
+fun initRenderingData() {
+    SynchronisedRenderingData
 }
 
 class ServerSetRenderingSchemaPacket(): Serializable {

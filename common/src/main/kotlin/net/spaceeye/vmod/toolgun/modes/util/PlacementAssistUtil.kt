@@ -38,11 +38,10 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 import kotlin.math.sign
 
-interface PlacementAssistCRIHandler {
+interface PlacementAssistCEH: PlacementModesState, PlacementModesCEH {
     var paCaughtShip: ClientShip?
     var paCaughtShips: LongArray?
     var paStage: ThreeClicksActivationSteps
-    var posMode: PositionModes
 
     var paAngle: Ref<Double>
     var paScrollAngle: Double
@@ -87,7 +86,7 @@ interface PlacementAssistCRIHandler {
         val mode = if (posMode != PositionModes.CENTERED_IN_BLOCK) {posMode} else {PositionModes.CENTERED_ON_SIDE}
 
         paCaughtShip = (level.getShipManagingPos(raycastResult.blockPosition) ?: run {paClientResetState(); return}) as ClientShip
-        paCaughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, paCaughtShip!!)
+        paCaughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, paCaughtShip!!, precisePlacementAssistSideNum)
 
         paStage = ThreeClicksActivationSteps.SECOND_RAYCAST
         return
@@ -126,9 +125,17 @@ interface PlacementAssistCRIHandler {
         }
         paCaughtShips = null
     }
+
+    fun paOnOpen() {
+        pmOnOpen()
+    }
+
+    fun paOnClose() {
+        pmOnClose()
+    }
 }
 
-interface PlacementAssistNetworkingUnit: BaseMode, PlacementAssistServerPart, PlacementAssistCRIHandler
+interface PlacementAssistNetworkingUnit: BaseMode, PlacementAssistServerPart, PlacementAssistCEH
 
 open class PlacementAssistNetworking(networkName: String): BaseNetworking<PlacementAssistNetworkingUnit>() {
     val s2cHandleFailure = "handle_failure" idWithConns {
@@ -175,7 +182,7 @@ open class PlacementAssistNetworking(networkName: String): BaseNetworking<Placem
     }
 }
 
-interface PlacementAssistSerialize {
+interface PlacementAssistSerialize: PlacementModesSerializable {
     var paAngle: Ref<Double>
     var paDistanceFromBlock: Double
     var paStage: ThreeClicksActivationSteps
@@ -186,6 +193,9 @@ interface PlacementAssistSerialize {
         buf.writeDouble(paAngle.it)
         buf.writeEnum(paStage)
         buf.writeDouble(paScrollAngle)
+
+        pmSerialize(buf)
+
         return buf
     }
 
@@ -194,18 +204,21 @@ interface PlacementAssistSerialize {
         paAngle.it = buf.readDouble()
         paStage = buf.readEnum(paStage.javaClass)
         paScrollAngle = buf.readDouble()
+
+        pmDeserialize(buf)
     }
 
     fun paServerSideVerifyLimits() {
         val limits = ServerLimits.instance
         paDistanceFromBlock = limits.distanceFromBlock.get(paDistanceFromBlock)
+
+        pmServerSideVerifyLimits()
     }
 }
 
 //TODO add checks for if functions are actually invoked on server
-interface PlacementAssistServerPart {
+interface PlacementAssistServerPart: PlacementModesState {
     var paStage: ThreeClicksActivationSteps
-    var posMode: PositionModes
 
     var paAngle: Ref<Double>
     
@@ -275,7 +288,7 @@ interface PlacementAssistServerPart {
             .normalize()
 
 
-        val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.NORMAL) {posMode} else {PositionModes.CENTERED_ON_SIDE}, paFirstResult, paSecondResult)
+        val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.CENTERED_IN_BLOCK) {PositionModes.CENTERED_ON_SIDE} else {posMode}, paFirstResult, paSecondResult, precisePlacementAssistSideNum)
         var rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
         // rotation IS IMPORTANT, so make a new transform with new rotation to translate points

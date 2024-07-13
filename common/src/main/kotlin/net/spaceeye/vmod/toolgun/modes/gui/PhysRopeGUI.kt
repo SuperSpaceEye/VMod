@@ -1,16 +1,14 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIContainer
-import net.spaceeye.vmod.guiElements.DItem
-import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.PhysRopeMode
-import net.spaceeye.vmod.toolgun.modes.util.PositionModes
+import net.spaceeye.vmod.toolgun.modes.util.PlacementModesGUI
 import net.spaceeye.vmod.translate.*
 
-interface PhysRopeGUI: GUIBuilder {
+interface PhysRopeGUI: GUIBuilder, PlacementModesGUI {
     override val itemName get() = PHYS_ROPE
 
     override fun makeGUISettings(parentWindow: UIContainer) {
@@ -24,10 +22,7 @@ interface PhysRopeGUI: GUIBuilder {
         makeTextEntry(SEGMENTS.get(),       ::segments,      offset, offset, parentWindow, limits.physRopeSegments)
         makeTextEntry(MASS_PER_SEGMENT.get(),::massPerSegment,offset,offset, parentWindow, limits.physRopeMassPerSegment)
         makeTextEntry(RADIUS.get(),         ::radius,        offset, offset, parentWindow, limits.physRopeRadius)
-        makeDropDown(
-            HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL },
-            DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE },
-        ))
+
+        pmMakePlacementModesNoCenteredInBlockGUIPart(parentWindow, offset)
     }
 }

@@ -49,7 +49,8 @@ object RaycastFunctions {
         @JvmField var globalCenteredHitPos: Vector3d?,
         @JvmField var hitNormal: Vector3d?,
         @JvmField var worldNormalDirection: Vector3d?,
-        @JvmField var globalNormalDirection: Vector3d?
+        @JvmField var globalNormalDirection: Vector3d?,
+        @JvmField var ship: Ship?
     )
 
     //https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
@@ -106,7 +107,7 @@ object RaycastFunctions {
         )
 
         val state = level.getBlockState(clipResult.blockPos)
-        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null) }
+        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null, null) }
 
         val ship = level.getShipManagingPos(clipResult.blockPos)
 
@@ -144,7 +145,7 @@ object RaycastFunctions {
             worldCenteredHitPos = posShipToWorld(ship, globalCenteredHitPos, null)
         }
 
-        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection)
+        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection, ship)
     }
 
     fun Level.clipIncludeShips(

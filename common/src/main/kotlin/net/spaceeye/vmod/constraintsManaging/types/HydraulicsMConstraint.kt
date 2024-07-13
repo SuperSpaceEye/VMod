@@ -6,9 +6,9 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.network.*
+import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
@@ -183,7 +183,7 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
 
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
-        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID)
+        renderer = ServerRenderingData.getRenderer(rID)
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
         aconstraint2 = aconstraint2.copy(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1])
@@ -417,8 +417,8 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
             }
         }
 
-        if (renderer != null) { rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID) }
+        if (renderer != null) { rID = ServerRenderingData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, renderer!!)
+        } else { renderer = ServerRenderingData.getRenderer(rID) }
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return true}
@@ -431,6 +431,6 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
     override fun onDeleteMConstraint(level: ServerLevel) {
         wasDeleted = true
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
+        ServerRenderingData.removeRenderer(rID)
     }
 }

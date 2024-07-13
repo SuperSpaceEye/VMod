@@ -9,7 +9,7 @@ import net.spaceeye.vmod.shipForceInducers.GravityController
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.GravChangerGUI
 import net.spaceeye.vmod.toolgun.modes.hud.GravChangerHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.GravChangerCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.GravChangerCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.GravChangerSerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -19,7 +19,7 @@ import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class GravChangerMode: BaseMode, GravChangerSerializable, GravChangerCRIH, GravChangerHUD, GravChangerGUI {
+class GravChangerMode: BaseMode, GravChangerSerializable, GravChangerCEH, GravChangerHUD, GravChangerGUI {
     enum class Mode {
         Individual,
         AllConnected,

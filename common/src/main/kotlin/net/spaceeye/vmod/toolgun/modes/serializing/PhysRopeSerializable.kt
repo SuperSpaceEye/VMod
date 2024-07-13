@@ -4,8 +4,9 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
 import net.spaceeye.vmod.toolgun.modes.state.PhysRopeMode
+import net.spaceeye.vmod.toolgun.modes.util.PlacementModesSerializable
 
-interface PhysRopeSerializable: MSerializable {
+interface PhysRopeSerializable: MSerializable, PlacementModesSerializable {
     override fun serialize(): FriendlyByteBuf {
         this as PhysRopeMode
 
@@ -14,12 +15,13 @@ interface PhysRopeSerializable: MSerializable {
         buf.writeDouble(compliance)
         buf.writeDouble(maxForce)
         buf.writeDouble(fixedDistance)
-        buf.writeEnum(posMode)
         buf.writeInt(segments)
         buf.writeDouble(massPerSegment)
         buf.writeDouble(radius)
 
         buf.writeBoolean(primaryFirstRaycast)
+
+        pmSerialize(buf)
 
         return buf
     }
@@ -30,12 +32,13 @@ interface PhysRopeSerializable: MSerializable {
         compliance = buf.readDouble()
         maxForce = buf.readDouble()
         fixedDistance = buf.readDouble()
-        posMode = buf.readEnum(posMode.javaClass)
         segments = buf.readInt()
         massPerSegment = buf.readDouble()
         radius = buf.readDouble()
 
         primaryFirstRaycast = buf.readBoolean()
+
+        pmDeserialize(buf)
     }
 
     override fun serverSideVerifyLimits() {
@@ -48,5 +51,7 @@ interface PhysRopeSerializable: MSerializable {
         massPerSegment = limits.physRopeMassPerSegment.get(massPerSegment)
         radius = limits.physRopeRadius.get(radius)
         segments = limits.physRopeSegments.get(segments)
+
+        pmServerSideVerifyLimits()
     }
 }

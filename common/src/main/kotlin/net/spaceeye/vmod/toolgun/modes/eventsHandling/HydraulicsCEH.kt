@@ -1,15 +1,15 @@
-package net.spaceeye.vmod.toolgun.modes.inputHandling
+package net.spaceeye.vmod.toolgun.modes.eventsHandling
 
 import dev.architectury.event.EventResult
 import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.modes.ClientRawInputsHandler
+import net.spaceeye.vmod.toolgun.modes.ClientEventsHandler
 import net.spaceeye.vmod.toolgun.modes.state.HydraulicsMode
-import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistCRIHandler
+import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistCEH
 import net.spaceeye.vmod.toolgun.modes.util.ThreeClicksActivationSteps
 import org.lwjgl.glfw.GLFW
 
-interface HydraulicsCRIH: ClientRawInputsHandler, PlacementAssistCRIHandler {
-    override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+interface HydraulicsCEH: ClientEventsHandler, PlacementAssistCEH {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
         this as HydraulicsMode
         if (paStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !primaryFirstRaycast) { return EventResult.pass() }
 
@@ -21,7 +21,7 @@ interface HydraulicsCRIH: ClientRawInputsHandler, PlacementAssistCRIHandler {
         return EventResult.interruptFalse()
     }
 
-    override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
+    override fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         this as HydraulicsMode
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
             clientHandlePrimary()
@@ -38,12 +38,20 @@ interface HydraulicsCRIH: ClientRawInputsHandler, PlacementAssistCRIHandler {
         return EventResult.interruptFalse()
     }
 
-    override fun handleMouseScrollEvent(amount: Double): EventResult {
+    override fun onMouseScrollEvent(amount: Double): EventResult {
         return clientHandleMouseEventPA(amount)
     }
 
     private fun clientHandlePrimary() {
         this as HydraulicsMode
         primaryFirstRaycast = !primaryFirstRaycast
+    }
+
+    override fun onOpenMode() {
+        paOnOpen()
+    }
+
+    override fun onCloseMode() {
+        paOnClose()
     }
 }

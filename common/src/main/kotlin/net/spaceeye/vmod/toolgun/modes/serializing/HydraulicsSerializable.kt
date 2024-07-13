@@ -15,7 +15,6 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
 
         buf.writeDouble(compliance)
         buf.writeDouble(maxForce)
-        buf.writeEnum(posMode)
         buf.writeDouble(width)
         buf.writeDouble(extensionDistance)
         buf.writeDouble(extensionSpeed)
@@ -36,7 +35,6 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
         this as HydraulicsMode
         compliance = buf.readDouble()
         maxForce = buf.readDouble()
-        posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
         extensionDistance = buf.readDouble()
         extensionSpeed = buf.readDouble()
@@ -60,6 +58,7 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
         extensionDistance = limits.extensionDistance.get(extensionDistance)
         extensionSpeed = limits.extensionSpeed.get(extensionSpeed)
         channel = limits.channelLength.get(channel)
+
         paServerSideVerifyLimits()
     }
 }

@@ -13,7 +13,7 @@ import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.HydraulicsGUI
 import net.spaceeye.vmod.toolgun.modes.hud.HydraulicsHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.HydraulicsCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.HydraulicsCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.HydraulicsSerializable
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -26,7 +26,7 @@ import java.awt.Color
 
 object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 
-class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIH, HydraulicsGUI, HydraulicsHUD, PlacementAssistServerPart, PlacementAssistNetworkingUnit {
+class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCEH, HydraulicsGUI, HydraulicsHUD, PlacementAssistServerPart, PlacementAssistNetworkingUnit {
     var compliance: Double = 1e-20
     var maxForce: Double = 1e10
     var width: Double = .2
@@ -46,6 +46,8 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIH, Hydrauli
     var primaryFirstRaycast = false
 
     override var posMode = PositionModes.NORMAL
+    override var precisePlacementAssistSideNum: Int = 3
+    override var precisePlacementAssistRendererId: Int = -1
 
     override var paDistanceFromBlock = 0.01
     override var paStage: ThreeClicksActivationSteps = ThreeClicksActivationSteps.FIRST_RAYCAST
@@ -84,7 +86,7 @@ class HydraulicsMode: BaseMode, HydraulicsSerializable, HydraulicsCRIH, Hydrauli
     } } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         val minLength = if (fixedMinLength <= 0.0) (rpoint1 - rpoint2).dist() else fixedMinLength

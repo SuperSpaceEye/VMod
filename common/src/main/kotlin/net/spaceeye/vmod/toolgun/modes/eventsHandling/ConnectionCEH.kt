@@ -1,16 +1,17 @@
-package net.spaceeye.vmod.toolgun.modes.inputHandling
+package net.spaceeye.vmod.toolgun.modes.eventsHandling
 
 import dev.architectury.event.EventResult
 import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.modes.ClientRawInputsHandler
-import net.spaceeye.vmod.toolgun.modes.state.WinchMode
-import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistCRIHandler
+import net.spaceeye.vmod.toolgun.modes.ClientEventsHandler
+import net.spaceeye.vmod.toolgun.modes.state.ConnectionMode
+import net.spaceeye.vmod.toolgun.modes.util.PlacementAssistCEH
 import net.spaceeye.vmod.toolgun.modes.util.ThreeClicksActivationSteps
 import org.lwjgl.glfw.GLFW
 
-interface WinchCRIH: ClientRawInputsHandler, PlacementAssistCRIHandler {
-    override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
-        this as WinchMode
+interface ConnectionCEH: ClientEventsHandler, PlacementAssistCEH {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+        this as ConnectionMode
+        if (action != GLFW.GLFW_PRESS) {return EventResult.pass()}
         if (paStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !primaryFirstRaycast) { return EventResult.pass() }
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
@@ -21,8 +22,8 @@ interface WinchCRIH: ClientRawInputsHandler, PlacementAssistCRIHandler {
         return EventResult.interruptFalse()
     }
 
-    override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
-        this as WinchMode
+    override fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
+        this as ConnectionMode
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
             clientHandlePrimary()
             refreshHUD()
@@ -38,12 +39,20 @@ interface WinchCRIH: ClientRawInputsHandler, PlacementAssistCRIHandler {
         return EventResult.interruptFalse()
     }
 
-    override fun handleMouseScrollEvent(amount: Double): EventResult {
+    override fun onMouseScrollEvent(amount: Double): EventResult {
         return clientHandleMouseEventPA(amount)
     }
 
+    override fun onOpenMode() {
+        paOnOpen()
+    }
+
+    override fun onCloseMode() {
+        paOnClose()
+    }
+
     private fun clientHandlePrimary() {
-        this as WinchMode
+        this as ConnectionMode
         primaryFirstRaycast = !primaryFirstRaycast
     }
 }

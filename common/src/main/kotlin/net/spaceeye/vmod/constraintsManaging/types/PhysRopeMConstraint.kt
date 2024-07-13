@@ -8,7 +8,7 @@ import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDime
 import net.spaceeye.vmod.entities.ServerEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import net.spaceeye.vmod.events.RandomEvents
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.PhysRopeRenderer
 import net.spaceeye.vmod.utils.*
@@ -280,7 +280,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         if (length < radius) { radius = length / 2 }
         if (length > radius * 4) { radius = length / 4 } // capsule constraint is actually just 4 balls in a row so
 
-        rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(
+        rID = ServerRenderingData.addRenderer(
             constraint.shipId0, constraint.shipId1, PhysRopeRenderer(
                 constraint.shipId0, constraint.shipId1, Vector3d(constraint.localPos0), Vector3d(constraint.localPos1),
                 Color(120, 0, 120),  radius, length * 2, entities.map { it.id }
@@ -396,6 +396,6 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
             (server), handler ->
             entities.forEach { it.kill() }
         }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
+        ServerRenderingData.removeRenderer(rID)
     }
 }

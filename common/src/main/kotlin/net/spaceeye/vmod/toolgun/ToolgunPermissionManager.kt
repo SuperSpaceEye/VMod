@@ -11,6 +11,7 @@ object ToolgunPermissionManager {
         loadState()
     }
 
+    //TODO this is dumb
     private fun saveState() {
         VMConfig.SERVER.PERMISSIONS.ALWAYS_ALLOWED    = allowedPlayersState   .joinToString(",") { it.toString() }
         VMConfig.SERVER.PERMISSIONS.ALWAYS_DISALLOWED = disallowedPlayersState.joinToString(",") { it.toString() }

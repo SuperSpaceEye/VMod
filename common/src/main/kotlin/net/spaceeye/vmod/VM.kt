@@ -9,7 +9,7 @@ import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
@@ -19,6 +19,7 @@ import net.spaceeye.vmod.toolgun.sendHUDErrorToOperators
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
+import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
@@ -41,7 +42,8 @@ object VM {
     fun init() {
         ConfigDelegateRegister.initConfig()
 
-        SynchronisedRenderingData
+        initRenderingData()
+        VSGravityManager
         SimpleMessagerNetworking
         ToolgunModes
         ServerToolGunState

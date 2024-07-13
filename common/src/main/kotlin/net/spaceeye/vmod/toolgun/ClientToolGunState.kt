@@ -16,7 +16,14 @@ import net.spaceeye.vmod.utils.ClientClosable
 import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
-    var currentMode: BaseMode? = null
+    private var _currentMode: BaseMode? = null
+    var currentMode: BaseMode?
+        get() = _currentMode
+        set(value) {
+            _currentMode?.onCloseMode()
+            _currentMode = value
+            _currentMode?.onOpenMode()
+        }
 
     fun refreshHUD() { screen?.refreshHUD() }
 
@@ -53,7 +60,7 @@ object ClientToolGunState : ClientClosable() {
 
     //TODO events should also have try catches so that it doesn't ever crash
     internal fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): EventResult {
-        val eventResult = if (currentMode == null) { EventResult.pass() } else { currentMode!!.handleKeyEvent(keyCode, scanCode, action, modifiers) }
+        val eventResult = if (currentMode == null) { EventResult.pass() } else { currentMode!!.onKeyEvent(keyCode, scanCode, action, modifiers) }
         if (eventResult != EventResult.pass()) { return eventResult }
 
         if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_CONSTRAINT.matches(keyCode, scanCode)) {
@@ -66,12 +73,12 @@ object ClientToolGunState : ClientClosable() {
 
     internal fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {
         if (currentMode == null) {return EventResult.interruptFalse()}
-        return currentMode!!.handleMouseButtonEvent(button, action, modifiers)
+        return currentMode!!.onMouseButtonEvent(button, action, modifiers)
     }
 
     internal fun handleMouseScrollEvent(amount: Double): EventResult {
         if (currentMode == null) { return EventResult.pass() }
-        return currentMode!!.handleMouseScrollEvent(amount)
+        return currentMode!!.onMouseScrollEvent(amount)
     }
 
     private var screen: ScreenWindow? = null

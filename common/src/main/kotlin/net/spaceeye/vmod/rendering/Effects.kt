@@ -26,7 +26,7 @@ object Effects {
 
     fun sendToolgunRayEffect(playerSource: Player, result: RaycastFunctions.RaycastResult, maxDistance: Double) {
         val endPos = result.worldHitPos ?: (result.origin + result.lookVec * maxDistance)
-        SynchronisedRenderingData.serverSynchronisedData.addTimedRenderer(
+        ServerRenderingData.addTimedRenderer(
             TimedA2BRenderer(
                 getRightSideClient(playerSource),
                 endPos,

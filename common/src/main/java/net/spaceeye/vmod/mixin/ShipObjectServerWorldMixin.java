@@ -3,7 +3,7 @@ package net.spaceeye.vmod.mixin;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker;
 import net.spaceeye.vmod.events.AVSEvents;
-import net.spaceeye.vmod.VSMasslessShipsProcessor;
+import net.spaceeye.vmod.vsStuff.VSMasslessShipsProcessor;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,7 +33,6 @@ abstract public class ShipObjectServerWorldMixin {
         deletedShipObjects.forEach((data) -> AVSEvents.INSTANCE.getServerShipRemoveEvent().emit(new AVSEvents.ServerShipRemoveEvent(data)));
     }
 
-    //TODO this will silence "Ship with ID {} has a mass of 0.0, not creating a ShipObject"
     @Redirect(
             method = "postTick",
             at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V"),

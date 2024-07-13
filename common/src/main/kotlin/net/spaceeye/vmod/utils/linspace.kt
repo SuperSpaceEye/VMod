@@ -13,7 +13,6 @@ fun linspace(start: Double, end: Double, num: Int): ArrayList<Double> {
     for (i in 0 until num) {
         linspaced.add((start+delta*i))
     }
-    linspaced.add(_end)
 
     return linspaced
 }

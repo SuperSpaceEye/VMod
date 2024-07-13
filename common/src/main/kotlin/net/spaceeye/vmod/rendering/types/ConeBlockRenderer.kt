@@ -22,6 +22,7 @@ import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.util.readQuatd
 import org.valkyrienskies.core.util.writeQuatd
 import org.valkyrienskies.mod.common.getShipManagingPos
+import org.valkyrienskies.mod.common.util.toFloat
 import org.valkyrienskies.mod.common.util.toMinecraft
 
 
@@ -64,7 +65,7 @@ class ConeBlockRenderer(): BlockRenderer {
             Quaterniond()
                 .mul(ship.renderTransform.shipToWorldRotation)
                 .mul(rot)
-                .toMinecraft()
+                .toFloat()
         )
 
         poseStack.scale(scale, scale, scale)

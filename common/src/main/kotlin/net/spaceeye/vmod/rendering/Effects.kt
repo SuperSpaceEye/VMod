@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.rendering
 
 import net.minecraft.world.entity.player.Player
-import net.spaceeye.vmod.rendering.types.TimedA2BRenderer
+import net.spaceeye.vmod.rendering.types.special.TimedA2BRenderer
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms

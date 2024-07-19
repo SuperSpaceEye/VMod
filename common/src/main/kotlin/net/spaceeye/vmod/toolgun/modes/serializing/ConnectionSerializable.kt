@@ -18,6 +18,7 @@ interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
         buf.writeDouble(width)
         buf.writeEnum(connectionMode)
         buf.writeColor(color)
+        buf.writeDouble(fixedDistance)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -33,6 +34,7 @@ interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
         width = buf.readDouble()
         connectionMode = buf.readEnum(connectionMode.javaClass)
         color = buf.readColor()
+        fixedDistance = buf.readDouble()
 
         primaryFirstRaycast = buf.readBoolean()
 

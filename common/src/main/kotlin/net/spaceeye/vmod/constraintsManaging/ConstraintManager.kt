@@ -26,6 +26,7 @@ import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.util.*
 import kotlin.math.max
 
 //ShipId seem to be unique and are retained by ships after saving/loading
@@ -40,7 +41,7 @@ class ConstraintManager: SavedData() {
     internal val constraintIdCounter = ConstraintIdCounter()
     private val idToDisabledCollisions = mutableMapOf<ShipId, MutableMap<ShipId, MutablePair<Int, MutableList<(() -> Unit)?>>>>()
 
-    private val tickingConstraints = mutableListOf<Tickable>()
+    private val tickingConstraints = Collections.synchronizedList(mutableListOf<Tickable>())
 
     private val toLoadConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
     private val groupedToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingGroup>>()

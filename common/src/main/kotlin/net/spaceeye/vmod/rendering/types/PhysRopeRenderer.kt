@@ -21,6 +21,7 @@ import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import org.joml.Quaterniond
 import org.lwjgl.opengl.GL11
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -42,6 +43,8 @@ class PhysRopeRenderer(): BaseRenderer {
     var entities = mutableListOf<PhysRopeComponentEntity?>()
 
     var sides: Int = 8
+
+    override val typeName = "PhysRopeRenderer"
 
     constructor(shipId1: ShipId, shipId2: ShipId,
                 point1: Vector3d, point2: Vector3d,
@@ -226,5 +229,7 @@ class PhysRopeRenderer(): BaseRenderer {
         }
     }
 
-    override val typeName = "PhysRopeRenderer"
+    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
+        throw AssertionError("Shouldn't be copied")
+    }
 }

@@ -19,6 +19,7 @@ import net.spaceeye.vmod.utils.writeVector3d
 import org.joml.Quaterniond
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.util.readQuatd
 import org.valkyrienskies.core.util.writeQuatd
 import org.valkyrienskies.mod.common.getShipManagingPos
@@ -33,6 +34,8 @@ class ConeBlockRenderer(): BlockRenderer {
     var pos = Vector3d()
     var rot = Quaterniond()
     var scale: Float = 1.0f
+
+    override val typeName = "BlockRenderer"
 
     constructor(_pos: Vector3d, _rot: Quaterniond, _scale: Float): this() {
         pos = _pos
@@ -57,8 +60,6 @@ class ConeBlockRenderer(): BlockRenderer {
 
         poseStack.translate(-camera.position.x, -camera.position.y, -camera.position.z)
         poseStack.translate(rpoint.x, rpoint.y, rpoint.z)
-
-        Minecraft.getInstance().gameRenderer.mainCamera
 
         poseStack.mulPose(
             Quaterniond()
@@ -94,6 +95,7 @@ class ConeBlockRenderer(): BlockRenderer {
         scale = buf.readFloat()
     }
 
-    override val typeName: String
-        get() = "BlockRenderer"
+    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
+        throw AssertionError("Shouldn't be copied")
+    }
 }

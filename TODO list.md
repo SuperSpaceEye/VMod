@@ -79,6 +79,9 @@ A rope that can stretch or push (if option is chosen)
 A rope with connections to the ground through which it like moves. No idea on how to make it.
 
 ## Slider
+Implementation: take 2 different points on a ship as an "axis",
+and connect them to 2 points in the world with 0 max distance.
+Points SHOULDN'T BE AT THE SAME POSITIONS
 
 ## Winch
 A rope that can be made longer or shorter

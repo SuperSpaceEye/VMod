@@ -25,6 +25,7 @@ import org.joml.Quaterniond
 import org.joml.primitives.AABBic
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import java.awt.Color
@@ -137,4 +138,5 @@ class SchemOutlinesRenderer(
     // only for internal use on client
     override fun serialize(): FriendlyByteBuf { throw AssertionError("Shouldn't be serialized") }
     override fun deserialize(buf: FriendlyByteBuf) { throw AssertionError("Shouldn't be deserialized") }
+    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer { throw AssertionError("Shouldn't be copied") }
 }

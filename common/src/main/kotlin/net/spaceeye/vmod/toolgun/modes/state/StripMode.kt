@@ -58,7 +58,7 @@ class StripMode: BaseMode, StripSerializable, StripCEH, StripGUI, StripHUD {
         for (x in b.x-r .. b.x+r) {
         for (y in b.y-r .. b.y+r) {
         for (z in b.z-r .. b.z+r) {
-            val list = instance.tryGetIdOfPosition(BlockPos(x, y, z)) ?: continue
+            val list = instance.tryGetIdsOfPosition(BlockPos(x, y, z)) ?: continue
             val temp = mutableListOf<ManagedConstraintId>()
             temp.addAll(list)
             temp.forEach { level.removeManagedConstraint(it) }

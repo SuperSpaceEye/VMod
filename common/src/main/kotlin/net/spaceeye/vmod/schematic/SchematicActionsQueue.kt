@@ -9,6 +9,7 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.schematic.containers.*
+import net.spaceeye.vmod.schematic.icontainers.ICopyableBlock
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
 import org.joml.primitives.AABBi
@@ -53,8 +54,10 @@ object SchematicActionsQueue: ServerClosable() {
                 val state = blockPalette.fromId(it.paletteId) ?: run {
                     throw RuntimeException("State under ID ${it.paletteId} is null.")
                 }
+                val block = state.block
 
                 level.getChunkAt(pos).setBlockState(pos, state, false)
+                if (block is ICopyableBlock) block.onPasteNoTag(level, pos, state, oldToNewId)
                 if (it.extraDataId != -1) {
                     val tag = flatExtraData[it.extraDataId]
                     tag.putInt("x", pos.x)
@@ -62,6 +65,7 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.putInt("z", pos.z)
 
                     var delayLoading = false
+                    val bcb = if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag) { delayLoading = true } else null
                     val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state) { delayLoading = true }
                     val fn = {
                         val be = level.getChunkAt(pos).getBlockEntity(pos)
@@ -69,6 +73,7 @@ object SchematicActionsQueue: ServerClosable() {
                             ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
                         }
                         cb?.let { afterPasteCallbacks.add { cb(be) } }
+                        bcb?.let { afterPasteCallbacks.add { bcb(be) } }
                         Unit
                     }
                     if (!delayLoading) {fn(); return@chunkForEach}
@@ -151,13 +156,14 @@ object SchematicActionsQueue: ServerClosable() {
                 val cpos = BlockPos(x, y, z)
                 val state = chunk.getBlockState(cpos)
                 if (state.isAir) {continue}
+                val block = state.block
 
                 val bePos = BlockPos(x + cX * 16, y, z + cZ * 16)
-
                 val be = chunk.getBlockEntity(bePos)
-                var tag: CompoundTag? = null
+
+                var tag: CompoundTag? = if (block is ICopyableBlock) {block.onCopy(level, cpos, state, be, ships)} else {null}
                 val fed = if (be == null) {-1} else {
-                    tag = be.saveWithFullMetadata()
+                    if (tag == null) {tag = be.saveWithFullMetadata()!!}
                     flatExtraData.add(tag)
                     flatExtraData.size - 1
                 }

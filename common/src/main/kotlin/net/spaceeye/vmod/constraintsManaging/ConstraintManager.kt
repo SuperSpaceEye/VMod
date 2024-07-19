@@ -302,7 +302,7 @@ class ConstraintManager: SavedData() {
         return mCon.mID
     }
 
-    fun tryGetIdOfPosition(pos: BlockPos): List<ManagedConstraintId>? {
+    fun tryGetIdsOfPosition(pos: BlockPos): List<ManagedConstraintId>? {
         return posToMId.getItemsAt(pos)
     }
 

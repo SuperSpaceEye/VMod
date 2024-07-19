@@ -22,6 +22,7 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.getQuatFromDir
 import org.valkyrienskies.mod.common.getShipManagingPos
 
+//TODO finish this mf
 class ThrusterMode: BaseMode, ThrusterSerializable, ThrusterCEH, ThrusterHUD, ThrusterGUI, PlacementModesState {
     override var posMode = PositionModes.NORMAL
     override var precisePlacementAssistSideNum: Int = 3

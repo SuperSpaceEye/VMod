@@ -472,7 +472,7 @@ class ConstraintManager: SavedData() {
 
             ShipSchematic.registerCopyPasteEvents(
                     "VMod Constraint Manager",
-            {level: ServerLevel, shipsToBeSaved: List<ServerShip>, unregister: () -> Unit ->
+            {level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
                 val instance = getInstance()
 
                 val toSave = shipsToBeSaved.filter { instance.shipsConstraints.containsKey(it.id) }
@@ -501,11 +501,11 @@ class ConstraintManager: SavedData() {
                 instance.saveSchema(tag)
 
                 CompoundTagSerializable(tag)
-            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: Serializable, unregister: () -> Unit ->
+            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
                 val instance = getInstance()
 
                 val file = CompoundTagSerializable(CompoundTag())
-                file.deserialize(loadFile.serialize())
+                file.deserialize(loadFile!!.serialize())
 
                 val tag = file.tag!!
                 val toInitConstraints = mutableListOf<MConstraint>()
@@ -544,15 +544,19 @@ class ConstraintManager: SavedData() {
 
                 val mapped = loadedShips.associate {
                     if (lastDimensionIds.containsKey(it.second)) {
-                        Pair(level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
+                        Pair(level.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
                     } else {
                         Pair(it.second, it.first.id)
                     }
                 }
 
+                val changedIds = mutableMapOf<Int, Int>()
                 for (it in toInitConstraints) {
-                    level!!.makeManagedConstraint(it.copyMConstraint(level!!, mapped)?: continue)
+                    val newId = level.makeManagedConstraint(it.copyMConstraint(level, mapped)?: continue) ?: continue
+                    changedIds[it.mID] = newId
                 }
+
+                globalMap["changedIDs"] = changedIds
             }
             )
         }

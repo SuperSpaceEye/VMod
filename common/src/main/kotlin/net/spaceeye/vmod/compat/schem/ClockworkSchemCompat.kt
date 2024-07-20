@@ -29,7 +29,7 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 
 class ClockworkSchemCompat(): SchemCompatItem {
     init {
-        ShipSchematic.registerCopyPasteEvents("vs_clockwork_compat", ::onCopyEvent, { _, _, _, _, -> }, ::onPasteBeforeEvent)
+        ShipSchematic.registerCopyPasteEvents("vs_clockwork_compat", ::onCopyEvent, { _, _, _, _, _, -> }, ::onPasteBeforeEvent)
     }
 
     fun getMapper(): ObjectMapper {
@@ -49,7 +49,7 @@ class ClockworkSchemCompat(): SchemCompatItem {
             ).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 
-    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, unregister: () -> Unit): Serializable {
+    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit): Serializable {
         val tag = CompoundTag()
 
         val tagData = ListTag()
@@ -87,9 +87,9 @@ class ClockworkSchemCompat(): SchemCompatItem {
         return CompoundTagSerializable(tag)
     }
 
-    private fun onPasteBeforeEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable, unregister: () -> Unit) {
+    private fun onPasteBeforeEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit) {
         val data = CompoundTagSerializable()
-        data.deserialize(file.serialize())
+        data.deserialize(file!!.serialize())
         val tag = data.tag ?: return
 
         val mapper = getMapper()

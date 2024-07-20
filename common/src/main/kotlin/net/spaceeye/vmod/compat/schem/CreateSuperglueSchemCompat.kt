@@ -35,7 +35,7 @@ class CreateSuperglueSchemCompat: SchemCompatItem {
         ShipSchematic.registerCopyPasteEvents("create_compat", ::onCopyEvent, ::onAfterPasteEvent)
     }
 
-    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, unregister: () -> Unit): Serializable {
+    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit): Serializable {
         val tag = CompoundTag()
 
         shipsToBeSaved
@@ -71,9 +71,9 @@ class CreateSuperglueSchemCompat: SchemCompatItem {
         return CompoundTagSerializable(tag)
     }
 
-    private fun onAfterPasteEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable, unregister: () -> Unit) {
+    private fun onAfterPasteEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit) {
         val data = CompoundTagSerializable()
-        data.deserialize(file.serialize())
+        data.deserialize(file!!.serialize())
         val tag = data.tag ?: return
 
         val oldToNew = loadedShips.associate { Pair(it.second, it.first) }

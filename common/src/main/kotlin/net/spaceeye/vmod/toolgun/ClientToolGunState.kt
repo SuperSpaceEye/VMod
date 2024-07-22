@@ -86,6 +86,7 @@ object ClientToolGunState : ClientClosable() {
     }
 
     internal fun onRenderHUD(stack: PoseStack, delta: Float) {
+        try {
         (screen ?: run {
             val temp = ScreenWindow()
             val minecraft = Minecraft.getInstance()
@@ -93,6 +94,8 @@ object ClientToolGunState : ClientClosable() {
             screen = temp
             temp
         }).onRenderHUD(stack, delta)
+        } catch (e: Exception) {
+        } catch (e: Error) {}
     }
 
     internal lateinit var gui: ToolgunGUI

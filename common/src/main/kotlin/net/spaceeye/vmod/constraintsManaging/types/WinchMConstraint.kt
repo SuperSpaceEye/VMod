@@ -6,13 +6,12 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.network.*
+import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
-import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -121,7 +120,7 @@ class WinchMConstraint(): MConstraint, MRenderable, Tickable {
         cIDs.add(level.shipObjectWorld.createNewConstraint(constraint)!!)
 
         renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
-        renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID)
+        renderer = ServerRenderingData.getRenderer(rID)
     }
 
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
@@ -301,8 +300,8 @@ class WinchMConstraint(): MConstraint, MRenderable, Tickable {
             }
         }
 
-        if (renderer != null) { rID = SynchronisedRenderingData.serverSynchronisedData.addRenderer(constraint.shipId0, constraint.shipId1, renderer!!)
-        } else { renderer = SynchronisedRenderingData.serverSynchronisedData.getRenderer(rID) }
+        if (renderer != null) { rID = ServerRenderingData.addRenderer(constraint.shipId0, constraint.shipId1, renderer!!)
+        } else { renderer = ServerRenderingData.getRenderer(rID) }
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(constraint) ?: clean(level) ?: return false)
         return true
@@ -311,6 +310,6 @@ class WinchMConstraint(): MConstraint, MRenderable, Tickable {
     override fun onDeleteMConstraint(level: ServerLevel) {
         wasDeleted = true
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        SynchronisedRenderingData.serverSynchronisedData.removeRenderer(rID)
+        ServerRenderingData.removeRenderer(rID)
     }
 }

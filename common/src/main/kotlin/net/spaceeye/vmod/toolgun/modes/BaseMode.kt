@@ -18,17 +18,20 @@ interface HUDBuilder {
     fun makeHUD(screen: UIContainer) {}
 }
 
-interface ClientRawInputsHandler {
-    fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
-    fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
-    fun handleMouseScrollEvent(amount: Double): EventResult { return EventResult.pass() }
+interface ClientEventsHandler {
+    fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
+    fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
+    fun onMouseScrollEvent(amount: Double): EventResult { return EventResult.pass() }
+
+    fun onOpenMode() {}
+    fun onCloseMode() {}
 }
 
 interface MSerializable: Serializable {
     fun serverSideVerifyLimits()
 }
 
-interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientRawInputsHandler {
+interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientEventsHandler {
     fun resetState() {}
 
     fun init(type: BaseNetworking.EnvType) {}

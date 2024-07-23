@@ -5,11 +5,20 @@
 * Group rendering objects by types to elevate common operations and add shared data between rendering types
 * "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
+* Redo how normal renderers and block renderers work
 
-# Constraint disabler
+## Constraint disabler
 * A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
 
-# Toolgun settings presets menu
+## java.awt.Color doesn't exist in headless mode
+
+## Redo ConstraintManager's tryMakeConstraint
+
+## Toolgun settings presets menu
+
+## Toolgun settings for shit like gravity etc
+
+## Add a "wire" thing maybe as an addon to vmod
 
 ## General Code Structure
 * Extract more code from Placement Assist for an easier use
@@ -59,6 +68,7 @@
 ## Hydraulics
 * Make it more stable
 * Fix the bug that crashes VS
+* Fix bad copying
 
 ## Elastic
 A rope that can stretch or push (if option is chosen)
@@ -69,6 +79,9 @@ A rope that can stretch or push (if option is chosen)
 A rope with connections to the ground through which it like moves. No idea on how to make it.
 
 ## Slider
+Implementation: take 2 different points on a ship as an "axis",
+and connect them to 2 points in the world with 0 max distance.
+Points SHOULDN'T BE AT THE SAME POSITIONS
 
 ## Winch
 A rope that can be made longer or shorter

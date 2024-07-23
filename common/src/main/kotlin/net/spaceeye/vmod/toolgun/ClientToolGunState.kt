@@ -10,15 +10,20 @@ import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ToolgunGUI
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
 import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.toolgun.modes.DefaultHUD
 import net.spaceeye.vmod.utils.ClientClosable
 import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
-    var currentMode: BaseMode? = null
+    private var _currentMode: BaseMode? = null
+    var currentMode: BaseMode?
+        get() = _currentMode
+        set(value) {
+            _currentMode?.onCloseMode()
+            _currentMode = value
+            _currentMode?.onOpenMode()
+        }
 
-    private var _refreshHUD = true
-    fun refreshHUD() { _refreshHUD = true }
+    fun refreshHUD() { screen?.refreshHUD() }
 
     val GUI_MENU_OPEN_OR_CLOSE = register(
         KeyMapping(
@@ -53,7 +58,7 @@ object ClientToolGunState : ClientClosable() {
 
     //TODO events should also have try catches so that it doesn't ever crash
     internal fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): EventResult {
-        val eventResult = if (currentMode == null) { EventResult.pass() } else { currentMode!!.handleKeyEvent(keyCode, scanCode, action, modifiers) }
+        val eventResult = if (currentMode == null) { EventResult.pass() } else { currentMode!!.onKeyEvent(keyCode, scanCode, action, modifiers) }
         if (eventResult != EventResult.pass()) { return eventResult }
 
         if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_CONSTRAINT.matches(keyCode, scanCode)) {
@@ -66,35 +71,31 @@ object ClientToolGunState : ClientClosable() {
 
     internal fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {
         if (currentMode == null) {return EventResult.interruptFalse()}
-        return currentMode!!.handleMouseButtonEvent(button, action, modifiers)
+        return currentMode!!.onMouseButtonEvent(button, action, modifiers)
     }
 
     internal fun handleMouseScrollEvent(amount: Double): EventResult {
         if (currentMode == null) { return EventResult.pass() }
-        return currentMode!!.handleMouseScrollEvent(amount)
+        return currentMode!!.onMouseScrollEvent(amount)
     }
 
-    private var screenGui: ScreenWindow? = null
-    private var defaultHUD = DefaultHUD()
+    private var screen: ScreenWindow? = null
+
+    internal fun addHUDError(str: String) {
+        screen?.addError(str)
+    }
 
     internal fun onRenderHUD(stack: PoseStack, delta: Float) {
-        val currentMode = currentMode ?: defaultHUD
-
-        val screenGui = screenGui ?: run {
+        try {
+        (screen ?: run {
             val temp = ScreenWindow()
             val minecraft = Minecraft.getInstance()
             temp.init(minecraft, minecraft.window.guiScaledWidth, minecraft.window.guiScaledHeight)
-            screenGui = temp
+            screen = temp
             temp
-        }
-
-        if (_refreshHUD) {
-            screenGui.screenContainer.clearChildren()
-            currentMode.makeHUD(screenGui.screenContainer)
-            _refreshHUD = false
-        }
-
-        screenGui.render(stack, 0, 0, delta)
+        }).onRenderHUD(stack, delta)
+        } catch (e: Exception) {
+        } catch (e: Error) {}
     }
 
     internal lateinit var gui: ToolgunGUI

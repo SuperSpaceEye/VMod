@@ -14,13 +14,13 @@ import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
 import net.spaceeye.vmod.toolgun.modes.hud.StripHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.StripCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.StripCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.StripSerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class StripMode: BaseMode, StripSerializable, StripCRIH, StripGUI, StripHUD {
+class StripMode: BaseMode, StripSerializable, StripCEH, StripGUI, StripHUD {
     enum class StripModes {
         StripAll,
         StripInRadius
@@ -58,7 +58,7 @@ class StripMode: BaseMode, StripSerializable, StripCRIH, StripGUI, StripHUD {
         for (x in b.x-r .. b.x+r) {
         for (y in b.y-r .. b.y+r) {
         for (z in b.z-r .. b.z+r) {
-            val list = instance.tryGetIdOfPosition(BlockPos(x, y, z)) ?: continue
+            val list = instance.tryGetIdsOfPosition(BlockPos(x, y, z)) ?: continue
             val temp = mutableListOf<ManagedConstraintId>()
             temp.addAll(list)
             temp.forEach { level.removeManagedConstraint(it) }

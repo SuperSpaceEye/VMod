@@ -18,6 +18,8 @@ class TrackworkSchemCompat: SchemCompatItem {
            && state.block != TrackBlocks.LARGE_PHYS_TRACK.get()
            && state.block != TrackBlocks.MED_PHYS_TRACK.get()
            && state.block != TrackBlocks.PHYS_TRACK.get()
+           && state.block != TrackBlocks.SIMPLE_WHEEL.get()
+           && state.block != TrackBlocks.SIMPLE_WHEEL_PART.get()
         ) {return}
         tag.putBoolean("Assembled", false)
         tag.remove("trackBlockID")

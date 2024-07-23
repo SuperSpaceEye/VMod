@@ -26,6 +26,7 @@ import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.util.*
 import kotlin.math.max
 
 //ShipId seem to be unique and are retained by ships after saving/loading
@@ -40,7 +41,7 @@ class ConstraintManager: SavedData() {
     internal val constraintIdCounter = ConstraintIdCounter()
     private val idToDisabledCollisions = mutableMapOf<ShipId, MutableMap<ShipId, MutablePair<Int, MutableList<(() -> Unit)?>>>>()
 
-    private val tickingConstraints = mutableListOf<Tickable>()
+    private val tickingConstraints = Collections.synchronizedList(mutableListOf<Tickable>())
 
     private val toLoadConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
     private val groupedToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
@@ -70,8 +71,8 @@ class ConstraintManager: SavedData() {
                 if (constraint.saveCounter == saveCounter) { continue }
                 if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
 
-                val ctag = constraint.nbtSerialize() ?: run { WLOG("UNABLE TO SERIALIZE CONSTRAINT ${constraint.typeName} WITH ID ${constraint.mID}"); null } ?: continue
-                ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("CONSTRAINT OF TYPE ${constraint.typeName} WAS NOT REGISTERED"); null } ?: continue)
+                val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.typeName} with ID ${constraint.mID}"); null } ?: continue
+                ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("Constraint of type ${constraint.typeName} was not registered"); null } ?: continue)
                 constraintsTag.add(ctag)
                 constraint.saveCounter = saveCounter
             }
@@ -101,8 +102,8 @@ class ConstraintManager: SavedData() {
                 for (constraint in group.constraintsToLoad) {
                     if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
 
-                    val ctag = constraint.nbtSerialize() ?: run { WLOG("UNABLE TO SERIALIZE CONSTRAINT ${constraint.typeName} WITH ID ${constraint.mID}"); null } ?: continue
-                    ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("CONSTRAINT OF TYPE ${constraint.typeName} WAS NOT REGISTERED"); null } ?: continue)
+                    val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.typeName} with ID ${constraint.mID}"); null } ?: continue
+                    ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("Constraint of type ${constraint.typeName} was not registered"); null } ?: continue)
                     constraintsTag.add(ctag)
                 }
                 group.wasSaved = true
@@ -185,18 +186,18 @@ class ConstraintManager: SavedData() {
                 val mConstraint = MConstraintTypes
                     .idxToSupplier(ctag.getInt("MCONSTRAINT_TYPE"), schema)!!
                     .get()
-                    .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("FAILED TO DESEREALIZE CONSTRAINT OF TYPE ${MConstraintTypes.idxToSupplier(type, schema)!!.get().typeName}"); null } ?: continue
+                    .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${MConstraintTypes.idxToSupplier(type, schema)!!.get().typeName}"); null } ?: continue
 
                 maxId = max(maxId, mConstraint.mID)
 
                 constraints.add(mConstraint)
                 count++
-                } catch (e: Exception) { ELOG("FAILED TO LOAD CONSTRAINT WITH IDX ${type} AND TYPE ${strType}") }
+                } catch (e: Exception) { ELOG("Failed to load constraint with idx $type and type $strType") }
             }
             toLoadConstraints[shipId.toLong()] = constraints
         }
         constraintIdCounter.setCounter(maxId + 1)
-        WLOG("LOADED $count CONSTRAINTS")
+        WLOG("Loaded $count constraints")
     }
 
     private fun groupLoadedData() {
@@ -241,6 +242,7 @@ class ConstraintManager: SavedData() {
         createConstraints()
     }
 
+    //TODO redo this
     private fun tryMakeConstraint(mCon: MConstraint, level: ServerLevel): Boolean {
         for (i in 0 until 1000) {
             if (mCon.onMakeMConstraint(level)) {return true}
@@ -300,7 +302,7 @@ class ConstraintManager: SavedData() {
         return mCon.mID
     }
 
-    fun tryGetIdOfPosition(pos: BlockPos): List<ManagedConstraintId>? {
+    fun tryGetIdsOfPosition(pos: BlockPos): List<ManagedConstraintId>? {
         return posToMId.getItemsAt(pos)
     }
 
@@ -470,7 +472,7 @@ class ConstraintManager: SavedData() {
 
             ShipSchematic.registerCopyPasteEvents(
                     "VMod Constraint Manager",
-            {level: ServerLevel, shipsToBeSaved: List<ServerShip>, unregister: () -> Unit ->
+            {level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
                 val instance = getInstance()
 
                 val toSave = shipsToBeSaved.filter { instance.shipsConstraints.containsKey(it.id) }
@@ -485,8 +487,8 @@ class ConstraintManager: SavedData() {
                     val constraints = instance.shipsConstraints[ship.id]!!
                     for (constraint in constraints) {
                         if (constraint.saveCounter == instance.saveCounter) { continue }
-                        val ctag = constraint.nbtSerialize() ?: run { WLOG("UNABLE TO SERIALIZE CONSTRAINT ${constraint.typeName} WITH ID ${constraint.mID}"); null } ?: continue
-                        ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("CONSTRAINT OF TYPE ${constraint.typeName} WAS NOT REGISTERED"); null } ?: continue)
+                        val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.typeName} with ID ${constraint.mID}"); null } ?: continue
+                        ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("Constraint of type ${constraint.typeName} was not registered"); null } ?: continue)
                         constraintsTag.add(ctag)
                         constraint.saveCounter = instance.saveCounter
                     }
@@ -499,11 +501,11 @@ class ConstraintManager: SavedData() {
                 instance.saveSchema(tag)
 
                 CompoundTagSerializable(tag)
-            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: Serializable, unregister: () -> Unit ->
+            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
                 val instance = getInstance()
 
                 val file = CompoundTagSerializable(CompoundTag())
-                file.deserialize(loadFile.serialize())
+                file.deserialize(loadFile!!.serialize())
 
                 val tag = file.tag!!
                 val toInitConstraints = mutableListOf<MConstraint>()
@@ -542,15 +544,19 @@ class ConstraintManager: SavedData() {
 
                 val mapped = loadedShips.associate {
                     if (lastDimensionIds.containsKey(it.second)) {
-                        Pair(level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
+                        Pair(level.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
                     } else {
                         Pair(it.second, it.first.id)
                     }
                 }
 
+                val changedIds = mutableMapOf<Int, Int>()
                 for (it in toInitConstraints) {
-                    level!!.makeManagedConstraint(it.copyMConstraint(level!!, mapped)?: continue)
+                    val newId = level.makeManagedConstraint(it.copyMConstraint(level, mapped)?: continue) ?: continue
+                    changedIds[it.mID] = newId
                 }
+
+                globalMap["changedIDs"] = changedIds
             }
             )
         }

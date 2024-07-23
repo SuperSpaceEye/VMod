@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.rendering.types
+package net.spaceeye.vmod.rendering.types.special
 
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.rendering.RenderingUtils
+import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
@@ -24,6 +25,7 @@ import org.joml.Quaterniond
 import org.joml.primitives.AABBic
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import java.awt.Color
@@ -33,12 +35,8 @@ class SchemOutlinesRenderer(
     val rotationAngle: Ref<Double>,
     val center: ShipTransformImpl,
     val ships: List<Pair<ShipTransform, AABBic>>
-): BaseRenderer, TimedRenderer, PositionDependentRenderer {
+): BaseRenderer {
     override val typeName get() = "SchemOutlinesRenderer"
-    override var timestampOfBeginning: Long = -1
-    override var activeFor_ms: Long = Long.MAX_VALUE / 2
-    override var wasActivated: Boolean = false
-    override val renderingPosition get() = Vector3d(Minecraft.getInstance().cameraEntity!!.position())
 
     val aabbPoints = mutableListOf(Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d())
 
@@ -140,4 +138,5 @@ class SchemOutlinesRenderer(
     // only for internal use on client
     override fun serialize(): FriendlyByteBuf { throw AssertionError("Shouldn't be serialized") }
     override fun deserialize(buf: FriendlyByteBuf) { throw AssertionError("Shouldn't be deserialized") }
+    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer { throw AssertionError("Shouldn't be copied") }
 }

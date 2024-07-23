@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.valkyrienskies.core.api.ships.*
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 
@@ -18,14 +19,18 @@ import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 @JsonIgnoreProperties(ignoreUnknown = true)
 class GravityController(
     var dimensionId: String,
-    gravityVector: JVector3d = org.joml.Vector3d(0.0, -10.0, 0.0)
 ): ShipForcesInducer {
     @JsonIgnore
-    var gravityVector = Vector3d(gravityVector)
+    var gravityVector = VSGravityManager.getDimensionGravityMutableReference(dimensionId)
 
     private var gravityVectorForSaving: JVector3d
         get() = gravityVector.toJomlVector3d()
-        set(value) { gravityVector = Vector3d(value)}
+        set(value) {
+            gravityVector = Vector3d(value)
+            // a bit dumb but should work
+            val dimensionGravity = VSGravityManager.getDimensionGravityMutableReference(dimensionId)
+            if (gravityVector == dimensionGravity) { gravityVector = dimensionGravity }
+        }
 
     override fun applyForces(physShip: PhysShip) {
         physShip as PhysShipImpl
@@ -36,7 +41,7 @@ class GravityController(
     }
 
     fun reset() {
-        gravityVector = Vector3d(0, -10, 0)
+        gravityVector = VSGravityManager.getDimensionGravityMutableReference(dimensionId)
     }
 
     companion object {

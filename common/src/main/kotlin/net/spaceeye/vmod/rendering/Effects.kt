@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.rendering
 
 import net.minecraft.world.entity.player.Player
-import net.spaceeye.vmod.rendering.types.TimedA2BRenderer
+import net.spaceeye.vmod.rendering.types.special.TimedA2BRenderer
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
@@ -26,7 +26,7 @@ object Effects {
 
     fun sendToolgunRayEffect(playerSource: Player, result: RaycastFunctions.RaycastResult, maxDistance: Double) {
         val endPos = result.worldHitPos ?: (result.origin + result.lookVec * maxDistance)
-        SynchronisedRenderingData.serverSynchronisedData.addTimedRenderer(
+        ServerRenderingData.addTimedRenderer(
             TimedA2BRenderer(
                 getRightSideClient(playerSource),
                 endPos,

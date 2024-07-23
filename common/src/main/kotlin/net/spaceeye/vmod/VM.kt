@@ -2,7 +2,6 @@ package net.spaceeye.vmod
 
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.event.events.common.LifecycleEvent
-import dev.architectury.platform.Platform
 import dev.architectury.utils.Env
 import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
@@ -10,15 +9,17 @@ import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
-import net.spaceeye.vmod.rendering.SynchronisedRenderingData
+import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.sendHUDErrorToOperators
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
+import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
@@ -27,19 +28,22 @@ fun WLOG(s: String) = VM.logger.warn(s)
 fun DLOG(s: String) = VM.logger.debug(s)
 fun ELOG(s: String) = VM.logger.error(s)
 
+// B is for broadcast
+fun BWLOG(main: String, toBroadcast: String) {
+    WLOG(main)
+    sendHUDErrorToOperators(toBroadcast)
+}
+
 object VM {
     const val MOD_ID = "valkyrien_mod"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!
 
     @JvmStatic
     fun init() {
-        if (!Platform.isModLoaded("valkyrienskies")) {
-            WLOG("VALKYRIEN SKIES IS NOT INSTALLED. NOT INITIALIZING THE MOD.")
-            return
-        }
         ConfigDelegateRegister.initConfig()
 
-        SynchronisedRenderingData
+        initRenderingData()
+        VSGravityManager
         SimpleMessagerNetworking
         ToolgunModes
         ServerToolGunState

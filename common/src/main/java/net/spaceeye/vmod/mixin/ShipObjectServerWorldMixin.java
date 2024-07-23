@@ -1,12 +1,16 @@
 package net.spaceeye.vmod.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker;
 import net.spaceeye.vmod.events.AVSEvents;
+import net.spaceeye.vmod.vsStuff.VSMasslessShipsProcessor;
+import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
@@ -29,11 +33,15 @@ abstract public class ShipObjectServerWorldMixin {
         deletedShipObjects.forEach((data) -> AVSEvents.INSTANCE.getServerShipRemoveEvent().emit(new AVSEvents.ServerShipRemoveEvent(data)));
     }
 
-    //TODO this will silence "Ship with ID {} has a mass of 0.0, not creating a ShipObject"
-//    @Redirect(method = "postTick", at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V"), remap = false)
-//    void redirectLogger(Logger instance, String s) {
-//
-//    }
+    @Redirect(
+            method = "postTick",
+            at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V"),
+            remap = false)
+    void redirectLogger(Logger instance, String s, @Local(ordinal = 0) long var38) {
+        if (VSMasslessShipsProcessor.INSTANCE.process(var38)) {
+            instance.warn(s);
+        }
+    }
 
     @Inject(method = "createNewConstraint", at = @At(value = "FIELD", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectServerWorld;constraints:Ljava/util/Map;"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD)
     void vmod_createNewConstraints(VSConstraint vsConstraint, CallbackInfoReturnable<Integer> cir, int var4) {

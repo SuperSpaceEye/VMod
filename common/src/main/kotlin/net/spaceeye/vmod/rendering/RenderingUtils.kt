@@ -77,19 +77,19 @@ object RenderingUtils {
         }
 
         @JvmStatic inline fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
-                            lu: Vector3d, ld: Vector3d, ru: Vector3d, rd: Vector3d) {
+                                       lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d) {
             buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
             buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
             buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
+            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
         }
 
         @JvmStatic inline fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
-                                       lu: Vector3d, ld: Vector3d, ru: Vector3d, rd: Vector3d, uv0: Float, uv1: Float) {
+                                       lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d, uv0: Float, uv1: Float) {
             buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(uv0, 1.0f).uv2(lightmapUV).endVertex()
             buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(uv0, 0.0f).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(uv1, 0.0f).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(uv1, 1.0f).uv2(lightmapUV).endVertex()
+            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(uv1, 0.0f).uv2(lightmapUV).endVertex()
+            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(uv1, 1.0f).uv2(lightmapUV).endVertex()
         }
 
         @JvmStatic inline fun makePolygon(sides: Int, radius: Double, up: Vector3d, right: Vector3d, pos: Vector3d): List<Vector3d> {
@@ -177,10 +177,10 @@ object RenderingUtils {
             val lu =  up * width + pos1
             val ld = -up * width + pos1
 
-            val ru = -up * width + pos2
-            val rd =  up * width + pos2
+            val rd = -up * width + pos2
+            val ru =  up * width + pos2
 
-            drawQuad(buf, matrix, r, g, b, a, lightmapUV, lu, ld, ru, rd)
+            drawQuad(buf, matrix, r, g, b, a, lightmapUV, lu, ld, rd, ru)
         }
 
         @JvmStatic inline fun makeFlatRectFacingCameraTexture(buf: VertexConsumer, matrix: Matrix4f,

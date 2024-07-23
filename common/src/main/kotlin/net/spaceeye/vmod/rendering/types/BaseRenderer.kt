@@ -2,12 +2,20 @@ package net.spaceeye.vmod.rendering.types
 
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
+import net.minecraft.client.renderer.MultiBufferSource
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.utils.RegistryObject
 import net.spaceeye.vmod.utils.Vector3d
+import org.valkyrienskies.core.api.ships.Ship
 
 interface BaseRenderer: Serializable, RegistryObject {
     fun renderData(poseStack: PoseStack, camera: Camera)
+    fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer
+}
+
+interface BlockRenderer: BaseRenderer {
+    override fun renderData(poseStack: PoseStack, camera: Camera) {}
+    fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource)
 }
 
 interface PositionDependentRenderer: BaseRenderer {

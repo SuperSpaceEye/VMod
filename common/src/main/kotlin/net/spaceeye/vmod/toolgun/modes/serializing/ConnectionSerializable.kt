@@ -15,10 +15,10 @@ interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
 
         buf.writeDouble(compliance)
         buf.writeDouble(maxForce)
-        buf.writeEnum(posMode)
         buf.writeDouble(width)
         buf.writeEnum(connectionMode)
         buf.writeColor(color)
+        buf.writeDouble(fixedDistance)
 
         buf.writeBoolean(primaryFirstRaycast)
 
@@ -31,10 +31,10 @@ interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
         this as ConnectionMode
         compliance = buf.readDouble()
         maxForce = buf.readDouble()
-        posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
         connectionMode = buf.readEnum(connectionMode.javaClass)
         color = buf.readColor()
+        fixedDistance = buf.readDouble()
 
         primaryFirstRaycast = buf.readBoolean()
 
@@ -47,6 +47,7 @@ interface ConnectionSerializable: MSerializable, PlacementAssistSerialize {
         compliance = limits.compliance.get(compliance)
         maxForce = limits.maxForce.get(maxForce)
         fixedDistance = limits.fixedDistance.get(fixedDistance)
+
         paServerSideVerifyLimits()
     }
 }

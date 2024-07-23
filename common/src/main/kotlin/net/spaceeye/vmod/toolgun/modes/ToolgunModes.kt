@@ -12,6 +12,7 @@ object ToolgunModes {
         SliderMode(),
 //        WinchMode(),
 
+        ThrusterMode(),
         GravChangerMode(),
         DisableCollisionsMode(),
         SchemMode(),

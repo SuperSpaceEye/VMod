@@ -41,7 +41,7 @@ object VSConstraintSerializationUtil {
                 cTag.putVector3d("localSlideAxis0", constraint.localSlideAxis0)
                 cTag.putDouble("maxDistBetweenPoints", constraint.maxDistBetweenPoints)
             }
-            else -> { WLOG("CAN'T SAVE TYPE ${constraint.constraintType} IN VSForceConstraint BLOCK"); return null}
+            else -> { WLOG("Can't save type ${constraint.constraintType} in VSForceConstraint block"); return null}
         }
 
         return cTag
@@ -78,7 +78,7 @@ object VSConstraintSerializationUtil {
             }
             VSConstraintType.FIXED_ORIENTATION -> {}
             VSConstraintType.HINGE_ORIENTATION -> {}
-            else -> { WLOG("CAN'T SAVE TYPE ${constraint.constraintType} IN VSForceConstraint BLOCK"); return null}
+            else -> { WLOG("Can't save type ${constraint.constraintType} in VSForceConstraint block"); return null}
         }
         return cTag
     }
@@ -89,7 +89,7 @@ object VSConstraintSerializationUtil {
         when (constraint) {
             is VSForceConstraint -> cTag = serializeForceConstraint(constraint, cTag!!)
             is VSTorqueConstraint -> cTag = serializeTorqueConstraint(constraint, cTag!!)
-            else -> {WLOG("CONSTRAINT TYPE ${constraint.constraintType} IS NOT VSForceConstraint OR VSTorqueConstraint. CAN'T SERIALIZE."); return null}
+            else -> {WLOG("Constraint type ${constraint.constraintType} is not VSForceConstraint OR VSTorqueConstraint. Can't serialize"); return null}
         }
 
         return cTag

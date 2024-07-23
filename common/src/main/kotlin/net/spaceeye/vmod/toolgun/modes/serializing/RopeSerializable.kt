@@ -4,8 +4,9 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.MSerializable
 import net.spaceeye.vmod.toolgun.modes.state.RopeMode
+import net.spaceeye.vmod.toolgun.modes.util.PlacementModesSerializable
 
-interface RopeSerializable: MSerializable {
+interface RopeSerializable: MSerializable, PlacementModesSerializable {
     override fun serialize(): FriendlyByteBuf {
         this as RopeMode
 
@@ -14,11 +15,12 @@ interface RopeSerializable: MSerializable {
         buf.writeDouble(compliance)
         buf.writeDouble(maxForce)
         buf.writeDouble(fixedDistance)
-        buf.writeEnum(posMode)
         buf.writeDouble(width)
         buf.writeInt(segments)
 
         buf.writeBoolean(primaryFirstRaycast)
+
+        pmSerialize(buf)
 
         return buf
     }
@@ -29,11 +31,12 @@ interface RopeSerializable: MSerializable {
         compliance = buf.readDouble()
         maxForce = buf.readDouble()
         fixedDistance = buf.readDouble()
-        posMode = buf.readEnum(posMode.javaClass)
         width = buf.readDouble()
         segments = buf.readInt()
 
         primaryFirstRaycast = buf.readBoolean()
+
+        pmDeserialize(buf)
     }
 
     override fun serverSideVerifyLimits() {
@@ -43,5 +46,7 @@ interface RopeSerializable: MSerializable {
         compliance = limits.compliance.get(compliance)
         maxForce = limits.maxForce.get(maxForce)
         fixedDistance = limits.fixedDistance.get(fixedDistance)
+
+        pmServerSideVerifyLimits()
     }
 }

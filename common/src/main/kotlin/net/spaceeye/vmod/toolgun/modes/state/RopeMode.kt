@@ -12,19 +12,22 @@ import net.spaceeye.vmod.rendering.types.RopeRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.RopeGUI
 import net.spaceeye.vmod.toolgun.modes.hud.RopeHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.RopeCRIH
+import net.spaceeye.vmod.toolgun.modes.eventsHandling.RopeCEH
 import net.spaceeye.vmod.toolgun.modes.serializing.RopeSerializable
+import net.spaceeye.vmod.toolgun.modes.util.PlacementModesState
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 
-class RopeMode: BaseMode, RopeSerializable, RopeCRIH, RopeGUI, RopeHUD {
+class RopeMode: BaseMode, RopeSerializable, RopeCEH, RopeGUI, RopeHUD, PlacementModesState {
+    override var posMode = PositionModes.NORMAL
+    override var precisePlacementAssistSideNum: Int = 3
+    override var precisePlacementAssistRendererId: Int = -1
+
     var compliance = 1e-20
     var maxForce = 1e10
     var fixedDistance = -1.0
-
-    var posMode = PositionModes.NORMAL
 
     var width: Double = .2
     var segments: Int = 16
@@ -37,7 +40,7 @@ class RopeMode: BaseMode, RopeSerializable, RopeCRIH, RopeGUI, RopeHUD {
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist()}

@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.rendering.types
+package net.spaceeye.vmod.rendering.types.special
 
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
@@ -9,8 +9,12 @@ import net.minecraft.client.Camera
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.rendering.RenderingUtils
+import net.spaceeye.vmod.rendering.types.BaseRenderer
+import net.spaceeye.vmod.rendering.types.PositionDependentRenderer
+import net.spaceeye.vmod.rendering.types.TimedRenderer
 import net.spaceeye.vmod.utils.*
 import org.lwjgl.opengl.GL11
+import org.valkyrienskies.core.api.ships.Ship
 import java.awt.Color
 
 class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer {
@@ -25,6 +29,8 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
     override var activeFor_ms: Long = -1
     override var wasActivated: Boolean = false
     override var renderingPosition: Vector3d = Vector3d()
+
+    override val typeName: String = "TimedA2BRenderer"
 
     constructor(point1: Vector3d,
                 point2: Vector3d,
@@ -78,8 +84,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
         poseStack.popPose()
     }
 
-    override val typeName: String = "TimedA2BRenderer"
-
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
 
@@ -104,5 +108,9 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
         timestampOfBeginning = buf.readLong()
         activeFor_ms = buf.readLong()
         renderingPosition = buf.readVector3d()
+    }
+
+    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
+        throw AssertionError("Shouldn't be copied")
     }
 }

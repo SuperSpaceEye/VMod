@@ -27,12 +27,18 @@ object VMConfig {
     }
     class Common: ConfigSubDirectory()
     class Server: ConfigSubDirectory() {
+        val AUTOREMOVE_MASSLESS_SHIPS: Boolean by CBool(true, "MAY BREAK SOMETHING. if true, will automatically remove massless ships if they appear.")
+
+        val SCALE_THRUSTERS_THRUST: Boolean by CBool(true)
+
+        var DIMENSION_GRAVITY_VALUES: String by CString("", "DO NOT CHANGE")
+
         val TOOLGUN = ServerToolgunSettings()
         val PERMISSIONS = Permissions()
         val SCHEMATICS = Schematics()
 
         class ServerToolgunSettings: ConfigSubDirectory() {
-            val MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
+            val MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "No Comment", Pair(1.0, Double.MAX_VALUE))
 
             //TODO use this
             val MAX_SHIPS_ALLOWED_TO_COPY: Int by CInt(-1, "Number of connected ships a player can copy in one request. <=0 for unlimited.")
@@ -41,9 +47,9 @@ object VMConfig {
         }
 
         class Permissions: ConfigSubDirectory() {
-            var VMOD_COMMANDS_PERMISSION_LEVEL: Int by CInt(2, "", Pair(0, 4))
-            var VMOD_OP_COMMANDS_PERMISSION_LEVEL: Int by CInt(4, "", Pair(0, 4))
-            var VMOD_TOOLGUN_PERMISSION_LEVEL: Int by CInt(2, "", Pair(0, 4))
+            var VMOD_COMMANDS_PERMISSION_LEVEL: Int by CInt(2, "No Comment", Pair(0, 4))
+            var VMOD_OP_COMMANDS_PERMISSION_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
+            var VMOD_TOOLGUN_PERMISSION_LEVEL: Int by CInt(2, "No Comment", Pair(0, 4))
 
             //using config to store shit
             var ALWAYS_ALLOWED: String by CString("", "DO NOT CHANGE")
@@ -51,7 +57,7 @@ object VMConfig {
         }
 
         class Schematics: ConfigSubDirectory() {
-            var TIMEOUT_TIME: Int by CInt(50, "", Pair(0, 20000))
+            var TIMEOUT_TIME: Int by CInt(50, "No Comment", Pair(0, 20000))
         }
     }
 }

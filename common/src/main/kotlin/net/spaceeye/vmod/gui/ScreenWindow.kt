@@ -5,7 +5,7 @@ import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.WindowScreen
 import gg.essential.elementa.components.UIBlock
 import gg.essential.elementa.components.UIContainer
-import gg.essential.elementa.components.UIText
+import gg.essential.elementa.components.UIWrappedText
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
@@ -63,8 +63,8 @@ class ScreenWindow: WindowScreen(ElementaVersion.V5, drawDefaultBackground = fal
             color = Color.YELLOW.toConstraint()
         }
 
-        val text = UIText(string, false) constrain {
-            x = CenterConstraint()
+        val text = UIWrappedText(string, false) constrain {
+            x = 5.pixels
             y = CenterConstraint()
 
             color = Color.BLACK.toConstraint()
@@ -74,9 +74,6 @@ class ScreenWindow: WindowScreen(ElementaVersion.V5, drawDefaultBackground = fal
 
         toAdd.add(MPair(errorBlock, getNow_ms()))
         refreshHUD()
-    }
-
-    private fun placeErrors() {
     }
 
     var animating = false
@@ -151,7 +148,6 @@ class ScreenWindow: WindowScreen(ElementaVersion.V5, drawDefaultBackground = fal
         if (refreshHUD) {
             screenContainer.clearChildren()
             currentMode.makeHUD(screenContainer)
-            placeErrors()
             refreshHUD = false
         }
 

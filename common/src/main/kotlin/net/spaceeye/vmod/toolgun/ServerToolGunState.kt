@@ -65,6 +65,8 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
         object : S2CConnection<S2CToolgunUsageRejectedPacket>(it, "toolgun") {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = EnvExecutor.runInEnv(EnvType.CLIENT) { Runnable {
                 ClientToolGunState.currentMode?.resetState()
+                //TODO
+                ClientToolGunState.addHUDError("You don't have the permission to use toolgun")
             } }
         }
     }

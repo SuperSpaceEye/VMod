@@ -3,70 +3,72 @@ package net.spaceeye.vmod.toolgun.modes.state
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIContainer
-import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.TranslatableComponent
-import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.constraintsManaging.*
-import net.spaceeye.vmod.constraintsManaging.types.ConnectionMConstraint
+import net.spaceeye.vmod.constraintsManaging.addFor
+import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
+import net.spaceeye.vmod.constraintsManaging.types.SliderMConstraint
 import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
-import net.spaceeye.vmod.toolgun.modes.hud.StripHUD
-import net.spaceeye.vmod.toolgun.modes.inputHandling.StripCRIH
-import net.spaceeye.vmod.toolgun.modes.serializing.StripSerializable
-import net.spaceeye.vmod.toolgun.modes.util.PositionModes
-import net.spaceeye.vmod.toolgun.modes.util.ThreeClicksActivationSteps
-import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
-import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
+import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.utils.RaycastFunctions
-import net.spaceeye.vmod.utils.vs.posShipToWorld
-import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.lwjgl.glfw.GLFW
-import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
-import org.valkyrienskies.mod.common.getShipManagingPos
-import org.valkyrienskies.mod.common.shipObjectWorld
 
 class SliderMode: BaseMode {
     var posMode = PositionModes.CENTERED_IN_BLOCK
-    var primaryFirstRaycast = false
+    var precisePlacementAssistSideNum = 3
+
+    var compliance: Double = 1e-20
+    var maxForce: Double = 1e20
 
     val conn_primary = register { object : C2SConnection<SliderMode>("slider_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SliderMode>(context.player, buf, ::SliderMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
-    var previousResult: RaycastFunctions.RaycastResult? = null
+    var shipRes1: RaycastFunctions.RaycastResult? = null
+    var shipRes2: RaycastFunctions.RaycastResult? = null
+    var axisRes1: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
-            level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
+    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycastAndActivateFn(posMode, precisePlacementAssistSideNum, level, raycastResult) {
+        level, shipId, ship, spoint, rpoint, rresult ->
 
-//        val dir = (rpoint1 - rpoint2).snormalize()
+        if (shipRes1 == null && rresult.ship == null) { return@serverRaycastAndActivateFn resetState() }
+        val shipRes1 = shipRes1 ?: run {
+            shipRes1 = rresult
+            return@serverRaycastAndActivateFn
+        }
 
-        val pspoint1 = posWorldToShip(ship1, rpoint2)
-        val pspoint2 = posWorldToShip(ship2, rpoint1)
+        val shipRes2 = shipRes2 ?: run {
+            shipRes2 = rresult
+            if (shipRes1.shipId != shipRes2!!.shipId) { return@serverRaycastAndActivateFn resetState() }
+            return@serverRaycastAndActivateFn
+        }
 
-        val c11 = VSAttachmentConstraint(shipId1, shipId2, 1e-8, spoint1.toJomlVector3d(), pspoint2.toJomlVector3d(), 1e20, 10.0)
-        val c12 = VSAttachmentConstraint(shipId1, shipId2, 1e-8, spoint1.toJomlVector3d(), pspoint2.toJomlVector3d(), 1e20, 0.0)
+        val axisRes1 = axisRes1 ?: run {
+            axisRes1 = rresult
+            return@serverRaycastAndActivateFn
+        }
 
-        val c21 = VSAttachmentConstraint(shipId1, shipId2, 1e-8, pspoint1.toJomlVector3d(), spoint2.toJomlVector3d(), 1e20, 10.0)
-        val c22 = VSAttachmentConstraint(shipId1, shipId2, 1e-8, pspoint1.toJomlVector3d(), spoint2.toJomlVector3d(), 1e20, 0.0)
+        val axisRes2 = rresult
 
+        if (axisRes1.shipId != axisRes2.shipId) { return@serverRaycastAndActivateFn resetState() }
 
-//        val c1 = VSAttachmentConstraint(shipId1, shipId2, 1e-20, spoint1.toJomlVector3d(), pspoint2.toJomlVector3d(), 1e20, 0.0)
-//        val c2 = VSAttachmentConstraint(shipId1, shipId2, 1e-20, pspoint1.toJomlVector3d(), spoint2.toJomlVector3d(), 1e20, 0.0)
+        val axisPair = getModePositions(posMode, axisRes1, axisRes2, precisePlacementAssistSideNum)
+        val shipPair = getModePositions(posMode, shipRes1, shipRes2, precisePlacementAssistSideNum)
 
-        level.shipObjectWorld.createNewConstraint(c11)
-        level.shipObjectWorld.createNewConstraint(c12)
-
-        level.shipObjectWorld.createNewConstraint(c21)
-        level.shipObjectWorld.createNewConstraint(c22)
+        level.makeManagedConstraint(SliderMConstraint(
+            axisRes1.shipId, shipRes1.shipId,
+            axisPair.first, axisPair.second, shipPair.first, shipPair.second,
+            compliance, maxForce, setOf(
+                axisRes1.blockPosition, shipRes1.blockPosition,
+                axisRes2.blockPosition, shipRes2.blockPosition).toList(), null
+        )).addFor(player)
 
         resetState()
     }
 
-    override fun handleKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
             return EventResult.interruptFalse()
@@ -75,9 +77,8 @@ class SliderMode: BaseMode {
         return EventResult.pass()
     }
 
-    override fun handleMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
+    override fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
-            primaryFirstRaycast = !primaryFirstRaycast
             conn_primary.sendToServer(this)
         }
 
@@ -90,24 +91,28 @@ class SliderMode: BaseMode {
         val buf = getBuffer()
 
         buf.writeEnum(posMode)
-        buf.writeBoolean(primaryFirstRaycast)
+        buf.writeInt(precisePlacementAssistSideNum)
+        buf.writeDouble(compliance)
+        buf.writeDouble(maxForce)
 
         return buf
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
         posMode = buf.readEnum(posMode.javaClass)
-        primaryFirstRaycast = buf.readBoolean()
+        precisePlacementAssistSideNum = buf.readInt()
+        compliance = buf.readDouble()
+        maxForce = buf.readDouble()
     }
 
-    override val itemName: TranslatableComponent
-        get() = TranslatableComponent("Slider")
+    override val itemName = TranslatableComponent("Slider")
 
     override fun makeGUISettings(parentWindow: UIContainer) {
     }
 
     override fun resetState() {
-        previousResult = null
-        primaryFirstRaycast = false
+        shipRes1 = null
+        shipRes2 = null
+        axisRes1 = null
     }
 }

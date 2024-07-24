@@ -12,6 +12,7 @@ import kotlin.math.max
 
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.util.Mth
 import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
@@ -29,6 +30,7 @@ import org.joml.primitives.AABBd
 import org.joml.primitives.AABBdc
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.mod.common.dimensionId
 import java.util.function.BiFunction
 import java.util.function.Function
 
@@ -50,7 +52,8 @@ object RaycastFunctions {
         @JvmField var hitNormal: Vector3d?,
         @JvmField var worldNormalDirection: Vector3d?,
         @JvmField var globalNormalDirection: Vector3d?,
-        @JvmField var ship: Ship?
+        @JvmField var ship: Ship?,
+        @JvmField var shipId: ShipId
     )
 
     //https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
@@ -107,7 +110,7 @@ object RaycastFunctions {
         )
 
         val state = level.getBlockState(clipResult.blockPos)
-        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null, null) }
+        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null, null, -1) }
 
         val ship = level.getShipManagingPos(clipResult.blockPos)
 
@@ -145,7 +148,7 @@ object RaycastFunctions {
             worldCenteredHitPos = posShipToWorld(ship, globalCenteredHitPos, null)
         }
 
-        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection, ship)
+        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection, ship, if (level is ServerLevel) ship?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!! else -1)
     }
 
     fun Level.clipIncludeShips(

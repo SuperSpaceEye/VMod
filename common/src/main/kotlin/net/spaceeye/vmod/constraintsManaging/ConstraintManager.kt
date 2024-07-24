@@ -537,7 +537,7 @@ class ConstraintManager: SavedData() {
 
                         constraints.add(mConstraint)
                         count++
-                        } catch (e: Exception) { ELOG("FAILED TO LOAD CONSTRAINT WITH IDX ${type} AND TYPE ${strType}") }
+                        } catch (e: Exception) { ELOG("FAILED TO LOAD CONSTRAINT WITH IDX ${type} AND TYPE ${strType}\n${e.stackTraceToString()}") }
                     }
                     toInitConstraints.addAll(constraints)
                 }

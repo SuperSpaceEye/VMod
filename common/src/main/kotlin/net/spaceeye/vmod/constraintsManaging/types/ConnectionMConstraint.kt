@@ -192,7 +192,7 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
         }
     }
 
-    override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         aconstraint1 = aconstraint1.copy(fixedDistance = aconstraint1.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[0])
         cIDs[0] = level.shipObjectWorld.createNewConstraint(aconstraint1)!!

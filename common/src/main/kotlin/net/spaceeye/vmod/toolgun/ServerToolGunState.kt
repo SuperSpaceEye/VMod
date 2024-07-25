@@ -62,7 +62,7 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
     }
 
     val s2cToolgunUsageRejected = "toolgun_usage_rejected" idWithConns {
-        object : S2CConnection<S2CToolgunUsageRejectedPacket>(it, "toolgun") {
+        object : S2CConnection<S2CToolgunUsageRejectedPacket>(it, "server_toolgun") {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = EnvExecutor.runInEnv(EnvType.CLIENT) { Runnable {
                 ClientToolGunState.currentMode?.resetState()
                 //TODO
@@ -77,7 +77,7 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
     }
 
     val c2sRequestRemoveLastConstraint = "request_remove_last_constraint" idWithConnc {
-        object : C2SConnection<C2SRequestRemoveLastConstraintPacket>(it, "toolgun") {
+        object : C2SConnection<C2SRequestRemoveLastConstraintPacket>(it, "server_toolgun") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = verifyPlayerAccessLevel(context.player as ServerPlayer) {
                 val stack = playersConstraintsStack[context.player.uuid] ?: return
                 var item: ManagedConstraintId = stack.removeLastOrNull() ?: return
@@ -117,12 +117,40 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
     }
 
     val s2cErrorHappened = "error_happened" idWithConns {
-        object : S2CConnection<S2CErrorHappened>(it, "toolgun") {
+        object : S2CConnection<S2CErrorHappened>(it, "server_toolgun") {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = S2CErrorHappened()
                 pkt.deserialize(buf)
 
                 ClientToolGunState.addHUDError(pkt.errorStr)
+            }
+        }
+    }
+
+    class S2CToolgunWasReset(): Serializable {
+        override fun serialize(): FriendlyByteBuf { return getBuffer() }
+        override fun deserialize(buf: FriendlyByteBuf) {}
+    }
+
+    val s2cTooglunWasReset = "toolgun_was_reset" idWithConns {
+        object : S2CConnection<S2CToolgunWasReset>(it, "server_toolgun") {
+            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                ClientToolGunState.currentMode?.resetState()
+                ClientToolGunState.currentMode?.refreshHUD()
+            }
+        }
+    }
+
+    class C2SToolgunWasReset(): Serializable {
+        override fun serialize(): FriendlyByteBuf { return getBuffer() }
+        override fun deserialize(buf: FriendlyByteBuf) {}
+    }
+
+    val c2sToolgunWasReset = "toolgun_was_reset" idWithConnc {
+        object : C2SConnection<C2SToolgunWasReset>(it, "server_toolgun") {
+            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val player = context.player ?: return
+                playersStates[player.uuid]?.mode?.resetState()
             }
         }
     }

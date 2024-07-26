@@ -279,7 +279,7 @@ object SchematicActionsQueue: ServerClosable() {
                 }
 
                 val item = placeData[placeLastKeys[placeLastPosition]]
-                val result = try {item?.place(start, timeout)} catch (e: Exception) {null}
+                val result = try {item?.place(start, timeout)} catch (e: Exception) {ELOG("Failed to place item with exception:\n${e.stackTraceToString()}"); null}
                 if (result == null || result) {
                     item!!.postPlacementFn()
                     placeData.remove(placeLastKeys[placeLastPosition])
@@ -301,7 +301,7 @@ object SchematicActionsQueue: ServerClosable() {
                 }
 
                 val item = saveData[saveLastKeys[saveLastPosition]]
-                val result = try {item?.save(start, timeout)} catch (e: Exception) {null}
+                val result = try {item?.save(start, timeout)} catch (e: Exception) {ELOG("Failed to copy item with exception:\n${e.stackTraceToString()}"); null}
                 if (result == null || result) {
                     item!!.postCopyFn()
                     saveData.remove(saveLastKeys[saveLastPosition])

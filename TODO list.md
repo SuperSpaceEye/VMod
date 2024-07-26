@@ -1,3 +1,9 @@
+# VERY IMPORTANT
+
+## change all event emmiters to thread safe versions
+
+# Do Eventually
+
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
 * Add clientside validation 

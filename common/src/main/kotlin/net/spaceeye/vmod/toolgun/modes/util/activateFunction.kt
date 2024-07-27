@@ -119,7 +119,7 @@ fun BaseMode.serverRaycast2PointsFnActivation(
     if (ship1 == ship2) { resetFn(); return }
 
     val shipId1: ShipId = previousResult.shipId!!
-    val shipId2: ShipId = previousResult.shipId!!
+    val shipId2: ShipId = raycastResult.shipId!!
 
     val (spoint1, spoint2) = getModePositions(mode, previousResult, raycastResult, precisePlacementAssistSideNum)
 

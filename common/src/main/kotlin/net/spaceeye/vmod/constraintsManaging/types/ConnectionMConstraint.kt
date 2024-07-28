@@ -108,7 +108,7 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
             ConnectionModes.FIXED_ORIENTATION -> {
                 val frot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
                 val frot2 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
-                VSFixedOrientationConstraint(shipId0, shipId1, compliance, frot1.invert(Quaterniond()), frot2.invert(Quaterniond()), 1e300)
+                VSFixedOrientationConstraint(shipId0, shipId1, compliance, frot1.invert(Quaterniond()), frot2.invert(Quaterniond()), maxForce)
             }
             ConnectionModes.HINGE_ORIENTATION -> {
                 val hrot1 = getHingeRotation(ship1?.transform, dir.normalize())

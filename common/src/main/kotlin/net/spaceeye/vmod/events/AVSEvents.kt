@@ -2,37 +2,23 @@ package net.spaceeye.vmod.events
 
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vmod.utils.SafeEventEmitter
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.impl.game.ships.ShipData
 import org.valkyrienskies.core.impl.game.ships.ShipDataCommon
-import org.valkyrienskies.core.impl.util.events.EventEmitter
-import org.valkyrienskies.core.impl.util.events.EventEmitterImpl
 import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
 
 // Additional VS Events
 object AVSEvents {
+    val serverShipRemoveEvent = SafeEventEmitter<ServerShipRemoveEvent>()
+    val clientShipUnloadEvent = SafeEventEmitter<ClientShipUnloadEvent>()
+    val serverShipUnloadEvent = SafeEventEmitter<ServerShipUnloadEvent>()
+    val splitShip = SafeEventEmitter<SplitShipEvent>() //VS event is useless
 
-    val serverShipUnloadEvent = EventEmitterImpl<ServerShipUnloadEvent>()
-
-    data class ServerShipUnloadEvent(val shipData: ShipDataCommon) {
-        companion object : EventEmitter<ServerShipUnloadEvent> by serverShipUnloadEvent
-    }
-
-    val clientShipUnloadEvent = EventEmitterImpl<ClientShipUnloadEvent>()
-
-    data class ClientShipUnloadEvent(val ship: Ship?) {
-        companion object : EventEmitter<ClientShipUnloadEvent> by clientShipUnloadEvent
-    }
-
-    val serverShipRemoveEvent = EventEmitterImpl<ServerShipRemoveEvent>()
-
-    data class ServerShipRemoveEvent(val ship: ShipData) {
-        companion object : EventEmitter<ServerShipRemoveEvent> by serverShipRemoveEvent
-    }
-
-    //VS event is useless
-    val splitShip = EventEmitterImpl<SplitShipEvent>()
+    data class ServerShipRemoveEvent(val ship: ShipData)
+    data class ServerShipUnloadEvent(val shipData: ShipDataCommon)
+    data class ClientShipUnloadEvent(val ship: Ship?)
 
     data class SplitShipEvent(
         val level: ServerLevel,
@@ -40,7 +26,5 @@ object AVSEvents {
         val newShip: ServerShip,
         val centerBlock: BlockPos,
         val blocks: DenseBlockPosSet
-    ) {
-        companion object : EventEmitter<SplitShipEvent> by splitShip
-    }
+    )
 }

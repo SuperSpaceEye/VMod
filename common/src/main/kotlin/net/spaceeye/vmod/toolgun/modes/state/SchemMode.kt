@@ -389,7 +389,7 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemHUD {
                 SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
                 ServerPlayerSchematics.schematics[player.uuid] = schem
             }
-            unregister.unregister()
+            unregister()
         }
     }
 

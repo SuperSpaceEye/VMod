@@ -1,6 +1,6 @@
 # VERY IMPORTANT
 
-## change all event emmiters to thread safe versions
+nothing
 
 # Do Eventually
 

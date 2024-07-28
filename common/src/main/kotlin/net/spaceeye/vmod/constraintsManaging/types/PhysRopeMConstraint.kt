@@ -5,7 +5,7 @@ import net.minecraft.nbt.*
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.entities.ServerEntitiesHolder
+import net.spaceeye.vmod.entities.events.ServerPhysEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.rendering.ServerRenderingData
@@ -24,7 +24,6 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.mod.common.shipObjectWorld
-import org.valkyrienskies.physics_api.ConstraintId
 import java.awt.Color
 import java.util.*
 
@@ -296,12 +295,12 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
             createConstraints(level, length)
         }
 
-        synchronized(ServerEntitiesHolder.entities) {
+        synchronized(ServerPhysEntitiesHolder.entities) {
             var loaded = 0
             val toLoad = segments
 
             entitiesUUIDs.forEach {
-                val entity = ServerEntitiesHolder.entities[it] ?: return@forEach
+                val entity = ServerPhysEntitiesHolder.entities[it] ?: return@forEach
                 entities.add(entity as PhysRopeComponentEntity)
                 loaded++
             }
@@ -319,7 +318,7 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
                 return@synchronized
             }
 
-            ServerEntitiesHolder.entityLoadedEvent.on {
+            ServerPhysEntitiesHolder.entityLoadedEvent.on {
                 (uuid, entity), handler ->
                 if (!entitiesUUIDs.contains(uuid)) { return@on }
                 entity as PhysRopeComponentEntity
@@ -378,14 +377,14 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
         RandomEvents.serverOnTick.on {
-            _, handler ->
+            _, unregister ->
             if (entitiesUUIDs.isNotEmpty()) {
                 onLoadMConstraint(level)
             } else {
                 createNewMConstraint(level)
             }
 
-            handler.unregister()
+            unregister()
         }
 
         return true

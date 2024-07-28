@@ -8,8 +8,10 @@ import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
+import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
 import net.spaceeye.vmod.rendering.initRenderingData
+import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
@@ -63,6 +65,9 @@ object VM {
 
     @JvmStatic
     fun makeEvents() {
+        RandomEvents
+        SchematicActionsQueue
+
         LifecycleEvent.SERVER_LEVEL_SAVE.register {
             if (it != ServerLevelHolder.overworldServerLevel) {return@register}
             ConstraintManager.setDirty()

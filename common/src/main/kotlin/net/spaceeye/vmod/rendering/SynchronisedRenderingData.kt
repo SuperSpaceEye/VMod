@@ -155,7 +155,7 @@ private object SynchronisedRenderingData {
             VSEvents.shipLoadEventClient.on { (ship) ->
                 clientSynchronisedData.subscribeToPageUpdates(ship.id)
             }
-            AVSEvents.clientShipUnloadEvent.on { (ship) ->
+            AVSEvents.clientShipUnloadEvent.on { (ship), _ ->
                 clientSynchronisedData.unsubscribeFromPageUpdates(ship?.id ?: return@on)
             }
         }}

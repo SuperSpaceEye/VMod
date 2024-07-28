@@ -1,14 +1,12 @@
 package net.spaceeye.vmod.events
 
-import dev.architectury.event.events.client.ClientLifecycleEvent
 import dev.architectury.event.events.client.ClientTickEvent
 import dev.architectury.event.events.common.TickEvent
 import dev.architectury.utils.EnvExecutor
 import net.fabricmc.api.EnvType
 import net.minecraft.client.Minecraft
 import net.minecraft.server.MinecraftServer
-import org.valkyrienskies.core.impl.util.events.EventEmitter
-import org.valkyrienskies.core.impl.util.events.EventEmitterImpl
+import net.spaceeye.vmod.utils.SafeEventEmitter
 
 object RandomEvents {
     init {
@@ -21,16 +19,9 @@ object RandomEvents {
         } }
     }
 
-    val serverOnTick = EventEmitterImpl<ServerOnTick>()
+    val serverOnTick = SafeEventEmitter<ServerOnTick>()
+    val clientOnTick = SafeEventEmitter<ClientOnTick>()
 
-    data class ServerOnTick(val server: MinecraftServer) {
-        companion object : EventEmitter<ServerOnTick> by serverOnTick
-    }
-
-    val clientOnTick = EventEmitterImpl<ClientOnTick>()
-
-    data class ClientOnTick(val minecraft: Minecraft) {
-        companion object : EventEmitter<ClientOnTick> by clientOnTick
-    }
-
+    data class ServerOnTick(val server: MinecraftServer)
+    data class ClientOnTick(val minecraft: Minecraft)
 }

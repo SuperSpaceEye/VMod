@@ -281,7 +281,7 @@ object VMCommands {
 
         string += "Page: ${page+1}/${ordered.size/10+1}"
 
-        player.sendMessage(TextComponent(string), player.uuid)
+        player.sendSystemMessage(Component.literal(string))
 
         return 0
     }

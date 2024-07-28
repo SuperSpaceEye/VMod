@@ -7,7 +7,6 @@ import dev.architectury.registry.client.keymappings.KeyMappingRegistry
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.screens.Screen
 import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ToolgunGUI
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes

@@ -1,3 +1,9 @@
+# VERY IMPORTANT
+
+## change all event emmiters to thread safe versions
+
+# Do Eventually
+
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
 * Add clientside validation 
@@ -9,6 +15,9 @@
 
 ## Constraint disabler
 * A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
+
+## Revise whole MConstraint structure
+## Redo how MConstraint renderers are saved
 
 ## java.awt.Color doesn't exist in headless mode
 
@@ -78,10 +87,11 @@ A rope that can stretch or push (if option is chosen)
 ## Pulley
 A rope with connections to the ground through which it like moves. No idea on how to make it.
 
-## Slider
-
 ## Winch
 A rope that can be made longer or shorter
+Maybe have 2 ropes.
+first rope will be "supporting rope" - it will have max compliance and force, but during retraction it will only shorten to diff between target and point
+second rope will be "retracting rope" - it will have max force == needed force to counteract other forces + more, but idk how to calculate other forces
 
 ## Wheels
 A tool that will create wheels from VS phys entities + maybe 

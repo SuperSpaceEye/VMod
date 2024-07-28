@@ -11,6 +11,7 @@ interface ScaleSerializable: MSerializable {
         val buf = getBuffer()
 
         buf.writeDouble(scale)
+        buf.writeBoolean(scaleAllConnected)
 
         return buf
     }
@@ -18,6 +19,7 @@ interface ScaleSerializable: MSerializable {
     override fun deserialize(buf: FriendlyByteBuf) {
         this as ScaleMode
         scale = buf.readDouble()
+        scaleAllConnected = buf.readBoolean()
     }
 
     override fun serverSideVerifyLimits() {

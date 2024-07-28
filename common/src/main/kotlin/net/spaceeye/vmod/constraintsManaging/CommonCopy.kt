@@ -47,14 +47,7 @@ fun commonCopy(
     val apoint2 = (if (nShip2 != null) Vector3d(attachmentPoints_[1]) + 0.5 - oCentered2!! + nCentered2!! else Vector3d(attachmentPoints_[1])).toBlockPos()
 
     val newAttachmentPoints = listOf(apoint1, apoint2)
+    val newRenderer = renderer?.copy(nShip1, nShip2, localPos0, localPos1)
 
-    var newRenderer: BaseRenderer? = null
-    if (renderer != null) {
-        newRenderer = when (renderer) {
-            is A2BRenderer  -> { A2BRenderer (nShip1 != null, nShip2 != null, localPos0, localPos1, renderer.color, renderer.width) }
-            is RopeRenderer -> { RopeRenderer(nShip1 != null, nShip2 != null, localPos0, localPos1, renderer.length, renderer.width, renderer.segments) }
-            else -> {throw AssertionError() }
-        }
-    }
     return constructor(nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer)
 }

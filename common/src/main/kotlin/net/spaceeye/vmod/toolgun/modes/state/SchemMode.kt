@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
+import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
@@ -382,9 +383,12 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
             null
         } ?: return
         val schem = ShipSchematic.getSchematicConstructor().get()
-        schem.makeFrom(player.level() as ServerLevel, player.uuid, serverCaughtShip) {
-            SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
-            ServerPlayerSchematics.schematics[player.uuid] = schem
+        RandomEvents.serverOnTick.on { (it), unregister ->
+            schem.makeFrom(player.level() as ServerLevel, player.uuid, serverCaughtShip) {
+                SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
+                ServerPlayerSchematics.schematics[player.uuid] = schem
+            }
+            unregister.unregister()
         }
     }
 

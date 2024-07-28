@@ -26,6 +26,7 @@ import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.util.*
 import kotlin.math.max
 
 //ShipId seem to be unique and are retained by ships after saving/loading
@@ -40,7 +41,7 @@ class ConstraintManager: SavedData() {
     internal val constraintIdCounter = ConstraintIdCounter()
     private val idToDisabledCollisions = mutableMapOf<ShipId, MutableMap<ShipId, MutablePair<Int, MutableList<(() -> Unit)?>>>>()
 
-    private val tickingConstraints = mutableListOf<Tickable>()
+    private val tickingConstraints = Collections.synchronizedList(mutableListOf<Tickable>())
 
     private val toLoadConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
     private val groupedToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
@@ -191,7 +192,7 @@ class ConstraintManager: SavedData() {
 
                 constraints.add(mConstraint)
                 count++
-                } catch (e: Exception) { ELOG("Failed to load constraint with idx $type and type $strType") }
+                } catch (e: Exception) { ELOG("Failed to load constraint with idx $type and type $strType\n${e.stackTraceToString()}") }
             }
             toLoadConstraints[shipId.toLong()] = constraints
         }
@@ -301,7 +302,7 @@ class ConstraintManager: SavedData() {
         return mCon.mID
     }
 
-    fun tryGetIdOfPosition(pos: BlockPos): List<ManagedConstraintId>? {
+    fun tryGetIdsOfPosition(pos: BlockPos): List<ManagedConstraintId>? {
         return posToMId.getItemsAt(pos)
     }
 
@@ -471,7 +472,7 @@ class ConstraintManager: SavedData() {
 
             ShipSchematic.registerCopyPasteEvents(
                     "VMod Constraint Manager",
-            {level: ServerLevel, shipsToBeSaved: List<ServerShip>, unregister: () -> Unit ->
+            {level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
                 val instance = getInstance()
 
                 val toSave = shipsToBeSaved.filter { instance.shipsConstraints.containsKey(it.id) }
@@ -500,7 +501,8 @@ class ConstraintManager: SavedData() {
                 instance.saveSchema(tag)
 
                 CompoundTagSerializable(tag)
-            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: Serializable, unregister: () -> Unit ->
+            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
+                if (loadFile == null) {return@registerCopyPasteEvents}
                 val instance = getInstance()
 
                 val file = CompoundTagSerializable(CompoundTag())
@@ -530,28 +532,32 @@ class ConstraintManager: SavedData() {
                         val mConstraint = MConstraintTypes
                             .idxToSupplier(ctag.getInt("MCONSTRAINT_TYPE"))
                             .get()
-                            .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("FAILED TO DESEREALIZE CONSTRAINT OF TYPE ${MConstraintTypes.idxToSupplier(type).get().typeName}"); null } ?: continue
+                            .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${MConstraintTypes.idxToSupplier(type).get().typeName}"); null } ?: continue
 
                         maxId = max(maxId, mConstraint.mID)
 
                         constraints.add(mConstraint)
                         count++
-                        } catch (e: Exception) { ELOG("FAILED TO LOAD CONSTRAINT WITH IDX ${type} AND TYPE ${strType}") }
+                        } catch (e: Exception) { ELOG("Failed to load constraint with idx ${type} and type ${strType}\n${e.stackTraceToString()}") }
                     }
                     toInitConstraints.addAll(constraints)
                 }
 
                 val mapped = loadedShips.associate {
                     if (lastDimensionIds.containsKey(it.second)) {
-                        Pair(level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
+                        Pair(level.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
                     } else {
                         Pair(it.second, it.first.id)
                     }
                 }
 
+                val changedIds = mutableMapOf<Int, Int>()
                 for (it in toInitConstraints) {
-                    level!!.makeManagedConstraint(it.copyMConstraint(level!!, mapped)?: continue)
+                    val newId = level.makeManagedConstraint(it.copyMConstraint(level, mapped)?: continue) ?: continue
+                    changedIds[it.mID] = newId
                 }
+
+                globalMap["changedIDs"] = changedIds
             }
             )
         }

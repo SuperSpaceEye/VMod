@@ -16,6 +16,7 @@ import net.spaceeye.vmod.utils.readVector3d
 import net.spaceeye.vmod.utils.writeVector3d
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.mod.common.getShipManagingPos
 
 class RopeRenderer(): BaseRenderer {
@@ -120,5 +121,9 @@ class RopeRenderer(): BaseRenderer {
 
         width = buf.readDouble()
         segments = buf.readInt()
+    }
+
+    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
+        return RopeRenderer(nShip1 != null, nShip2 != null, spoint1, spoint2, length, width, segments)
     }
 }

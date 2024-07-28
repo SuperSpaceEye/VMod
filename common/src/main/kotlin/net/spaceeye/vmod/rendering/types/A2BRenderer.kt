@@ -8,14 +8,13 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.client.renderer.LightTexture
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color
 
@@ -115,5 +114,9 @@ open class A2BRenderer(): BaseRenderer {
 
         point1 = buf.readVector3d()
         point2 = buf.readVector3d()
+    }
+
+    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
+        return A2BRenderer (nShip1 != null, nShip2 != null, spoint1, spoint2, color, width)
     }
 }

@@ -7,6 +7,7 @@ import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.rendering.types.BaseRenderer
+import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.deserializeBlockPositions
 import net.spaceeye.vmod.utils.serializeBlockPositions
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
@@ -94,7 +95,7 @@ class RopeMConstraint(): MConstraint, MRenderable {
         }
     }
 
-    override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         constraint = constraint.copy(ropeLength = constraint.ropeLength * scaleBy)
 
         level.shipObjectWorld.removeConstraint(vsId)

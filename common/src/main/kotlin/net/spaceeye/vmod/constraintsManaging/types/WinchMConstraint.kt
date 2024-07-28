@@ -131,7 +131,7 @@ class WinchMConstraint(): MConstraint, MRenderable, Tickable {
         }
     }
 
-    override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         minLength *= scaleBy
         extendedDist *= scaleBy
         addDist *= scaleBy

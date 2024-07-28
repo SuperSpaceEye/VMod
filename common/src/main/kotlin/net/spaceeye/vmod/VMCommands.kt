@@ -1,5 +1,6 @@
 package net.spaceeye.vmod
 
+import com.google.common.primitives.Ints.min
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
@@ -26,15 +27,18 @@ import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.command.RelativeVector3Argument
 import org.valkyrienskies.mod.common.command.ShipArgument
 import org.valkyrienskies.mod.common.command.shipWorld
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
+import org.valkyrienskies.mod.common.util.toJOML
 import org.valkyrienskies.mod.mixinducks.feature.command.VSCommandSource
 import java.nio.file.Paths
 import java.util.UUID
+import kotlin.math.max
 
 typealias VSCS = CommandContext<VSCommandSource>
 typealias MCS = CommandContext<CommandSourceStack>
@@ -60,6 +64,15 @@ object VMCommands {
         }
 
         return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem() && ServerToolGunState.playerHasAccess(player)
+    }
+
+    private fun findClosestShips(cc: CommandContext<CommandSourceStack>): List<Ship> {
+        val dimensionId = cc.source.level.dimensionId
+        val pos = cc.source.position.toJOML()
+
+        return cc.source.shipWorld.allShips
+            .filter { it.chunkClaimDimension == dimensionId }
+            .sortedBy { it.transform.positionInWorld.distanceSquared(pos) }
     }
 
     //==========//==========//==========//==========//==========//==========//==========//==========//==========//==========
@@ -133,7 +146,7 @@ object VMCommands {
 
     private var placeUUID = UUID(0L, 0L)
 
-    private fun placeServerSchematic(cc: CommandContext<CommandSourceStack>): Int {
+    private fun placeServerSchematic(cc: CommandContext<CommandSourceStack>, customName: Boolean): Int {
         val uuid = UUID(0L, 0L)
 
         val position = Vec3Argument.getVec3(cc, "position")
@@ -148,6 +161,7 @@ object VMCommands {
         placeUUID = UUID(placeUUID.mostSignificantBits, placeUUID.leastSignificantBits + 1)
 
         schem.placeAt(cc.source.level, placeUUID, Vector3d(position).toJomlVector3d(), rotation) { ships ->
+            if (!customName) {return@placeAt}
             if (ships.size == 1) {
                 ships[0].slug = name
                 return@placeAt
@@ -247,6 +261,31 @@ object VMCommands {
         return 0
     }
 
+    private fun displayShipsInOrder(cc: CommandContext<CommandSourceStack>): Int {
+        val player = try { cc.source.playerOrException } catch (e: Exception) {return 1}
+        var page = try { IntegerArgumentType.getInteger(cc, "page") - 1 } catch (e: Exception) {0}
+
+        val ordered = findClosestShips(cc)
+
+        page = max(min(page, ordered.size / 10), 0)
+        val start = page * 10
+
+        val ships = mutableListOf<Ship>()
+        for (i in min(start+10, ordered.size) -1 downTo  start) { ships.add(ordered[i]) }
+
+        var string = ""
+        for (ship in ships) {
+            val bpos = Vector3d(ship.transform.positionInWorld).toBlockPos()
+            string += "${ship.slug} |||| ${ship.transform.positionInWorld.distance(player.x, player.y, player.z).toInt()} |||| x=${bpos.x} y=${bpos.y} z=${bpos.z} \n"
+        }
+
+        string += "Page: ${page+1}/${ordered.size/10+1}"
+
+        player.sendMessage(TextComponent(string), player.uuid)
+
+        return 0
+    }
+
     private object OP {
         fun allowPlayerToUseToolgun(cc: CommandContext<CommandSourceStack>): Int {
             val uuid = EntityArgument.getPlayer(cc, "player").uuid
@@ -306,6 +345,10 @@ object VMCommands {
             ).then(
                 lt("vs-delete-massless-ships").executes { vsDeleteMasslessShips(it) }
             ).then(
+                lt("display-ships-in-order").executes { displayShipsInOrder(it) }.then(
+                    arg("page", IntegerArgumentType.integer(1)).executes { displayShipsInOrder(it) }
+                )
+            ).then(
                 lt("schem")
                 .then(
                     lt("save-to-sever").then(
@@ -317,10 +360,16 @@ object VMCommands {
                     )
                 ).then(
                     lt("place").then(
-                        arg("position", Vec3Argument.vec3()).executes { placeServerSchematic(it) }.then(
-                            arg("rotation", RelativeVector3Argument.relativeVector3()).executes { placeServerSchematic(it) }.then(
-                                arg("name", StringArgumentType.string()).executes { placeServerSchematic(it) }
+                        arg("position", Vec3Argument.vec3()).executes { placeServerSchematic(it, true) }.then(
+                            arg("rotation", RelativeVector3Argument.relativeVector3()).executes { placeServerSchematic(it, true) }.then(
+                                arg("name", StringArgumentType.string()).executes { placeServerSchematic(it, true) }
                             )
+                        )
+                    )
+                ).then(
+                    lt("place-no-custom-name").then(
+                        arg("position", Vec3Argument.vec3()).executes { placeServerSchematic(it, false) }.then(
+                            arg("rotation", RelativeVector3Argument.relativeVector3()).executes { placeServerSchematic(it, false) }
                         )
                     )
                 )

@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.DoubleTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.AABB
@@ -21,13 +22,13 @@ import org.valkyrienskies.core.util.toAABBd
 import org.valkyrienskies.mod.common.util.toMinecraft
 import java.util.*
 
-object CreateSuperglueCompatPlatformUtils {
+object EntitySavingPlatformUtils {
     @ExpectPlatform
     @JvmStatic
-    fun saveToTag(entity: SuperGlueEntity, tag: CompoundTag): Unit = throw AssertionError()
+    fun saveToTag(entity: Entity, tag: CompoundTag): Unit = throw AssertionError()
     @ExpectPlatform
     @JvmStatic
-    fun loadFromTag(entity: SuperGlueEntity, tag: CompoundTag): Unit = throw AssertionError()
+    fun loadFromTag(entity: Entity, tag: CompoundTag): Unit = throw AssertionError()
 }
 
 class CreateSuperglueSchemCompat: SchemCompatItem {
@@ -35,7 +36,7 @@ class CreateSuperglueSchemCompat: SchemCompatItem {
         ShipSchematic.registerCopyPasteEvents("create_compat", ::onCopyEvent, ::onAfterPasteEvent)
     }
 
-    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, unregister: () -> Unit): Serializable {
+    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit): Serializable {
         val tag = CompoundTag()
 
         shipsToBeSaved
@@ -50,7 +51,7 @@ class CreateSuperglueSchemCompat: SchemCompatItem {
             entities.forEach {entity ->
                 try {
                     val entityTag = CompoundTag()
-                    CreateSuperglueCompatPlatformUtils.saveToTag(entity, entityTag)
+                    EntitySavingPlatformUtils.saveToTag(entity, entityTag)
                     val offset = getCenterPos(entity.position().x.toInt(), entity.position().z.toInt())
                     val epos = Vector3d(entity.position()) - offset
 
@@ -71,7 +72,8 @@ class CreateSuperglueSchemCompat: SchemCompatItem {
         return CompoundTagSerializable(tag)
     }
 
-    private fun onAfterPasteEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable, unregister: () -> Unit) {
+    private fun onAfterPasteEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit) {
+        if (file == null) {return}
         val data = CompoundTagSerializable()
         data.deserialize(file.serialize())
         val tag = data.tag ?: return
@@ -85,7 +87,7 @@ class CreateSuperglueSchemCompat: SchemCompatItem {
             (tag.get(shipIdStr)!! as ListTag).forEach {
                 it as CompoundTag
                 val entity = SuperGlueEntity(level, AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-                CreateSuperglueCompatPlatformUtils.loadFromTag(entity, it)
+                EntitySavingPlatformUtils.loadFromTag(entity, it)
                 val npos = Vector3d(entity.position()) + getCenterPos(ship.transform.positionInShip.x().toInt(), ship.transform.positionInShip.z().toInt())
                 entity.setPos(npos.toMCVec3())
                 entity.uuid = UUID.randomUUID()

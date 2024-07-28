@@ -9,7 +9,6 @@ import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.spaceeye.vmod.blocks.SimpleMessager
 import net.spaceeye.vmod.VMItems.TAB
-import java.util.function.Supplier
 
 object VMBlocks {
     private val BLOCKS = DeferredRegister.create(VM.MOD_ID, Registries.BLOCK)

@@ -66,22 +66,22 @@
   "vmod.gui.setting.all_connected_and_touching": "All Connected And Touching",
 
 
-  "vmod.gui.text.common_hud_1": "lclick - main mode, rclick - secondary mode",
-  "vmod.gui.text.common_hud_2": "lclick on the other ship or the ground",
-  "vmod.gui.text.common_hud_3": "look at the target and press lclick again",
-  "vmod.gui.text.common_hud_4": "configure rotation with mouse wheel, press lclick to confirm",
-  "vmod.gui.text.common_hud_5": "lclick - main mode",
+  "vmod.gui.text.common_hud_1": "LMB - main mode, RMB - secondary mode",
+  "vmod.gui.text.common_hud_2": "LMB on the other ship or the ground",
+  "vmod.gui.text.common_hud_3": "look at the target and press LMB again",
+  "vmod.gui.text.common_hud_4": "configure rotation with mouse wheel, press LMB to confirm",
+  "vmod.gui.text.common_hud_5": "LMB - main mode",
 
-  "vmod.gui.text.disable_collisions_hud_1": "lclick to disable collisions, rclick to enable all collisions",
+  "vmod.gui.text.disable_collisions_hud_1": "LMB to disable collisions, RMB to enable all collisions",
 
-  "vmod.gui.text.scale_hud_1": "lclick - scale ship/s",
+  "vmod.gui.text.scale_hud_1": "LMB - scale ship/s",
 
-  "vmod.gui.text.schem_hud_1": "lclick - save ship as schematic",
-  "vmod.gui.text.schem_hud_2": "lclick - save ship as schematic\nrclick - paste schematic\nmouse wheel - rotate schematic",
+  "vmod.gui.text.schem_hud_1": "LMB - create schematic from ship",
+  "vmod.gui.text.schem_hud_2": "LMB - save ship as schematic\nRMB - paste schematic\nmouse wheel - rotate schematic",
 
-  "vmod.gui.text.strip_hud_1": "lclick - strip constraints",
+  "vmod.gui.text.strip_hud_1": "LMB - strip constraints",
 
-  "vmod.gui.text.grav_changer_hud_1": "lclick - set gravity. rclick - reset gravity",
+  "vmod.gui.text.grav_changer_hud_1": "LMB - set gravity. RMB - reset gravity",
 
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
   "key.vmod.remove_top_constraint": "Remove Top Constraint",

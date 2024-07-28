@@ -58,6 +58,7 @@ interface HydraulicsSerializable: MSerializable, PlacementAssistSerialize {
         extensionDistance = limits.extensionDistance.get(extensionDistance)
         extensionSpeed = limits.extensionSpeed.get(extensionSpeed)
         channel = limits.channelLength.get(channel)
+        fixedMinLength = limits.fixedDistance.get(fixedMinLength)
 
         paServerSideVerifyLimits()
     }

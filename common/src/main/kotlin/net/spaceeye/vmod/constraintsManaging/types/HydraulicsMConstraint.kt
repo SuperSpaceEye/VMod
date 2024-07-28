@@ -91,7 +91,7 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
 
         _renderer: BaseRenderer? = null,
 
-        _dir: Vector3d? = null
+        dir: Vector3d? = null
     ): this() {
         renderer = _renderer
         minLength = _minLength
@@ -114,8 +114,8 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) { return }
 
         val dist1 = rpoint1 - rpoint2
-        val len = (_dir ?: dist1).dist()
-        val dir = (_dir ?: run { dist1.normalize() }) * ( if (len < 10 || len > 30) 20 else 40)
+        val len = (dir ?: dist1).dist()
+        val dir = (dir ?: run { dist1.normalize() }) * ( if (len < 10 || len > 30) 20 else 40)
 
         val rpoint1 = rpoint1 + dir
         val rpoint2 = rpoint2 - dir
@@ -227,7 +227,7 @@ class HydraulicsMConstraint(): MConstraint, MRenderable, Tickable {
         }
     }
 
-    override fun onScaleBy(level: ServerLevel, scaleBy: Double) {
+    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         minLength *= scaleBy
         extendedDist *= scaleBy
         addDist *= scaleBy

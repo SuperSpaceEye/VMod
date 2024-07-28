@@ -11,14 +11,19 @@ import org.valkyrienskies.core.api.ships.ServerShip
 class TrackworkSchemCompat: SchemCompatItem {
     override fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit) {}
 
+    private val blocksSet = setOf(
+         TrackBlocks.LARGE_SUSPENSION_TRACK.get()
+        ,TrackBlocks.MED_SUSPENSION_TRACK.get()
+        ,TrackBlocks.SUSPENSION_TRACK.get()
+        ,TrackBlocks.LARGE_PHYS_TRACK.get()
+        ,TrackBlocks.MED_PHYS_TRACK.get()
+        ,TrackBlocks.PHYS_TRACK.get()
+        ,TrackBlocks.SIMPLE_WHEEL.get()
+        ,TrackBlocks.SIMPLE_WHEEL_PART.get()
+    )
+
     override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: () -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
-        if (  state.block != TrackBlocks.LARGE_SUSPENSION_TRACK.get()
-           && state.block != TrackBlocks.MED_SUSPENSION_TRACK.get()
-           && state.block != TrackBlocks.SUSPENSION_TRACK.get()
-           && state.block != TrackBlocks.LARGE_PHYS_TRACK.get()
-           && state.block != TrackBlocks.MED_PHYS_TRACK.get()
-           && state.block != TrackBlocks.PHYS_TRACK.get()
-        ) {return}
+        if (!blocksSet.contains(state.block)) return
         tag.putBoolean("Assembled", false)
         tag.remove("trackBlockID")
     }

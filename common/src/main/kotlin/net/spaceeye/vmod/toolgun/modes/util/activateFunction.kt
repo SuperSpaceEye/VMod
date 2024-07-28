@@ -62,6 +62,31 @@ fun calculatePrecise(raycastResult: RaycastFunctions.RaycastResult, precisePlace
     return points.minBy { (it - point).sqrDist() }
 }
 
+fun BaseMode.serverRaycastAndActivateFn(
+    mode: PositionModes,
+    precisePlacementAssistSideNum: Int,
+    level: Level,
+    raycastResult: RaycastFunctions.RaycastResult,
+    fnToActivate: (
+        level: ServerLevel,
+        shipId: ShipId,
+        ship: ServerShip?,
+        spoint: Vector3d,
+        rpoint: Vector3d,
+        rresult: RaycastFunctions.RaycastResult) -> Unit
+) {
+    if (level !is ServerLevel) {throw RuntimeException("Function intended for server use only was activated on client. How.")}
+    if (raycastResult.state.isAir) {return}
+
+    val ship = raycastResult.ship as ServerShip?
+    val shipId = raycastResult.shipId!!
+
+    val spoint = getModePosition(mode, raycastResult, precisePlacementAssistSideNum)
+    val rpoint = if (ship == null) spoint else posShipToWorld(ship, Vector3d(spoint))
+
+    fnToActivate(level, shipId, ship, spoint, rpoint, raycastResult)
+}
+
 fun BaseMode.serverRaycast2PointsFnActivation(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,
@@ -87,14 +112,14 @@ fun BaseMode.serverRaycast2PointsFnActivation(
     val (res, previousResult) = processNewResult(raycastResult)
     if (!res) {return}
 
-    val ship1 = level.getShipManagingPos(previousResult!!.blockPosition)
-    val ship2 = level.getShipManagingPos(raycastResult.blockPosition)
+    val ship1 = previousResult!!.ship as ServerShip?
+    val ship2 = raycastResult.ship as ServerShip?
 
     if (ship1 == null && ship2 == null) { resetFn(); return }
     if (ship1 == ship2) { resetFn(); return }
 
-    val shipId1: ShipId = ship1?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
-    val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
+    val shipId1: ShipId = previousResult.shipId!!
+    val shipId2: ShipId = raycastResult.shipId!!
 
     val (spoint1, spoint2) = getModePositions(mode, previousResult, raycastResult, precisePlacementAssistSideNum)
 

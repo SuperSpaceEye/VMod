@@ -10,8 +10,8 @@ import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.GravChangerGUI
 import net.spaceeye.vmod.toolgun.modes.hud.GravChangerHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.GravChangerCEH
-import net.spaceeye.vmod.toolgun.modes.serializing.GravChangerSerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
+import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
@@ -19,15 +19,15 @@ import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class GravChangerMode: BaseMode, GravChangerSerializable, GravChangerCEH, GravChangerHUD, GravChangerGUI {
+class GravChangerMode: BaseMode, GravChangerCEH, GravChangerHUD, GravChangerGUI {
     enum class Mode {
         Individual,
         AllConnected,
         AllConnectedAndTouching
     }
 
-    var gravityVector = Vector3d(0, -10, 0)
-    var mode = Mode.Individual
+    var gravityVector: Vector3d by get(0, Vector3d(0, -10, 0))
+    var mode: Mode by get(1, Mode.Individual)
 
     val conn_primary = register { object : C2SConnection<GravChangerMode>("gravity_changer_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<GravChangerMode>(context.player, buf, ::GravChangerMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
     val conn_secondary = register { object : C2SConnection<GravChangerMode>("gravity_changer_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<GravChangerMode>(context.player, buf, ::GravChangerMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }

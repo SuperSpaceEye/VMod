@@ -29,9 +29,9 @@ import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.SchemCEH
-import net.spaceeye.vmod.toolgun.modes.serializing.SchemSerializable
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
+import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
@@ -305,7 +305,12 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     }
 }
 
-class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
+class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemHUD {
+    var rotationAngle: Ref<Double> by get(0, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it as Ref<Double>).it)}, customDeserialize = {buf -> rotationAngle.it = buf.readDouble(); rotationAngle})
+
+    val conn_primary = register { object : C2SConnection<SchemMode>("schem_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
+    val conn_secondary = register { object : C2SConnection<SchemMode>("schem_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
+
     override var itemsScroll: ScrollComponent? = null
     override lateinit var parentWindow: UIContainer
 
@@ -322,9 +327,6 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
 
         ClientPlayerSchematics.saveSchematic(name, schem!!)
     }
-
-    val conn_primary = register { object : C2SConnection<SchemMode>("schem_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
-    val conn_secondary = register { object : C2SConnection<SchemMode>("schem_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
 
     var renderer: SchemOutlinesRenderer? = null
 
@@ -365,7 +367,6 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
 
     var filename = ""
 
-    var rotationAngle = Ref(0.0)
     var scrollAngle = Math.toRadians(10.0)
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {

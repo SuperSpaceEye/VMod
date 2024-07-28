@@ -3,11 +3,15 @@ package net.spaceeye.vmod.toolgun.modes
 import dev.architectury.event.EventResult
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIContainer
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.NetworkingRegisteringFunctions
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.serializing.SerializableItemDelegate
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.javaField
 
 interface GUIBuilder {
     val itemName: TranslatableComponent
@@ -28,7 +32,30 @@ interface ClientEventsHandler {
 }
 
 interface MSerializable: Serializable {
-    fun serverSideVerifyLimits()
+    private fun getSerializableItems() =
+        this::class.declaredMemberProperties.mapNotNull { item ->
+            val javaField = item.javaField
+            if (javaField == null || !SerializableItemDelegate::class.java.isAssignableFrom(javaField.type)) return@mapNotNull null
+
+            javaField.isAccessible = true
+            val delegate = javaField.get(this) as SerializableItemDelegate<*>
+
+            delegate
+        }.sortedBy { it.serializationPos }
+
+    override fun serialize(): FriendlyByteBuf {
+        val buf = getBuffer()
+        getSerializableItems().forEach { it.serialize(it.it, buf) }
+        return buf
+    }
+
+    override fun deserialize(buf: FriendlyByteBuf) {
+        getSerializableItems().forEach { it.setValue(null, null, it.deserialize(buf)) }
+    }
+
+    fun serverSideVerifyLimits() {
+        getSerializableItems().forEach { it.setValue(null, null, it.verification(it.it)) }
+    }
 }
 
 interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientEventsHandler {

@@ -64,19 +64,3 @@ interface PlacementModesGUI: PlacementModesState {
         )
     }
 }
-
-interface PlacementModesSerializable: PlacementModesState {
-    fun pmSerialize(buf: FriendlyByteBuf) {
-        buf.writeEnum(posMode)
-        buf.writeInt(precisePlacementAssistSideNum)
-    }
-
-    fun pmDeserialize(buf: FriendlyByteBuf) {
-        posMode = buf.readEnum(posMode.javaClass)
-        precisePlacementAssistSideNum = buf.readInt()
-    }
-
-    fun pmServerSideVerifyLimits() {
-        precisePlacementAssistSideNum = ServerLimits.instance.precisePlacementAssistSides.get(precisePlacementAssistSideNum)
-    }
-}

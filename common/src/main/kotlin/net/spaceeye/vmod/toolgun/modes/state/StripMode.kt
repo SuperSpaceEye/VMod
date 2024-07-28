@@ -10,25 +10,25 @@ import net.spaceeye.vmod.constraintsManaging.ConstraintManager
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.getAllManagedConstraintIdsOfShipId
 import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
+import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
 import net.spaceeye.vmod.toolgun.modes.hud.StripHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.StripCEH
-import net.spaceeye.vmod.toolgun.modes.serializing.StripSerializable
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
+import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class StripMode: BaseMode, StripSerializable, StripCEH, StripGUI, StripHUD {
+class StripMode: BaseMode, StripCEH, StripGUI, StripHUD {
     enum class StripModes {
         StripAll,
         StripInRadius
     }
 
-    var radius: Int = 1
-    var mode = StripModes.StripAll
-
+    var radius: Int by get(0, 1, {ServerLimits.instance.stripRadius.get(it as Int)})
+    var mode: StripModes by get(1, StripModes.StripAll)
 
     val conn_primary = register { object : C2SConnection<StripMode>("strip_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<StripMode>(context.player, buf, ::StripMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 

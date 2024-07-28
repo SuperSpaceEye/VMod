@@ -182,40 +182,6 @@ open class PlacementAssistNetworking(networkName: String): BaseNetworking<Placem
     }
 }
 
-interface PlacementAssistSerialize: PlacementModesSerializable {
-    var paAngle: Ref<Double>
-    var paDistanceFromBlock: Double
-    var paStage: ThreeClicksActivationSteps
-    var paScrollAngle: Double
-
-    fun paSerialize(buf: FriendlyByteBuf): FriendlyByteBuf {
-        buf.writeDouble(paDistanceFromBlock)
-        buf.writeDouble(paAngle.it)
-        buf.writeEnum(paStage)
-        buf.writeDouble(paScrollAngle)
-
-        pmSerialize(buf)
-
-        return buf
-    }
-
-    fun paDeserialize(buf: FriendlyByteBuf) {
-        paDistanceFromBlock = buf.readDouble()
-        paAngle.it = buf.readDouble()
-        paStage = buf.readEnum(paStage.javaClass)
-        paScrollAngle = buf.readDouble()
-
-        pmDeserialize(buf)
-    }
-
-    fun paServerSideVerifyLimits() {
-        val limits = ServerLimits.instance
-        paDistanceFromBlock = limits.distanceFromBlock.get(paDistanceFromBlock)
-
-        pmServerSideVerifyLimits()
-    }
-}
-
 //TODO add checks for if functions are actually invoked on server
 interface PlacementAssistServerPart: PlacementModesState {
     var paStage: ThreeClicksActivationSteps

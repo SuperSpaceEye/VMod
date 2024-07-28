@@ -89,6 +89,9 @@ A rope with connections to the ground through which it like moves. No idea on ho
 
 ## Winch
 A rope that can be made longer or shorter
+Maybe have 2 ropes.
+first rope will be "supporting rope" - it will have max compliance and force, but during retraction it will only shorten to diff between target and point
+second rope will be "retracting rope" - it will have max force == needed force to counteract other forces + more, but idk how to calculate other forces
 
 ## Wheels
 A tool that will create wheels from VS phys entities + maybe 

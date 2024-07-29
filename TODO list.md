@@ -21,8 +21,6 @@ nothing
 
 ## java.awt.Color doesn't exist in headless mode
 
-## Redo ConstraintManager's tryMakeConstraint
-
 ## Toolgun settings presets menu
 
 ## Toolgun settings for shit like gravity etc

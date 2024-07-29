@@ -13,7 +13,7 @@ class SafeEventEmitter<T> {
         val toRemove = mutableSetOf<(data: T, unsubscribe: () -> Unit) -> Unit>()
         events.forEach { event ->
             var unsubscribe = false
-            event.invoke(data) {unsubscribe = false}
+            event.invoke(data) {unsubscribe = true}
             if (unsubscribe) {toRemove.add(event)}
         }
         events.removeAll(toRemove)

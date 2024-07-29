@@ -10,7 +10,7 @@ object ToolgunModes {
         HydraulicsMode(),
         PhysRopeMode(),
         SliderMode(),
-//        WinchMode(),
+        SyncRotation(),
 
         ThrusterMode(),
         GravChangerMode(),

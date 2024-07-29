@@ -13,5 +13,6 @@ object MConstraintTypes: Registry<MConstraint>() {
         register(::WinchMConstraint)
         register(::ThrusterMConstraint)
         register(::SliderMConstraint)
+        register(::SyncRotationMConstraint)
     }
 }

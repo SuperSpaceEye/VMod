@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.Vector3d
@@ -17,14 +18,12 @@ import net.spaceeye.vmod.utils.vs.copy
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.joml.Quaterniond
-import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
-import org.valkyrienskies.physics_api.ConstraintId
 
-class ConnectionMConstraint(): MConstraint, MRenderable {
+class ConnectionMConstraint(): TwoShipsMConstraint("ConnectionMConstraint"), MRenderable {
     enum class ConnectionModes {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,
@@ -35,14 +34,10 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
     lateinit var aconstraint2: VSAttachmentConstraint
     lateinit var rconstraint: VSTorqueConstraint
 
-    override var renderer: BaseRenderer? = null
-    override var mID: ManagedConstraintId = -1
-    override var saveCounter: Int = -1
-    override val typeName: String = "ConnectionMConstraint"
-    var rID: Int = -1
+    override val mainConstraint: VSConstraint get() = aconstraint1
 
-    val cIDs = mutableListOf<ConstraintId>()
-    var attachmentPoints_ = mutableListOf<BlockPos>()
+    override var renderer: BaseRenderer? = null
+    var rID: Int = -1
 
     var fixedLength: Double = 0.0
     var connectionMode: ConnectionModes = ConnectionModes.FIXED_ORIENTATION
@@ -119,26 +114,6 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
         }
     }
 
-    override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
-        val ship1Exists = allShips.contains(aconstraint1.shipId0)
-        val ship2Exists = allShips.contains(aconstraint1.shipId1)
-
-        return     (ship1Exists && ship2Exists)
-                || (ship1Exists && dimensionIds.contains(aconstraint1.shipId1))
-                || (ship2Exists && dimensionIds.contains(aconstraint1.shipId0))
-    }
-
-    override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
-        val toReturn = mutableListOf<ShipId>()
-
-        if (!dimensionIds.contains(aconstraint1.shipId0)) {toReturn.add(aconstraint1.shipId0)}
-        if (!dimensionIds.contains(aconstraint1.shipId1)) {toReturn.add(aconstraint1.shipId1)}
-
-        return toReturn
-    }
-
-    override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
-
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
         if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
@@ -204,8 +179,6 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
         cIDs[1] = level.shipObjectWorld.createNewConstraint(aconstraint2)!!
     }
 
-    override fun getVSIds(): Set<VSConstraintId> = cIDs.toSet()
-
     override fun nbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
 
@@ -236,11 +209,6 @@ class ConnectionMConstraint(): MConstraint, MRenderable {
         tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint  = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSTorqueConstraint
 
         return this
-    }
-
-    private fun <T> clean(level: ServerLevel): T? {
-        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        return null
     }
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {

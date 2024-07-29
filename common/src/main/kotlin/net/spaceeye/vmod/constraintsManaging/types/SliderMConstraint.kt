@@ -5,8 +5,8 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.MRenderable
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.commonCopy
+import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.Vector3d
@@ -14,28 +14,19 @@ import net.spaceeye.vmod.utils.deserializeBlockPositions
 import net.spaceeye.vmod.utils.serializeBlockPositions
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
 import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
-import org.valkyrienskies.core.api.ships.QueryableShipData
-import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
+import org.valkyrienskies.core.apigame.constraints.VSConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
-import org.valkyrienskies.physics_api.ConstraintId
 
-class SliderMConstraint(): MConstraint, MRenderable {
-    override var mID: ManagedConstraintId = -1
-
+class SliderMConstraint(): TwoShipsMConstraint("SliderMConstraint"), MRenderable {
     lateinit var constraint1: VSAttachmentConstraint
     lateinit var constraint2: VSAttachmentConstraint
+    override val mainConstraint: VSConstraint get() = constraint1
 
     override var renderer: BaseRenderer? = null
-    var attachmentPoints_ = mutableListOf<BlockPos>()
-
 
     var rID: Int = -1
-    override val typeName: String = "SliderMConstraint"
-
-    val cIDs = mutableListOf<ConstraintId>()
 
     constructor(
         axisShipId: ShipId,
@@ -69,27 +60,6 @@ class SliderMConstraint(): MConstraint, MRenderable {
         this.renderer = renderer
     }
 
-    override var saveCounter: Int = -1
-
-    override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
-        val ship1Exists = allShips.contains(constraint1.shipId0)
-        val ship2Exists = allShips.contains(constraint1.shipId1)
-
-        return     (ship1Exists && ship2Exists)
-                || (ship1Exists && dimensionIds.contains(constraint1.shipId1))
-                || (ship2Exists && dimensionIds.contains(constraint1.shipId0))
-    }
-
-    override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
-        val toReturn = mutableListOf<ShipId>()
-
-        if (!dimensionIds.contains(constraint1.shipId0)) {toReturn.add(constraint1.shipId0)}
-        if (!dimensionIds.contains(constraint1.shipId1)) {toReturn.add(constraint1.shipId1)}
-
-        return toReturn
-    }
-
-    override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
         TODO("Not yet implemented")
     }
@@ -99,7 +69,6 @@ class SliderMConstraint(): MConstraint, MRenderable {
             _, _, _, _, axis1, ship1, newAPPair1, _ ->
             commonCopy(level, mapped, constraint2, listOf(attachmentPoints_[2], attachmentPoints_[3]), renderer) {
                 nShip1Id, nShip2Id, nShip1, nShip2, axis2, ship2, newAPPair2, newRenderer ->
-                val level = level
                 SliderMConstraint(nShip1Id, nShip2Id, axis1, axis2, ship1, ship2,
                     constraint1.compliance, constraint1.maxForce,
                     listOf(newAPPair1[0], newAPPair1[1], newAPPair2[0], newAPPair2[1]),
@@ -110,7 +79,6 @@ class SliderMConstraint(): MConstraint, MRenderable {
 
     // it doesn't need to do anything
     override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
-    override fun getVSIds(): Set<VSConstraintId> = cIDs.toSet()
 
     override fun nbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
@@ -134,11 +102,6 @@ class SliderMConstraint(): MConstraint, MRenderable {
         VSConstraintDeserializationUtil.tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); constraint2 = (VSConstraintDeserializationUtil.deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
 
         return this
-    }
-
-    private fun <T> clean(level: ServerLevel): T? {
-        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        return null
     }
 
     override fun onMakeMConstraint(level: ServerLevel): Boolean {

@@ -48,7 +48,7 @@ class WinchMConstraint(): MConstraint, MRenderable, Tickable {
 
     override var mID: ManagedConstraintId = -1
     override val typeName: String get() = "WinchMConstraint"
-    override var saveCounter: Int = -1
+    override var __saveCounter: Int = -1
 
     constructor(
         // shipyard pos

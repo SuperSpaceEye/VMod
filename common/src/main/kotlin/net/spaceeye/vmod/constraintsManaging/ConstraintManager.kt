@@ -69,13 +69,13 @@ class ConstraintManager: SavedData() {
 
             val constraintsTag = ListTag()
             for (constraint in mConstraints) {
-                if (constraint.saveCounter == saveCounter) { continue }
+                if (constraint.__saveCounter == saveCounter) { continue }
                 if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
 
                 val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.typeName} with ID ${constraint.mID}"); null } ?: continue
                 ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("Constraint of type ${constraint.typeName} was not registered"); null } ?: continue)
                 constraintsTag.add(ctag)
-                constraint.saveCounter = saveCounter
+                constraint.__saveCounter = saveCounter
             }
             shipsTag.put(shipId.toString(), constraintsTag)
         }
@@ -508,11 +508,11 @@ class ConstraintManager: SavedData() {
                     val constraintsTag = ListTag()
                     val constraints = instance.shipsConstraints[ship.id]!!
                     for (constraint in constraints) {
-                        if (constraint.saveCounter == instance.saveCounter) { continue }
+                        if (constraint.__saveCounter == instance.saveCounter) { continue }
                         val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.typeName} with ID ${constraint.mID}"); null } ?: continue
                         ctag.putInt("MCONSTRAINT_TYPE", MConstraintTypes.typeToIdx(constraint.typeName) ?: run { WLOG("Constraint of type ${constraint.typeName} was not registered"); null } ?: continue)
                         constraintsTag.add(ctag)
-                        constraint.saveCounter = instance.saveCounter
+                        constraint.__saveCounter = instance.saveCounter
                     }
                     shipsTag.put("${ship.id}", constraintsTag)
                 }

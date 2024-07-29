@@ -52,9 +52,10 @@ interface MRenderable {
 
 interface MConstraint: RegistryObject {
     var mID: ManagedConstraintId
-    // SHOULD BE SET TO -1.
-    // DO NOT USE IT ANYWHERE. JUST IMPLEMENT AS SIMPLE VAR
-    var saveCounter: Int
+    //DO NOT TOUCH IT
+    @set:Internal
+    @get:Internal
+    var __saveCounter: Int
 
     fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
     // SHOULDN'T RETURN GROUND SHIPID

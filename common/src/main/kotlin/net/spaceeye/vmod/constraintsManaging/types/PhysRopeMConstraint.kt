@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.*
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.entities.events.ServerPhysEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
@@ -18,8 +19,6 @@ import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.joml.Vector3dc
-import org.valkyrienskies.core.api.ships.QueryableShipData
-import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
@@ -27,11 +26,10 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 import java.util.*
 
-class PhysRopeMConstraint(): MConstraint, MRenderable {
+class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRenderable {
     lateinit var constraint: VSRopeConstraint
+    override val mainConstraint: VSConstraint get() = constraint
     override var renderer: BaseRenderer? = null
-
-    var attachmentPoints_ = mutableListOf<BlockPos>()
 
     var ropeLength = 0.0
     var segments: Int = 0
@@ -40,7 +38,6 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
 
     var entitiesUUIDs = mutableListOf<UUID>()
     var entities = mutableListOf<PhysRopeComponentEntity>()
-    var cIDs = mutableListOf<Int>()
     var rID: Int = -1
 
 //    var firstRotation: Quaterniond? = null
@@ -68,29 +65,6 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         this.radius = radius
     }
 
-    override var mID: ManagedConstraintId = -1
-    override val typeName: String get() = "PhysRopeMConstraint"
-    override var saveCounter: Int = -1
-
-    override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
-        val ship1Exists = allShips.contains(constraint.shipId0)
-        val ship2Exists = allShips.contains(constraint.shipId1)
-
-        return     (ship1Exists && ship2Exists)
-                || (ship1Exists && dimensionIds.contains(constraint.shipId1))
-                || (ship2Exists && dimensionIds.contains(constraint.shipId0))
-    }
-
-    override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
-        val toReturn = mutableListOf<ShipId>()
-
-        if (!dimensionIds.contains(constraint.shipId0)) {toReturn.add(constraint.shipId0)}
-        if (!dimensionIds.contains(constraint.shipId1)) {toReturn.add(constraint.shipId1)}
-
-        return toReturn
-    }
-
-    override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
         if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
 
@@ -168,10 +142,6 @@ class PhysRopeMConstraint(): MConstraint, MRenderable {
         }
 
         oldEntities.forEach { it.kill() }
-    }
-
-    override fun getVSIds(): Set<VSConstraintId> {
-        return cIDs.toSet()
     }
 
     override fun nbtSerialize(): CompoundTag? {

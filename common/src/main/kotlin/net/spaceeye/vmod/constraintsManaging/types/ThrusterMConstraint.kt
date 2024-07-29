@@ -26,7 +26,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
     override val typeName: String get() = "ThrusterMConstraint"
     override var mID: ManagedConstraintId = -1
-    override var saveCounter: Int = -1
+    override var __saveCounter: Int = -1
 
     var shipId: ShipId = -1
     var pos = Vector3d()
@@ -54,15 +54,12 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         this.renderer = renderer
     }
 
-    override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
-        return allShips.contains(shipId)
-    }
-
-    override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
-        return mutableListOf(shipId)
-    }
-
+    override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>) = allShips.contains(shipId)
+    override fun attachedToShips(dimensionIds: Collection<ShipId>) = mutableListOf(shipId)
     override fun getAttachmentPoints(): List<BlockPos> = listOf(bpos)
+    override fun getVSIds(): Set<VSConstraintId> = setOf()
+
+
     override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         (renderer!! as ConeBlockRenderer).scale *= scaleBy.toFloat()
         ServerRenderingData.setRenderer(shipId, shipId, rID, renderer!!)
@@ -75,7 +72,6 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         val thruster = controller.getThruster(thrusterId)!!
         controller.updateThruster(thrusterId, thruster.copy(force = thruster.force * scaleBy * scaleBy))
     }
-    override fun getVSIds(): Set<VSConstraintId> = setOf()
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         val nId = mapped[shipId] ?: return null
 

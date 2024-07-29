@@ -13,7 +13,7 @@ import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 class DisabledCollisionMConstraint(): MConstraint {
     override val typeName: String get() = "DisabledCollisionMConstraint"
     override var mID: ManagedConstraintId = -1
-    override var saveCounter: Int = -1
+    override var __saveCounter: Int = -1
 
     var shipId1: ShipId = -1
     var shipId2: ShipId = -1

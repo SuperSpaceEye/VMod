@@ -78,6 +78,8 @@ nothing
 * Make it more stable
 * Fix the bug that crashes VS
 * Fix bad copying
+* Fix bad scaling
+* Redo it
 
 ## Elastic
 A rope that can stretch or push (if option is chosen)

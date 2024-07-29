@@ -275,7 +275,7 @@ interface PlacementAssistServerPart: PlacementModesState {
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
         val constraint = paMConstraintBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult))
-        level.makeManagedConstraint(constraint).addFor(player)
+        level.makeManagedConstraint(constraint){it.addFor(player)}
         paServerResetState()
     }
     fun paServerResetState() {

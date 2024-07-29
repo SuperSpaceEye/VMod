@@ -55,7 +55,7 @@ class RopeMode: BaseMode, RopeCEH, RopeGUI, RopeHUD, PlacementModesState {
                 spoint1, spoint2,
                 dist, width, segments
             )
-        )).addFor(player)
+        )){it.addFor(player)}
 
         resetState()
     }

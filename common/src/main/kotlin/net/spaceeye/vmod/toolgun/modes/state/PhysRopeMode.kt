@@ -73,7 +73,7 @@ class PhysRopeMode: BaseMode, PhysRopeCEH, PhysRopeGUI, PhysRopeHUD, PlacementMo
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce, dist, segments, massPerSegment, radius,
             listOf(previousResult.blockPosition, raycastResult.blockPosition),
-        )).addFor(player)
+        )){it.addFor(player)}
 
         resetState()
     }

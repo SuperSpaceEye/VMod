@@ -62,8 +62,8 @@ class DisabledCollisionMConstraint(): MConstraint {
     }
 
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, newShipId))
-        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId2, newShipId))
+        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, newShipId)) {}
+        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId2, newShipId)) {}
     }
 
     override fun nbtSerialize(): CompoundTag? {

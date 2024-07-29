@@ -87,7 +87,7 @@ class ConnectionMode: BaseMode, ConnectionCEH, ConnectionGUI, ConnectionHUD, Pla
                 spoint1, spoint2,
                 color, width
             )
-        )).addFor(player)
+        )){it.addFor(player)}
 
         resetState()
     }

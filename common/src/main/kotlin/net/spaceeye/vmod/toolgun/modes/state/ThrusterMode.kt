@@ -53,6 +53,6 @@ class ThrusterMode: BaseMode, ThrusterCEH, ThrusterHUD, ThrusterGUI, PlacementMo
             ConeBlockRenderer(
                 basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), 1.0f
             )
-        )).addFor(player)
+        )){it.addFor(player)}
     }
 }

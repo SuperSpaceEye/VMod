@@ -71,7 +71,7 @@ class SliderMode: BaseMode, SliderCEH, SliderGUI, SliderHUD {
             compliance, maxForce, setOf(
                 axisRes1.blockPosition, shipRes1.blockPosition,
                 axisRes2.blockPosition, shipRes2.blockPosition).toList(), null
-        )).addFor(player)
+        )){it.addFor(player)}
 
         sresetState(player)
     }

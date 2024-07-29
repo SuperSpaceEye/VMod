@@ -10,6 +10,7 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.events.AVSEvents
+import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
@@ -45,7 +46,7 @@ class ConstraintManager: SavedData() {
 
     private val toLoadConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
     private val groupedToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
-    private val shipIsStaticStatus = mutableMapOf<ShipId, Boolean>()
+    private val shipDataStatus = mutableMapOf<ShipId, ShipData>()
 
     private val posToMId = PosMap<ManagedConstraintId>()
 
@@ -208,7 +209,7 @@ class ConstraintManager: SavedData() {
                 if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
                 neededShipIds.addAll(constraint.attachedToShips(dimensionIds))
             }
-            val group = LoadingGroup(level!!, mConstraints, neededShipIds, shipIsStaticStatus)
+            val group = LoadingGroup(level!!, mConstraints, neededShipIds, shipDataStatus)
             for (id in neededShipIds) {
                 groupedToLoadConstraints.computeIfAbsent(id) { mutableListOf() }.add(group)
             }
@@ -242,27 +243,45 @@ class ConstraintManager: SavedData() {
         createConstraints()
     }
 
-    //TODO redo this
-    private fun tryMakeConstraint(mCon: MConstraint, level: ServerLevel): Boolean {
-        for (i in 0 until 1000) {
-            if (mCon.onMakeMConstraint(level)) {return true}
+    private fun tryMakeConstraint(mCon: MConstraint, level: ServerLevel, onFailure: () -> Unit, rest: () -> Unit) {
+        for (i in 0 until 10) {
+            if (mCon.onMakeMConstraint(level)) {return rest()}
         }
-        ELOG("WAS NOT ABLE TO CREATE A CONSTRAINT OF TYPE ${mCon.typeName} UNDER ID ${mCon.mID}")
-        return false
+
+        var attempts = 0
+        val maxAttempts = 100
+        RandomEvents.serverOnTick.on { _, unsubscribe ->
+            if (attempts > maxAttempts) {
+                onFailure()
+                return@on unsubscribe()
+            }
+
+            if (mCon.onMakeMConstraint(level)) {
+                rest()
+                return@on unsubscribe()
+            }
+
+            attempts++
+        }
     }
 
     //TODO REMEMBER TO FUCKING CALL setDirty()
-    fun makeConstraint(level: ServerLevel, mCon: MConstraint): ManagedConstraintId? {
+    fun makeConstraint(level: ServerLevel, mCon: MConstraint, callback: ((ManagedConstraintId?) -> Unit)) {
         mCon.mID = constraintIdCounter.getID()
-        if (!tryMakeConstraint(mCon, level)) {constraintIdCounter.dec(); return null}
 
-        mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
-        idToConstraint[mCon.mID] = mCon
-        if (mCon is Tickable) { tickingConstraints.add(mCon) }
-        mCon.getAttachmentPoints().forEach { posToMId.addItemTo(mCon.mID, it) }
+        tryMakeConstraint(mCon, level, {
+            ELOG("Was not able to create constraint of type ${mCon.typeName} under ID ${mCon.mID}")
+            callback(null)
+        }) {
+            mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
+            idToConstraint[mCon.mID] = mCon
+            if (mCon is Tickable) { tickingConstraints.add(mCon) }
+            mCon.getAttachmentPoints().forEach { posToMId.addItemTo(mCon.mID, it) }
 
-        setDirty()
-        return mCon.mID
+            setDirty()
+
+            callback(mCon.mID)
+        }
     }
 
     fun getManagedConstraint(id: ManagedConstraintId): MConstraint? = idToConstraint[id]
@@ -286,20 +305,23 @@ class ConstraintManager: SavedData() {
     }
 
     @Internal
-    fun makeConstraintWithId(level: ServerLevel, mCon: MConstraint, id: Int): ManagedConstraintId? {
-        if (id == -1) { ELOG("CREATING A CONSTRAINT WITH NO SPECIFIED ID WHEN A SPECIFIC ID IS EXPECTED AT ${constraintIdCounter.peekID()}"); return makeConstraint(level, mCon) }
+    fun makeConstraintWithId(level: ServerLevel, mCon: MConstraint, id: Int, callback: ((ManagedConstraintId?) -> Unit)) {
+        if (id == -1) { throw AssertionError("makeConstraintWithId was called without a specific id") }
 
         mCon.mID = id
-        if (!tryMakeConstraint(mCon, level)) {return null}
+        tryMakeConstraint(mCon, level, {
+            ELOG("Was not able to create constraint of type ${mCon.typeName} under ID ${mCon.mID}")
+            callback(null)
+        }) {
+            mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
+            if (idToConstraint.contains(mCon.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING CONSTRAINT IN makeConstraintWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
+            idToConstraint[mCon.mID] = mCon
+            if (mCon is Tickable) { tickingConstraints.add(mCon) }
+            mCon.getAttachmentPoints().forEach { posToMId.addItemTo(mCon.mID, it) }
 
-        mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
-        if (idToConstraint.contains(mCon.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING CONSTRAINT IN makeConstraintWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
-        idToConstraint[mCon.mID] = mCon
-        if (mCon is Tickable) { tickingConstraints.add(mCon) }
-        mCon.getAttachmentPoints().forEach { posToMId.addItemTo(mCon.mID, it) }
-
-        setDirty()
-        return mCon.mID
+            setDirty()
+            callback(mCon.mID)
+        }
     }
 
     fun tryGetIdsOfPosition(pos: BlockPos): List<ManagedConstraintId>? {
@@ -553,8 +575,9 @@ class ConstraintManager: SavedData() {
 
                 val changedIds = mutableMapOf<Int, Int>()
                 for (it in toInitConstraints) {
-                    val newId = level.makeManagedConstraint(it.copyMConstraint(level, mapped)?: continue) ?: continue
-                    changedIds[it.mID] = newId
+                    level.makeManagedConstraint(it.copyMConstraint(level, mapped) ?: continue) {newId ->
+                        changedIds[it.mID] = newId ?: return@makeManagedConstraint
+                    }
                 }
 
                 globalMap["changedIDs"] = changedIds

@@ -105,7 +105,7 @@ class HydraulicsMode: BaseMode, HydraulicsCEH, HydraulicsGUI, HydraulicsHUD, Pla
                 spoint1, spoint2,
                 color, width
             )
-        )).addFor(player)
+        )){it.addFor(player)}
 
         resetState()
     }

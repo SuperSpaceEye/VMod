@@ -8,7 +8,6 @@ import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.network.MessageModes
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.BaseMode
@@ -51,8 +50,6 @@ class HydraulicsMode: BaseMode, HydraulicsCEH, HydraulicsGUI, HydraulicsHUD, Pla
     var extensionSpeed: Double by get(14, 1.0, {ServerLimits.instance.extensionSpeed.get(it as Double)})
     var channel: String by get(15, "hydraulics", {ServerLimits.instance.channelLength.get(it as String)})
 
-    var messageModes: MessageModes by get(16, MessageModes.Toggle)
-
     val conn_primary = register { object : C2SConnection<HydraulicsMode>("hydraulics_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
     val conn_secondary = register { object : C2SConnection<HydraulicsMode>("hydraulics_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<HydraulicsMode>(context.player, buf, ::HydraulicsMode) {
             item, serverLevel, player, raycastResult ->
@@ -72,7 +69,7 @@ class HydraulicsMode: BaseMode, HydraulicsCEH, HydraulicsGUI, HydraulicsHUD, Pla
                         spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
                         compliance, maxForce,
                         paDistanceFromBlock, paDistanceFromBlock + extensionDistance,
-                        extensionSpeed, channel, messageModes, connectionMode,
+                        extensionSpeed, channel, connectionMode,
                         listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                         A2BRenderer(
                                 ship1 != null,
@@ -97,7 +94,7 @@ class HydraulicsMode: BaseMode, HydraulicsCEH, HydraulicsGUI, HydraulicsHUD, Pla
             ship1, ship2, shipId1, shipId2,
             compliance, maxForce,
             minLength, minLength + extensionDistance,
-            extensionSpeed, channel, messageModes, connectionMode,
+            extensionSpeed, channel, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
                 ship1 != null,

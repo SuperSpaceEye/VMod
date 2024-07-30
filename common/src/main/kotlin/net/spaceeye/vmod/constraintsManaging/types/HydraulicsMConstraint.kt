@@ -51,8 +51,6 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
 
     var channel: String = ""
 
-    var mode = MessageModes.Toggle
-
     var connectionMode = ConnectionMode.FIXED_ORIENTATION
 
     override var renderer: BaseRenderer? = null
@@ -77,7 +75,6 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
 
         _channel: String,
 
-        messageModes: MessageModes,
         _connectionMode: ConnectionMode,
 
         attachmentPoints: List<BlockPos>,
@@ -93,7 +90,6 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         extensionSpeed = _extensionSpeed / 20.0
 
         channel = _channel
-        mode = messageModes
         connectionMode = _connectionMode
 
         attachmentPoints_ = attachmentPoints.toMutableList()
@@ -175,7 +171,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
             val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
 
             if (connectionMode == ConnectionMode.FREE_ORIENTATION) {
-                val ret = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed, channel, mode, connectionMode, newAttachmentPoints, newRenderer, null)
+                val ret = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed, channel, connectionMode, newAttachmentPoints, newRenderer, null)
                 ret.addDist = addDist
                 ret.extendedDist = extendedDist
                 ret.extensionSpeed = extensionSpeed
@@ -192,7 +188,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
 
                 val dir = srpoint1 - srpoint2
 
-                val ret = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed, channel, mode, connectionMode, newAttachmentPoints, newRenderer, dir)
+                val ret = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed, channel, connectionMode, newAttachmentPoints, newRenderer, dir)
                 ret.addDist = addDist
                 ret.extendedDist = extendedDist
                 ret.extensionSpeed = extensionSpeed
@@ -227,11 +223,8 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         tag.putDouble("maxDistance", maxLength)
         tag.putDouble("extensionSpeed", extensionSpeed)
         tag.putDouble("extendedDist", extendedDist)
-        tag.putBoolean("isActivating", fnToUse == ::activatingFn)
-        tag.putBoolean("isDeactivating", fnToUse == ::deactivatingFn)
         tag.putString("channel", channel)
         tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
-        tag.putInt("mode", mode.ordinal)
         tag.putInt("constraintMode", connectionMode.ordinal)
 
         serializeRenderer(tag)
@@ -255,13 +248,6 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         channel = tag.getString("channel")
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
-        fnToUse = when {
-            tag.getBoolean("isActivating") -> ::activatingFn
-            tag.getBoolean("isDeactivating") -> ::deactivatingFn
-            else -> null
-        }
-
-        mode = MessageModes.values()[tag.getInt("mode")]
         connectionMode = if (tag.contains("constraintMode")) {ConnectionMode.values()[tag.getInt("constraintMode")]} else {ConnectionMode.FIXED_ORIENTATION}
 
         deserializeRenderer(tag)
@@ -277,41 +263,6 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
     var wasDeleted = false
     var fnToUse: (() -> Boolean)? = null
     var lastExtended: Double = 0.0
-
-    // ======================================================================================
-
-    // a sum of all activation(+1) and deactivations (-1)
-    // if the sum is 0, then do nothing
-    // if the sum is >0, then set function to activating
-    // if the sum if <0, then set function to deactivating
-    // gets reset every tick
-    // is needed for when there are multiple commands in the same tick
-    var activationCounter = 0
-
-    private fun activatingFn(): Boolean {
-        extendedDist = min(extendedDist + extensionSpeed, maxLength - minLength)
-        if (extendedDist >= maxLength - minLength) { return false }
-        return true
-    }
-
-    private fun deactivatingFn(): Boolean {
-        extendedDist = max(extendedDist - extensionSpeed, 0.0)
-        if (extendedDist <= 0) {return false}
-        return true
-    }
-
-    private fun toggleTick(msg: Message) {
-        when (msg) {
-            is Activate   -> { if(fnToUse == null) {activationCounter = 0}; activationCounter++ }
-            is Deactivate -> { if(fnToUse == null) {activationCounter = 0}; activationCounter-- }
-            else -> return
-        }
-
-        when {
-            activationCounter > 0 -> { fnToUse = ::activatingFn }
-            activationCounter < 0 -> { fnToUse = ::deactivatingFn }
-        }
-    }
 
     // ======================================================================================
 
@@ -356,7 +307,6 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
 
         if (lastExtended == extendedDist) {return}
         lastExtended = extendedDist
-        activationCounter = 0
 
         val shipObjectWorld = server.shipObjectWorld
 
@@ -376,10 +326,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
             msg, unregister ->
             if (wasDeleted) {unregister(); return@register}
 
-            when (mode) {
-                MessageModes.Toggle -> toggleTick(msg)
-                MessageModes.Signal -> signalTick(msg)
-            }
+            signalTick(msg)
         }
 
         if (renderer != null) { rID = ServerRenderingData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, renderer!!)

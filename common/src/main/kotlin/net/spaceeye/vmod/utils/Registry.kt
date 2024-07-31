@@ -36,4 +36,6 @@ open class Registry<T: RegistryObject> {
         if (!schema.values.containsAll(strToIdx.keys)) { throw AssertionError("Schemas are incompatible ") }
         schema.forEach {(k, v) -> strToIdx[v] = k}
     }
+
+    fun asList() = suppliers.toList()
 }

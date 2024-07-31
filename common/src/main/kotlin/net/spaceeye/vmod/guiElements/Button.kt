@@ -72,6 +72,31 @@ class ToggleButton(
 ): UIBlock(baseColor) {
     var activeColor = baseColor
     var state = defaultState
+
+    fun setDisplay(activated: Boolean) {
+        activeColor = when(activated) {
+            true -> activatedColor
+            false -> baseColor
+        }
+    }
+
+    fun updateColor() {
+        animate {
+            setColorAnimation(
+                Animations.OUT_EXP,
+                animationTime,
+                activeColor.brighter().brighter().toConstraint()
+            )
+        }
+        animate {
+            setColorAnimation(
+                Animations.OUT_EXP,
+                animationTime,
+                activeColor.brighter().toConstraint()
+            )
+        }
+    }
+
     init {
         onMouseEnter {
             animate {
@@ -93,26 +118,10 @@ class ToggleButton(
         }
         onMouseClick {
             state = !state
-            activeColor = when(state) {
-                true -> activatedColor
-                false -> baseColor
-            }
 
+            setDisplay(state)
             fnToActivate(state)
-            animate {
-                setColorAnimation(
-                    Animations.OUT_EXP,
-                    animationTime,
-                    activeColor.brighter().brighter().toConstraint()
-                )
-            }
-            animate {
-                setColorAnimation(
-                    Animations.OUT_EXP,
-                    animationTime,
-                    activeColor.brighter().toConstraint()
-                )
-            }
+            updateColor()
         }
 
         UIText(buttonName, shadow = false).constrain {

@@ -7,8 +7,7 @@ import dev.architectury.registry.client.keymappings.KeyMappingRegistry
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.gui.ScreenWindow
-import net.spaceeye.vmod.gui.ToolgunGUI
-import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
+import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.utils.ClientClosable
 import org.lwjgl.glfw.GLFW
@@ -98,14 +97,13 @@ object ClientToolGunState : ClientClosable() {
         } catch (e: Error) {}
     }
 
-    internal lateinit var gui: ToolgunGUI
+    internal lateinit var gui: MainToolgunGUIWindow
 
     internal fun guiIsOpened() = Minecraft.getInstance().screen == gui
     internal fun otherGuiIsOpened() = Minecraft.getInstance().screen != null && Minecraft.getInstance().screen != gui
 
     internal fun init() {
-        gui = ToolgunGUI()
-        gui.makeScrollComponents(modes)
+        gui = MainToolgunGUIWindow()
     }
 
     override fun close() {

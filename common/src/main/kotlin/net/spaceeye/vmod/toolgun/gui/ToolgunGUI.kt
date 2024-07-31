@@ -1,7 +1,5 @@
-package net.spaceeye.vmod.gui
+package net.spaceeye.vmod.toolgun.gui
 
-import gg.essential.elementa.ElementaVersion
-import gg.essential.elementa.WindowScreen
 import gg.essential.elementa.components.ScrollComponent
 import gg.essential.elementa.components.UIBlock
 import gg.essential.elementa.components.UIWrappedText
@@ -10,18 +8,11 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
-class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
-    val mainWindow = UIBlock(Color(200, 200, 200)).constrain {
-        x = CenterConstraint()
-        y = CenterConstraint()
-
-        width = 90f.percent()
-        height = 90f.percent()
-    } childOf window
-
+class ToolgunGUI(mainWindow: UIBlock): ToolgunWindow {
     val scrollComponent = ScrollComponent().constrain {
         x = 2f.percent()
         y = 2f.percent()
@@ -48,7 +39,13 @@ class ToolgunGUI: WindowScreen(ElementaVersion.V5) {
         height = 100.percent()
     } childOf settingsComponent
 
-    fun makeScrollComponents(components: List<BaseMode>) {
+    init {
+        makeScrollComponents(modes)
+    }
+
+    override fun onGUIOpen() {}
+
+    private fun makeScrollComponents(components: List<BaseMode>) {
         for ((i, component) in components.withIndex()) {
             val componentColor = if (i % 2 == 0) {
                 Color(100, 100, 100)

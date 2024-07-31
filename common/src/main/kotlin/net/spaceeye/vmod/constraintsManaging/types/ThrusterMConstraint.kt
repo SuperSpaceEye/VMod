@@ -70,7 +70,7 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         val controller = ThrustersController.getOrCreate(ship)
 
         val thruster = controller.getThruster(thrusterId)!!
-        controller.updateThruster(thrusterId, thruster.copy(force = thruster.force * scaleBy * scaleBy))
+        controller.updateThruster(thrusterId, thruster.copy(force = thruster.force * scaleBy * scaleBy * scaleBy))
     }
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         val nId = mapped[shipId] ?: return null

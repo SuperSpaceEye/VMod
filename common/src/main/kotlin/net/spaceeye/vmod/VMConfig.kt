@@ -14,6 +14,7 @@ object VMConfig {
     class Client: ConfigSubDirectory() {
         val TOOLGUN = ClientToolgunSettings()
         val RENDERING = ClientRenderingSettings()
+        val INTERNAL_DATA = InternalData()
 
         class ClientToolgunSettings: ConfigSubDirectory() {
             var MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
@@ -23,6 +24,10 @@ object VMConfig {
 
         class ClientRenderingSettings: ConfigSubDirectory() {
             val MAX_RENDERING_DISTANCE: Double by CDouble(200.0, "Max distance in blocks some renderers are able to render. Reload the game for change to take the effect.", Pair(1.0, Double.MAX_VALUE))
+        }
+
+        class InternalData: ConfigSubDirectory() {
+
         }
     }
     class Common: ConfigSubDirectory()
@@ -50,6 +55,7 @@ object VMConfig {
             var VMOD_COMMANDS_PERMISSION_LEVEL: Int by CInt(2, "No Comment", Pair(0, 4))
             var VMOD_OP_COMMANDS_PERMISSION_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
             var VMOD_TOOLGUN_PERMISSION_LEVEL: Int by CInt(2, "No Comment", Pair(0, 4))
+            var VMOD_CHANGING_SERVER_SETTINGS_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
 
             //using config to store shit
             var ALWAYS_ALLOWED: String by CString("", "DO NOT CHANGE")

@@ -11,7 +11,7 @@ import net.spaceeye.vmod.toolgun.modes.gui.GravChangerGUI
 import net.spaceeye.vmod.toolgun.modes.hud.GravChangerHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.GravChangerCEH
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
-import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips

@@ -16,7 +16,7 @@ import net.spaceeye.vmod.toolgun.modes.gui.HydraulicsGUI
 import net.spaceeye.vmod.toolgun.modes.hud.HydraulicsHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.HydraulicsCEH
 import net.spaceeye.vmod.toolgun.modes.util.*
-import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Ref
 import net.spaceeye.vmod.utils.Vector3d

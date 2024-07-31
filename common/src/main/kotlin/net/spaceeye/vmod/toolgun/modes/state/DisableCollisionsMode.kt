@@ -15,7 +15,7 @@ import net.spaceeye.vmod.toolgun.modes.eventsHandling.DisableCollisionsCEH
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
-import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
 

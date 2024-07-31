@@ -18,7 +18,7 @@ import net.spaceeye.vmod.toolgun.modes.util.PlacementModesState
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePosition
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
-import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.getQuatFromDir
 import org.valkyrienskies.mod.common.getShipManagingPos

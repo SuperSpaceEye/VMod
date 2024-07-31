@@ -16,7 +16,7 @@ import net.spaceeye.vmod.toolgun.modes.eventsHandling.SliderCEH
 import net.spaceeye.vmod.toolgun.modes.gui.SliderGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SliderHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
-import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 
 class SliderMode: BaseMode, SliderCEH, SliderGUI, SliderHUD {

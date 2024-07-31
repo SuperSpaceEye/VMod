@@ -16,7 +16,7 @@ import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ConnectionHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.ConnectionCEH
 import net.spaceeye.vmod.toolgun.modes.util.*
-import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.*
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ServerShip

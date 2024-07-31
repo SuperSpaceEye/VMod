@@ -13,7 +13,7 @@ import net.spaceeye.vmod.toolgun.modes.eventsHandling.SyncRotationCEH
 import net.spaceeye.vmod.toolgun.modes.gui.SyncRotationGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SyncRotationHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
-import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.joml.Quaterniond
 

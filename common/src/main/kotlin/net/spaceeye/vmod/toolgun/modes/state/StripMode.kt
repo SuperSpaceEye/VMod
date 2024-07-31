@@ -17,7 +17,7 @@ import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
 import net.spaceeye.vmod.toolgun.modes.hud.StripHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.StripCEH
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
-import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
 

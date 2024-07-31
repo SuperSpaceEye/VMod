@@ -31,7 +31,7 @@ import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.SchemCEH
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
-import net.spaceeye.vmod.toolgun.serializing.SerializableItem.get
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond

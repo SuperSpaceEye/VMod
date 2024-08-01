@@ -50,6 +50,15 @@ object ClientToolGunState : ClientClosable() {
         )
     )
 
+    fun openGUI() {
+        gui.onGUIOpen()
+        Minecraft.getInstance().setScreen(gui)
+    }
+
+    fun closeGUI() {
+        Minecraft.getInstance().setScreen(null)
+    }
+
     private fun register(keyMapping: KeyMapping): KeyMapping {
         KeyMappingRegistry.register(keyMapping)
         return keyMapping
@@ -97,7 +106,7 @@ object ClientToolGunState : ClientClosable() {
         } catch (e: Error) {}
     }
 
-    internal lateinit var gui: MainToolgunGUIWindow
+    private lateinit var gui: MainToolgunGUIWindow
 
     internal fun guiIsOpened() = Minecraft.getInstance().screen == gui
     internal fun otherGuiIsOpened() = Minecraft.getInstance().screen != null && Minecraft.getInstance().screen != gui

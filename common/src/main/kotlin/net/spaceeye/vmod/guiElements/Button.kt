@@ -85,14 +85,14 @@ class ToggleButton(
             setColorAnimation(
                 Animations.OUT_EXP,
                 animationTime,
-                activeColor.brighter().brighter().toConstraint()
+                activeColor.brighter().toConstraint()
             )
         }
         animate {
             setColorAnimation(
                 Animations.OUT_EXP,
                 animationTime,
-                activeColor.brighter().toConstraint()
+                activeColor.toConstraint()
             )
         }
     }

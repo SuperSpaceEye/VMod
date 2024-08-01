@@ -15,6 +15,7 @@ open class SerializableItemDelegate <T : Any>(
     var serialize: (it: Any, buf: FriendlyByteBuf) -> Unit,
     var deserialize: (buf: FriendlyByteBuf) -> T) {
 
+    lateinit var cachedName: String
     operator fun getValue(thisRef: Any?, property: KProperty<*>):T {
         return it
     }
@@ -24,6 +25,7 @@ open class SerializableItemDelegate <T : Any>(
     }
 
     operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): SerializableItemDelegate<T> {
+        cachedName = property.name
         return this
     }
 }

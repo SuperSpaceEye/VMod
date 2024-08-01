@@ -6,6 +6,7 @@ import gg.essential.elementa.components.UIWrappedText
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
+import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
@@ -43,7 +44,9 @@ class ToolgunGUI(mainWindow: UIBlock): ToolgunWindow {
         makeScrollComponents(modes)
     }
 
-    override fun onGUIOpen() {}
+    override fun onGUIOpen() {
+        ServerLimits.updateFromServer()
+    }
 
     private fun makeScrollComponents(components: List<BaseMode>) {
         for ((i, component) in components.withIndex()) {

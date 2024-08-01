@@ -3,8 +3,11 @@ package net.spaceeye.vmod.limits
 import dev.architectury.networking.NetworkManager
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ServerToolGunState
 import kotlin.math.max
 import kotlin.math.min
 
@@ -45,27 +48,60 @@ object ServerLimits: NetworkingRegisteringFunctions {
 
     var instance: ServerLimitsInstance = ServerLimitsInstance()
 
-    fun update() { c2sRequestServerLimitsUpdate.sendToServer(C2SRequestServerLimitsUpdate()) }
+    fun updateFromServer() { c2sRequestServerLimits.sendToServer(C2SRequestServerLimits()) }
+    fun tryUpdateToServer() { c2sSendUpdatedServerLimits.sendToServer(instance) }
 
-    private class C2SRequestServerLimitsUpdate: Serializable {
+    private class C2SRequestServerLimits: Serializable {
         override fun serialize(): FriendlyByteBuf {return getBuffer()}
         override fun deserialize(buf: FriendlyByteBuf) {}
     }
 
-    private val c2sRequestServerLimitsUpdate = "request_server_limits_update" idWithConnc {
-        object : C2SConnection<C2SRequestServerLimitsUpdate>(it, "server_limits") {
+    private class S2CServerLimitsUpdateWasRejected: Serializable {
+        override fun serialize(): FriendlyByteBuf {return getBuffer()}
+        override fun deserialize(buf: FriendlyByteBuf) {}
+    }
+
+    private val c2sRequestServerLimits = "request_server_limits" idWithConnc {
+        object : C2SConnection<C2SRequestServerLimits>(it, "server_limits") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                s2cSendServerLimitsUpdate.sendToClient(context.player as ServerPlayer, instance)
+                s2cSendCurrentServerLimits.sendToClient(context.player as ServerPlayer, instance)
             }
         }
     }
 
-    private val s2cSendServerLimitsUpdate = "send_server_limits_update" idWithConns {
+    private val s2cSendCurrentServerLimits = "send_current_server_limits" idWithConns {
         object : S2CConnection<ServerLimitsInstance>(it, "server_limits") {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val update = ServerLimitsInstance()
                 update.deserialize(buf)
                 instance = update
+            }
+        }
+    }
+
+    private val c2sSendUpdatedServerLimits = "send_updated_server_limits" idWithConnc {
+        object : C2SConnection<ServerLimitsInstance>(it, "server_limits") {
+            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val player = context.player as ServerPlayer
+                if (!(ServerToolGunState.playerHasAccess(player) && player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_CHANGING_SERVER_SETTINGS_LEVEL))) {
+                    s2cServerLimitsUpdateWasRejected.sendToClient(player, S2CServerLimitsUpdateWasRejected())
+                    return
+                }
+
+                val newInstance = ServerLimitsInstance()
+                newInstance.deserialize(buf)
+
+                instance = newInstance
+
+            }
+        }
+    }
+
+    private val s2cServerLimitsUpdateWasRejected = "server_limits_update_was_rejected" idWithConns {
+        object : S2CConnection<S2CServerLimitsUpdateWasRejected>(it, "server_limits") {
+            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                ClientToolGunState.closeGUI()
+                ClientToolGunState.addHUDError("Server Limits update was rejected")
             }
         }
     }

@@ -45,14 +45,13 @@ class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
                     if (res != EventResult.pass()) {return@register res}
 
                     if (isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
-                        ClientToolGunState.gui.onGUIOpen()
-                        Minecraft.getInstance().setScreen(ClientToolGunState.gui)
+                        ClientToolGunState.openGUI()
                         return@register EventResult.pass()
                     }
                 }
 
                 if (guiIsOpened && isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
-                    Minecraft.getInstance().setScreen(null)
+                    ClientToolGunState.closeGUI()
                     return@register EventResult.pass()
                 }
 

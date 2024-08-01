@@ -1,9 +1,11 @@
 package net.spaceeye.vmod.limits
 
 import dev.architectury.networking.NetworkManager
+import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
+import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.toolgun.ClientToolGunState
@@ -45,8 +47,31 @@ object ServerLimits: NetworkingRegisteringFunctions {
         SerializableItem.registerSerializationItem(IntLimit::class, {it: Any, buf: FriendlyByteBuf -> it as IntLimit; buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) {buf -> IntLimit(buf.readInt(), buf.readInt())}
         SerializableItem.registerSerializationItem(StrLimit::class, {it: Any, buf: FriendlyByteBuf -> it as StrLimit; buf.writeInt(it.sizeLimit)}) {buf -> StrLimit(buf.readInt())}
     }
+    private var _instance = ServerLimitsInstance()
+    var wasLoaded = false
+    var instance: ServerLimitsInstance
+        get() {
+            if (!wasLoaded) {load(); wasLoaded = true}
+            return _instance
+        }
+        set(value) {
+            save(value)
+            _instance = value
+        }
 
-    var instance: ServerLimitsInstance = ServerLimitsInstance()
+    private fun save(value: ServerLimitsInstance) {
+        val arr = value.serialize().accessByteBufWithCorrectSize()
+        ExternalDataUtil.writeObject("ServerLimits", arr)
+    }
+
+    private fun load() {
+        val bytes = ExternalDataUtil.readObject("ServerLimits") ?: run {
+            save(_instance)
+            return
+        }
+        val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
+        _instance.deserialize(buf)
+    }
 
     fun updateFromServer() { c2sRequestServerLimits.sendToServer(C2SRequestServerLimits()) }
     fun tryUpdateToServer() { c2sSendUpdatedServerLimits.sendToServer(instance) }

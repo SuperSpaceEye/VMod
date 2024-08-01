@@ -61,8 +61,6 @@ nothing
 
 ## Server side things
 * Add server side validation for (kinda ✅) constraints and rendering
-* Add the ability for server to change limits
-* Add the ability for server and clients to synchronise limits
 
 ## Schematic
 * Copy entities (maybe, idfk)

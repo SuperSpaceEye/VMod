@@ -139,7 +139,7 @@ interface PlacementAssistNetworkingUnit: BaseMode, PlacementAssistServerPart, Pl
 
 open class PlacementAssistNetworking(networkName: String): BaseNetworking<PlacementAssistNetworkingUnit>() {
     val s2cHandleFailure = "handle_failure" idWithConns {
-        object : S2CConnection<S2CHandleFailurePacket>(it, networkName) {
+        object : S2CConnection<EmptyPacket>(it, networkName) {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val obj = clientObj ?: return
                 obj.resetState()
@@ -175,11 +175,6 @@ open class PlacementAssistNetworking(networkName: String): BaseNetworking<Placem
             }
         }
     }
-
-    class S2CHandleFailurePacket(): Serializable {
-        override fun serialize(): FriendlyByteBuf { return getBuffer() }
-        override fun deserialize(buf: FriendlyByteBuf) {}
-    }
 }
 
 //TODO add checks for if functions are actually invoked on server
@@ -206,7 +201,7 @@ interface PlacementAssistServerPart: PlacementModesState {
     }
 
     private fun handleFailure(player: Player) {
-        paNetworkingObject.s2cHandleFailure.sendToClient(player as ServerPlayer, PlacementAssistNetworking.S2CHandleFailurePacket())
+        paNetworkingObject.s2cHandleFailure.sendToClient(player as ServerPlayer, EmptyPacket())
         paServerResetState()
     }
 

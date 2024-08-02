@@ -237,7 +237,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
 
     // transmitter can't begin transmitting data to receiver by itself
     val c2sLoadSchematic = "load_schematic" idWithConnc {
-        object : C2SConnection<C2SLoadSchematic>(it, networkName) {
+        object : C2SConnection<EmptyPacket>(it, networkName) {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val lastReq = ServerPlayerSchematics.loadRequests[context.player.uuid]
                 if (lastReq != null && getNow_ms() - lastReq < 10000L) { return }
@@ -297,11 +297,6 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
                 data
             )
         }
-    }
-
-    class C2SLoadSchematic(): Serializable {
-        override fun serialize(): FriendlyByteBuf { return getBuffer() }
-        override fun deserialize(buf: FriendlyByteBuf) {}
     }
 }
 

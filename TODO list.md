@@ -17,11 +17,13 @@ nothing
 * A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
 
 ## Revise whole MConstraint structure
+* Instead of rendering shit being part of MConstraint itself, have "extensions" that you can add to MConstraint. They won't see other "extensions" (maybe) but just the constraint itself.
 ## Redo how MConstraint renderers are saved
 
 ## java.awt.Color doesn't exist in headless mode
 
 ## Toolgun settings presets menu
+* maybe when pressing alt or smth it will show all presets for this mode, and allow player to cycle them
 
 ## Toolgun settings for shit like gravity etc
 

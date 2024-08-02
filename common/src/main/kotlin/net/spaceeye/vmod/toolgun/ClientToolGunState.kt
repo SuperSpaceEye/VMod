@@ -10,6 +10,7 @@ import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.utils.ClientClosable
+import net.spaceeye.vmod.utils.EmptyPacket
 import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
@@ -70,7 +71,7 @@ object ClientToolGunState : ClientClosable() {
         if (eventResult != EventResult.pass()) { return eventResult }
 
         if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_CONSTRAINT.matches(keyCode, scanCode)) {
-            ServerToolGunState.c2sRequestRemoveLastConstraint.sendToServer(ServerToolGunState.C2SRequestRemoveLastConstraintPacket())
+            ServerToolGunState.c2sRequestRemoveLastConstraint.sendToServer(EmptyPacket())
             return EventResult.interruptFalse()
         }
 

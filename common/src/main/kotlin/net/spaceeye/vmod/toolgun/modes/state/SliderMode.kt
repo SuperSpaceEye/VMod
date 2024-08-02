@@ -17,6 +17,7 @@ import net.spaceeye.vmod.toolgun.modes.gui.SliderGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SliderHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.RaycastFunctions
 
 class SliderMode: BaseMode, SliderCEH, SliderGUI, SliderHUD {
@@ -77,7 +78,7 @@ class SliderMode: BaseMode, SliderCEH, SliderGUI, SliderHUD {
     }
 
     fun sresetState(player: ServerPlayer) {
-        ServerToolGunState.s2cTooglunWasReset.sendToClient(player, ServerToolGunState.S2CToolgunWasReset())
+        ServerToolGunState.s2cTooglunWasReset.sendToClient(player, EmptyPacket())
         resetState()
     }
 

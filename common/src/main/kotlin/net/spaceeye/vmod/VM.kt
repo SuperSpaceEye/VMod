@@ -18,6 +18,7 @@ import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.sendHUDErrorToOperators
+import net.spaceeye.vmod.toolgun.serverSettings.modes.DimensionalGravitySettings
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
@@ -44,8 +45,8 @@ object VM {
     fun init() {
         ConfigDelegateRegister.initConfig()
 
+        DimensionalGravitySettings
         initRenderingData()
-        VSGravityManager
         SimpleMessagerNetworking
         ToolgunModes
         ServerToolGunState
@@ -87,6 +88,8 @@ object VM {
             ServerLevelHolder.server = server
             ServerLevelHolder.overworldServerLevel = server.overworld()
             ConstraintManager.initNewInstance()
+
+            VSGravityManager
         }
 
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {

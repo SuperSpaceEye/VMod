@@ -14,6 +14,7 @@ import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
 import net.spaceeye.vmod.toolgun.modes.state.SchemNetworking
 import net.spaceeye.vmod.translate.*
+import net.spaceeye.vmod.utils.EmptyPacket
 import java.awt.Color
 import java.util.*
 
@@ -87,7 +88,7 @@ interface SchemGUI: GUIBuilder {
             Button(Color.GRAY.brighter(), LOAD.get()) {
                 schem = ClientPlayerSchematics.loadSchematic(path)
                 if (schem != null) {
-                    SchemNetworking.c2sLoadSchematic.sendToServer(SchemNetworking.C2SLoadSchematic())
+                    SchemNetworking.c2sLoadSchematic.sendToServer(EmptyPacket())
                 }
             }.constrain {
                 x = 0.pixels()

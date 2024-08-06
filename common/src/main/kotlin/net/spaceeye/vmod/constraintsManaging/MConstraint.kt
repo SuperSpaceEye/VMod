@@ -63,7 +63,8 @@ interface MConstraint: RegistryObject {
 
     // positions to which constraint is "attached" to the ship/world
     // is needed for strip tool, moving constraints on ship splitting
-    fun getAttachmentPoints(): List<BlockPos>
+    fun getAttachmentPositions(): List<BlockPos>
+    fun getAttachmentPoints(): List<Vector3d>
 
     // is called on ship splitting
     fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId)
@@ -100,29 +101,4 @@ fun updatePositions(
         }
         attachmentPoints[i] = new
     }
-}
-
-fun updateRenderer(
-    localPos0: Vector3dc,
-    localPos1: Vector3dc,
-    shipId0: ShipId,
-    shipId1: ShipId,
-    id: Int
-): BaseRenderer? {
-    val renderer = ServerRenderingData.getRenderer(id) ?: return null
-
-    when (renderer) {
-        is RopeRenderer -> {
-            renderer.point1 = Vector3d(localPos0)
-            renderer.point2 = Vector3d(localPos1)
-            ServerRenderingData.setRenderer(shipId0, shipId1, id, renderer)
-        }
-
-        is A2BRenderer -> {
-            renderer.point1 = Vector3d(localPos0)
-            renderer.point2 = Vector3d(localPos1)
-            ServerRenderingData.setRenderer(shipId0, shipId1, id, renderer)
-        }
-    }
-    return renderer
 }

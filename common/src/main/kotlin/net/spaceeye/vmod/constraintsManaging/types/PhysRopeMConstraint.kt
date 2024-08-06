@@ -66,6 +66,7 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRender
     }
 
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        throw NotImplementedError()
         if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
 
         val first = when (previous) {

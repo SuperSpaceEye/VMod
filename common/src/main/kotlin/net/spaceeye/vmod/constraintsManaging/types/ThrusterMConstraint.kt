@@ -56,7 +56,8 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
 
     override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>) = allShips.contains(shipId)
     override fun attachedToShips(dimensionIds: Collection<ShipId>) = mutableListOf(shipId)
-    override fun getAttachmentPoints(): List<BlockPos> = listOf(bpos)
+    override fun getAttachmentPositions(): List<BlockPos> = listOf(bpos)
+    override fun getAttachmentPoints(): List<Vector3d> = listOf(Vector3d(pos))
     override fun getVSIds(): Set<VSConstraintId> = setOf()
 
 
@@ -119,6 +120,7 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
     }
 
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        throw NotImplementedError()
         if (previous != bpos) {return}
 
         val oShip = level.shipObjectWorld.loadedShips.getById(shipId) ?: return

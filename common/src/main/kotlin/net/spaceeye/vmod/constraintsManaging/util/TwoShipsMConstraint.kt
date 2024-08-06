@@ -4,11 +4,13 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
+import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraint
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
+import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
 
@@ -41,7 +43,14 @@ abstract class TwoShipsMConstraint(override val typeName: String): MConstraint {
 
     override fun getVSIds(): Set<VSConstraintId> = cIDs.toSet()
 
-    override fun getAttachmentPoints(): List<BlockPos> = attachmentPoints_
+    override fun getAttachmentPositions(): List<BlockPos> = attachmentPoints_
+
+    override fun getAttachmentPoints(): List<Vector3d> = when (mainConstraint) {
+        is VSForceConstraint -> listOf(
+            Vector3d((mainConstraint as VSForceConstraint).localPos0),
+            Vector3d((mainConstraint as VSForceConstraint).localPos1))
+        else -> listOf()
+    }
 
     protected fun <T> clean(level: ServerLevel): T? {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }

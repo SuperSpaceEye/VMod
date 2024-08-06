@@ -41,7 +41,8 @@ class DisabledCollisionMConstraint(): MConstraint {
         return toReturn
     }
 
-    override fun getAttachmentPoints(): List<BlockPos> = listOf()
+    override fun getAttachmentPositions(): List<BlockPos> = listOf()
+    override fun getAttachmentPoints(): List<Vector3d> = listOf()
     override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
     override fun getVSIds(): Set<VSConstraintId> = setOf()
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? { return DisabledCollisionMConstraint(mapped[shipId1] ?: return null, mapped[shipId2] ?: return null) }

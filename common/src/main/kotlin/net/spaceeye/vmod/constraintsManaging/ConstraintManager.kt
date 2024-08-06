@@ -276,7 +276,7 @@ class ConstraintManager: SavedData() {
             mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
             idToConstraint[mCon.mID] = mCon
             if (mCon is Tickable) { tickingConstraints.add(mCon) }
-            mCon.getAttachmentPoints().forEach { posToMId.addItemTo(mCon.mID, it) }
+            mCon.getAttachmentPositions().forEach { posToMId.addItemTo(mCon.mID, it) }
 
             setDirty()
 
@@ -293,7 +293,7 @@ class ConstraintManager: SavedData() {
         mCon.onDeleteMConstraint(level)
         idToConstraint.remove(id)
         if (mCon is Tickable) { tickingConstraints.remove(mCon) }
-        mCon.getAttachmentPoints().forEach { posToMId.removeItemFromPos(mCon.mID, it) }
+        mCon.getAttachmentPositions().forEach { posToMId.removeItemFromPos(mCon.mID, it) }
 
         setDirty()
         return true
@@ -317,7 +317,7 @@ class ConstraintManager: SavedData() {
             if (idToConstraint.contains(mCon.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING CONSTRAINT IN makeConstraintWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
             idToConstraint[mCon.mID] = mCon
             if (mCon is Tickable) { tickingConstraints.add(mCon) }
-            mCon.getAttachmentPoints().forEach { posToMId.addItemTo(mCon.mID, it) }
+            mCon.getAttachmentPositions().forEach { posToMId.addItemTo(mCon.mID, it) }
 
             setDirty()
             callback(mCon.mID)
@@ -361,6 +361,7 @@ class ConstraintManager: SavedData() {
         return idToDisabledCollisions[shipId]?.map { (k, v) -> Pair(k, v.left) }?.toMap()
     }
 
+    //TODO redo when ship splitting actually happens
     private fun shipWasSplitEvent(
         originalShip: ServerShip,
         newShip: ServerShip,

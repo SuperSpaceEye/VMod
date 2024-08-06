@@ -61,7 +61,7 @@ class SliderMConstraint(): TwoShipsMConstraint("SliderMConstraint"), MRenderable
     }
 
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        TODO("Not yet implemented")
+        throw NotImplementedError()
     }
 
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {

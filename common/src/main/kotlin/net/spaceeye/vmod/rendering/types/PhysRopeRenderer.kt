@@ -227,7 +227,7 @@ class PhysRopeRenderer(): BaseRenderer {
         }
     }
 
-    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
-        throw AssertionError("Shouldn't be copied")
+    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
+        return null
     }
 }

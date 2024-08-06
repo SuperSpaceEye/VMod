@@ -138,6 +138,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
     }
 
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        throw NotImplementedError()
         if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
         cIDs.clear()
@@ -152,8 +153,8 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         aconstraint1 = aconstraint1.copy(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0])
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
 
-        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
-        renderer = ServerRenderingData.getRenderer(rID)
+//        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
+//        renderer = ServerRenderingData.getRenderer(rID)
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
         aconstraint2 = aconstraint2.copy(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1])

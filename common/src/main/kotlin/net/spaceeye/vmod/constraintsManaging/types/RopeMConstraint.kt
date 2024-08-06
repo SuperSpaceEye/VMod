@@ -41,6 +41,7 @@ class RopeMConstraint(): TwoShipsMConstraint("RopeMConstraint"), MRenderable {
     }
 
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        throw NotImplementedError()
         if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
         level.shipObjectWorld.removeConstraint(cIDs[0])
 
@@ -55,7 +56,7 @@ class RopeMConstraint(): TwoShipsMConstraint("RopeMConstraint"), MRenderable {
 
         cIDs[0] = level.shipObjectWorld.createNewConstraint(mainConstraint)!!
 
-        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
+//        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
     }
 
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {

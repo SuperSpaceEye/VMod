@@ -50,8 +50,8 @@ class RopeMode: BaseMode, RopeCEH, RopeGUI, RopeHUD, PlacementModesState {
             maxForce, dist,
             listOf(prresult.blockPosition, rresult.blockPosition),
             RopeRenderer(
-                ship1 != null,
-                ship2 != null,
+                ship1?.id ?: -1L,
+                ship2?.id ?: -1L,
                 spoint1, spoint2,
                 dist, width, segments
             )

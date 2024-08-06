@@ -72,8 +72,8 @@ class HydraulicsMode: BaseMode, HydraulicsCEH, HydraulicsGUI, HydraulicsHUD, Pla
                         extensionSpeed, channel, connectionMode,
                         listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                         A2BRenderer(
-                                ship1 != null,
-                                ship2 != null,
+                                ship1?.id ?: -1L,
+                                ship2?.id ?: -1L,
                                 spoint1, spoint2,
                                 color, width
                         )
@@ -97,8 +97,8 @@ class HydraulicsMode: BaseMode, HydraulicsCEH, HydraulicsGUI, HydraulicsHUD, Pla
             extensionSpeed, channel, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition),
             A2BRenderer(
-                ship1 != null,
-                ship2 != null,
+                ship1?.id ?: -1L,
+                ship2?.id ?: -1L,
                 spoint1, spoint2,
                 color, width
             )

@@ -47,7 +47,7 @@ fun commonCopy(
     val apoint2 = (if (nShip2 != null) Vector3d(attachmentPoints_[1]) + 0.5 - oCentered2!! + nCentered2!! else Vector3d(attachmentPoints_[1])).toBlockPos()
 
     val newAttachmentPoints = listOf(apoint1, apoint2)
-    val newRenderer = renderer?.copy(nShip1, nShip2, localPos0, localPos1)
+    val newRenderer = renderer?.copy(mapped.map {(k, v) -> Pair(k, level.shipObjectWorld.allShips.getById(v)!!)}.toMap())
 
     return constructor(nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer)
 }

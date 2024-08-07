@@ -5,30 +5,36 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.constraintsManaging.util.AbstractMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.MConstraintExtension
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
+import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class RenderableExtension(): MConstraintExtension {
     private lateinit var renderer: BaseRenderer
     private var rID = -1
-    private lateinit var obj: AbstractMConstraint
+    private lateinit var obj: ExtendableMConstraint
 
     constructor(renderer: BaseRenderer): this() {
         this.renderer = renderer
     }
 
-    override fun onInit(obj: AbstractMConstraint) {
+    override fun onInit(obj: ExtendableMConstraint) {
         this.obj = obj
     }
 
-    override fun onAfterCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: AbstractMConstraint) {
+    override fun onAfterCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableMConstraint) {
         val newRenderer = renderer.copy(mapped.map {(k, v) -> Pair(k, level.shipObjectWorld.allShips.getById(v)!!) }.toMap()) ?: return
         new.addExtension(RenderableExtension(newRenderer))
+    }
+
+    override fun onBeforeOnScaleByMConstraint(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
+        renderer.scaleBy(scaleBy)
+        ServerRenderingData.setUpdated(rID, renderer)
     }
 
     override fun onSerialize(): CompoundTag? {

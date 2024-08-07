@@ -32,16 +32,18 @@ object A {
 }
 
 class ConeBlockRenderer(): BlockRenderer {
+    var shipId = -1L
     var pos = Vector3d()
     var rot = Quaterniond()
     var scale: Float = 1.0f
 
     override val typeName = "BlockRenderer"
 
-    constructor(_pos: Vector3d, _rot: Quaterniond, _scale: Float): this() {
-        pos = _pos
-        rot = _rot
-        scale = _scale
+    constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId): this() {
+        this.pos = pos
+        this.rot = rot
+        this.scale = scale
+        this.shipId = shipId
     }
 
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource) {
@@ -97,6 +99,11 @@ class ConeBlockRenderer(): BlockRenderer {
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
-        return null
+        val spoint = updatePosition(pos, oldToNew[shipId]!!)
+        return ConeBlockRenderer(spoint, Quaterniond(rot), scale, oldToNew[shipId]!!.id)
+    }
+
+    override fun scaleBy(by: Double) {
+        scale *= by.toFloat()
     }
 }

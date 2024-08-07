@@ -108,7 +108,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
         renderingPosition = buf.readVector3d()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
-        throw AssertionError("Shouldn't be copied")
-    }
+    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
+    override fun scaleBy(by: Double) { throw AssertionError("Shouldn't be scaled") }
 }

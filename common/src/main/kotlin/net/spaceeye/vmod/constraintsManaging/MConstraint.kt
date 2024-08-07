@@ -1,17 +1,9 @@
 package net.spaceeye.vmod.constraintsManaging
 
-import io.netty.buffer.Unpooled
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.rendering.RenderingTypes
-import net.spaceeye.vmod.rendering.ServerRenderingData
-import net.spaceeye.vmod.rendering.types.A2BRenderer
-import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.rendering.types.RopeRenderer
 import net.spaceeye.vmod.utils.RegistryObject
 import net.spaceeye.vmod.utils.Vector3d
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -23,31 +15,6 @@ import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 
 interface Tickable {
     fun tick(server: MinecraftServer, unregister: () -> Unit)
-}
-
-interface MRenderable {
-    var renderer: BaseRenderer?
-
-    fun serializeRenderer(tag: CompoundTag) {
-        if (renderer != null) {
-            try {
-                tag.putString("rendererType", renderer!!.typeName)
-                tag.putByteArray("renderer", renderer!!.serialize().accessByteBufWithCorrectSize())
-            } catch (e: Exception) { ELOG("FAILED TO SERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}")
-            } catch (e: Error) { ELOG("FAILED TO SERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}") }
-        }
-    }
-
-    fun deserializeRenderer(tag: CompoundTag) {
-        if (tag.contains("renderer")) {
-            try {
-                val type = tag.getString("rendererType")
-                renderer = RenderingTypes.typeToSupplier(type).get()
-                renderer!!.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(tag.getByteArray("renderer"))))
-            } catch (e: Exception) { ELOG("FAILED TO DESERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}")
-            } catch (e: Error) { ELOG("FAILED TO DESERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}") }
-        }
-    }
 }
 
 interface MConstraint: RegistryObject {

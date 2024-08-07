@@ -10,7 +10,6 @@ import net.spaceeye.vmod.entities.events.ServerPhysEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.rendering.ServerRenderingData
-import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.PhysRopeRenderer
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
@@ -26,10 +25,9 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 import java.util.*
 
-class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRenderable {
+class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint") {
     lateinit var constraint: VSRopeConstraint
     override val mainConstraint: VSConstraint get() = constraint
-    override var renderer: BaseRenderer? = null
 
     var ropeLength = 0.0
     var segments: Int = 0
@@ -65,7 +63,7 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRender
         this.radius = radius
     }
 
-    override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
         throw NotImplementedError()
         if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
 
@@ -95,9 +93,9 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRender
         ) ?: run { level.removeManagedConstraint(mID) ; return }
     }
 
-    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        return commonCopy(level, mapped, constraint, attachmentPoints_, null) {
-                nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, _ ->
+    override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
+        return commonCopy(level, mapped, constraint, attachmentPoints_) {
+                nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints->
             val con = PhysRopeMConstraint(
                 nShip1?.id ?: constraint.shipId0, nShip2?.id ?: constraint.shipId1,
                 constraint.compliance, localPos0.toJomlVector3d(), localPos1.toJomlVector3d(),
@@ -113,7 +111,7 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRender
     //why does it recreate phys entities instead of modifying them?
     //shipObjectWorld.teleportPhysicsEntity doesn't scale entities when you give it new scale
     //changing physEntityServer also doesn't seem to work but i'm not sure
-    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
+    override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         val newPositions = entities.map {
             (Vector3d(it.physicsEntityData!!.transform.positionInWorld) - scalingCenter) * scaleBy + scalingCenter
         }
@@ -145,11 +143,9 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRender
         oldEntities.forEach { it.kill() }
     }
 
-    override fun nbtSerialize(): CompoundTag? {
+    override fun iNbtSerialize(): CompoundTag? {
         val tag = VSConstraintSerializationUtil.serializeConstraint(constraint) ?: return null
 
-        tag.putInt("managedID", mID)
-        tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
         tag.putDouble("ropeLength", ropeLength)
         tag.putInt("segments", segments)
         tag.putDouble("massPerSegment", massPerSegment)
@@ -168,14 +164,10 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRender
 //        tag.putQuaterniond("middleRotation", middleRotation!!)
 //        tag.putQuaterniond("lastRotation", lastRotation!!)
 
-        serializeRenderer(tag)
-
         return tag
     }
 
-    override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        mID = tag.getInt("managedID")
-        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
+    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         ropeLength = tag.getDouble("ropeLength")
         segments = tag.getInt("segments")
         massPerSegment = tag.getDouble("massPerSegment")
@@ -186,7 +178,6 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRender
 //        lastRotation = tag.getQuaterniond("lastRotation")
 
         entitiesUUIDs = (tag.get("uuids") as ListTag).map { (it as CompoundTag).getUUID("uuid") }.toMutableList()
-        deserializeRenderer(tag)
 
         tryConvertDimensionId(tag, lastDimensionIds); constraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
 
@@ -346,7 +337,7 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRender
         return true
     }
 
-    override fun onMakeMConstraint(level: ServerLevel): Boolean {
+    override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         RandomEvents.serverOnTick.on {
             _, unregister ->
             if (entitiesUUIDs.isNotEmpty()) {
@@ -361,7 +352,7 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint"), MRender
         return true
     }
 
-    override fun onDeleteMConstraint(level: ServerLevel) {
+    override fun iOnDeleteMConstraint(level: ServerLevel) {
         RandomEvents.serverOnTick.on {
             (server), handler ->
             entities.forEach { it.kill() }

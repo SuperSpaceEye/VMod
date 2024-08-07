@@ -12,6 +12,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 interface BaseRenderer: Serializable, RegistryObject {
     fun renderData(poseStack: PoseStack, camera: Camera)
     fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer?
+    fun scaleBy(by: Double)
 }
 
 interface BlockRenderer: BaseRenderer {

@@ -126,4 +126,8 @@ open class A2BRenderer(): BaseRenderer {
 
         return A2BRenderer(newId1, newId2, spoint1, spoint2, color, width)
     }
+
+    override fun scaleBy(by: Double) {
+        width *= by
+    }
 }

@@ -90,6 +90,12 @@ class ServerSynchronisedRenderingData:
 
     private var idToPage = mutableMapOf<Int, Long>()
 
+    fun setUpdated(id: Int, renderer: BaseRenderer): Boolean = lock {
+        val page = idToPage[id] ?: return@lock false
+        set(page, id, renderer)
+        return@lock true
+    }
+
     fun setRenderer(shipId1: Long, shipId2: Long, id: Int, renderer: BaseRenderer): Int = lock {
         val idToUse = if (ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.containsValue(shipId1)) {shipId2} else {shipId1}
         set(idToUse, id, renderer)

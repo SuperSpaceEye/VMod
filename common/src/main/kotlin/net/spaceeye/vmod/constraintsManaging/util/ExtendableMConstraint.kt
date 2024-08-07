@@ -7,12 +7,13 @@ import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.utils.Vector3d
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 
-abstract class AbstractMConstraint: MConstraint {
+abstract class ExtendableMConstraint(final override val typeName: String): MConstraint {
     abstract fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
     // SHOULDN'T RETURN GROUND SHIPID
     abstract fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId>
@@ -44,14 +45,16 @@ abstract class AbstractMConstraint: MConstraint {
     @get:Internal
     final override var __saveCounter: Int = -1
 
-    val extensions = mutableListOf<MConstraintExtension>()
+    private val _extensions = mutableListOf<MConstraintExtension>()
+    val extensions: List<MConstraintExtension> get() = _extensions
 
-    fun addExtension(extension: MConstraintExtension) {
+    fun addExtension(extension: MConstraintExtension): ExtendableMConstraint {
         extension.onInit(this)
-        extensions.add(extension)
+        _extensions.add(extension)
+        return this
     }
 
-    inline fun <reified T: MConstraintExtension> getExtension(type: Class<T>): List<T> {
+    inline fun <reified T: MConstraintExtension> getExtensionsOfType(): List<T> {
         return extensions.filterIsInstance<T>()
     }
 
@@ -75,32 +78,36 @@ abstract class AbstractMConstraint: MConstraint {
     final override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
         TODO()
         iMoveShipyardPosition(level, previous, new, newShipId)
-        extensions.forEach { it.onAfterMoveShipyardPositions(level, previous, new, newShipId) }
+        _extensions.forEach { it.onAfterMoveShipyardPositions(level, previous, new, newShipId) }
     }
 
     final override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        extensions.forEach { it.onBeforeCopyMConstraint(level, mapped) }
+        _extensions.forEach { it.onBeforeCopyMConstraint(level, mapped) }
         val new = iCopyMConstraint(level, mapped)
-        new?.let { extensions.forEach { it.onAfterCopyMConstraint(level, mapped, new as AbstractMConstraint) } }
+        new?.let { _extensions.forEach { it.onAfterCopyMConstraint(level, mapped, new as ExtendableMConstraint) } }
         return new
     }
 
     final override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
+        _extensions.forEach { it.onBeforeOnScaleByMConstraint(level, scaleBy, scalingCenter) }
         return iOnScaleBy(level, scaleBy, scalingCenter)
     }
 
-    final override  fun getVSIds(): Set<VSConstraintId> {
+    final override fun getVSIds(): Set<VSConstraintId> {
         return iGetVSIds()
     }
 
-    final override fun nbtSerialize(): CompoundTag? {
+    @NonExtendable
+    override fun nbtSerialize(): CompoundTag? {
         val saveTag = CompoundTag()
+
+        saveTag.putInt("mID", mID)
 
         val mainTag = iNbtSerialize() ?: return null
         saveTag.put("Main", mainTag)
 
         val extensionsTag = CompoundTag()
-        extensions.forEach {
+        _extensions.forEach {
             extensionsTag.put(it.typeName, it.onSerialize() ?: return@forEach)
         }
 
@@ -110,13 +117,16 @@ abstract class AbstractMConstraint: MConstraint {
         return saveTag
     }
 
-    final override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
+    @NonExtendable
+    override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
+        mID = tag.getInt("mID")
+
         val mainTag = tag.getCompound("Main")
         val mc = iNbtDeserialize(mainTag, lastDimensionIds)
-        extensions.clear()
+        _extensions.clear()
 
         val extensionsTag = tag.getCompound("Extensions")
-        extensions.addAll(extensionsTag.allKeys.mapNotNull {type ->
+        _extensions.addAll(extensionsTag.allKeys.mapNotNull { type ->
             val ext = MConstraintExtension.fromType(type)
             val success = ext.onDeserialize(extensionsTag.getCompound(type), lastDimensionIds)
             if (!success) return@mapNotNull null
@@ -129,13 +139,13 @@ abstract class AbstractMConstraint: MConstraint {
 
     @Internal
     final override fun onMakeMConstraint(level: ServerLevel): Boolean {
-        extensions.forEach { it.onMakeMConstraint(level) }
+        _extensions.forEach { it.onMakeMConstraint(level) }
         return iOnMakeMConstraint(level)
     }
 
     @Internal
     final override fun onDeleteMConstraint(level: ServerLevel) {
-        extensions.forEach { it.onDeleteMConstraint(level) }
+        _extensions.forEach { it.onDeleteMConstraint(level) }
         return iOnDeleteMConstraint(level)
     }
 }

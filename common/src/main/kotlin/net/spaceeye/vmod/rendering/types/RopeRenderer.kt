@@ -131,4 +131,9 @@ class RopeRenderer(): BaseRenderer {
 
         return RopeRenderer(newId1, newId2, spoint1, spoint2, length, width, segments)
     }
+
+    override fun scaleBy(by: Double) {
+        width *= by
+        length *= by
+    }
 }

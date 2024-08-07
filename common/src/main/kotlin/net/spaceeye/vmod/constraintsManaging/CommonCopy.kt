@@ -21,8 +21,7 @@ fun commonCopy(
         mapped: Map<ShipId, ShipId>,
         constraint: VSForceConstraint,
         attachmentPoints_: List<BlockPos>,
-        renderer: BaseRenderer?,
-        constructor: (nShip1Id: ShipId, nShip2Id: ShipId, nShip1: ServerShip?, nShip2: ServerShip?, localPos0: Vector3d, localPos1: Vector3d, newAttachmentPoints: List<BlockPos>, newRenderer: BaseRenderer?) -> MConstraint?): MConstraint? {
+        constructor: (nShip1Id: ShipId, nShip2Id: ShipId, nShip1: ServerShip?, nShip2: ServerShip?, localPos0: Vector3d, localPos1: Vector3d, newAttachmentPoints: List<BlockPos>) -> MConstraint?): MConstraint? {
     if (!mapped.keys.containsAll(listOf(constraint.shipId0, constraint.shipId1))) {return null}
 
     val inShipyard1 = level.isChunkInShipyard(constraint.localPos0.x().toInt() / 16, constraint.localPos0.z().toInt() / 16)
@@ -47,7 +46,6 @@ fun commonCopy(
     val apoint2 = (if (nShip2 != null) Vector3d(attachmentPoints_[1]) + 0.5 - oCentered2!! + nCentered2!! else Vector3d(attachmentPoints_[1])).toBlockPos()
 
     val newAttachmentPoints = listOf(apoint1, apoint2)
-    val newRenderer = renderer?.copy(mapped.map {(k, v) -> Pair(k, level.shipObjectWorld.allShips.getById(v)!!)}.toMap())
 
-    return constructor(nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer)
+    return constructor(nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints)
 }

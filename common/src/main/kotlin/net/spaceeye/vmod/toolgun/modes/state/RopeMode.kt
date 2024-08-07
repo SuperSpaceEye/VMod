@@ -5,6 +5,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
+import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.RopeMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
@@ -49,13 +50,12 @@ class RopeMode: BaseMode, RopeCEH, RopeGUI, RopeHUD, PlacementModesState {
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce, dist,
             listOf(prresult.blockPosition, rresult.blockPosition),
-            RopeRenderer(
-                ship1?.id ?: -1L,
-                ship2?.id ?: -1L,
-                spoint1, spoint2,
-                dist, width, segments
-            )
-        )){it.addFor(player)}
+        ).addExtension(RenderableExtension(RopeRenderer(
+            ship1?.id ?: -1L,
+            ship2?.id ?: -1L,
+            spoint1, spoint2,
+            dist, width, segments
+        )))){it.addFor(player)}
 
         resetState()
     }

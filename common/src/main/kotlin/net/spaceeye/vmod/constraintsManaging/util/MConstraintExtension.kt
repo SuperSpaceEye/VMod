@@ -5,16 +5,19 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MExtensionTypes
 import net.spaceeye.vmod.utils.RegistryObject
+import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
 interface MConstraintExtension: RegistryObject {
-    fun onInit(obj: AbstractMConstraint)
+    fun onInit(obj: ExtendableMConstraint)
 
     fun onAfterMoveShipyardPositions(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
 
     fun onBeforeCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>) {}
     //should add new extension to new MConstraint
-    fun onAfterCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: AbstractMConstraint)
+    fun onAfterCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableMConstraint) {}
+
+    fun onBeforeOnScaleByMConstraint(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
 
     // will be called after MConstraint is serialized
     fun onSerialize(): CompoundTag?

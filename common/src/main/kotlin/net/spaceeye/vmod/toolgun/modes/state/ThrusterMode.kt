@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.types.ThrusterMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.C2SConnection
@@ -49,10 +50,9 @@ class ThrusterMode: BaseMode, ThrusterCEH, ThrusterHUD, ThrusterGUI, PlacementMo
             basePos,
             raycastResult.blockPosition,
             -raycastResult.globalNormalDirection!!,
-            force, channel,
-            ConeBlockRenderer(
-                basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), 1.0f
-            )
-        )){it.addFor(player)}
+            force, channel
+        ).addExtension(RenderableExtension(ConeBlockRenderer(
+            basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), 1.0f, ship.id
+        )))){it.addFor(player)}
     }
 }

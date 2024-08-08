@@ -88,6 +88,7 @@ class ConeBlockRenderer(): BlockRenderer {
         buf.writeVector3d(pos)
         buf.writeQuatd(rot)
         buf.writeFloat(scale)
+        buf.writeLong(shipId)
 
         return buf
     }
@@ -96,6 +97,7 @@ class ConeBlockRenderer(): BlockRenderer {
         pos = buf.readVector3d()
         rot = buf.readQuatd()
         scale = buf.readFloat()
+        shipId = buf.readLong()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {

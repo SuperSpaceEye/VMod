@@ -20,22 +20,14 @@ open class Registry<T: RegistryObject> {
         idxToStr[suppliers.size - 1] = type
     }
 
-    fun typeToIdx(type: String) = strToIdx[type]
     fun typeToSupplier(type: String) = suppliers[strToIdx[type]!!]
+    fun asList() = suppliers.toList()
 
+    fun typeToIdx(type: String) = strToIdx[type]
     fun idxToSupplier(idx: Int) = suppliers[idx]
-
-    fun idxToSupplier(idx: Int, schema: Map<Int, String>): Supplier<T>? {
-        val name = schema[idx] ?: throw AssertionError("idx doesn't exist in schema")
-        val currentIdx = strToIdx[name] ?: return null
-        return suppliers[currentIdx]
-    }
-
     fun getSchema(): Map<String, Int> = strToIdx
     fun setSchema(schema: Map<Int, String>) {
         if (!schema.values.containsAll(strToIdx.keys)) { throw AssertionError("Schemas are incompatible ") }
         schema.forEach {(k, v) -> strToIdx[v] = k}
     }
-
-    fun asList() = suppliers.toList()
 }

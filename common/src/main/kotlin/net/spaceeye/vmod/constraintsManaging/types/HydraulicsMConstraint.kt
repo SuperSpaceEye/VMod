@@ -7,10 +7,8 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.network.*
-import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
 import net.spaceeye.vmod.utils.vs.copy
@@ -26,7 +24,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
 
-class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRenderable, Tickable {
+class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), Tickable {
     enum class ConnectionMode {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,
@@ -39,8 +37,6 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
 
     override val mainConstraint: VSConstraint get() = aconstraint1
 
-    var rID: Int = -1
-
     var minLength: Double = -1.0
     var maxLength: Double = -1.0
 
@@ -52,8 +48,6 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
     var channel: String = ""
 
     var connectionMode = ConnectionMode.FIXED_ORIENTATION
-
-    override var renderer: BaseRenderer? = null
 
     constructor(
         // shipyard pos
@@ -79,11 +73,8 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
 
         attachmentPoints: List<BlockPos>,
 
-        _renderer: BaseRenderer? = null,
-
         dir: Vector3d? = null
     ): this() {
-        renderer = _renderer
         minLength = _minLength
         maxLength = _maxLength
         // extensionSpeed is in seconds. Constraint is being updated every mc tick
@@ -137,7 +128,8 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         }
     }
 
-    override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        throw NotImplementedError()
         if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
         cIDs.clear()
@@ -152,8 +144,8 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         aconstraint1 = aconstraint1.copy(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0])
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
 
-        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
-        renderer = ServerRenderingData.getRenderer(rID)
+//        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
+//        renderer = ServerRenderingData.getRenderer(rID)
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
         aconstraint2 = aconstraint2.copy(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1])
@@ -163,15 +155,15 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint)!!)
     }
 
-    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        return commonCopy(level, mapped, aconstraint1, attachmentPoints_, renderer) {
-            nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer ->
+    override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
+        return commonCopy(level, mapped, aconstraint1, attachmentPoints_) {
+            nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints ->
 
             val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
             val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
 
             if (connectionMode == ConnectionMode.FREE_ORIENTATION) {
-                val ret = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed, channel, connectionMode, newAttachmentPoints, newRenderer, null)
+                val ret = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed, channel, connectionMode, newAttachmentPoints, null)
                 ret.addDist = addDist
                 ret.extendedDist = extendedDist
                 ret.extensionSpeed = extensionSpeed
@@ -180,15 +172,15 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
 
             // Why? if the mode chosen is hinge and its points are very close to each other, due to inaccuracy the
             // direction will be wrong after copy. So instead use supporting constraint to get the direction.
-            commonCopy(level, mapped, aconstraint2, attachmentPoints_, null) {
-                    _, _, _, _, slocalPos0, slocalPos1, _, _ ->
+            commonCopy(level, mapped, aconstraint2, attachmentPoints_) {
+                    _, _, _, _, slocalPos0, slocalPos1, _ ->
 
                 val srpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, slocalPos0) } else slocalPos0
                 val srpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, slocalPos1) } else slocalPos1
 
                 val dir = srpoint1 - srpoint2
 
-                val ret = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed, channel, connectionMode, newAttachmentPoints, newRenderer, dir)
+                val ret = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed, channel, connectionMode, newAttachmentPoints, dir)
                 ret.addDist = addDist
                 ret.extendedDist = extendedDist
                 ret.extensionSpeed = extensionSpeed
@@ -197,7 +189,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         }
     }
 
-    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
+    override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         minLength *= scaleBy
         extendedDist *= scaleBy
         addDist *= scaleBy
@@ -208,15 +200,13 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
 
-        aconstraint2 = aconstraint1.copy(fixedDistance = aconstraint2.fixedDistance * scaleBy)
+        aconstraint2 = aconstraint2.copy(fixedDistance = aconstraint2.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[1])
         cIDs[1] = level.shipObjectWorld.createNewConstraint(aconstraint2)!!
     }
 
-    override fun nbtSerialize(): CompoundTag? {
+    override fun iNbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
-
-        tag.putInt("managedID", mID)
 
         tag.putDouble("addDist", addDist)
         tag.putDouble("minDistance", minLength)
@@ -224,10 +214,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         tag.putDouble("extensionSpeed", extensionSpeed)
         tag.putDouble("extendedDist", extendedDist)
         tag.putString("channel", channel)
-        tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
         tag.putInt("constraintMode", connectionMode.ordinal)
-
-        serializeRenderer(tag)
 
         tag.put("c1", VSConstraintSerializationUtil.serializeConstraint(aconstraint1) ?: return null)
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return tag}
@@ -237,20 +224,15 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         return tag
     }
 
-    override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        mID = tag.getInt("managedID")
-
+    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         addDist = tag.getDouble("addDist")
         minLength = tag.getDouble("minDistance")
         maxLength = tag.getDouble("maxDistance")
         extensionSpeed = tag.getDouble("extensionSpeed")
         extendedDist = tag.getDouble("extendedDist")
         channel = tag.getString("channel")
-        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
         connectionMode = if (tag.contains("constraintMode")) {ConnectionMode.values()[tag.getInt("constraintMode")]} else {ConnectionMode.FIXED_ORIENTATION}
-
-        deserializeRenderer(tag)
 
         tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return this}
@@ -321,16 +303,13 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         cIDs[1] = shipObjectWorld.createNewConstraint(aconstraint2) ?: return
     }
 
-    override fun onMakeMConstraint(level: ServerLevel): Boolean {
+    override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         MessagingNetwork.register(channel) {
             msg, unregister ->
             if (wasDeleted) {unregister(); return@register}
 
             signalTick(msg)
         }
-
-        if (renderer != null) { rID = ServerRenderingData.addRenderer(aconstraint1.shipId0, aconstraint1.shipId1, renderer!!)
-        } else { renderer = ServerRenderingData.getRenderer(rID) }
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return true}
@@ -340,9 +319,8 @@ class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), MRe
         return true
     }
 
-    override fun onDeleteMConstraint(level: ServerLevel) {
+    override fun iOnDeleteMConstraint(level: ServerLevel) {
         wasDeleted = true
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        ServerRenderingData.removeRenderer(rID)
     }
 }

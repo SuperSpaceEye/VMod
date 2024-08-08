@@ -20,6 +20,7 @@ import org.joml.Quaterniond
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
+import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.util.readQuatd
 import org.valkyrienskies.core.util.writeQuatd
 import org.valkyrienskies.mod.common.getShipManagingPos
@@ -31,16 +32,18 @@ object A {
 }
 
 class ConeBlockRenderer(): BlockRenderer {
+    var shipId = -1L
     var pos = Vector3d()
     var rot = Quaterniond()
     var scale: Float = 1.0f
 
     override val typeName = "BlockRenderer"
 
-    constructor(_pos: Vector3d, _rot: Quaterniond, _scale: Float): this() {
-        pos = _pos
-        rot = _rot
-        scale = _scale
+    constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId): this() {
+        this.pos = pos
+        this.rot = rot
+        this.scale = scale
+        this.shipId = shipId
     }
 
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource) {
@@ -85,6 +88,7 @@ class ConeBlockRenderer(): BlockRenderer {
         buf.writeVector3d(pos)
         buf.writeQuatd(rot)
         buf.writeFloat(scale)
+        buf.writeLong(shipId)
 
         return buf
     }
@@ -93,9 +97,15 @@ class ConeBlockRenderer(): BlockRenderer {
         pos = buf.readVector3d()
         rot = buf.readQuatd()
         scale = buf.readFloat()
+        shipId = buf.readLong()
     }
 
-    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
-        throw AssertionError("Shouldn't be copied")
+    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
+        val spoint = updatePosition(pos, oldToNew[shipId]!!)
+        return ConeBlockRenderer(spoint, Quaterniond(rot), scale, oldToNew[shipId]!!.id)
+    }
+
+    override fun scaleBy(by: Double) {
+        scale *= by.toFloat()
     }
 }

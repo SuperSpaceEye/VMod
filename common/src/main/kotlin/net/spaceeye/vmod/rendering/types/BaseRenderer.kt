@@ -7,10 +7,12 @@ import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.utils.RegistryObject
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.Ship
+import org.valkyrienskies.core.api.ships.properties.ShipId
 
 interface BaseRenderer: Serializable, RegistryObject {
     fun renderData(poseStack: PoseStack, camera: Camera)
-    fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer
+    fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer?
+    fun scaleBy(by: Double)
 }
 
 interface BlockRenderer: BaseRenderer {

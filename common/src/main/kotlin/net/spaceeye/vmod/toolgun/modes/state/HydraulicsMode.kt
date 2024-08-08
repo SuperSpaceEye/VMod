@@ -5,6 +5,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
+import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
@@ -70,14 +71,13 @@ class HydraulicsMode: BaseMode, HydraulicsCEH, HydraulicsGUI, HydraulicsHUD, Pla
                         compliance, maxForce,
                         paDistanceFromBlock, paDistanceFromBlock + extensionDistance,
                         extensionSpeed, channel, connectionMode,
-                        listOf(rresults.first.blockPosition, rresults.second.blockPosition),
-                        A2BRenderer(
-                                ship1 != null,
-                                ship2 != null,
-                                spoint1, spoint2,
-                                color, width
-                        )
-                )
+                        listOf(rresults.first.blockPosition, rresults.second.blockPosition)
+                ).addExtension(RenderableExtension(A2BRenderer(
+                    ship1?.id ?: -1L,
+                    ship2?.id ?: -1L,
+                    spoint1, spoint2,
+                    color, width
+                )))
             }
 
     override fun init(type: BaseNetworking.EnvType) {
@@ -95,14 +95,13 @@ class HydraulicsMode: BaseMode, HydraulicsCEH, HydraulicsGUI, HydraulicsHUD, Pla
             compliance, maxForce,
             minLength, minLength + extensionDistance,
             extensionSpeed, channel, connectionMode,
-            listOf(prresult.blockPosition, rresult.blockPosition),
-            A2BRenderer(
-                ship1 != null,
-                ship2 != null,
-                spoint1, spoint2,
-                color, width
-            )
-        )){it.addFor(player)}
+            listOf(prresult.blockPosition, rresult.blockPosition)
+        ).addExtension(RenderableExtension(A2BRenderer(
+            ship1?.id ?: -1L,
+            ship2?.id ?: -1L,
+            spoint1, spoint2,
+            color, width
+        )))){it.addFor(player)}
 
         resetState()
     }

@@ -35,11 +35,11 @@ class SyncRotationMConstraint(): TwoShipsMConstraint("SyncRotationMConstraint") 
             )
     }
 
-    override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        TODO("Not yet implemented")
+    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        throw NotImplementedError()
     }
 
-    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
+    override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         if (!mapped.keys.contains(mainConstraint.shipId0) && !mapped.keys.contains(mainConstraint.shipId1)) return null
 
         return SyncRotationMConstraint(
@@ -52,9 +52,9 @@ class SyncRotationMConstraint(): TwoShipsMConstraint("SyncRotationMConstraint") 
         )
     }
 
-    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
+    override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
 
-    override fun nbtSerialize(): CompoundTag? {
+    override fun iNbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
 
         tag.putInt("mID", mID)
@@ -64,7 +64,7 @@ class SyncRotationMConstraint(): TwoShipsMConstraint("SyncRotationMConstraint") 
         return tag
     }
 
-    override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
+    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         mID = tag.getInt("mID")
 
         VSConstraintDeserializationUtil.tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); mainConstraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSTorqueConstraint
@@ -72,12 +72,12 @@ class SyncRotationMConstraint(): TwoShipsMConstraint("SyncRotationMConstraint") 
         return this
     }
 
-    override fun onMakeMConstraint(level: ServerLevel): Boolean {
+    override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         cIDs.add(level.shipObjectWorld.createNewConstraint(mainConstraint) ?: clean(level) ?: return false)
         return true
     }
 
-    override fun onDeleteMConstraint(level: ServerLevel) {
+    override fun iOnDeleteMConstraint(level: ServerLevel) {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
     }
 }

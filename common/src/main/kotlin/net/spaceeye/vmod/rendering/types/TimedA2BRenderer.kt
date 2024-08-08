@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.rendering.types.special
+package net.spaceeye.vmod.rendering.types
 
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
@@ -9,12 +9,10 @@ import net.minecraft.client.Camera
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.rendering.RenderingUtils
-import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.rendering.types.PositionDependentRenderer
-import net.spaceeye.vmod.rendering.types.TimedRenderer
 import net.spaceeye.vmod.utils.*
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
+import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
 class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer {
@@ -110,7 +108,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
         renderingPosition = buf.readVector3d()
     }
 
-    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
-        throw AssertionError("Shouldn't be copied")
-    }
+    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
+    override fun scaleBy(by: Double) { throw AssertionError("Shouldn't be scaled") }
 }

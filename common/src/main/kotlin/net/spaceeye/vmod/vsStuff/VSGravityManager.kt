@@ -12,10 +12,15 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 
 object VSGravityManager {
     val __gravities = mutableMapOf<DimensionId, Vector3d>()
+    var wasLoaded = false
     init {
-        ServerLevelHolder.server!!.allLevels.forEach { __gravities[it.dimensionId] = Vector3d(0, -10, 0) }
         loadState()
         VSEvents.shipLoadEvent.on { (ship) ->
+            if (!wasLoaded) {
+                ServerLevelHolder.server!!.allLevels.forEach { __gravities.getOrPut(it.dimensionId) {Vector3d(0, -10, 0)}}
+                wasLoaded = true
+            }
+
             val ship = ServerLevelHolder.server!!.shipObjectWorld.loadedShips.getById(ship.id) ?: return@on
             GravityController.getOrCreate(ship)
         }

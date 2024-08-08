@@ -7,7 +7,8 @@ import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.network.FriendlyByteBuf
+import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import org.lwjgl.opengl.GL11
@@ -15,19 +16,20 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
-class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer {
-    var point1: Vector3d = Vector3d()
-    var point2: Vector3d = Vector3d()
+class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer, AutoSerializable {
+    var point1: Vector3d by get(0, Vector3d())
+    var point2: Vector3d by get(1, Vector3d())
 
-    var color: Color = Color(0)
+    var color: Color by get(2, Color(0))
 
-    var width: Double = .2
+    var width: Double by get(3, .2)
 
-    override var timestampOfBeginning: Long = -1
-    override var activeFor_ms: Long = -1
+    override var timestampOfBeginning: Long by get(4, -1)
+    override var activeFor_ms: Long by get(5, -1)
+    override var renderingPosition: Vector3d by get(6, Vector3d())
+
+
     override var wasActivated: Boolean = false
-    override var renderingPosition: Vector3d = Vector3d()
-
     override val typeName: String = "TimedA2BRenderer"
 
     constructor(point1: Vector3d,
@@ -80,32 +82,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
         tesselator.end()
 
         poseStack.popPose()
-    }
-
-    override fun serialize(): FriendlyByteBuf {
-        val buf = getBuffer()
-
-        buf.writeColor(color)
-        buf.writeDouble(width)
-        buf.writeVector3d(point1)
-        buf.writeVector3d(point2)
-
-        buf.writeLong(timestampOfBeginning)
-        buf.writeLong(activeFor_ms)
-        buf.writeVector3d(renderingPosition)
-
-        return buf
-    }
-
-    override fun deserialize(buf: FriendlyByteBuf) {
-        color = buf.readColor()
-        width = buf.readDouble()
-        point1 = buf.readVector3d()
-        point2 = buf.readVector3d()
-
-        timestampOfBeginning = buf.readLong()
-        activeFor_ms = buf.readLong()
-        renderingPosition = buf.readVector3d()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }

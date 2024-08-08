@@ -8,21 +8,19 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.texture.OverlayTexture
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.VMBlocks
+import net.spaceeye.vmod.constraintsManaging.updatePosition
+import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingStuff
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.readVector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
-import net.spaceeye.vmod.utils.writeVector3d
 import org.joml.Quaterniond
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.util.readQuatd
-import org.valkyrienskies.core.util.writeQuatd
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.util.toMinecraft
 
@@ -31,11 +29,11 @@ object A {
     val testState = VMBlocks.CONE_THRUSTER.get().defaultBlockState()
 }
 
-class ConeBlockRenderer(): BlockRenderer {
-    var shipId = -1L
-    var pos = Vector3d()
-    var rot = Quaterniond()
-    var scale: Float = 1.0f
+class ConeBlockRenderer(): BlockRenderer, AutoSerializable {
+    var shipId: Long by get(0, -1L)
+    var pos: Vector3d by get(1, Vector3d())
+    var rot: Quaterniond by get(2, Quaterniond())
+    var scale: Float by get(3, 1.0f)
 
     override val typeName = "BlockRenderer"
 
@@ -80,24 +78,6 @@ class ConeBlockRenderer(): BlockRenderer {
         RenderingStuff.blockRenderer.renderSingleBlock(A.testState, poseStack, buffer, combinedLightIn, combinedOverlayIn)
 
         poseStack.popPose()
-    }
-
-    override fun serialize(): FriendlyByteBuf {
-        val buf = getBuffer()
-
-        buf.writeVector3d(pos)
-        buf.writeQuatd(rot)
-        buf.writeFloat(scale)
-        buf.writeLong(shipId)
-
-        return buf
-    }
-
-    override fun deserialize(buf: FriendlyByteBuf) {
-        pos = buf.readVector3d()
-        rot = buf.readQuatd()
-        scale = buf.readFloat()
-        shipId = buf.readLong()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {

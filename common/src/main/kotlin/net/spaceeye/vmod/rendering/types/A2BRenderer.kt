@@ -8,8 +8,9 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.constraintsManaging.getCenterPos
+import net.spaceeye.vmod.constraintsManaging.updatePosition
+import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -19,19 +20,16 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-//TODO move
-fun updatePosition(old: Vector3d, newShip: Ship): Vector3d = old - Vector3d(getCenterPos(old.x.toInt(), old.z.toInt())) + Vector3d(getCenterPos(newShip.transform.positionInShip.x().toInt(), newShip.transform.positionInShip.z().toInt()))
+open class A2BRenderer(): BaseRenderer, AutoSerializable {
+    var shipId1: Long by get(0, -1L)
+    var shipId2: Long by get(1, -1L)
 
-open class A2BRenderer(): BaseRenderer {
-    var shipId1 = -1L
-    var shipId2 = -1L
+    var point1: Vector3d by get(2, Vector3d())
+    var point2: Vector3d by get(3, Vector3d())
 
-    var point1: Vector3d = Vector3d()
-    var point2: Vector3d = Vector3d()
+    var color: Color by get(4, Color(0))
 
-    var color: Color = Color(0)
-
-    var width: Double = .2
+    var width: Double by get(5, .2)
 
     constructor(shipId1: Long,
                 shipId2: Long,
@@ -89,32 +87,6 @@ open class A2BRenderer(): BaseRenderer {
         tesselator.end()
 
         poseStack.popPose()
-    }
-
-    override fun serialize(): FriendlyByteBuf {
-        val buf = getBuffer()
-
-        buf.writeColor(color)
-        buf.writeLong(shipId1)
-        buf.writeLong(shipId2)
-
-        buf.writeDouble(width)
-
-        buf.writeVector3d(point1)
-        buf.writeVector3d(point2)
-
-        return buf
-    }
-
-    override fun deserialize(buf: FriendlyByteBuf) {
-        color = buf.readColor()
-        shipId1 = buf.readLong()
-        shipId2 = buf.readLong()
-
-        width = buf.readDouble()
-
-        point1 = buf.readVector3d()
-        point2 = buf.readVector3d()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {

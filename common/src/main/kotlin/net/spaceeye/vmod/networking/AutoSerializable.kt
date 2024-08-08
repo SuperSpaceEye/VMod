@@ -2,6 +2,10 @@ package net.spaceeye.vmod.networking
 
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.utils.*
+import org.jetbrains.annotations.ApiStatus.NonExtendable
+import org.joml.Quaterniond
+import org.valkyrienskies.core.util.readQuatd
+import org.valkyrienskies.core.util.writeQuatd
 import java.awt.Color
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -31,6 +35,7 @@ open class SerializableItemDelegate <T : Any>(
 }
 
 interface AutoSerializable: Serializable {
+    @NonExtendable
     fun getSerializableItems() =
         this::class.declaredMemberProperties.mapNotNull { item ->
             val javaField = item.javaField
@@ -42,12 +47,14 @@ interface AutoSerializable: Serializable {
             delegate
         }.sortedBy { it.serializationPos }
 
+    @NonExtendable
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
         getSerializableItems().forEach { it.serialize(it.it, buf) }
         return buf
     }
 
+    @NonExtendable
     override fun deserialize(buf: FriendlyByteBuf) {
         getSerializableItems().forEach { it.setValue(null, null, it.deserialize(buf)) }
     }
@@ -65,12 +72,14 @@ object SerializableItem {
     }
 
     init {
+        registerSerializationItem(Quaterniond::class, {it, buf -> buf.writeQuatd(it as Quaterniond)}) {buf -> buf.readQuatd()}
         registerSerializationItem(Vector3d::class, {it, buf -> buf.writeVector3d(it as Vector3d)}) {buf -> buf.readVector3d()}
         registerSerializationItem(Boolean::class, {it, buf -> buf.writeBoolean(it as Boolean)}) {buf -> buf.readBoolean()}
         registerSerializationItem(Double::class, {it, buf -> buf.writeDouble(it as Double)}) {buf -> buf.readDouble()}
         registerSerializationItem(String::class, {it, buf -> buf.writeUtf(it as String)}) {buf -> buf.readUtf()}
         registerSerializationItem(Color::class, {it, buf -> buf.writeColor(it as Color)}) {buf -> buf.readColor()}
         registerSerializationItem(Float::class, {it, buf -> buf.writeFloat(it as Float)}) {buf -> buf.readFloat()}
+        registerSerializationItem(Long::class, {it, buf -> buf.writeLong(it as Long)}) {buf -> buf.readLong()}
         registerSerializationItem(Int::class, {it, buf -> buf.writeInt(it as Int)}) {buf -> buf.readInt()}
     }
 

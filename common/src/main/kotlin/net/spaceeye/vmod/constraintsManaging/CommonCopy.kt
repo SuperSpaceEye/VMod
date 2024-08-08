@@ -2,19 +2,17 @@ package net.spaceeye.vmod.constraintsManaging
 
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.rendering.types.A2BRenderer
-import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.rendering.types.RopeRenderer
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.ServerShip
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
 import org.valkyrienskies.mod.common.isChunkInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
-import java.lang.AssertionError
 
 //it's needed to not use ship's chunk claim
 inline fun getCenterPos(x: Int, z: Int) = Vector3d(((x / 16 / 256 - 1) * 256 + 128) * 16, 0, ((z / 16 / 256) * 256 + 128) * 16)
+inline fun updatePosition(old: Vector3d, newShip: Ship): Vector3d = old - Vector3d(getCenterPos(old.x.toInt(), old.z.toInt())) + Vector3d(getCenterPos(newShip.transform.positionInShip.x().toInt(), newShip.transform.positionInShip.z().toInt()))
 
 fun commonCopy(
         level: ServerLevel,

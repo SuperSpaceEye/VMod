@@ -132,6 +132,7 @@ class ConnectionMConstraint(): TwoShipsMConstraint("ConnectionMConstraint") {
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint)!!)
     }
 
+    //TODO it's probably wrong?
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         return commonCopy(level, mapped, aconstraint1, attachmentPoints_) {
             nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints ->

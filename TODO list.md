@@ -24,6 +24,8 @@ nothing
 
 ## java.awt.Color doesn't exist in headless mode
 
+## Copycat blocks have incompat with vschem
+
 ## Toolgun settings presets menu
 * maybe when pressing alt or smth it will show all presets for this mode, and allow player to cycle them
 

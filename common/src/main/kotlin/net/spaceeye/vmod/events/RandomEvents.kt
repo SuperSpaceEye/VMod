@@ -6,6 +6,7 @@ import dev.architectury.utils.EnvExecutor
 import net.fabricmc.api.EnvType
 import net.minecraft.client.Minecraft
 import net.minecraft.server.MinecraftServer
+import net.spaceeye.vmod.utils.CancellableEventEmitter
 import net.spaceeye.vmod.utils.SafeEventEmitter
 
 object RandomEvents {
@@ -22,6 +23,12 @@ object RandomEvents {
     val serverOnTick = SafeEventEmitter<ServerOnTick>()
     val clientOnTick = SafeEventEmitter<ClientOnTick>()
 
+    val mouseMove = CancellableEventEmitter<OnMouseMove>()
+    //why? arch event is cringe and doesn't actually cancel mc keybinds
+    val keyPress = CancellableEventEmitter<OnKeyPress>()
+
     data class ServerOnTick(val server: MinecraftServer)
     data class ClientOnTick(val minecraft: Minecraft)
+    data class OnMouseMove(val x: Double, val y: Double)
+    data class OnKeyPress(val key: Int, val scanCode: Int, val action: Int, val modifiers: Int)
 }

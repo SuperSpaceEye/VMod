@@ -11,7 +11,9 @@
   ],
   "client": [
     "GameRendererMixin",
-    "LevelRendererMixin"
+    "KeyboardHandlerMixin",
+    "LevelRendererMixin",
+    "MixinMouseHandler"
   ],
   "injectors": {
     "defaultRequire": 1

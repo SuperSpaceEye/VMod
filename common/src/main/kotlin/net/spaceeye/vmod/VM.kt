@@ -10,6 +10,9 @@ import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
+import net.spaceeye.vmod.physgun.ClientPhysgunState
+import net.spaceeye.vmod.physgun.PhysgunItem
+import net.spaceeye.vmod.physgun.ServerPhysgunState
 import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
@@ -50,9 +53,13 @@ object VM {
         SimpleMessagerNetworking
         ToolgunModes
         ServerToolGunState
+        ServerPhysgunState
         ShipSchematic
         SchemCompatObj
-        EnvExecutor.runInEnv(Env.CLIENT) { Runnable { ClientToolGunState } }
+        EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+            ClientToolGunState
+            ClientPhysgunState
+        } }
 
         VMBlocks.register()
         VMBlockEntities.register()
@@ -100,5 +107,6 @@ object VM {
         }}
 
         ToolgunItem.makeEvents()
+        PhysgunItem.makeEvents()
     }
 }

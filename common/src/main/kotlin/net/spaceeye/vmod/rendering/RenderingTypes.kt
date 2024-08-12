@@ -11,5 +11,6 @@ object RenderingTypes: Registry<BaseRenderer>() {
         register(::TimedA2BRenderer)
         register(::PhysRopeRenderer)
         register(::ConeBlockRenderer)
+        register(::PhysgunRayRenderer)
     }
 }

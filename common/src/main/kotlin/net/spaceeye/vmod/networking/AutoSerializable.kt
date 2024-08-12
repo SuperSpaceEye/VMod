@@ -7,6 +7,7 @@ import org.joml.Quaterniond
 import org.valkyrienskies.core.util.readQuatd
 import org.valkyrienskies.core.util.writeQuatd
 import java.awt.Color
+import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.declaredMemberProperties
@@ -80,6 +81,7 @@ object SerializableItem {
         registerSerializationItem(Color::class, {it, buf -> buf.writeColor(it as Color)}) {buf -> buf.readColor()}
         registerSerializationItem(Float::class, {it, buf -> buf.writeFloat(it as Float)}) {buf -> buf.readFloat()}
         registerSerializationItem(Long::class, {it, buf -> buf.writeLong(it as Long)}) {buf -> buf.readLong()}
+        registerSerializationItem(UUID::class, {it, buf -> buf.writeUUID(it as UUID)}) {buf -> buf.readUUID()}
         registerSerializationItem(Int::class, {it, buf -> buf.writeInt(it as Int)}) {buf -> buf.readInt()}
     }
 

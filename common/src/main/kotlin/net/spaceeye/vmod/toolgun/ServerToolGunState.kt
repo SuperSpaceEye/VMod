@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
+import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.NetworkingRegisteringFunctions
 import net.spaceeye.vmod.networking.S2CConnection
@@ -75,16 +76,21 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
 
                 val level = context.player.level as ServerLevel
 
-                // if constraint wasn't already removed, then remove it
-                while (true) {
-                    if (level.removeManagedConstraint(item)) {
-                        break
-                    } else {
-                        item = stack.removeLastOrNull() ?: return
+                //TODO wrap everything in this
+                RandomEvents.serverOnTick.on {
+                    _, unsubscribe ->
+                    unsubscribe()
+                    // if constraint wasn't already removed, then remove it
+                    while (true) {
+                        if (level.removeManagedConstraint(item)) {
+                            break
+                        } else {
+                            item = stack.removeLastOrNull() ?: return@on
+                        }
                     }
-                }
 
-                context.player.sendMessage(REMOVED, context.player.uuid)
+                    context.player.sendMessage(REMOVED, context.player.uuid)
+                }
             }
         }
     }

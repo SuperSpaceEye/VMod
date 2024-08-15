@@ -18,6 +18,7 @@ object ToolgunModes {
         SchemMode(),
         ScaleMode(),
         StripMode(),
+        ShipRemoverMode()
     )
     var initialized = false
     init {

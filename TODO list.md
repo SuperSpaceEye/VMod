@@ -12,15 +12,9 @@ nothing
 * "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
 * Redo how normal renderers and block renderers work
-* Use AutoSerializable
 
 ## Constraint disabler
 * A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
-
-## Revise whole MConstraint structure
-* Instead of rendering shit being part of MConstraint itself, have "extensions" that you can add to MConstraint. They won't see other "extensions" (maybe) but just the constraint itself.
-* Allow constraints to be not removed by strip tool or whatever
-## Redo how MConstraint renderers are saved
 
 ## java.awt.Color doesn't exist in headless mode
 
@@ -29,13 +23,12 @@ nothing
 ## Toolgun settings presets menu
 * maybe when pressing alt or smth it will show all presets for this mode, and allow player to cycle them
 
-## Toolgun settings for shit like gravity etc
-
 ## Add a "wire" thing maybe as an addon to vmod
 
 ## General Code Structure
 * Extract more code from Placement Assist for an easier use
 * Extract more common code (connection/hydraulics)
+* Create "AutoGUIBuilder"
 
 ## Ticking Constraints
 * Redo them

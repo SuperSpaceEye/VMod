@@ -1,18 +1,15 @@
 package net.spaceeye.vmod.physgun
 
-import dev.architectury.networking.NetworkManager
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.rendering.ReservedRenderingPages
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.PhysgunRayRenderer
 import net.spaceeye.vmod.shipForceInducers.PhysgunController
-import net.spaceeye.vmod.toolgun.ServerToolGunState.idWithConnc
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
@@ -94,84 +91,75 @@ object ServerPhysgunState: ServerClosable() {
         var increaseDistanceBy: Double by get(7, 0.0)
     }
 
-    val c2sPrimaryStateChanged = "state_changed" idWithConnc {
-        object : C2SConnection<C2SPhysgunStateChanged>(it, "server_physgun") {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val pkt = C2SPhysgunStateChanged()
-                pkt.deserialize(buf)
+    val c2sPrimaryStateChanged = regC2S<C2SPhysgunStateChanged>("state_changed", "server_physgun") { pkt, player ->
+        val state = playerStates.getOrPut(player.uuid) { PlayerPhysgunState() }
+        synchronized(state.lock) {
+            state.fromPkt(player, pkt)
 
-                val player = context.player as ServerPlayer
+            if (state.unfreezeAllOrOne && !state.primaryActivated) {
+                val player = state.serverPlayer!!
 
-                val state = playerStates.getOrPut(player.uuid) { PlayerPhysgunState() }
-                synchronized(state.lock) {
-                    state.fromPkt(player, pkt)
+                val dir = Vector3d(player.lookAngle).snormalize()
+                val pos = Vector3d(player.eyePosition)
 
-                    if (state.unfreezeAllOrOne && !state.primaryActivated) {
-                        val player = state.serverPlayer!!
+                val result = RaycastFunctions.raycast(player.level, RaycastFunctions.Source(dir, pos))
+                if (result.state.isAir) {return@regC2S}
+                if (result.ship == null) {return@regC2S}
 
-                        val dir = Vector3d(player.lookAngle).snormalize()
-                        val pos = Vector3d(player.eyePosition)
+                (result.ship!! as ServerShip).isStatic = false
 
-                        val result = RaycastFunctions.raycast(player.level, RaycastFunctions.Source(dir, pos))
-                        if (result.state.isAir) {return}
-                        if (result.ship == null) {return}
+                return@regC2S
+            }
 
-                        (result.ship!! as ServerShip).isStatic = false
+            if (!state.primaryActivated) {
+                state.mainShipId = -1
+                state.caughtShipIds.clear()
+                activelySeeking.remove(player.uuid)
 
-                        return
-                    }
+                ServerRenderingData.removeRenderer(state.rID)
+                state.rID = -1
+                return@regC2S
+            }
+            if (state.mainShipId == -1L) {
+                activelySeeking.add(player.uuid)
+                return@regC2S
+            }
+            active.add(player.uuid)
+            val level = state.serverPlayer!!.level
+            val ship = level.shipObjectWorld.loadedShips.getById(state.mainShipId)!!
 
-                    if (!state.primaryActivated) {
-                        state.mainShipId = -1
-                        state.caughtShipIds.clear()
-                        activelySeeking.remove(player.uuid)
+            if (state.freezeSelected) {
+                (ship as ServerShip).isStatic = true
+                state.mainShipId = -1
+                state.caughtShipIds.clear()
+                return@regC2S
+            }
 
-                        ServerRenderingData.removeRenderer(state.rID)
-                        state.rID = -1
-                        return
-                    }
-                    if (state.mainShipId == -1L) {
-                        activelySeeking.add(player.uuid)
-                        return
-                    }
-                    active.add(player.uuid)
-                    val level = state.serverPlayer!!.level
-                    val ship = level.shipObjectWorld.loadedShips.getById(state.mainShipId)!!
-
-                    if (state.freezeSelected) {
-                        (ship as ServerShip).isStatic = true
-                        state.mainShipId = -1
-                        state.caughtShipIds.clear()
-                        return
-                    }
-
-                    if (state.freezeAll) {
-                        traverseGetConnectedShips(ship.id).traversedShipIds.forEach { id ->
-                            ((level.shipObjectWorld.loadedShips.getById(id) ?: return@forEach) as ServerShip).isStatic = true
-                        }
-                        state.mainShipId = -1
-                        state.caughtShipIds.clear()
-                        return
-                    }
-
-                    if (state.unfreezeAllOrOne) {
-                        traverseGetConnectedShips(ship.id).traversedShipIds.forEach { id ->
-                            ((level.shipObjectWorld.loadedShips.getById(id) ?: return@forEach) as ServerShip).isStatic = false
-                        }
-                        return
-                    }
-
-
-                    state.playerDir = Vector3d(player.lookAngle).snormalize()
-                    state.playerPos = Vector3d(player.eyePosition)
-
-                    state.idealRotation = state.quatDiff.mul(state.idealRotation, Quaterniond())
-
-                    if (state.increaseDistanceBy != 0.0) {
-                        state.distanceFromPlayer = max(state.distanceFromPlayer + state.increaseDistanceBy, 0.0)
-                        state.increaseDistanceBy = 0.0
-                    }
+            if (state.freezeAll) {
+                traverseGetConnectedShips(ship.id).traversedShipIds.forEach { id ->
+                    ((level.shipObjectWorld.loadedShips.getById(id) ?: return@forEach) as ServerShip).isStatic = true
                 }
+                state.mainShipId = -1
+                state.caughtShipIds.clear()
+                return@regC2S
+            }
+
+            if (state.unfreezeAllOrOne) {
+                traverseGetConnectedShips(ship.id).traversedShipIds.forEach { id ->
+                    ((level.shipObjectWorld.loadedShips.getById(id) ?: return@forEach) as ServerShip).isStatic = false
+                }
+                return@regC2S
+            }
+
+
+            state.playerDir = Vector3d(player.lookAngle).snormalize()
+            state.playerPos = Vector3d(player.eyePosition)
+
+            state.idealRotation = state.quatDiff.mul(state.idealRotation, Quaterniond())
+
+            if (state.increaseDistanceBy != 0.0) {
+                state.distanceFromPlayer = max(state.distanceFromPlayer + state.increaseDistanceBy, 0.0)
+                state.increaseDistanceBy = 0.0
             }
         }
     }
@@ -198,7 +186,7 @@ object ServerPhysgunState: ServerClosable() {
                     val player = if (
                            state.serverPlayer == null
                         || state.serverPlayer!!.mainHandItem.item != VMItems.PHYSGUN.get()
-                        ) {
+                    ) {
                         toRemove.add(uuid)
                         ServerRenderingData.removeRenderer(state.rID)
                         state.rID = -1
@@ -228,7 +216,17 @@ object ServerPhysgunState: ServerClosable() {
                     return@forEach
                 }
 
-                val player = state.serverPlayer!!
+                val player = if (
+                    state.serverPlayer == null
+                    || state.serverPlayer!!.mainHandItem.item != VMItems.PHYSGUN.get()
+                ) {
+                    toRemove.add(uuid)
+                    ServerRenderingData.removeRenderer(state.rID)
+                    state.rID = -1
+                    state.mainShipId = -1L
+                    state.caughtShipIds.clear()
+                    return@forEach
+                } else state.serverPlayer!!
 
                 val dir = Vector3d(player.lookAngle).snormalize()
                 val pos = Vector3d(player.eyePosition)

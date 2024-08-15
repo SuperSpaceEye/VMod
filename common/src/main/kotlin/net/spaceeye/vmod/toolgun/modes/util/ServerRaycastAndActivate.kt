@@ -15,31 +15,43 @@ import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 
-inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
+inline fun <reified T: BaseMode> BaseMode.serverTryActivate(
     player: Player,
     buf: FriendlyByteBuf,
     constructor: () -> BaseMode,
-    noinline fn: (item: T, ServerLevel, Player, RaycastFunctions.RaycastResult) -> Unit) = verifyPlayerAccessLevel(player as ServerPlayer) {
-    val level = player.level as ServerLevel
-
+    noinline fn: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit
+) = verifyPlayerAccessLevel(player as ServerPlayer) {
     var serverMode = ServerToolGunState.playersStates.getOrPut(player.uuid) { PlayerToolgunState(constructor()) }
     if (serverMode.mode !is T) { serverMode = PlayerToolgunState(constructor()); ServerToolGunState.playersStates[player.uuid] = serverMode }
 
     try {
-    serverMode.mode.init(BaseNetworking.EnvType.Server)
-    serverMode.mode.deserialize(buf)
-    serverMode.mode.serverSideVerifyLimits()
+        serverMode.mode.init(BaseNetworking.EnvType.Server)
+        serverMode.mode.deserialize(buf)
+        serverMode.mode.serverSideVerifyLimits()
 
-    val result = RaycastFunctions.raycast(
-        level,
-        RaycastFunctions.Source(Vector3d(player.lookAngle), Vector3d(player.eyePosition)),
-        VMConfig.SERVER.TOOLGUN.MAX_RAYCAST_DISTANCE
-    )
-
-    Effects.sendToolgunRayEffect(player, result, VMConfig.SERVER.TOOLGUN.MAX_RAYCAST_DISTANCE)
-
-    fn(serverMode.mode as T, level, player, result)
+        fn(serverMode.mode as T, player.level as ServerLevel, player)
     } catch (e: Exception) {
         ELOG("Failed to activate function ${fn.javaClass.name} of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
+    }
+}
+
+inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
+    player: Player,
+    buf: FriendlyByteBuf,
+    constructor: () -> BaseMode,
+    noinline fn: (T, ServerLevel, ServerPlayer, RaycastFunctions.RaycastResult) -> Unit
+) = serverTryActivate<T>(player, buf, constructor) { item: T, level: ServerLevel, player: ServerPlayer ->
+    try {
+        val result = RaycastFunctions.raycast(
+            level,
+            RaycastFunctions.Source(Vector3d(player.lookAngle), Vector3d(player.eyePosition)),
+            VMConfig.SERVER.TOOLGUN.MAX_RAYCAST_DISTANCE
+        )
+
+        Effects.sendToolgunRayEffect(player, result, VMConfig.SERVER.TOOLGUN.MAX_RAYCAST_DISTANCE)
+
+        fn(item, level, player, result)
+    } catch (e: Exception) {
+        ELOG("Failed to activate function ${fn.javaClass.name} of ${item.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
     }
 }

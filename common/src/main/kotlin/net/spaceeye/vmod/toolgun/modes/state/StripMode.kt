@@ -6,10 +6,9 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.constraintsManaging.ConstraintManager
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
-import net.spaceeye.vmod.constraintsManaging.getAllManagedConstraintIdsOfShipId
-import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
+import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.constraintsManaging.extensions.NonStrippable
+import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.modes.BaseMode
@@ -30,7 +29,12 @@ class StripMode: BaseMode, StripCEH, StripGUI, StripHUD {
     var radius: Int by get(0, 1, {ServerLimits.instance.stripRadius.get(it as Int)})
     var mode: StripModes by get(1, StripModes.StripAll)
 
-    val conn_primary = register { object : C2SConnection<StripMode>("strip_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<StripMode>(context.player, buf, ::StripMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
+    val conn_primary = register {
+        object : C2SConnection<StripMode>("strip_mode_primary", "toolgun_command") {
+            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
+                serverRaycastAndActivate<StripMode>(context.player, buf, ::StripMode) {
+              item, serverLevel, player, raycastResult ->
+                    item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {return}
@@ -43,10 +47,11 @@ class StripMode: BaseMode, StripCEH, StripGUI, StripHUD {
     private fun stripAll(level: ServerLevel, raycastResult: RaycastFunctions.RaycastResult) {
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return
 
-//        level.shipObjectWorld.deleteShip(ship)
-//        return
-
-        level.getAllManagedConstraintIdsOfShipId(ship.id).forEach { level.removeManagedConstraint(it) }
+        level.getAllManagedConstraintIdsOfShipId(ship.id).forEach {
+            val mc = level.getManagedConstraint(it)
+            if (mc is ExtendableMConstraint && mc.getExtensionsOfType<NonStrippable>().isNotEmpty()) { return@forEach }
+            level.removeManagedConstraint(it)
+        }
     }
 
     private fun stripInRadius(level: ServerLevel, raycastResult: RaycastFunctions.RaycastResult) {
@@ -61,7 +66,11 @@ class StripMode: BaseMode, StripCEH, StripGUI, StripHUD {
             val list = instance.tryGetIdsOfPosition(BlockPos(x, y, z)) ?: continue
             val temp = mutableListOf<ManagedConstraintId>()
             temp.addAll(list)
-            temp.forEach { level.removeManagedConstraint(it) }
+            temp.forEach {
+                val mc = level.getManagedConstraint(it)
+                if (mc is ExtendableMConstraint && mc.getExtensionsOfType<NonStrippable>().isNotEmpty()) { return@forEach }
+                level.removeManagedConstraint(it)
+            }
         } } }
     }
 }

@@ -45,16 +45,16 @@ abstract class ExtendableMConstraint(final override val typeName: String): MCons
     @get:Internal
     final override var __saveCounter: Int = -1
 
-    private val _extensions = mutableListOf<MConstraintExtension>()
-    val extensions: List<MConstraintExtension> get() = _extensions
+    private val _extensions = mutableSetOf<MConstraintExtension>()
+    open val extensions: Collection<MConstraintExtension> get() = _extensions
 
-    fun addExtension(extension: MConstraintExtension): ExtendableMConstraint {
+    open fun addExtension(extension: MConstraintExtension): ExtendableMConstraint {
         extension.onInit(this)
         _extensions.add(extension)
         return this
     }
 
-    inline fun <reified T: MConstraintExtension> getExtensionsOfType(): List<T> {
+    inline fun <reified T: MConstraintExtension> getExtensionsOfType(): Collection<T> {
         return extensions.filterIsInstance<T>()
     }
 

@@ -1,8 +1,8 @@
 package net.spaceeye.vmod.utils
 
-import com.mojang.math.Quaternion
 import org.joml.Quaterniond
+import org.joml.Quaternionf
 
-fun Quaternion.toJoml(): Quaterniond {
-    return Quaterniond(this.i().toDouble(), this.j().toDouble(), this.k().toDouble(), this.i().toDouble())
+fun Quaternionf.toJoml(): Quaterniond {
+    return Quaterniond(this.x.toDouble(), this.y.toDouble(), this.z.toDouble(), this.w.toDouble())
 }

@@ -5,7 +5,7 @@ import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.guiElements.*
@@ -23,7 +23,7 @@ import java.awt.Color
 
 class DimensionalGravitySettings: ServerSettingsGUIBuilder {
     //TODO
-    override val itemName: TranslatableComponent get() = TranslatableComponent("Dimensional Gravity")
+    override val itemName get() = Component.literal("Dimensional Gravity")
     override val typeName: String get() = "DimensionalGravitySettings"
 
     override fun makeGUISettings(parentWindow: UIContainer) {

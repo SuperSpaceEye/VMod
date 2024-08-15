@@ -7,7 +7,7 @@ import net.minecraft.world.item.Item
 import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.events.RandomEvents
 
-class PhysgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
+class PhysgunItem: Item(Properties().`arch$tab`(VMItems.TAB).stacksTo(1)) {
     companion object {
         @JvmStatic
         fun playerIsUsingPhysgun(): Boolean {

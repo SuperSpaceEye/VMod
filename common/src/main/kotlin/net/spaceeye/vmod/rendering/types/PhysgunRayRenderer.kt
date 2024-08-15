@@ -61,7 +61,7 @@ class PhysgunRayRenderer(): BaseRenderer, TimedRenderer, PositionDependentRender
 
         val player = Minecraft.getInstance().level!!.getPlayerByUUID(player) ?: return
 
-        val level = player.level as ClientLevel
+        val level = player.level() as ClientLevel
 
 
         val inFirstPerson = player.uuid == targetUUID && !camera.isDetached

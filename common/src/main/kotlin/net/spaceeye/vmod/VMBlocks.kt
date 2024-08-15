@@ -21,6 +21,7 @@ object VMBlocks {
     private val BLOCKS = DeferredRegister.create(VM.MOD_ID, Registries.BLOCK)
 
     var SIMPLE_MESSAGER: RegistrySupplier<SimpleMessager> = BLOCKS.register("simple_messager") { SimpleMessager(BlockBehaviour.Properties.of().strength(2.0f)) }
+    var CONE_THRUSTER = NoTabBlocks.CONE_THRUSTER
 
     fun register() {BLOCKS.register(); NoTabBlocks.BLOCKS.register()}
     fun registerItems(items: DeferredRegister<Item?>) {

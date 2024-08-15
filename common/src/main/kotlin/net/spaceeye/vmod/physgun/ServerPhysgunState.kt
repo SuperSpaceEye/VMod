@@ -102,7 +102,7 @@ object ServerPhysgunState: ServerClosable() {
                 val dir = Vector3d(player.lookAngle).snormalize()
                 val pos = Vector3d(player.eyePosition)
 
-                val result = RaycastFunctions.raycast(player.level, RaycastFunctions.Source(dir, pos))
+                val result = RaycastFunctions.raycast(player.level(), RaycastFunctions.Source(dir, pos))
                 if (result.state.isAir) {return@regC2S}
                 if (result.ship == null) {return@regC2S}
 
@@ -125,7 +125,7 @@ object ServerPhysgunState: ServerClosable() {
                 return@regC2S
             }
             active.add(player.uuid)
-            val level = state.serverPlayer!!.level
+            val level = state.serverPlayer!!.level()
             val ship = level.shipObjectWorld.loadedShips.getById(state.mainShipId)!!
 
             if (state.freezeSelected) {
@@ -234,7 +234,7 @@ object ServerPhysgunState: ServerClosable() {
                 state.playerPos = pos
                 state.playerDir = dir
 
-                val result = RaycastFunctions.raycast(player.level, RaycastFunctions.Source(dir, pos))
+                val result = RaycastFunctions.raycast(player.level(), RaycastFunctions.Source(dir, pos))
 
                 val pageId = ReservedRenderingPages.TimedRenderingObjects
                 if (state.rID == -1) {

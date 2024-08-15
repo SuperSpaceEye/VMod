@@ -5,7 +5,7 @@ import gg.essential.elementa.components.UIText
 import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
@@ -18,7 +18,7 @@ import java.awt.Color
 import java.util.*
 
 class ServerLimitsSettings: ServerSettingsGUIBuilder {
-    override val itemName: TranslatableComponent get() = TranslatableComponent("Server Limits")
+    override val itemName get() = Component.literal("Server Limits")
     override val typeName: String get() = "Server Limits"
 
     override fun makeGUISettings(parentWindow: UIContainer) {

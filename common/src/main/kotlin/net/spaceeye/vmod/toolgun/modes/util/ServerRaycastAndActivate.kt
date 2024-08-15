@@ -29,7 +29,7 @@ inline fun <reified T: BaseMode> BaseMode.serverTryActivate(
         serverMode.mode.deserialize(buf)
         serverMode.mode.serverSideVerifyLimits()
 
-        fn(serverMode.mode as T, player.level as ServerLevel, player)
+        fn(serverMode.mode as T, player.level() as ServerLevel, player)
     } catch (e: Exception) {
         ELOG("Failed to activate function ${fn.javaClass.name} of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
     }

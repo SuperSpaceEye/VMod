@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
 import gg.essential.elementa.components.UIContainer
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.toolgun.modes.util.SimpleHUD
@@ -18,8 +18,7 @@ class ShipRemoverMode: BasicMode<ShipRemoverMode>("ship_remover"), SimpleHUD {
         level.shipObjectWorld.deleteShip(raycastResult.ship as ServerShip)
     }
 
-    override val itemName: TranslatableComponent
-        get() = TranslatableComponent("Ship Remover")
+    override val itemName get() = Component.literal("Ship Remover")
 
     override fun makeGUISettings(parentWindow: UIContainer) {}
     override fun makeSubText(makeText: (String) -> Unit) {

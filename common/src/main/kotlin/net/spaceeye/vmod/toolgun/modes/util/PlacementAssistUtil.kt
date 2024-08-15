@@ -139,7 +139,7 @@ interface PlacementAssistNetworkingUnit: BaseMode, PlacementAssistServerPart, Pl
 
 open class PlacementAssistNetworking(networkName: String): BaseNetworking<PlacementAssistNetworkingUnit>() {
     val s2cHandleFailure = "handle_failure" idWithConns {
-        object : S2CConnection<S2CHandleFailurePacket>(it, networkName) {
+        object : S2CConnection<EmptyPacket>(it, networkName) {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val obj = clientObj ?: return
                 obj.resetState()
@@ -175,45 +175,6 @@ open class PlacementAssistNetworking(networkName: String): BaseNetworking<Placem
             }
         }
     }
-
-    class S2CHandleFailurePacket(): Serializable {
-        override fun serialize(): FriendlyByteBuf { return getBuffer() }
-        override fun deserialize(buf: FriendlyByteBuf) {}
-    }
-}
-
-interface PlacementAssistSerialize: PlacementModesSerializable {
-    var paAngle: Ref<Double>
-    var paDistanceFromBlock: Double
-    var paStage: ThreeClicksActivationSteps
-    var paScrollAngle: Double
-
-    fun paSerialize(buf: FriendlyByteBuf): FriendlyByteBuf {
-        buf.writeDouble(paDistanceFromBlock)
-        buf.writeDouble(paAngle.it)
-        buf.writeEnum(paStage)
-        buf.writeDouble(paScrollAngle)
-
-        pmSerialize(buf)
-
-        return buf
-    }
-
-    fun paDeserialize(buf: FriendlyByteBuf) {
-        paDistanceFromBlock = buf.readDouble()
-        paAngle.it = buf.readDouble()
-        paStage = buf.readEnum(paStage.javaClass)
-        paScrollAngle = buf.readDouble()
-
-        pmDeserialize(buf)
-    }
-
-    fun paServerSideVerifyLimits() {
-        val limits = ServerLimits.instance
-        paDistanceFromBlock = limits.distanceFromBlock.get(paDistanceFromBlock)
-
-        pmServerSideVerifyLimits()
-    }
 }
 
 //TODO add checks for if functions are actually invoked on server
@@ -240,7 +201,7 @@ interface PlacementAssistServerPart: PlacementModesState {
     }
 
     private fun handleFailure(player: Player) {
-        paNetworkingObject.s2cHandleFailure.sendToClient(player as ServerPlayer, PlacementAssistNetworking.S2CHandleFailurePacket())
+        paNetworkingObject.s2cHandleFailure.sendToClient(player as ServerPlayer, EmptyPacket())
         paServerResetState()
     }
 
@@ -309,7 +270,7 @@ interface PlacementAssistServerPart: PlacementModesState {
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
         val constraint = paMConstraintBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult))
-        level.makeManagedConstraint(constraint).addFor(player)
+        level.makeManagedConstraint(constraint){it.addFor(player)}
         paServerResetState()
     }
     fun paServerResetState() {

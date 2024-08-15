@@ -12,24 +12,25 @@ import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.DisableCollisionsGUI
 import net.spaceeye.vmod.toolgun.modes.hud.DisableCollisionHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.DisableCollisionsCEH
-import net.spaceeye.vmod.toolgun.modes.serializing.DisableCollisionsSerializable
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class DisableCollisionsMode: BaseMode, DisableCollisionsSerializable, DisableCollisionsCEH, DisableCollisionHUD, DisableCollisionsGUI {
+class DisableCollisionsMode: BaseMode, DisableCollisionsCEH, DisableCollisionHUD, DisableCollisionsGUI {
+    var primaryFirstRaycast: Boolean by get(0, false)
+
     val conn_primary = register { object : C2SConnection<DisableCollisionsMode>("disable_collisions_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<DisableCollisionsMode>(context.player, buf, ::DisableCollisionsMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
     val conn_secondary = register { object : C2SConnection<DisableCollisionsMode>("disable_collisions_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<DisableCollisionsMode>(context.player, buf, ::DisableCollisionsMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
-    var primaryFirstRaycast = false
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(PositionModes.NORMAL, 3, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, shipId2)).addFor(player)
+        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, shipId2)){it.addFor(player)}
         resetState()
     }
 

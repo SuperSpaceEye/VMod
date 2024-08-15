@@ -5,6 +5,7 @@ import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.ClientEventsHandler
 import net.spaceeye.vmod.toolgun.modes.state.SliderMode
+import net.spaceeye.vmod.utils.EmptyPacket
 import org.lwjgl.glfw.GLFW
 
 interface SliderCEH: ClientEventsHandler {
@@ -13,7 +14,7 @@ interface SliderCEH: ClientEventsHandler {
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
             refreshHUD()
-            ServerToolGunState.c2sToolgunWasReset.sendToServer(ServerToolGunState.C2SToolgunWasReset())
+            ServerToolGunState.c2sToolgunWasReset.sendToServer(EmptyPacket())
             return EventResult.interruptFalse()
         }
 

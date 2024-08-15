@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.spaceeye.vmod.physgun.PhysgunItem
 import net.spaceeye.vmod.toolgun.ToolgunItem
 
 object VMItems {
@@ -26,6 +27,8 @@ object VMItems {
     var LOGO: RegistrySupplier<Item> = ITEMS.register("vmod_logo") { Item(Item.Properties()) }
 
     var TOOLGUN: RegistrySupplier<ToolgunItem> = ITEMS.register("toolgun") { ToolgunItem() }
+
+    var PHYSGUN: RegistrySupplier<PhysgunItem> = ITEMS.register("physgun") { PhysgunItem() }
 
     fun register() {
         VMBlocks.registerItems(ITEMS)

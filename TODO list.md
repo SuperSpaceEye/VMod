@@ -1,6 +1,6 @@
 # VERY IMPORTANT
 
-## change all event emmiters to thread safe versions
+nothing
 
 # Do Eventually
 
@@ -16,22 +16,19 @@
 ## Constraint disabler
 * A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
 
-## Revise whole MConstraint structure
-## Redo how MConstraint renderers are saved
-
 ## java.awt.Color doesn't exist in headless mode
 
-## Redo ConstraintManager's tryMakeConstraint
+## Copycat blocks have incompat with vschem
 
 ## Toolgun settings presets menu
-
-## Toolgun settings for shit like gravity etc
+* maybe when pressing alt or smth it will show all presets for this mode, and allow player to cycle them
 
 ## Add a "wire" thing maybe as an addon to vmod
 
 ## General Code Structure
 * Extract more code from Placement Assist for an easier use
 * Extract more common code (connection/hydraulics)
+* Create "AutoGUIBuilder"
 
 ## Ticking Constraints
 * Redo them
@@ -63,8 +60,6 @@
 
 ## Server side things
 * Add server side validation for (kinda ✅) constraints and rendering
-* Add the ability for server to change limits
-* Add the ability for server and clients to synchronise limits
 
 ## Schematic
 * Copy entities (maybe, idfk)
@@ -78,6 +73,8 @@
 * Make it more stable
 * Fix the bug that crashes VS
 * Fix bad copying
+* Fix bad scaling
+* Redo it
 
 ## Elastic
 A rope that can stretch or push (if option is chosen)

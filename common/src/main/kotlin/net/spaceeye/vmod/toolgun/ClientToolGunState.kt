@@ -8,10 +8,10 @@ import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.spaceeye.vmod.gui.ScreenWindow
-import net.spaceeye.vmod.gui.ToolgunGUI
-import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
+import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.utils.ClientClosable
+import net.spaceeye.vmod.utils.EmptyPacket
 import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
@@ -52,6 +52,15 @@ object ClientToolGunState : ClientClosable() {
         )
     )
 
+    fun openGUI() {
+        gui.onGUIOpen()
+        Minecraft.getInstance().setScreen(gui)
+    }
+
+    fun closeGUI() {
+        Minecraft.getInstance().setScreen(null)
+    }
+
     private fun register(keyMapping: KeyMapping): KeyMapping {
         KeyMappingRegistry.register(keyMapping)
         return keyMapping
@@ -63,7 +72,7 @@ object ClientToolGunState : ClientClosable() {
         if (eventResult != EventResult.pass()) { return eventResult }
 
         if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_CONSTRAINT.matches(keyCode, scanCode)) {
-            ServerToolGunState.c2sRequestRemoveLastConstraint.sendToServer(ServerToolGunState.C2SRequestRemoveLastConstraintPacket())
+            ServerToolGunState.c2sRequestRemoveLastConstraint.sendToServer(EmptyPacket())
             return EventResult.interruptFalse()
         }
 
@@ -99,14 +108,13 @@ object ClientToolGunState : ClientClosable() {
         } catch (e: Error) {}
     }
 
-    internal lateinit var gui: ToolgunGUI
+    private lateinit var gui: MainToolgunGUIWindow
 
     internal fun guiIsOpened() = Minecraft.getInstance().screen == gui
     internal fun otherGuiIsOpened() = Minecraft.getInstance().screen != null && Minecraft.getInstance().screen != gui
 
     internal fun init() {
-        gui = ToolgunGUI()
-        gui.makeScrollComponents(modes)
+        gui = MainToolgunGUIWindow()
     }
 
     override fun close() {

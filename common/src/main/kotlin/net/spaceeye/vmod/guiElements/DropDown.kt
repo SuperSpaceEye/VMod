@@ -15,6 +15,8 @@ class DropDown(
 
     val activatedColor: Color = Color(0, 170, 0),
     text_scale: Float = 1f,
+    val onClose: () -> Unit = {},
+    val onOpen: () -> Unit = {}
 ): UIBlock() {
     var activated = false
 
@@ -61,14 +63,14 @@ class DropDown(
             height = ChildBasedSizeConstraint() + 4.pixels()
         }
 
-        var _this = this
+        val _this = this
         lateinit var itemsHolder: UIComponent
 
         val menuButton = Button(Color(150, 150, 150), menuName, text_scale) {
             activated = !activated
             when (activated) {
-                true  -> { itemsHolder childOf _this; activateButtons(false) }
-                false -> { _this.removeChild(itemsHolder) }
+                true  -> { itemsHolder childOf _this; activateButtons(false); onOpen() }
+                false -> { _this.removeChild(itemsHolder); onClose() }
             }
         }.constrain {
             width = ChildBasedSizeConstraint() + 4.pixels()

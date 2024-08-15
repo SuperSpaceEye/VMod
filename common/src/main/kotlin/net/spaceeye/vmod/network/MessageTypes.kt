@@ -6,8 +6,6 @@ import net.spaceeye.vmod.utils.RegistryObject
 
 object MessageTypes: Registry<Message>() {
     init {
-        register(::Activate)
-        register(::Deactivate)
         register(::Signal)
     }
 
@@ -30,18 +28,6 @@ object MessageTypes: Registry<Message>() {
 interface Message: RegistryObject {
     fun toNBT(): CompoundTag
     fun fromNBT(tag: CompoundTag)
-}
-
-class Activate: Message {
-    override fun toNBT(): CompoundTag { return CompoundTag() }
-    override fun fromNBT(tag: CompoundTag) {}
-    override val typeName = "Activate"
-}
-
-class Deactivate: Message {
-    override fun toNBT(): CompoundTag { return CompoundTag() }
-    override fun fromNBT(tag: CompoundTag) {}
-    override val typeName = "Deactivate"
 }
 
 class Signal(): Message {

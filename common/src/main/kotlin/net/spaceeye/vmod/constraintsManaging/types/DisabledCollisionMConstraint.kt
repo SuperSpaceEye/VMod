@@ -13,7 +13,7 @@ import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 class DisabledCollisionMConstraint(): MConstraint {
     override val typeName: String get() = "DisabledCollisionMConstraint"
     override var mID: ManagedConstraintId = -1
-    override var saveCounter: Int = -1
+    override var __saveCounter: Int = -1
 
     var shipId1: ShipId = -1
     var shipId2: ShipId = -1
@@ -41,7 +41,8 @@ class DisabledCollisionMConstraint(): MConstraint {
         return toReturn
     }
 
-    override fun getAttachmentPoints(): List<BlockPos> = listOf()
+    override fun getAttachmentPositions(): List<BlockPos> = listOf()
+    override fun getAttachmentPoints(): List<Vector3d> = listOf()
     override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
     override fun getVSIds(): Set<VSConstraintId> = setOf()
     override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? { return DisabledCollisionMConstraint(mapped[shipId1] ?: return null, mapped[shipId2] ?: return null) }
@@ -62,8 +63,8 @@ class DisabledCollisionMConstraint(): MConstraint {
     }
 
     override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, newShipId))
-        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId2, newShipId))
+        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, newShipId)) {}
+        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId2, newShipId)) {}
     }
 
     override fun nbtSerialize(): CompoundTag? {

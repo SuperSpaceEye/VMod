@@ -41,12 +41,6 @@ interface HydraulicsGUI: GUIBuilder, PlacementModesGUI {
 
         makeTextEntry(CHANNEL.get(), ::channel, offset, offset, parentWindow, limits.channelLength)
 
-        makeDropDown(
-            HYDRAULICS_INPUT_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(TOGGLE.get(), messageModes == net.spaceeye.vmod.network.MessageModes.Toggle) { messageModes = net.spaceeye.vmod.network.MessageModes.Toggle },
-            DItem(SIGNAL.get(), messageModes == net.spaceeye.vmod.network.MessageModes.Signal) { messageModes = net.spaceeye.vmod.network.MessageModes.Signal }
-        ))
-
         pmMakePlacementModesGUIPart(parentWindow, offset)
 
         makeDropDown(CONNECTION_MODES.get(), parentWindow, offset, offset, listOf(

@@ -29,9 +29,9 @@ import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.SchemCEH
-import net.spaceeye.vmod.toolgun.modes.serializing.SchemSerializable
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
@@ -237,7 +237,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
 
     // transmitter can't begin transmitting data to receiver by itself
     val c2sLoadSchematic = "load_schematic" idWithConnc {
-        object : C2SConnection<C2SLoadSchematic>(it, networkName) {
+        object : C2SConnection<EmptyPacket>(it, networkName) {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val lastReq = ServerPlayerSchematics.loadRequests[context.player.uuid]
                 if (lastReq != null && getNow_ms() - lastReq < 10000L) { return }
@@ -298,14 +298,14 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
             )
         }
     }
-
-    class C2SLoadSchematic(): Serializable {
-        override fun serialize(): FriendlyByteBuf { return getBuffer() }
-        override fun deserialize(buf: FriendlyByteBuf) {}
-    }
 }
 
-class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
+class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemHUD {
+    var rotationAngle: Ref<Double> by get(0, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it as Ref<Double>).it)}, customDeserialize = {buf -> rotationAngle.it = buf.readDouble(); rotationAngle})
+
+    val conn_primary = register { object : C2SConnection<SchemMode>("schem_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
+    val conn_secondary = register { object : C2SConnection<SchemMode>("schem_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
+
     override var itemsScroll: ScrollComponent? = null
     override lateinit var parentWindow: UIContainer
 
@@ -322,9 +322,6 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
 
         ClientPlayerSchematics.saveSchematic(name, schem!!)
     }
-
-    val conn_primary = register { object : C2SConnection<SchemMode>("schem_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
-    val conn_secondary = register { object : C2SConnection<SchemMode>("schem_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
 
     var renderer: SchemOutlinesRenderer? = null
 
@@ -365,7 +362,6 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
 
     var filename = ""
 
-    var rotationAngle = Ref(0.0)
     var scrollAngle = Math.toRadians(10.0)
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
@@ -388,7 +384,7 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemSerializable, SchemHUD {
                 SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
                 ServerPlayerSchematics.schematics[player.uuid] = schem
             }
-            unregister.unregister()
+            unregister()
         }
     }
 

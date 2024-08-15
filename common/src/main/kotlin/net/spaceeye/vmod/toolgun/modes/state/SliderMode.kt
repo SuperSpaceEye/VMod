@@ -8,25 +8,28 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.SliderMConstraint
+import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.SliderCEH
 import net.spaceeye.vmod.toolgun.modes.gui.SliderGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SliderHUD
-import net.spaceeye.vmod.toolgun.modes.serializing.SliderSerializable
 import net.spaceeye.vmod.toolgun.modes.util.*
+import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.RaycastFunctions
 
-class SliderMode: BaseMode, SliderSerializable, SliderCEH, SliderGUI, SliderHUD {
-    override var posMode = PositionModes.CENTERED_IN_BLOCK
-    override var precisePlacementAssistSideNum = 3
-    override var precisePlacementAssistRendererId: Int = -1
+class SliderMode: BaseMode, SliderCEH, SliderGUI, SliderHUD {
+    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
+    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
 
-    var compliance: Double = 1e-20
-    var maxForce: Double = 1e20
+    override var posMode: PositionModes by get(2, PositionModes.NORMAL)
+    override var precisePlacementAssistSideNum: Int by get(3, 3, {ServerLimits.instance.precisePlacementAssistSides.get(it as Int)})
 
     val conn_primary = register { object : C2SConnection<SliderMode>("slider_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SliderMode>(context.player, buf, ::SliderMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
+
+    override var precisePlacementAssistRendererId: Int = -1
 
     var shipRes1: RaycastFunctions.RaycastResult? = null
     var shipRes2: RaycastFunctions.RaycastResult? = null
@@ -68,14 +71,14 @@ class SliderMode: BaseMode, SliderSerializable, SliderCEH, SliderGUI, SliderHUD 
             axisPair.first, axisPair.second, shipPair.first, shipPair.second,
             compliance, maxForce, setOf(
                 axisRes1.blockPosition, shipRes1.blockPosition,
-                axisRes2.blockPosition, shipRes2.blockPosition).toList(), null
-        )).addFor(player)
+                axisRes2.blockPosition, shipRes2.blockPosition).toList()
+        )){it.addFor(player)}
 
         sresetState(player)
     }
 
     fun sresetState(player: ServerPlayer) {
-        ServerToolGunState.s2cTooglunWasReset.sendToClient(player, ServerToolGunState.S2CToolgunWasReset())
+        ServerToolGunState.s2cTooglunWasReset.sendToClient(player, EmptyPacket())
         resetState()
     }
 

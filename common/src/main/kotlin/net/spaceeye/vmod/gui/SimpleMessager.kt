@@ -8,8 +8,10 @@ import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.WindowScreen
 import gg.essential.elementa.components.ScrollComponent
 import gg.essential.elementa.components.UIBlock
+import gg.essential.elementa.components.UIText
 import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.constraints.ChildBasedSizeConstraint
+import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.constraints.animation.Animations
 import gg.essential.elementa.dsl.*
 import net.minecraft.client.Minecraft
@@ -318,7 +320,7 @@ object SimpleMessagerGUI: ClientClosable() {
 class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): WindowScreen(ElementaVersion.V5) {
     var channel = ""
 
-    var msg: Message? = null
+    var msg: Message? = Signal()
 
     val mainWindow = UIBlock(Color(240, 240, 240)).constrain {
         x = CenterConstraint()
@@ -350,33 +352,12 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
         y = 2.pixels()
     } childOf itemsHolder
 
-    var modeDropDown: DropDown
-
     var entry: TextEntry
-    var dmenu: DropDown? = null
 
     init {
+        UIText("Press TAB to close", shadow = false) constrain {x = CenterConstraint(); y = SiblingConstraint() + 2f.pixels; color = Color.BLACK.toConstraint()} childOf itemsHolder
         entry = makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, itemsHolder, ServerLimits.instance.channelLength)
-        modeDropDown = makeDropDown(MESSAGER_MODE.get(), itemsHolder, 2f, 2f, listOf(
-            DItem(TOGGLE.get(), msg is Activate || msg is Deactivate) {
-                dmenu!!.unhide(true)
-            },
-            DItem(SIGNAL.get(), msg is Signal) {
-                dmenu!!.hide(true)
-                msg = Signal()
-            }
-        ))
-
-        dmenu = makeDropDown(FUNCTION.get(), itemsHolder, 2f, 2f, listOf(
-            DItem(ACTIVATE.get(),    msg is Activate)   { msg = Activate() },
-            DItem(DEACTIVATE.get(),  msg is Deactivate) { msg = Deactivate() }
-        ))
-
-        when (msg) {
-            is Activate   -> dmenu!!.unhide(true)
-            is Deactivate -> dmenu!!.unhide(true)
-            is Signal     -> dmenu!!.hide(true)
-        }
+        msg = Signal()
     }
 
     fun updateState(msg: Message, channel: String) {
@@ -386,30 +367,8 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
 
     fun updateGui() {
         itemsHolder.removeChild(entry)
-        itemsHolder.removeChild(modeDropDown)
-        itemsHolder.removeChild(dmenu!!)
 
         entry = makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, itemsHolder, ServerLimits.instance.channelLength)
-        modeDropDown = makeDropDown(MESSAGER_MODE.get(), itemsHolder, 2f, 2f, listOf(
-            DItem(TOGGLE.get(), msg is Activate || msg is Deactivate) {
-                dmenu!!.unhide(true)
-            },
-            DItem(SIGNAL.get(), msg is Signal) {
-                dmenu!!.hide(true)
-                msg = Signal()
-            }
-        ))
-
-        dmenu = makeDropDown(FUNCTION.get(), itemsHolder, 2f, 2f, listOf(
-            DItem(ACTIVATE.get(),    msg is Activate)   { msg = Activate() },
-            DItem(DEACTIVATE.get(),  msg is Deactivate) { msg = Deactivate() }
-        ))
-
-        when (msg) {
-            is Activate   -> dmenu!!.unhide(true)
-            is Deactivate -> dmenu!!.unhide(true)
-            is Signal     -> dmenu!!.hide(true)
-        }
     }
 
     fun updateSuccess() {

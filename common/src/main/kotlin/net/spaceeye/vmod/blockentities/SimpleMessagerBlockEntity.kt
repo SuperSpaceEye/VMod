@@ -5,13 +5,13 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.VMBlockEntities
-import net.spaceeye.vmod.network.Activate
 import net.spaceeye.vmod.network.Message
 import net.spaceeye.vmod.network.MessageTypes
+import net.spaceeye.vmod.network.Signal
 
 class SimpleMessagerBlockEntity(pos: BlockPos, state: BlockState): BlockEntity(VMBlockEntities.SIMPLE_MESSAGER.get(), pos, state) {
     var channel = "hydraulics"
-    var msg: Message = Activate()
+    var msg: Message = Signal()
 
     override fun load(tag: CompoundTag) {
         super.load(tag)

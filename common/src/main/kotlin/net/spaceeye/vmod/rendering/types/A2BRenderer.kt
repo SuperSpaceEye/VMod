@@ -8,36 +8,38 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.network.FriendlyByteBuf
+import net.spaceeye.vmod.constraintsManaging.updatePosition
+import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import org.lwjgl.opengl.GL11
-import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
-import org.valkyrienskies.mod.common.getShipManagingPos
+import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-open class A2BRenderer(): BaseRenderer {
-    var ship1isShip: Boolean = false
-    var ship2isShip: Boolean = false
+open class A2BRenderer(): BaseRenderer, AutoSerializable {
+    var shipId1: Long by get(0, -1L)
+    var shipId2: Long by get(1, -1L)
 
-    var point1: Vector3d = Vector3d()
-    var point2: Vector3d = Vector3d()
+    var point1: Vector3d by get(2, Vector3d())
+    var point2: Vector3d by get(3, Vector3d())
 
-    var color: Color = Color(0)
+    var color: Color by get(4, Color(0))
 
-    var width: Double = .2
+    var width: Double by get(5, .2)
 
-    constructor(ship1isShip: Boolean,
-                ship2isShip: Boolean,
+    constructor(shipId1: Long,
+                shipId2: Long,
                 point1: Vector3d,
                 point2: Vector3d,
                 color: Color,
                 width: Double,
     ): this() {
-        this.ship1isShip = ship1isShip
-        this.ship2isShip = ship2isShip
+        this.shipId1 = shipId1
+        this.shipId2 = shipId2
         this.point1 = point1
         this.point2 = point2
         this.color = color
@@ -47,16 +49,13 @@ open class A2BRenderer(): BaseRenderer {
     override val typeName = "A2BRenderer"
 
     override fun renderData(poseStack: PoseStack, camera: Camera) {
-        val level = Minecraft.getInstance().level
+        val level = Minecraft.getInstance().level!!
 
-        val ship1 = level.getShipManagingPos(point1.toBlockPos())
-        val ship2 = level.getShipManagingPos(point2.toBlockPos())
+        val ship1 = if (shipId1 != -1L) { level.shipObjectWorld.loadedShips.getById(shipId1) ?: return } else null
+        val ship2 = if (shipId2 != -1L) { level.shipObjectWorld.loadedShips.getById(shipId2) ?: return } else null
 
-        if (ship1isShip && ship1 == null) {return}
-        if (ship2isShip && ship2 == null) {return}
-
-        val rpoint1 = if (ship1 == null) point1 else posShipToWorldRender(ship1 as ClientShip, point1)
-        val rpoint2 = if (ship2 == null) point2 else posShipToWorldRender(ship2 as ClientShip, point2)
+        val rpoint1 = if (ship1 == null) point1 else posShipToWorldRender(ship1, point1)
+        val rpoint2 = if (ship2 == null) point2 else posShipToWorldRender(ship2, point2)
 
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
@@ -90,33 +89,17 @@ open class A2BRenderer(): BaseRenderer {
         poseStack.popPose()
     }
 
-    override fun serialize(): FriendlyByteBuf {
-        val buf = getBuffer()
+    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
+        val spoint1 = if (shipId1 != -1L) {updatePosition(point1, oldToNew[shipId1]!!)} else {Vector3d(point1)}
+        val spoint2 = if (shipId2 != -1L) {updatePosition(point2, oldToNew[shipId2]!!)} else {Vector3d(point2)}
 
-        buf.writeColor(color)
-        buf.writeBoolean(ship1isShip)
-        buf.writeBoolean(ship2isShip)
+        val newId1 = if (shipId1 != -1L) {oldToNew[shipId1]!!.id} else {-1}
+        val newId2 = if (shipId2 != -1L) {oldToNew[shipId2]!!.id} else {-1}
 
-        buf.writeDouble(width)
-
-        buf.writeVector3d(point1)
-        buf.writeVector3d(point2)
-
-        return buf
+        return A2BRenderer(newId1, newId2, spoint1, spoint2, color, width)
     }
 
-    override fun deserialize(buf: FriendlyByteBuf) {
-        color = buf.readColor()
-        ship1isShip = buf.readBoolean()
-        ship2isShip = buf.readBoolean()
-
-        width = buf.readDouble()
-
-        point1 = buf.readVector3d()
-        point2 = buf.readVector3d()
-    }
-
-    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
-        return A2BRenderer (nShip1 != null, nShip2 != null, spoint1, spoint2, color, width)
+    override fun scaleBy(by: Double) {
+        width *= by
     }
 }

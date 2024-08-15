@@ -15,8 +15,8 @@ import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.entity.EntityInLevelCallback
 import net.spaceeye.vmod.VMEntities
-import net.spaceeye.vmod.utils.ClientClosable
-import net.spaceeye.vmod.utils.ServerClosable
+import net.spaceeye.vmod.entities.events.ClientPhysEntitiesHolder
+import net.spaceeye.vmod.entities.events.ServerPhysEntitiesHolder
 import org.joml.Matrix3d
 import org.joml.Quaterniond
 import org.joml.Vector3d
@@ -28,61 +28,13 @@ import org.valkyrienskies.core.apigame.physics.*
 import org.valkyrienskies.core.apigame.world.ServerShipWorldCore
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.*
-import org.valkyrienskies.core.impl.util.events.EventEmitter
-import org.valkyrienskies.core.impl.util.events.EventEmitterImpl
 import org.valkyrienskies.core.impl.util.serialization.VSJacksonUtil
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.mod.common.util.toJOML
 import org.valkyrienskies.mod.common.util.toMinecraft
 import org.valkyrienskies.mod.mixin.accessors.entity.EntityAccessor
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.PI
-
-object ClientEntitiesHolder{
-    val clientEntityLoadedEvent = EventEmitterImpl<ClientEntityLoadedEvent>()
-
-    data class ClientEntityLoadedEvent(val id: Int, val entity: Entity) {
-        companion object : EventEmitter<ClientEntityLoadedEvent> by clientEntityLoadedEvent
-    }
-
-    val clientRemovedEntity = EventEmitterImpl<ClientRemovedEntity>()
-
-    data class ClientRemovedEntity(val id: Int, val entity: Entity) {
-        companion object : EventEmitter<ClientRemovedEntity> by clientRemovedEntity
-    }
-
-    fun entityLoaded(id: Int, entity: Entity) {
-        clientEntityLoadedEvent.emit(ClientEntityLoadedEvent(id, entity))
-    }
-}
-
-object ServerEntitiesHolder: ServerClosable() {
-    val entities = ConcurrentHashMap<UUID, Entity>()
-
-    val entityLoadedEvent = EventEmitterImpl<EntityLoadedEvent>()
-
-    data class EntityLoadedEvent(val uuid: UUID, val entity: Entity) {
-        companion object : EventEmitter<EntityLoadedEvent> by entityLoadedEvent
-    }
-
-    val serverRemovedEntity = EventEmitterImpl<ServerRemovedEntity>()
-
-    data class ServerRemovedEntity(val uuid: UUID, val entity: Entity) {
-        companion object : EventEmitter<ServerRemovedEntity> by serverRemovedEntity
-    }
-
-    // Entities load after constraint manager so that's good
-    fun entityLoaded(uuid: UUID, entity: Entity) {
-        entities[uuid] = entity
-        entityLoadedEvent.emit(EntityLoadedEvent(uuid, entity))
-    }
-
-    override fun close() {
-        entities.clear()
-    }
-}
 
 class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: Level): Entity(type, level) {
     // Physics data, persistent
@@ -105,7 +57,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
 
     init {
         if (level.isClientSide) {
-            ClientEntitiesHolder.entityLoaded(id, this)
+            ClientPhysEntitiesHolder.entityLoaded(id, this)
         }
     }
 
@@ -205,7 +157,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
         super.load(compoundTag)
 
         if (!level.isClientSide) {
-            ServerEntitiesHolder.entityLoaded(uuid, this)
+            ServerPhysEntitiesHolder.entityLoaded(uuid, this)
         }
     }
 
@@ -269,12 +221,12 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
     }
 
     override fun kill() {
-        ServerEntitiesHolder.serverRemovedEntity.emit(ServerEntitiesHolder.ServerRemovedEntity(uuid, this))
+        ServerPhysEntitiesHolder.serverRemovedEntity.emit(ServerPhysEntitiesHolder.ServerRemovedEntity(uuid, this))
         super.kill()
     }
 
     override fun onClientRemoval() {
-        ClientEntitiesHolder.clientRemovedEntity.emit(ClientEntitiesHolder.ClientRemovedEntity(id, this))
+        ClientPhysEntitiesHolder.clientRemovedEntity.emit(ClientPhysEntitiesHolder.ClientRemovedEntity(id, this))
         super.onClientRemoval()
     }
 
@@ -301,7 +253,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
             entity.setPos(pos.x, pos.y, pos.z)
             level.addFreshEntity(entity)
             if (!level.isClientSide) {
-                ServerEntitiesHolder.entityLoaded(entity.uuid, entity)
+                ServerPhysEntitiesHolder.entityLoaded(entity.uuid, entity)
             }
             return entity
         }

@@ -6,28 +6,21 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.network.Message
 import net.spaceeye.vmod.network.MessagingNetwork
 import net.spaceeye.vmod.network.Signal
-import net.spaceeye.vmod.rendering.ServerRenderingData
-import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
 import net.spaceeye.vmod.shipForceInducers.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getVector3d
 import net.spaceeye.vmod.utils.putVector3d
-import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
-    override val typeName: String get() = "ThrusterMConstraint"
-    override var mID: ManagedConstraintId = -1
-    override var saveCounter: Int = -1
-
+class ThrusterMConstraint(): ExtendableMConstraint("ThrusterMConstraint"), Tickable {
     var shipId: ShipId = -1
     var pos = Vector3d()
     var bpos = BlockPos(0, 0, 0)
@@ -39,44 +32,33 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
 
     var thrusterId: Int = -1
 
-    override var renderer: BaseRenderer? = null
-
-    var rID = -1
-
-    constructor(shipId: ShipId, pos: Vector3d, bpos: BlockPos, forceDir: Vector3d, force: Double, channel: String, renderer: BaseRenderer): this() {
+    constructor(shipId: ShipId, pos: Vector3d, bpos: BlockPos, forceDir: Vector3d, force: Double, channel: String): this() {
         this.shipId = shipId
         this.pos = pos
         this.bpos = bpos
         this.forceDir = forceDir
         this.force = force
         this.channel = channel
-
-        this.renderer = renderer
     }
 
-    override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
-        return allShips.contains(shipId)
-    }
+    override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>) = allShips.contains(shipId)
+    override fun iAttachedToShips(dimensionIds: Collection<ShipId>) = mutableListOf(shipId, shipId)
+    override fun iGetAttachmentPositions(): List<BlockPos> = listOf(bpos, bpos)
+    override fun iGetAttachmentPoints(): List<Vector3d> = listOf(Vector3d(pos), Vector3d(pos))
+    override fun iGetVSIds(): Set<VSConstraintId> = setOf()
 
-    override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
-        return mutableListOf(shipId)
-    }
 
-    override fun getAttachmentPoints(): List<BlockPos> = listOf(bpos)
-    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
-        (renderer!! as ConeBlockRenderer).scale *= scaleBy.toFloat()
-        ServerRenderingData.setRenderer(shipId, shipId, rID, renderer!!)
-
+    override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         if (!VMConfig.SERVER.SCALE_THRUSTERS_THRUST) {return}
 
         val ship = level.shipObjectWorld.loadedShips.getById(shipId)!!
         val controller = ThrustersController.getOrCreate(ship)
 
         val thruster = controller.getThruster(thrusterId)!!
-        controller.updateThruster(thrusterId, thruster.copy(force = thruster.force * scaleBy * scaleBy))
+        controller.updateThruster(thrusterId, thruster.copy(force = thruster.force * scaleBy * scaleBy * scaleBy))
     }
-    override fun getVSIds(): Set<VSConstraintId> = setOf()
-    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
+
+    override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         val nId = mapped[shipId] ?: return null
 
         val nShip = level.shipObjectWorld.loadedShips.getById(nId) ?: level.shipObjectWorld.allShips.getById(nId) ?: return null
@@ -87,13 +69,10 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         val nPos = pos - oCentered + nCentered
         val nBPos = (Vector3d(bpos) - oCentered + nCentered).toBlockPos()
 
-        val renderer = (renderer as ConeBlockRenderer)
-        val nRenderer = ConeBlockRenderer(Vector3d(nPos), Quaterniond(renderer.rot), renderer.scale)
-
-        return ThrusterMConstraint(nShip.id, nPos, nBPos, Vector3d(forceDir), force, channel, nRenderer)
+        return ThrusterMConstraint(nShip.id, nPos, nBPos, Vector3d(forceDir), force, channel)
     }
 
-    override fun onMakeMConstraint(level: ServerLevel): Boolean {
+    override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         val ship = level.shipObjectWorld.loadedShips.getById(shipId) ?: return false
 
         MessagingNetwork.register(channel) {
@@ -106,15 +85,11 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
 
         thrusterId = controller.newThruster(pos, forceDir, force)
 
-        if (renderer != null) { rID = ServerRenderingData.addRenderer(shipId, shipId, renderer!!)
-        } else { renderer = ServerRenderingData.getRenderer(rID) }
-
         return true
     }
 
-    override fun onDeleteMConstraint(level: ServerLevel) {
+    override fun iOnDeleteMConstraint(level: ServerLevel) {
         wasRemoved = true
-        ServerRenderingData.removeRenderer(rID)
         val ship = level.shipObjectWorld.allShips.getById(shipId) ?: return
 
         val controller = ThrustersController.getOrCreate(ship)
@@ -122,14 +97,15 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         controller.removeThruster(thrusterId)
     }
 
-    override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+        throw NotImplementedError()
         if (previous != bpos) {return}
 
         val oShip = level.shipObjectWorld.loadedShips.getById(shipId) ?: return
         val oController = ThrustersController.getOrCreate(oShip)
         oController.removeThruster(thrusterId)
 
-        ServerRenderingData.removeRenderer(rID)
+//        ServerRenderingData.removeRenderer(rID)
 
         shipId = newShipId
         pos = (pos - Vector3d(bpos) + Vector3d(new))
@@ -139,13 +115,10 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         val nController = ThrustersController.getOrCreate(nShip)
         thrusterId = nController.newThruster(pos, forceDir, force)
 
-        val temp = (renderer as ConeBlockRenderer)
-        renderer = ConeBlockRenderer(pos, temp.rot, temp.scale)
-
-        rID = ServerRenderingData.addRenderer(shipId, shipId, renderer!!)
+//        rID = ServerRenderingData.addRenderer(shipId, shipId, renderer!!)
     }
 
-    override fun nbtSerialize(): CompoundTag? {
+    override fun iNbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
         tag.putInt("managedId", mID)
 
@@ -158,12 +131,10 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         tag.putDouble("percentage", percentage)
         tag.putString("channel", channel)
 
-        serializeRenderer(tag)
-
         return tag
     }
 
-    override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
+    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         mID = tag.getInt("managedId")
 
         shipId = tag.getLong("shipId")
@@ -174,8 +145,6 @@ class ThrusterMConstraint(): MConstraint, MRenderable, Tickable {
         bpos = BlockPos.of(tag.getLong("bpos"))
         percentage = tag.getDouble("percentage")
         channel = tag.getString("channel")
-
-        deserializeRenderer(tag)
 
         return this
     }

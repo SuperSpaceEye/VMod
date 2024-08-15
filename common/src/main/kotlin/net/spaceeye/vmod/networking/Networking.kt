@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.toolgun.ServerToolGunState.idWithConnc
+import net.spaceeye.vmod.toolgun.ServerToolGunState.idWithConns
 import java.security.MessageDigest
 
 interface Connection {
@@ -83,6 +85,28 @@ abstract class S2CConnection<T : Serializable>(id: String, connectionName: Strin
     fun sendToClient(player: ServerPlayer, packet: T) = NetworkManager.sendToPlayer(player, id, packet.serialize())
     fun sendToClients(players: Iterable<ServerPlayer>, packet: T) = NetworkManager.sendToPlayers(players, id, packet.serialize())
 }
+
+inline fun <reified T: Serializable>makeC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
+    object : C2SConnection<T>(name, connName) {
+        override fun serverHandler(buf: FriendlyByteBuf, context: PacketContext) {
+            val pkt = T::class.java.getConstructor().newInstance()
+            pkt.deserialize(buf)
+            fn(pkt, context.player as ServerPlayer)
+        }
+    }
+
+inline fun <reified T: Serializable>makeS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit ) =
+    object : S2CConnection<T>(name, connName) {
+        override fun clientHandler(buf: FriendlyByteBuf, context: PacketContext) {
+            val pkt = T::class.java.getConstructor().newInstance()
+            pkt.deserialize(buf)
+            fn(pkt)
+        }
+    }
+
+inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(it, connName, fn)}
+inline fun <reified T: Serializable>regS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C(it, connName, fn)}
+
 
 abstract class TRConnection<T : Serializable>(id: String, connectionName: String, val invocationSide: Side): Connection {
     override val side: Side = invocationSide

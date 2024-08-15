@@ -2,27 +2,24 @@ package net.spaceeye.vmod.constraintsManaging
 
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.rendering.types.A2BRenderer
-import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.rendering.types.RopeRenderer
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.ServerShip
+import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
 import org.valkyrienskies.mod.common.isChunkInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
-import java.lang.AssertionError
 
 //it's needed to not use ship's chunk claim
 inline fun getCenterPos(x: Int, z: Int) = Vector3d(((x / 16 / 256 - 1) * 256 + 128) * 16, 0, ((z / 16 / 256) * 256 + 128) * 16)
+inline fun updatePosition(old: Vector3d, newShip: Ship): Vector3d = old - Vector3d(getCenterPos(old.x.toInt(), old.z.toInt())) + Vector3d(getCenterPos(newShip.transform.positionInShip.x().toInt(), newShip.transform.positionInShip.z().toInt()))
 
 fun commonCopy(
         level: ServerLevel,
         mapped: Map<ShipId, ShipId>,
         constraint: VSForceConstraint,
         attachmentPoints_: List<BlockPos>,
-        renderer: BaseRenderer?,
-        constructor: (nShip1Id: ShipId, nShip2Id: ShipId, nShip1: ServerShip?, nShip2: ServerShip?, localPos0: Vector3d, localPos1: Vector3d, newAttachmentPoints: List<BlockPos>, newRenderer: BaseRenderer?) -> MConstraint?): MConstraint? {
+        constructor: (nShip1Id: ShipId, nShip2Id: ShipId, nShip1: ServerShip?, nShip2: ServerShip?, localPos0: Vector3d, localPos1: Vector3d, newAttachmentPoints: List<BlockPos>) -> MConstraint?): MConstraint? {
     if (!mapped.keys.containsAll(listOf(constraint.shipId0, constraint.shipId1))) {return null}
 
     val inShipyard1 = level.isChunkInShipyard(constraint.localPos0.x().toInt() / 16, constraint.localPos0.z().toInt() / 16)
@@ -47,7 +44,6 @@ fun commonCopy(
     val apoint2 = (if (nShip2 != null) Vector3d(attachmentPoints_[1]) + 0.5 - oCentered2!! + nCentered2!! else Vector3d(attachmentPoints_[1])).toBlockPos()
 
     val newAttachmentPoints = listOf(apoint1, apoint2)
-    val newRenderer = renderer?.copy(nShip1, nShip2, localPos0, localPos1)
 
-    return constructor(nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints, newRenderer)
+    return constructor(nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints)
 }

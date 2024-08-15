@@ -8,20 +8,19 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.texture.OverlayTexture
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.VMBlocks
+import net.spaceeye.vmod.constraintsManaging.updatePosition
+import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingStuff
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.readVector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
-import net.spaceeye.vmod.utils.writeVector3d
 import org.joml.Quaterniond
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
-import org.valkyrienskies.core.util.readQuatd
-import org.valkyrienskies.core.util.writeQuatd
+import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.util.toFloat
 import org.valkyrienskies.mod.common.util.toMinecraft
@@ -31,17 +30,19 @@ object A {
     val testState = VMBlocks.CONE_THRUSTER.get().defaultBlockState()
 }
 
-class ConeBlockRenderer(): BlockRenderer {
-    var pos = Vector3d()
-    var rot = Quaterniond()
-    var scale: Float = 1.0f
+class ConeBlockRenderer(): BlockRenderer, AutoSerializable {
+    var shipId: Long by get(0, -1L)
+    var pos: Vector3d by get(1, Vector3d())
+    var rot: Quaterniond by get(2, Quaterniond())
+    var scale: Float by get(3, 1.0f)
 
     override val typeName = "BlockRenderer"
 
-    constructor(_pos: Vector3d, _rot: Quaterniond, _scale: Float): this() {
-        pos = _pos
-        rot = _rot
-        scale = _scale
+    constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId): this() {
+        this.pos = pos
+        this.rot = rot
+        this.scale = scale
+        this.shipId = shipId
     }
 
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource) {
@@ -80,23 +81,12 @@ class ConeBlockRenderer(): BlockRenderer {
         poseStack.popPose()
     }
 
-    override fun serialize(): FriendlyByteBuf {
-        val buf = getBuffer()
-
-        buf.writeVector3d(pos)
-        buf.writeQuatd(rot)
-        buf.writeFloat(scale)
-
-        return buf
+    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
+        val spoint = updatePosition(pos, oldToNew[shipId]!!)
+        return ConeBlockRenderer(spoint, Quaterniond(rot), scale, oldToNew[shipId]!!.id)
     }
 
-    override fun deserialize(buf: FriendlyByteBuf) {
-        pos = buf.readVector3d()
-        rot = buf.readQuatd()
-        scale = buf.readFloat()
-    }
-
-    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
-        throw AssertionError("Shouldn't be copied")
+    override fun scaleBy(by: Double) {
+        scale *= by.toFloat()
     }
 }

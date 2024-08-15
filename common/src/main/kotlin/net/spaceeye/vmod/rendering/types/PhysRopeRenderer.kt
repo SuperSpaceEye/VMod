@@ -11,15 +11,15 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
-import net.spaceeye.vmod.entities.ClientEntitiesHolder
+import net.spaceeye.vmod.entities.events.ClientPhysEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
-import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawPolygonTube
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.makePolygon
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
-import org.joml.Quaterniond
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -27,22 +27,25 @@ import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-class PhysRopeRenderer(): BaseRenderer {
-    var shipId1: ShipId = -1
-    var shipId2: ShipId = -1
+class PhysRopeRenderer(): BaseRenderer, AutoSerializable {
+    var shipId1: Long by get(0, -1L)
+    var shipId2: Long by get(1, -1)
 
-    lateinit var point1: Vector3d
-    lateinit var point2: Vector3d
+    var point1: Vector3d by get(2, Vector3d())
+    var point2: Vector3d by get(3, Vector3d())
 
-    var color: Color = Color(0)
+    var color: Color by get(4, Color(0))
 
-    var width: Double = .2
-    var chainLength: Double = 1.0
+    var width: Double by get(5, .2)
+    var chainLength: Double by get(6, 1.0)
+
+    var sides: Int by get(7, 8)
 
     var ids = listOf<Int>()
-    var entities = mutableListOf<PhysRopeComponentEntity?>()
 
-    var sides: Int = 8
+
+
+    var entities = mutableListOf<PhysRopeComponentEntity?>()
 
     override val typeName = "PhysRopeRenderer"
 
@@ -153,39 +156,13 @@ class PhysRopeRenderer(): BaseRenderer {
     private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, ) = makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse)
 
     override fun serialize(): FriendlyByteBuf {
-        val buf = getBuffer()
-
-        buf.writeLong(shipId1)
-        buf.writeLong(shipId2)
-
-        buf.writeVector3d(point1)
-        buf.writeVector3d(point2)
-
-        buf.writeColor(color)
-
-        buf.writeDouble(width)
-        buf.writeDouble(chainLength)
-
-        buf.writeInt(sides)
-
+        val buf = super.serialize()
         buf.writeCollection(ids) { buf, id -> buf.writeInt(id)}
-
         return buf
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
-        shipId1 = buf.readLong()
-        shipId2 = buf.readLong()
-
-        point1 = buf.readVector3d()
-        point2 = buf.readVector3d()
-
-        color = buf.readColor()
-
-        width = buf.readDouble()
-        chainLength = buf.readDouble()
-
-        sides = buf.readInt()
+        super.deserialize(buf)
 
         ids = buf.readCollection({ mutableListOf() }) {buf.readInt()}
 
@@ -198,38 +175,37 @@ class PhysRopeRenderer(): BaseRenderer {
             }
 
             var got = false
-            ClientEntitiesHolder.clientEntityLoadedEvent.on {
-                (anID, anEntity), handler ->
-                if (got) {handler.unregister(); return@on}
+            ClientPhysEntitiesHolder.clientEntityLoadedEvent.on {
+                (anID, anEntity), unregister ->
+                if (got) {unregister(); return@on}
                 val entity = Minecraft.getInstance().level!!.getEntity(id)
                 if (entity != null) {
                     entities[i] = entity as PhysRopeComponentEntity
-                    handler.unregister()
+                    unregister()
                     got = true
                 }
 
                 if (anID != id) {return@on}
                 entities[i] = anEntity as PhysRopeComponentEntity
-                handler.unregister()
+                unregister()
                 got = true
             }
 
             //kinda stupid but it's needed because last entity id may not appear and idk why it doesn't
             var times = 0
             RandomEvents.clientOnTick.on {
-                _, handler ->
-                if (got) {handler.unregister(); return@on}
+                _, unregister ->
+                if (got) {unregister(); return@on}
                 times++
-                if (times > 11) {handler.unregister(); return@on}
+                if (times > 11) {unregister(); return@on}
                 val entity = Minecraft.getInstance().level!!.getEntity(id) ?: return@on
                 entities[i] = entity as PhysRopeComponentEntity
-                handler.unregister()
+                unregister()
                 got = true
             }
         }
     }
 
-    override fun copy(nShip1: Ship?, nShip2: Ship?, spoint1: Vector3d, spoint2: Vector3d): BaseRenderer {
-        throw AssertionError("Shouldn't be copied")
-    }
+    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { return null }
+    override fun scaleBy(by: Double) {}
 }

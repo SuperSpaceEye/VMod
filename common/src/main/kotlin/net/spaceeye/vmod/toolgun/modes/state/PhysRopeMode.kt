@@ -7,16 +7,17 @@ import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.PhysRopeMConstraint
+import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.PhysRopeGUI
 import net.spaceeye.vmod.toolgun.modes.hud.PhysRopeHUD
 import net.spaceeye.vmod.toolgun.modes.eventsHandling.PhysRopeCEH
-import net.spaceeye.vmod.toolgun.modes.serializing.PhysRopeSerializable
 import net.spaceeye.vmod.toolgun.modes.util.PlacementModesState
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePositions
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorld
@@ -25,26 +26,22 @@ import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCEH, PhysRopeGUI, PhysRopeHUD, PlacementModesState {
-    override var posMode = PositionModes.NORMAL
-    override var precisePlacementAssistSideNum: Int = 3
-    override var precisePlacementAssistRendererId: Int = -1
+class PhysRopeMode: BaseMode, PhysRopeCEH, PhysRopeGUI, PhysRopeHUD, PlacementModesState {
+    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
+    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
+    var fixedDistance: Double by get(2, -1.0, {ServerLimits.instance.fixedDistance.get(it as Double)})
 
-    var compliance = 1e-20
-    var maxForce = 1e10
-    var fixedDistance = -1.0
+    override var posMode: PositionModes by get(3, PositionModes.NORMAL)
+    override var precisePlacementAssistSideNum: Int by get(4, 3, {ServerLimits.instance.precisePlacementAssistSides.get(it as Int)})
+    var primaryFirstRaycast: Boolean by get(5, false)
 
-    var segments: Int = 16
-    var massPerSegment: Double = 1000.0
-    var radius: Double = 0.5
-
-
-    var primaryFirstRaycast = false
-
-
+    var segments: Int by get(6, 16, {ServerLimits.instance.physRopeSegments.get(it as Int)})
+    var massPerSegment: Double by get(7, 1000.0, {ServerLimits.instance.physRopeMassPerSegment.get(it as Double)})
+    var radius: Double by get(8, 0.5, {ServerLimits.instance.physRopeRadius.get(it as Double)})
 
     val conn_primary = register { object : C2SConnection<PhysRopeMode>("phys_rope_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<PhysRopeMode>(context.player, buf, ::PhysRopeMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
+    override var precisePlacementAssistRendererId: Int = -1
     var previousResult: RaycastFunctions.RaycastResult? = null
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
@@ -76,7 +73,7 @@ class PhysRopeMode: BaseMode, PhysRopeSerializable, PhysRopeCEH, PhysRopeGUI, Ph
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce, dist, segments, massPerSegment, radius,
             listOf(previousResult.blockPosition, raycastResult.blockPosition),
-        )).addFor(player)
+        )){it.addFor(player)}
 
         resetState()
     }

@@ -9,12 +9,14 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
+import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.networking.NetworkingRegisteringFunctions
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.translate.REMOVED
+import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import java.util.UUID
@@ -45,7 +47,7 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
 
     @JvmStatic inline fun <T> verifyPlayerAccessLevel(player: ServerPlayer, fn: () -> T) {
         if (!playerHasAccess(player)) {
-            s2cToolgunUsageRejected.sendToClient(player, S2CToolgunUsageRejectedPacket())
+            s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
             return
         }
         fn()
@@ -56,13 +58,8 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
         playersConstraintsStack.clear()
     }
 
-    class S2CToolgunUsageRejectedPacket(): Serializable {
-        override fun serialize(): FriendlyByteBuf {return getBuffer()}
-        override fun deserialize(buf: FriendlyByteBuf) {}
-    }
-
     val s2cToolgunUsageRejected = "toolgun_usage_rejected" idWithConns {
-        object : S2CConnection<S2CToolgunUsageRejectedPacket>(it, "server_toolgun") {
+        object : S2CConnection<EmptyPacket>(it, "server_toolgun") {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = EnvExecutor.runInEnv(EnvType.CLIENT) { Runnable {
                 ClientToolGunState.currentMode?.resetState()
                 //TODO
@@ -71,29 +68,29 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
         }
     }
 
-    class C2SRequestRemoveLastConstraintPacket(): Serializable {
-        override fun serialize(): FriendlyByteBuf {return getBuffer()}
-        override fun deserialize(buf: FriendlyByteBuf) {}
-    }
-
     val c2sRequestRemoveLastConstraint = "request_remove_last_constraint" idWithConnc {
-        object : C2SConnection<C2SRequestRemoveLastConstraintPacket>(it, "server_toolgun") {
+        object : C2SConnection<EmptyPacket>(it, "server_toolgun") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = verifyPlayerAccessLevel(context.player as ServerPlayer) {
                 val stack = playersConstraintsStack[context.player.uuid] ?: return
                 var item: ManagedConstraintId = stack.removeLastOrNull() ?: return
 
                 val level = context.player.level() as ServerLevel
 
-                // if constraint wasn't already removed, then remove it
-                while (true) {
-                    if (level.removeManagedConstraint(item)) {
-                        break
-                    } else {
-                        item = stack.removeLastOrNull() ?: return
+                //TODO wrap everything in this
+                RandomEvents.serverOnTick.on {
+                    _, unsubscribe ->
+                    unsubscribe()
+                    // if constraint wasn't already removed, then remove it
+                    while (true) {
+                        if (level.removeManagedConstraint(item)) {
+                            break
+                        } else {
+                            item = stack.removeLastOrNull() ?: return@on
+                        }
                     }
-                }
 
-                context.player.sendSystemMessage(REMOVED)
+                    context.player.sendSystemMessage(REMOVED)
+                }
             }
         }
     }
@@ -127,13 +124,8 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
         }
     }
 
-    class S2CToolgunWasReset(): Serializable {
-        override fun serialize(): FriendlyByteBuf { return getBuffer() }
-        override fun deserialize(buf: FriendlyByteBuf) {}
-    }
-
     val s2cTooglunWasReset = "toolgun_was_reset" idWithConns {
-        object : S2CConnection<S2CToolgunWasReset>(it, "server_toolgun") {
+        object : S2CConnection<EmptyPacket>(it, "server_toolgun") {
             override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 ClientToolGunState.currentMode?.resetState()
                 ClientToolGunState.currentMode?.refreshHUD()
@@ -141,16 +133,104 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
         }
     }
 
-    class C2SToolgunWasReset(): Serializable {
-        override fun serialize(): FriendlyByteBuf { return getBuffer() }
-        override fun deserialize(buf: FriendlyByteBuf) {}
-    }
-
     val c2sToolgunWasReset = "toolgun_was_reset" idWithConnc {
-        object : C2SConnection<C2SToolgunWasReset>(it, "server_toolgun") {
+        object : C2SConnection<EmptyPacket>(it, "server_toolgun") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val player = context.player ?: return
                 playersStates[player.uuid]?.mode?.resetState()
+            }
+        }
+    }
+
+    enum class AccessTo {
+        NormalToolgunUsage,
+        ServerSettings
+    }
+
+    class C2SAskIfIHaveAccess(): Serializable {
+        lateinit var accessTo: AccessTo
+        lateinit var callbackId: UUID
+
+        constructor(accessTo: AccessTo, callbackId: UUID): this() {
+            this.accessTo = accessTo
+            this.callbackId = callbackId
+        }
+
+        override fun serialize(): FriendlyByteBuf {
+            val buf = getBuffer()
+
+            buf.writeEnum(accessTo)
+            buf.writeUUID(callbackId)
+
+            return buf
+        }
+
+        override fun deserialize(buf: FriendlyByteBuf) {
+            accessTo = buf.readEnum(AccessTo::class.java)
+            callbackId = buf.readUUID()
+        }
+    }
+
+    val callbacks = mutableMapOf<UUID, (Boolean) -> Unit>()
+
+    fun checkIfIHaveAccess(accessTo: AccessTo, callback: (Boolean) -> Unit) {
+        val askUUID = UUID.randomUUID()
+        callbacks[askUUID] = callback
+        c2sAskIfIHaveAccess.sendToServer(C2SAskIfIHaveAccess(accessTo, askUUID))
+    }
+
+    private val c2sAskIfIHaveAccess = "ask_if_i_have_access" idWithConnc {
+        object : C2SConnection<C2SAskIfIHaveAccess>(it, "server_toolgun") {
+            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val pkt = C2SAskIfIHaveAccess(); pkt.deserialize(buf)
+                val player = context.player as ServerPlayer
+                val generalAccess = playerHasAccess(player)
+
+                if (!generalAccess) { return s2cResponseToAccessRequest.sendToClient(player, S2CResponseToAccessRequest(pkt.accessTo, pkt.callbackId, false)) }
+
+                val hasAccess = when (pkt.accessTo) {
+                    AccessTo.NormalToolgunUsage -> generalAccess
+                    AccessTo.ServerSettings -> player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_CHANGING_SERVER_SETTINGS_LEVEL)
+                }
+
+                s2cResponseToAccessRequest.sendToClient(player, S2CResponseToAccessRequest(pkt.accessTo, pkt.callbackId, hasAccess))
+            }
+        }
+    }
+
+    class S2CResponseToAccessRequest(): Serializable {
+        lateinit var accessTo: AccessTo
+        lateinit var callbackId: UUID
+        var response = false
+
+        constructor(accessTo: AccessTo, callbackId: UUID, response: Boolean): this() {
+            this.accessTo = accessTo
+            this.callbackId = callbackId
+            this.response = response
+        }
+
+        override fun serialize(): FriendlyByteBuf {
+            val buf = getBuffer()
+
+            buf.writeEnum(accessTo)
+            buf.writeBoolean(response)
+            buf.writeUUID(callbackId)
+
+            return buf
+        }
+
+        override fun deserialize(buf: FriendlyByteBuf) {
+            accessTo = buf.readEnum(AccessTo::class.java)
+            response = buf.readBoolean()
+            callbackId = buf.readUUID()
+        }
+    }
+
+    val s2cResponseToAccessRequest = "response_to_access_request" idWithConns {
+        object : S2CConnection<S2CResponseToAccessRequest>(it, "server_toolgun") {
+            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+                val pkt = S2CResponseToAccessRequest(); pkt.deserialize(buf)
+                callbacks[pkt.callbackId]?.invoke(pkt.response)
             }
         }
     }

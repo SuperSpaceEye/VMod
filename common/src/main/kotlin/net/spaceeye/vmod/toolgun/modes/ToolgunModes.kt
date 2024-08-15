@@ -10,7 +10,7 @@ object ToolgunModes {
         HydraulicsMode(),
         PhysRopeMode(),
         SliderMode(),
-//        WinchMode(),
+        SyncRotation(),
 
         ThrusterMode(),
         GravChangerMode(),
@@ -18,6 +18,7 @@ object ToolgunModes {
         SchemMode(),
         ScaleMode(),
         StripMode(),
+        ShipRemoverMode()
     )
     var initialized = false
     init {

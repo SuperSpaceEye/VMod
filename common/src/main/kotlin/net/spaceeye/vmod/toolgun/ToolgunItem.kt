@@ -10,6 +10,7 @@ import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.spaceeye.vmod.VMItems
+import net.spaceeye.vmod.events.RandomEvents
 import org.lwjgl.glfw.GLFW
 
 class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
@@ -30,10 +31,10 @@ class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
                 ClientToolGunState.onRenderHUD(stack, delta)
             }
 
-            ClientRawInputEvent.KEY_PRESSED.register {
-                client, keyCode, scanCode, action, modifiers ->
-                if (!playerIsUsingToolgun()) {return@register EventResult.pass()}
-                if (ClientToolGunState.otherGuiIsOpened()) {return@register EventResult.pass()}
+            RandomEvents.keyPress.on {
+                (keyCode, scanCode, action, modifiers), _ ->
+                if (!playerIsUsingToolgun()) {return@on false}
+                if (ClientToolGunState.otherGuiIsOpened()) {return@on false}
 
                 val guiIsOpened = ClientToolGunState.guiIsOpened()
                 val isPressed = action == GLFW.GLFW_PRESS
@@ -42,20 +43,20 @@ class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
                 // user from opening menu or smth in the middle of using some mode
                 if (!guiIsOpened) {
                     val res = ClientToolGunState.handleKeyEvent(keyCode, scanCode, action, modifiers)
-                    if (res != EventResult.pass()) {return@register res}
+                    if (res != EventResult.pass()) {return@on true}
 
                     if (isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
-                        Minecraft.getInstance().setScreen(ClientToolGunState.gui)
-                        return@register EventResult.pass()
+                        ClientToolGunState.openGUI()
+                        return@on false
                     }
                 }
 
                 if (guiIsOpened && isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
-                    Minecraft.getInstance().setScreen(null)
-                    return@register EventResult.pass()
+                    ClientToolGunState.closeGUI()
+                    return@on false
                 }
 
-                return@register EventResult.pass()
+                return@on false
             }
 
             ClientRawInputEvent.MOUSE_CLICKED_PRE.register {

@@ -47,7 +47,7 @@ class PlacementAssistTransformProvider(
             level,
             RaycastFunctions.Source(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
-                Vector3d(Minecraft.getInstance().player!!.eyePosition)
+                Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.position)
             ),
             raycastDistance,
             ignoreShipIds,

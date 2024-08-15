@@ -8,14 +8,20 @@ import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
+import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
+import net.spaceeye.vmod.physgun.ClientPhysgunState
+import net.spaceeye.vmod.physgun.PhysgunItem
+import net.spaceeye.vmod.physgun.ServerPhysgunState
 import net.spaceeye.vmod.rendering.initRenderingData
+import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.sendHUDErrorToOperators
+import net.spaceeye.vmod.toolgun.serverSettings.modes.DimensionalGravitySettings
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
@@ -42,14 +48,18 @@ object VM {
     fun init() {
         ConfigDelegateRegister.initConfig()
 
+        DimensionalGravitySettings
         initRenderingData()
-        VSGravityManager
         SimpleMessagerNetworking
         ToolgunModes
         ServerToolGunState
+        ServerPhysgunState
         ShipSchematic
         SchemCompatObj
-        EnvExecutor.runInEnv(Env.CLIENT) { Runnable { ClientToolGunState } }
+        EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+            ClientToolGunState
+            ClientPhysgunState
+        } }
 
         VMBlocks.register()
         VMBlockEntities.register()
@@ -63,6 +73,9 @@ object VM {
 
     @JvmStatic
     fun makeEvents() {
+        RandomEvents
+        SchematicActionsQueue
+
         LifecycleEvent.SERVER_LEVEL_SAVE.register {
             if (it != ServerLevelHolder.overworldServerLevel) {return@register}
             ConstraintManager.setDirty()
@@ -82,6 +95,8 @@ object VM {
             ServerLevelHolder.server = server
             ServerLevelHolder.overworldServerLevel = server.overworld()
             ConstraintManager.initNewInstance()
+
+            VSGravityManager
         }
 
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
@@ -92,5 +107,6 @@ object VM {
         }}
 
         ToolgunItem.makeEvents()
+        PhysgunItem.makeEvents()
     }
 }

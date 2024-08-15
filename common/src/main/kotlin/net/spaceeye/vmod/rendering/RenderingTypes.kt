@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.rendering
 
 import net.spaceeye.vmod.rendering.types.*
-import net.spaceeye.vmod.rendering.types.special.TimedA2BRenderer
+import net.spaceeye.vmod.rendering.types.TimedA2BRenderer
 import net.spaceeye.vmod.utils.Registry
 
 object RenderingTypes: Registry<BaseRenderer>() {
@@ -11,5 +11,6 @@ object RenderingTypes: Registry<BaseRenderer>() {
         register(::TimedA2BRenderer)
         register(::PhysRopeRenderer)
         register(::ConeBlockRenderer)
+        register(::PhysgunRayRenderer)
     }
 }

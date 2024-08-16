@@ -12,6 +12,7 @@ import net.spaceeye.vmod.utils.SafeEventEmitter
 object RandomEvents {
     init {
         TickEvent.SERVER_PRE.register { serverOnTick.emit(ServerOnTick(it)) }
+        TickEvent.SERVER_POST.register { serverAfterTick.emit(ServerOnTick(it)) }
 
         EnvExecutor.runInEnv(EnvType.CLIENT) { Runnable {
             ClientTickEvent.CLIENT_PRE.register {
@@ -22,6 +23,8 @@ object RandomEvents {
 
     val serverOnTick = SafeEventEmitter<ServerOnTick>()
     val clientOnTick = SafeEventEmitter<ClientOnTick>()
+
+    val serverAfterTick = SafeEventEmitter<ServerOnTick>()
 
     val mouseMove = CancellableEventEmitter<OnMouseMove>()
     //why? arch event is cringe and doesn't actually cancel mc keybinds

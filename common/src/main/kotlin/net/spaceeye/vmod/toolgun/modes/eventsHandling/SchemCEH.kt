@@ -26,14 +26,15 @@ interface SchemCEH: ClientEventsHandler {
         return EventResult.interruptFalse()
     }
 
-    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         this as SchemMode
+        if (action != GLFW.GLFW_PRESS) { return false }
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
-            return EventResult.interruptFalse()
+            return true
         }
 
-        return EventResult.pass()
+        return false
     }
 
     override fun onMouseScrollEvent(amount: Double): EventResult {

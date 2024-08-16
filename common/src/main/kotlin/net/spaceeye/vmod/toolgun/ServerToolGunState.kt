@@ -11,10 +11,13 @@ import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.networking.NetworkingRegisteringFunctions
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.BaseNetworking
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.translate.REMOVED
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.ServerClosable
@@ -35,9 +38,14 @@ fun sendHUDErrorToOperators(error: String) {
     }
 }
 
-object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
+object ServerToolGunState: ServerClosable() {
     val playersStates = ConcurrentHashMap<UUID, PlayerToolgunState>()
     val playersConstraintsStack = ConcurrentHashMap<UUID, MutableList<ManagedConstraintId>>()
+
+    init {
+        // it needs to initialize all c2s and s2c receivers
+        ToolgunModes.asList().forEach { it.get().init(BaseNetworking.EnvType.Server) }
+    }
 
     @JvmStatic fun playerHasAccess(player: ServerPlayer): Boolean {
         return      player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_TOOLGUN_PERMISSION_LEVEL)

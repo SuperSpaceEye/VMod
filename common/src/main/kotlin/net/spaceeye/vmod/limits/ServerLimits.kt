@@ -7,6 +7,8 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.*
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
@@ -42,7 +44,7 @@ class ServerLimitsInstance: AutoSerializable {
     val channelLength: StrLimit by get(12, StrLimit(50))
 }
 
-object ServerLimits: NetworkingRegisteringFunctions {
+object ServerLimits {
     init {
         SerializableItem.registerSerializationItem(DoubleLimit::class, {it: Any, buf: FriendlyByteBuf -> it as DoubleLimit; buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) {buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
         SerializableItem.registerSerializationItem(IntLimit::class, {it: Any, buf: FriendlyByteBuf -> it as IntLimit; buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) {buf -> IntLimit(buf.readInt(), buf.readInt())}

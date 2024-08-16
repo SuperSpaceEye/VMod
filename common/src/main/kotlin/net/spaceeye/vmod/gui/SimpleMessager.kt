@@ -25,6 +25,8 @@ import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.*
 import net.spaceeye.vmod.networking.C2SConnection
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.ClientToolGunState
@@ -248,22 +250,6 @@ object SimpleMessagerNetworking {
                 ordersQueue.clear()
             }
         }
-    }
-
-    private infix fun <TT: Serializable> String.idWithConnc(constructor: (String) -> C2SConnection<TT>): C2SConnection<TT> {
-        val instance = constructor(this)
-        try { // Why? so that if it's registered on dedicated client/server it won't die
-            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
-        } catch(e: NoSuchMethodError) {}
-        return instance
-    }
-
-    private infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
-        val instance = constructor(this)
-        try { // Why? so that if it's registered on dedicated client/server it won't die
-            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
-        } catch(e: NoSuchMethodError) {}
-        return instance
     }
 }
 

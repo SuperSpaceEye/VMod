@@ -9,9 +9,9 @@ import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.guiElements.*
-import net.spaceeye.vmod.limits.ServerLimits.idWithConnc
-import net.spaceeye.vmod.limits.ServerLimits.idWithConns
 import net.spaceeye.vmod.networking.C2SConnection
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.ClientToolGunState

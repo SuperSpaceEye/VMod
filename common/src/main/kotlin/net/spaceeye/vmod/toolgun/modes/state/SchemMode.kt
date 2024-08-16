@@ -14,6 +14,8 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.*
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue

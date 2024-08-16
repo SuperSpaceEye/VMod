@@ -6,9 +6,9 @@ import net.spaceeye.vmod.toolgun.modes.state.StripMode
 import org.lwjgl.glfw.GLFW
 
 interface StripCEH: ClientEventsHandler {
-    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         this as StripMode
-        return EventResult.pass()
+        return false
     }
 
     override fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {

@@ -9,20 +9,20 @@ import net.spaceeye.vmod.utils.EmptyPacket
 import org.lwjgl.glfw.GLFW
 
 interface SliderCEH: ClientEventsHandler {
-    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         this as SliderMode
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
             refreshHUD()
             ServerToolGunState.c2sToolgunWasReset.sendToServer(EmptyPacket())
-            return EventResult.interruptFalse()
+            return true
         }
 
         if (primaryTimes != 0 && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(key, scancode)) {
-            return EventResult.interruptFalse()
+            return true
         }
 
-        return EventResult.pass()
+        return false
     }
 
     override fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {

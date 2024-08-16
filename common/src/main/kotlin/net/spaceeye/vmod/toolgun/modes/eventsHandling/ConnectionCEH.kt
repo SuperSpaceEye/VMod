@@ -9,17 +9,18 @@ import net.spaceeye.vmod.toolgun.modes.util.ThreeClicksActivationSteps
 import org.lwjgl.glfw.GLFW
 
 interface ConnectionCEH: ClientEventsHandler, PlacementAssistCEH {
-    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         this as ConnectionMode
-        if (action != GLFW.GLFW_PRESS) {return EventResult.pass()}
-        if (paStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !primaryFirstRaycast) { return EventResult.pass() }
+        if (action != GLFW.GLFW_PRESS) {return false}
+        if (paStage == ThreeClicksActivationSteps.FIRST_RAYCAST && !primaryFirstRaycast) { return false }
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
             refreshHUD()
+            return true
         }
 
-        return EventResult.interruptFalse()
+        return false
     }
 
     override fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {

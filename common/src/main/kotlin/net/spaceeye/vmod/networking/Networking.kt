@@ -11,8 +11,8 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VM
-import net.spaceeye.vmod.toolgun.ServerToolGunState.idWithConnc
-import net.spaceeye.vmod.toolgun.ServerToolGunState.idWithConns
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import java.security.MessageDigest
 
 interface Connection {
@@ -31,25 +31,33 @@ interface Serializable {
 private val hasher = MessageDigest.getInstance("MD5")
 fun Serializable.hash() = hasher.digest(serialize().accessByteBufWithCorrectSize())
 
-interface NetworkingRegisteringFunctions {
-    infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
+object NetworkingRegistrationFunctions {
+    val registeredIDs = mutableSetOf<String>()
+
+    @JvmStatic inline infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
         val instance = constructor(this)
+        if (registeredIDs.contains(instance.id.toString())) {return instance}
+        registeredIDs.add(instance.id.toString())
         try { // Why? so that if it's registered on dedicated client/server it won't die
             NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
         } catch(e: NoSuchMethodError) {}
         return instance
     }
 
-    infix fun <TT: Serializable> String.idWithConnc(constructor: (String) -> C2SConnection<TT>): C2SConnection<TT> {
+    @JvmStatic inline infix fun <TT: Serializable> String.idWithConnc(constructor: (String) -> C2SConnection<TT>): C2SConnection<TT> {
         val instance = constructor(this)
+        if (registeredIDs.contains(instance.id.toString())) {return instance}
+        registeredIDs.add(instance.id.toString())
         try { // Why? so that if it's registered on dedicated client/server it won't die
             NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
         } catch(e: NoSuchMethodError) {}
         return instance
     }
 
-    fun <T: Serializable> registerTR(id: String, registeringSide: Side, constructor: (String) -> TRConnection<T>): TRConnection<T> {
+    @JvmStatic inline fun <T: Serializable> registerTR(id: String, registeringSide: Side, constructor: (String) -> TRConnection<T>): TRConnection<T> {
         val instance = constructor(id)
+        if (registeredIDs.contains(instance.id.toString())) {return instance}
+        registeredIDs.add(instance.id.toString())
         try {
             // handler should be on the opposite side of the intended invocation side.
             if (registeringSide == instance.invocationSide.opposite()) {
@@ -59,7 +67,7 @@ interface NetworkingRegisteringFunctions {
         return instance
     }
 
-    fun Side.opposite() = when (this) {
+    @JvmStatic fun Side.opposite() = when (this) {
         Side.S2C -> Side.C2S
         Side.C2S -> Side.S2C
     }
@@ -106,7 +114,6 @@ inline fun <reified T: Serializable>makeS2C(name: String, connName: String, cros
 
 inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(it, connName, fn)}
 inline fun <reified T: Serializable>regS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C(it, connName, fn)}
-
 
 abstract class TRConnection<T : Serializable>(id: String, connectionName: String, val invocationSide: Side): Connection {
     override val side: Side = invocationSide

@@ -4,6 +4,8 @@ import dev.architectury.networking.NetworkManager
 import dev.architectury.networking.NetworkManager.PacketContext
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.opposite
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.registerTR
 import net.spaceeye.vmod.utils.Either
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
@@ -18,7 +20,7 @@ abstract class DataStream<
     transmitterSide: NetworkManager.Side,
     currentSide: NetworkManager.Side,
     val partByteAmount: Int = 30000,
-    ): NetworkingRegisteringFunctions {
+    ) {
 
     abstract fun requestPacketConstructor(): TRequest
     abstract fun dataPacketConstructor(): TData

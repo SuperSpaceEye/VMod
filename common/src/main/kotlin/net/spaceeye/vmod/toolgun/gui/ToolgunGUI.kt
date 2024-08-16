@@ -9,7 +9,6 @@ import gg.essential.elementa.constraints.animation.Animations
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.toolgun.modes.ToolgunModes.modes
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
@@ -41,7 +40,7 @@ class ToolgunGUI(mainWindow: UIBlock): ToolgunWindow {
     } childOf settingsComponent
 
     init {
-        makeScrollComponents(modes)
+        makeScrollComponents(ClientToolGunState.modes)
     }
 
     override fun onGUIOpen() {

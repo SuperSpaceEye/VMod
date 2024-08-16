@@ -12,10 +12,9 @@ import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.MConstraint
-import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
-import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.transformProviders.CenteredAroundPlacementAssistTransformProvider

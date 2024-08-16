@@ -22,14 +22,14 @@ interface DisableCollisionsCEH: ClientEventsHandler {
         return EventResult.interruptFalse()
     }
 
-    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         this as DisableCollisionsMode
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
             refreshHUD()
-            return EventResult.interruptFalse()
+            return true
         }
 
-        return EventResult.pass()
+        return false
     }
 }

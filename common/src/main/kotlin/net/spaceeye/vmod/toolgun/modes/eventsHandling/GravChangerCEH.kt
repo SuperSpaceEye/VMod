@@ -20,13 +20,13 @@ interface GravChangerCEH: ClientEventsHandler {
         return EventResult.interruptFalse()
     }
 
-    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         this as GravChangerMode
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
-            return EventResult.interruptFalse()
+            return true
         }
 
-        return EventResult.pass()
+        return false
     }
 }

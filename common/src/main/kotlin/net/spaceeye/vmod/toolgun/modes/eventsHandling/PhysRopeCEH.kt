@@ -8,16 +8,17 @@ import net.spaceeye.vmod.toolgun.modes.util.PlacementModesCEH
 import org.lwjgl.glfw.GLFW
 
 interface PhysRopeCEH: ClientEventsHandler, PlacementModesCEH {
-    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         this as PhysRopeMode
-        if (!primaryFirstRaycast) { return EventResult.pass() }
+        if (!primaryFirstRaycast) { return false }
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
             refreshHUD()
+            return true
         }
 
-        return EventResult.interruptFalse()
+        return false
     }
 
     override fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {

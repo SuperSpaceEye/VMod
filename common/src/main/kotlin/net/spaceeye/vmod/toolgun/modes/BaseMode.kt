@@ -8,8 +8,8 @@ import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.networking.*
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
 import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.ServerToolGunState.idWithConnc
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.toolgun.modes.util.serverTryActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -24,7 +24,7 @@ interface HUDBuilder {
 }
 
 interface ClientEventsHandler {
-    fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
+    fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean { return false }
     fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
     fun onMouseScrollEvent(amount: Double): EventResult { return EventResult.pass() }
 
@@ -45,35 +45,36 @@ interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientEventsHandler 
 
     fun refreshHUD() { ClientToolGunState.refreshHUD() }
 
+    //TODO remove
     fun <T: Serializable> register(constructor: () -> C2SConnection<T>): C2SConnection<T> {
         val instance = constructor()
-        if (!ToolgunModes.initialized) {
-            try { NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler()) } catch (e: NoSuchMethodError) { }
-        }
+        if (NetworkingRegistrationFunctions.registeredIDs.contains(instance.id.toString())) {return instance}
+        NetworkingRegistrationFunctions.registeredIDs.add(instance.id.toString())
+
+        try { NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler()) } catch (e: NoSuchMethodError) { }
         return instance
     }
-
 }
 
-inline fun <reified T: BaseMode> BaseMode.registerConnection(instance: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) = register {
+inline fun <reified T: BaseMode> BaseMode.registerConnection(mode: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) = register {
     name idWithConnc {
         object : C2SConnection<T>(it, "toolgun_command") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
-                serverRaycastAndActivate<T>(context.player, buf, {instance.javaClass.getConstructor().newInstance()}, toExecute)
+                serverRaycastAndActivate<T>(context.player, buf, ToolgunModes.getMode(mode::class), toExecute)
         }
     }
 }
 
-inline fun <reified T: BaseMode> BaseMode.registerConnection(instance: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) = register {
+inline fun <reified T: BaseMode> BaseMode.registerConnection(mode: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) = register {
     name idWithConnc {
         object : C2SConnection<T>(name, "toolgun_command") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
-                serverTryActivate<T>(context.player, buf, {instance.javaClass.getConstructor().newInstance()}, toExecute)
+                serverTryActivate<T>(context.player, buf, ToolgunModes.getMode(mode::class), toExecute)
         }
     }
 }
 
-abstract class BaseNetworking <T: BaseMode>: NetworkingRegisteringFunctions {
+abstract class BaseNetworking <T: BaseMode> {
     var clientObj: T? = null
     var serverObj: T? = null
 

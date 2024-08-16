@@ -7,9 +7,9 @@ import net.spaceeye.vmod.toolgun.modes.util.PlacementModesCEH
 import org.lwjgl.glfw.GLFW
 
 interface ThrusterCEH: ClientEventsHandler, PlacementModesCEH {
-    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         this as ThrusterMode
-        return EventResult.pass()
+        return false
     }
 
     override fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {

@@ -7,19 +7,19 @@ import net.spaceeye.vmod.toolgun.modes.state.SyncRotation
 import org.lwjgl.glfw.GLFW
 
 interface SyncRotationCEH: ClientEventsHandler {
-    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): EventResult {
+    override fun onKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         this as SyncRotation
-        if (action != GLFW.GLFW_PRESS) {return EventResult.pass()}
+        if (action != GLFW.GLFW_PRESS) {return false}
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode)) {
             resetState()
             refreshHUD()
-            return EventResult.interruptFalse()
+            return true
         }
 
-        if (primaryFirstRaycast) {return EventResult.interruptFalse()}
+        if (primaryFirstRaycast) {return true}
 
-        return EventResult.pass()
+        return true
     }
 
     override fun onMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {

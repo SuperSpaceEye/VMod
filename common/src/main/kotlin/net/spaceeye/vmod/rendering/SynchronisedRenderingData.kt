@@ -11,6 +11,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.networking.*
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.rendering.types.*
 import org.valkyrienskies.core.impl.hooks.VSEvents
@@ -37,7 +38,7 @@ class ClientSynchronisedRenderingData:
         1000000,
         ::serializeItem,
         ::deserializeItem,
-        ), NetworkingRegisteringFunctions {
+        ) {
 
     init {
         addCustomClient { clear() }

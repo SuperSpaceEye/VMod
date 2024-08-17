@@ -20,6 +20,8 @@ object ToolgunModes: ClassRegistry<BaseMode>() {
         register(ScaleMode::class)
         register(StripMode::class)
         register(ShipRemoverMode::class)
+
+        ToolgunExtensions
     }
 
     @JvmStatic

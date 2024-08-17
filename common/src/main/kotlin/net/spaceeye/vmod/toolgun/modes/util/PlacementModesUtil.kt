@@ -10,6 +10,7 @@ import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.rendering.types.special.PrecisePlacementAssistRenderer
 import net.spaceeye.vmod.translate.*
 
+//TODO convert all modes to extendable and remove this
 interface PlacementModesState {
     var posMode: PositionModes
     var precisePlacementAssistSideNum: Int
@@ -17,50 +18,11 @@ interface PlacementModesState {
 }
 
 interface PlacementModesCEH: PlacementModesState {
-    fun pmOnOpen() {
-        if (posMode != PositionModes.PRECISE_PLACEMENT) {return}
-        precisePlacementAssistRendererId = ClientRenderingData.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
-    }
-
-    fun pmOnClose() {
-        ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId)
-    }
+    fun pmOnOpen() {}
+    fun pmOnClose() {}
 }
 
 interface PlacementModesGUI: PlacementModesState {
-    private var internalPrecisePlacementAssistSideNum: Int
-        get() = precisePlacementAssistSideNum
-        set(value) {
-            precisePlacementAssistSideNum = value
-            if (posMode != PositionModes.PRECISE_PLACEMENT) {return}
-            ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId)
-            precisePlacementAssistRendererId = ClientRenderingData.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
-        }
-
-    fun pmMakePlacementModesGUIPart(parentWindow: UIContainer, offset: Float) {
-        makeTextEntry("Precise Placement Assist Sides", ::internalPrecisePlacementAssistSideNum, offset, offset, parentWindow, ServerLimits.instance.precisePlacementAssistSides)
-        makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL           ; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
-            DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE ; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
-            DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
-            DItem("Precise Placement",     posMode == PositionModes.PRECISE_PLACEMENT) {
-                posMode = PositionModes.PRECISE_PLACEMENT
-                ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId)
-                precisePlacementAssistRendererId = ClientRenderingData.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
-            })
-        )
-    }
-
-    fun pmMakePlacementModesNoCenteredInBlockGUIPart(parentWindow: UIContainer, offset: Float) {
-        makeTextEntry("Precise Placement Assist Sides", ::internalPrecisePlacementAssistSideNum, offset, offset, parentWindow, ServerLimits.instance.precisePlacementAssistSides)
-        makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL           ; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
-            DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE ; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
-            DItem("Precise Placement",     posMode == PositionModes.PRECISE_PLACEMENT) {
-                posMode = PositionModes.PRECISE_PLACEMENT
-                ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId)
-                precisePlacementAssistRendererId = ClientRenderingData.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
-            })
-        )
-    }
+    fun pmMakePlacementModesGUIPart(parentWindow: UIContainer, offset: Float) {}
+    fun pmMakePlacementModesNoCenteredInBlockGUIPart(parentWindow: UIContainer, offset: Float) {}
 }

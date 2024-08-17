@@ -41,7 +41,6 @@ class ColorPicker(defaultColor: Color, val onColorChange: (color: Color) -> Unit
     init {
         constrain {
             width  = 100.percent()
-            height = 100.percent()
         }
 
         redTextbox   constrain { width = 50.percent() }
@@ -49,12 +48,17 @@ class ColorPicker(defaultColor: Color, val onColorChange: (color: Color) -> Unit
         blueTextbox  constrain { width = 50.percent() }
         alphaTextbox constrain { width = 50.percent() }
 
+        constrain {
+            width = 100.percent
+            height = (redTextbox.getHeight() * 4f).pixels
+        }
+
         colorResult constrain {
             x = SiblingConstraint()
             y = 0.percent()
 
             width = 50.percent()
-            height = 50.percent()
+            height = (redTextbox.getHeight() * 4f).pixels
         } childOf this
     }
 }

@@ -16,7 +16,7 @@ import net.spaceeye.vmod.utils.EmptyPacket
 import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
-    var modes = listOf<BaseMode>()
+    val modes = ToolgunModes.asList().map { it.get() }.map { it.init(BaseNetworking.EnvType.Client); it }
 
     private var _currentMode: BaseMode? = null
     var currentMode: BaseMode?
@@ -118,11 +118,9 @@ object ClientToolGunState : ClientClosable() {
 
     internal fun init() {
         gui = MainToolgunGUIWindow()
-        modes = ToolgunModes.asList().map { it.get() }.map { it.init(BaseNetworking.EnvType.Client); it }
     }
 
     override fun close() {
         currentMode = null
-        modes = listOf()
     }
 }

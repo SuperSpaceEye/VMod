@@ -25,29 +25,33 @@ abstract class BasicConnectionExtension<T: ExtendableToolgunMode>(): ToolgunMode
     open fun getSecondaryFunction(): ((mode: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit)? = null
     open fun getResetFunction(): ((mode: T, level: ServerLevel, player: ServerPlayer) -> Unit)? = null
 
-    open fun getPrimaryClientCallback(): (() -> Unit)? = null
-    open fun getSecondaryClientCallback(): (() -> Unit)? = null
-    open fun getResetClientCallback(): (() -> Unit)? = null
+    open fun getPrimaryClientCallback(): ((mode: T) -> Unit)? = null
+    open fun getSecondaryClientCallback(): ((mode: T) -> Unit)? = null
+    open fun getResetClientCallback(): ((mode: T) -> Unit)? = null
 
-    private val primaryClientCallback: (() -> Unit)? = getPrimaryClientCallback()
-    private val secondaryClientCallback: (() -> Unit)? = getSecondaryClientCallback()
-    private val resetClientCallback: (() -> Unit)? = getResetClientCallback()
+    @JvmField var primaryFunction: ((mode: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit)? = getPrimaryFunction()
+    @JvmField var secondaryFunction: ((mode: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit)? = getSecondaryFunction()
+    @JvmField var resetFunction: ((mode: T, level: ServerLevel, player: ServerPlayer) -> Unit)? = getResetFunction()
+
+    @JvmField var primaryClientCallback: ((mode: T) -> Unit)? = getPrimaryClientCallback()
+    @JvmField var secondaryClientCallback: ((mode: T) -> Unit)? = getSecondaryClientCallback()
+    @JvmField var resetClientCallback: ((mode: T) -> Unit)? = getResetClientCallback()
 
     private lateinit var mode: ExtendableToolgunMode
 
-    override fun onInit(mode: ExtendableToolgunMode, type: BaseNetworking.EnvType) {
+    final override fun onInit(mode: ExtendableToolgunMode, type: BaseNetworking.EnvType) {
         this.mode = mode
 
-        primaryConn = getPrimaryFunction()?.let { mode.registerConnection(mode, name + "_primary_connection") { item, level, player, rr -> it(item as T, level, player, rr) } } as C2SConnection<T>?
-        secondaryConn = getSecondaryFunction()?.let { mode.registerConnection(mode, name + "_secondary_connection") { item, level, player, rr -> it(item as T, level, player, rr) } } as C2SConnection<T>?
-        resetConn = getResetFunction()?.let { mode.registerConnection(mode, name + "_reset_connection") { item, level, player -> it(item as T, level, player) } } as C2SConnection<T>?
+        primaryConn = primaryFunction?.let { mode.registerConnection(mode, name + "_primary_connection") { item, level, player, rr -> it(item as T, level, player, rr) } } as C2SConnection<T>?
+        secondaryConn = secondaryFunction?.let { mode.registerConnection(mode, name + "_secondary_connection") { item, level, player, rr -> it(item as T, level, player, rr) } } as C2SConnection<T>?
+        resetConn = resetFunction?.let { mode.registerConnection(mode, name + "_reset_connection") { item, level, player -> it(item as T, level, player) } } as C2SConnection<T>?
     }
 
-    override fun eOnKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
+    final override fun eOnKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         if (action != GLFW.GLFW_PRESS) {return false}
 
         if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode) && resetConn != null) {
-            resetClientCallback?.invoke()
+            resetClientCallback?.invoke(mode as T)
             resetConn!!.sendToServer(mode as T)
             return true
         }
@@ -55,17 +59,17 @@ abstract class BasicConnectionExtension<T: ExtendableToolgunMode>(): ToolgunMode
         return false
     }
 
-    override fun eOnMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
+    final override fun eOnMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {
         if (action != GLFW.GLFW_PRESS) {return EventResult.pass()}
 
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && primaryConn != null) {
-            primaryClientCallback?.invoke()
+            primaryClientCallback?.invoke(mode as T)
             primaryConn!!.sendToServer(mode as T)
             return EventResult.interruptFalse()
         }
 
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && secondaryConn != null) {
-            secondaryClientCallback?.invoke()
+            secondaryClientCallback?.invoke(mode as T)
             secondaryConn!!.sendToServer(mode as T)
             return EventResult.interruptFalse()
         }

@@ -56,11 +56,11 @@ object NetworkingRegistrationFunctions {
 
     @JvmStatic inline fun <T: Serializable> registerTR(id: String, registeringSide: Side, constructor: (String) -> TRConnection<T>): TRConnection<T> {
         val instance = constructor(id)
-        if (registeredIDs.contains(instance.id.toString())) {return instance}
-        registeredIDs.add(instance.id.toString())
         try {
             // handler should be on the opposite side of the intended invocation side.
             if (registeringSide == instance.invocationSide.opposite()) {
+                if (registeredIDs.contains(instance.id.toString())) {return instance}
+                registeredIDs.add(instance.id.toString())
                 NetworkManager.registerReceiver(instance.invocationSide, instance.id, instance.getHandler())
             }
         } catch (e: NoSuchMethodError) {}

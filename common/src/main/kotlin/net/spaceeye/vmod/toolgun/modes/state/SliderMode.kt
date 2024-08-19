@@ -1,7 +1,5 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import dev.architectury.networking.NetworkManager
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -9,27 +7,26 @@ import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.SliderMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.toolgun.modes.eventsHandling.SliderCEH
 import net.spaceeye.vmod.toolgun.modes.gui.SliderGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SliderHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.RaycastFunctions
 
-class SliderMode: BaseMode, SliderCEH, SliderGUI, SliderHUD {
+class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
     var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
     var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
 
-    override var posMode: PositionModes by get(2, PositionModes.NORMAL)
-    override var precisePlacementAssistSideNum: Int by get(3, 3, {ServerLimits.instance.precisePlacementAssistSides.get(it as Int)})
-
-    val conn_primary = register { object : C2SConnection<SliderMode>("slider_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SliderMode>(context.player, buf, ::SliderMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
-
-    override var precisePlacementAssistRendererId: Int = -1
+    var posMode: PositionModes = PositionModes.NORMAL
+    var precisePlacementAssistSideNum: Int = 3
 
     var shipRes1: RaycastFunctions.RaycastResult? = null
     var shipRes2: RaycastFunctions.RaycastResult? = null
@@ -82,10 +79,28 @@ class SliderMode: BaseMode, SliderCEH, SliderGUI, SliderHUD {
         resetState()
     }
 
-    override fun resetState() {
+    override fun eResetState() {
         shipRes1 = null
         shipRes2 = null
         axisRes1 = null
         primaryTimes = 0
+    }
+
+    companion object {
+        init {
+            ToolgunModes.registerWrapper(SliderMode::class) {
+                it.addExtension<SliderMode> {
+                    BasicConnectionExtension<SliderMode>("slider_mode"
+                        ,allowResetting = true
+                        ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                        ,primaryClientCallback = { inst -> inst.primaryTimes++; inst.refreshHUD() }
+                    )
+                }.addExtension<SliderMode> {
+                    BlockMenuOpeningExtension<SliderMode> { inst -> inst.primaryTimes != 0 }
+                }.addExtension<SliderMode> {
+                    PlacementModesExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
+                }
+            }
+        }
     }
 }

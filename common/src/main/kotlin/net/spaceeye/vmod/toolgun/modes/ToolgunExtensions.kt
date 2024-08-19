@@ -5,6 +5,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.networking.makeS2C
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.ClassRegistry
@@ -14,6 +15,7 @@ object ToolgunExtensions: ClassRegistry<ToolgunModeExtension>() {
         register(BasicConnectionExtension::class)
         register(PlacementModesExtension::class)
         register(PlacementAssistExtension::class)
+        register(BlockMenuOpeningExtension::class)
 
         makeEvents()
     }

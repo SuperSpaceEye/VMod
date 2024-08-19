@@ -1,8 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import dev.architectury.networking.NetworkManager
 import net.minecraft.core.BlockPos
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -10,17 +8,16 @@ import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.extensions.NonStrippable
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
 import net.spaceeye.vmod.toolgun.modes.hud.StripHUD
-import net.spaceeye.vmod.toolgun.modes.eventsHandling.StripCEH
-import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class StripMode: BaseMode, StripCEH, StripGUI, StripHUD {
+class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     enum class StripModes {
         StripAll,
         StripInRadius
@@ -28,13 +25,6 @@ class StripMode: BaseMode, StripCEH, StripGUI, StripHUD {
 
     var radius: Int by get(0, 1, {ServerLimits.instance.stripRadius.get(it as Int)})
     var mode: StripModes by get(1, StripModes.StripAll)
-
-    val conn_primary = register {
-        object : C2SConnection<StripMode>("strip_mode_primary", "toolgun_command") {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
-                serverRaycastAndActivate<StripMode>(context.player, buf, ::StripMode) {
-              item, serverLevel, player, raycastResult ->
-                    item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {return}
@@ -72,5 +62,17 @@ class StripMode: BaseMode, StripCEH, StripGUI, StripHUD {
                 level.removeManagedConstraint(it)
             }
         } } }
+    }
+
+    companion object {
+        init {
+            ToolgunModes.registerWrapper(StripMode::class) {
+                it.addExtension<StripMode> {
+                    BasicConnectionExtension<StripMode>("strip_mode"
+                        ,primaryFunction = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                    )
+                }
+            }
+        }
     }
 }

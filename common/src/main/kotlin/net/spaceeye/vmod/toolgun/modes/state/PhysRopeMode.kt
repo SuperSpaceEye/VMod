@@ -1,23 +1,22 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import dev.architectury.networking.NetworkManager
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.PhysRopeMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.PhysRopeGUI
 import net.spaceeye.vmod.toolgun.modes.hud.PhysRopeHUD
-import net.spaceeye.vmod.toolgun.modes.eventsHandling.PhysRopeCEH
-import net.spaceeye.vmod.toolgun.modes.util.PlacementModesState
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePositions
-import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorld
@@ -26,22 +25,21 @@ import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class PhysRopeMode: BaseMode, PhysRopeCEH, PhysRopeGUI, PhysRopeHUD, PlacementModesState {
+class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
     var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
     var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
     var fixedDistance: Double by get(2, -1.0, {ServerLimits.instance.fixedDistance.get(it as Double)})
 
-    override var posMode: PositionModes by get(3, PositionModes.NORMAL)
-    override var precisePlacementAssistSideNum: Int by get(4, 3, {ServerLimits.instance.precisePlacementAssistSides.get(it as Int)})
-    var primaryFirstRaycast: Boolean by get(5, false)
+    var primaryFirstRaycast: Boolean by get(3, false)
 
-    var segments: Int by get(6, 16, {ServerLimits.instance.physRopeSegments.get(it as Int)})
-    var massPerSegment: Double by get(7, 1000.0, {ServerLimits.instance.physRopeMassPerSegment.get(it as Double)})
-    var radius: Double by get(8, 0.5, {ServerLimits.instance.physRopeRadius.get(it as Double)})
+    var segments: Int by get(4, 16, {ServerLimits.instance.physRopeSegments.get(it as Int)})
+    var massPerSegment: Double by get(5, 1000.0, {ServerLimits.instance.physRopeMassPerSegment.get(it as Double)})
+    var radius: Double by get(6, 0.5, {ServerLimits.instance.physRopeRadius.get(it as Double)})
 
-    val conn_primary = register { object : C2SConnection<PhysRopeMode>("phys_rope_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<PhysRopeMode>(context.player, buf, ::PhysRopeMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
-    override var precisePlacementAssistRendererId: Int = -1
+    var posMode: PositionModes = PositionModes.NORMAL
+    var precisePlacementAssistSideNum: Int = 3
+
     var previousResult: RaycastFunctions.RaycastResult? = null
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
@@ -78,8 +76,26 @@ class PhysRopeMode: BaseMode, PhysRopeCEH, PhysRopeGUI, PhysRopeHUD, PlacementMo
         resetState()
     }
 
-    override fun resetState() {
+    override fun eResetState() {
         previousResult = null
         primaryFirstRaycast = false
+    }
+
+    companion object {
+        init {
+            ToolgunModes.registerWrapper(PhysRopeMode::class) {
+                it.addExtension<PhysRopeMode> {
+                    BasicConnectionExtension<PhysRopeMode>("phys_rope_mode"
+                        ,allowResetting = true
+                        ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                        ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
+                    )
+                }.addExtension<PhysRopeMode> {
+                    PlacementModesExtension(false, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
+                }.addExtension<PhysRopeMode> {
+                    BlockMenuOpeningExtension<PhysRopeMode> { inst -> !inst.primaryFirstRaycast }
+                }
+            }
+        }
     }
 }

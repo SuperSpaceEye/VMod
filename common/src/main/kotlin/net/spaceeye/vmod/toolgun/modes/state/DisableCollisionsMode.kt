@@ -1,29 +1,25 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import dev.architectury.networking.NetworkManager
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.types.DisabledCollisionMConstraint
-import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.DisableCollisionsGUI
 import net.spaceeye.vmod.toolgun.modes.hud.DisableCollisionHUD
-import net.spaceeye.vmod.toolgun.modes.eventsHandling.DisableCollisionsCEH
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
-import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class DisableCollisionsMode: BaseMode, DisableCollisionsCEH, DisableCollisionHUD, DisableCollisionsGUI {
+class DisableCollisionsMode: ExtendableToolgunMode(), DisableCollisionHUD, DisableCollisionsGUI {
     var primaryFirstRaycast: Boolean by get(0, false)
-
-    val conn_primary = register { object : C2SConnection<DisableCollisionsMode>("disable_collisions_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<DisableCollisionsMode>(context.player, buf, ::DisableCollisionsMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
-    val conn_secondary = register { object : C2SConnection<DisableCollisionsMode>("disable_collisions_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<DisableCollisionsMode>(context.player, buf, ::DisableCollisionsMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
@@ -40,8 +36,25 @@ class DisableCollisionsMode: BaseMode, DisableCollisionsCEH, DisableCollisionHUD
         level.getAllDisabledCollisionsOfId(ship.id)?.forEach { (id, num) -> for (i in 0 until num) { level.enableCollisionBetween(ship.id, id) } }
     }
 
-    override fun resetState() {
+    override fun eResetState() {
         previousResult = null
         primaryFirstRaycast = false
+    }
+
+    companion object {
+        init {
+            ToolgunModes.registerWrapper(DisableCollisionsMode::class) {
+                it.addExtension<DisableCollisionsMode> {
+                    BasicConnectionExtension<DisableCollisionsMode>("disable_connections_mode"
+                        ,allowResetting = true
+                        ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                        ,secondaryFunction     = { inst, level, player, rr -> inst.activateSecondaryFunction(level, player, rr)}
+                        ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
+                    )
+                }.addExtension<DisableCollisionsMode> {
+                    BlockMenuOpeningExtension<DisableCollisionsMode> { inst -> !inst.primaryFirstRaycast }
+                }
+            }
+        }
     }
 }

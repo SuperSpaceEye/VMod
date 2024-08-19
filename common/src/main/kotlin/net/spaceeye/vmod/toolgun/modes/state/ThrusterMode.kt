@@ -1,7 +1,5 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import dev.architectury.networking.NetworkManager
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -9,32 +7,27 @@ import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.types.ThrusterMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
-import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.ThrusterGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ThrusterHUD
-import net.spaceeye.vmod.toolgun.modes.eventsHandling.ThrusterCEH
-import net.spaceeye.vmod.toolgun.modes.util.PlacementModesState
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePosition
-import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.getQuatFromDir
 import org.valkyrienskies.mod.common.getShipManagingPos
 
 //TODO finish this mf
-class ThrusterMode: BaseMode, ThrusterCEH, ThrusterHUD, ThrusterGUI, PlacementModesState {
-    override var posMode: PositionModes by get(0, PositionModes.NORMAL)
-    override var precisePlacementAssistSideNum: Int by get(1, 3, {ServerLimits.instance.precisePlacementAssistSides.get(it as Int)})
+class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
+    var force: Double by get(0, 10000.0)
+    var channel: String by get(1, "thruster", {ServerLimits.instance.channelLength.get(it as String)})
 
-    var force: Double by get(2, 10000.0)
-    var channel: String by get(3, "thruster", {ServerLimits.instance.channelLength.get(it as String)})
-
-    val conn_primary = register { object : C2SConnection<ThrusterMode>("thruster_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<ThrusterMode>(context.player, buf, ::ThrusterMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
-
-    override var precisePlacementAssistRendererId: Int = -1
+    var posMode: PositionModes = PositionModes.NORMAL
+    var precisePlacementAssistSideNum: Int = 3
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (raycastResult.state.isAir) {return}
@@ -54,5 +47,19 @@ class ThrusterMode: BaseMode, ThrusterCEH, ThrusterHUD, ThrusterGUI, PlacementMo
         ).addExtension(RenderableExtension(ConeBlockRenderer(
             basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), 1.0f, ship.id
         )))){it.addFor(player)}
+    }
+
+    companion object {
+        init {
+            ToolgunModes.registerWrapper(ThrusterMode::class) {
+                it.addExtension<ThrusterMode> {
+                    BasicConnectionExtension<ThrusterMode>("thruster_mode"
+                        ,primaryFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
+                    )
+                }.addExtension<ThrusterMode> {
+                    PlacementModesExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
+                }
+            }
+        }
     }
 }

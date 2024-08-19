@@ -3,36 +3,36 @@ package net.spaceeye.vmod.toolgun.modes
 import dev.architectury.event.EventResult
 import gg.essential.elementa.components.UIContainer
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.utils.RegistryObject
 import org.jetbrains.annotations.ApiStatus.NonExtendable
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 interface EGUIBuilder {
-    fun eMakeGUISettings(parentWindow: UIContainer) {}
+    @OverrideOnly fun eMakeGUISettings(parentWindow: UIContainer) {}
 }
 
 interface EHUDBuilder {
-    fun eMakeHUD(screen: UIContainer) {}
+    @OverrideOnly fun eMakeHUD(screen: UIContainer) {}
 }
 
 interface EClientEventsHandler {
-    fun eOnKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean { return false }
-    fun eOnMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
-    fun eOnMouseScrollEvent(amount: Double): EventResult { return EventResult.pass() }
+    @OverrideOnly fun eOnKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean { return false }
+    @OverrideOnly fun eOnMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult { return EventResult.pass() }
+    @OverrideOnly fun eOnMouseScrollEvent(amount: Double): EventResult { return EventResult.pass() }
 
-    fun eOnOpenMode() {}
-    fun eOnCloseMode() {}
+    @OverrideOnly fun eOnOpenMode() {}
+    @OverrideOnly fun eOnCloseMode() {}
 }
 
 interface EBase {
-    fun eResetState() {}
-    fun eInit(type: BaseNetworking.EnvType) {}
+    @OverrideOnly fun eResetState() {}
+    @OverrideOnly fun eInit(type: BaseNetworking.EnvType) {}
 }
 
-interface ToolgunModeExtension: RegistryObject, MSerializable, EBase, EClientEventsHandler, EGUIBuilder {
-    fun preInit(mode: ExtendableToolgunMode, type: BaseNetworking.EnvType) {}
-    fun onInit(mode: ExtendableToolgunMode, type: BaseNetworking.EnvType) {}
+interface ToolgunModeExtension: MSerializable, EBase, EClientEventsHandler, EGUIBuilder {
+    @OverrideOnly fun preInit(mode: ExtendableToolgunMode, type: BaseNetworking.EnvType) {}
+    @OverrideOnly fun onInit(mode: ExtendableToolgunMode, type: BaseNetworking.EnvType) {}
     @NonExtendable @Deprecated("DO NOT USE THIS", ReplaceWith("super.onInit"), level = DeprecationLevel.ERROR)
-    override fun eInit(type: BaseNetworking.EnvType) {}
+    @OverrideOnly override fun eInit(type: BaseNetworking.EnvType) {}
 }
 
 abstract class ExtendableToolgunMode: BaseMode, EBase, EGUIBuilder, EHUDBuilder, EClientEventsHandler {

@@ -1,7 +1,5 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import net.minecraft.server.level.ServerLevel
-import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.MConstraint
@@ -14,8 +12,10 @@ import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ConnectionHUD
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.*
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistNetworking
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
@@ -65,46 +65,28 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
         primaryFirstRaycast = false
     }
 
-    //TODO make better somehow?
     companion object {
         val paNetworkingObj = PlacementAssistNetworking("connection_networking")
         init {
             ToolgunModes.registerWrapper(ConnectionMode::class) {
-                it as ExtendableToolgunMode
                 it.addExtension<ConnectionMode> {
-                    object : BasicConnectionExtension<ConnectionMode>("connection_mode") {
-                        override fun getPrimaryFunction(): ((mode: ConnectionMode, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit)? = {
-                            item, level, player, rr -> item.activatePrimaryFunction(level, player, rr)
-                        }
-
-                        override fun getPrimaryClientCallback(): ((mode: ConnectionMode) -> Unit)? = {
-                            item -> item.primaryFirstRaycast = !item.primaryFirstRaycast; item.refreshHUD()
-                        }
-
-                        override fun getResetFunction(): ((mode: ConnectionMode, level: ServerLevel, player: ServerPlayer) -> Unit)? = {
-                            item, level, player -> item.resetState()
-                        }
-
-                        override fun getResetClientCallback(): ((mode: ConnectionMode) -> Unit)? = {
-                            item -> item.resetState(); item.refreshHUD()
-                        }
-                    }
+                    BasicConnectionExtension<ConnectionMode>("connection_mode"
+                        ,allowResetting = true
+                        ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                        ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
+                    )
                 }.addExtension<ConnectionMode> {
-                    object : PlacementAssistExtension(
-                        true,
-                        {mode -> it.posMode = mode},
-                        {num -> it.precisePlacementAssistSideNum = num}
-                        ) {
-                        override val paMConstraintBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>) -> MConstraint
-                            = { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult> ->
-                                ConnectionMConstraint(
-                                    spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
-                                    it.compliance, it.maxForce, it.fixedDistance, it.connectionMode,
-                                    listOf(rresults.first.blockPosition, rresults.second.blockPosition)
-                                )
-                            }
-                        override val paNetworkingObject: PlacementAssistNetworking get() = paNetworkingObj
-                    }
+                    BlockMenuOpeningExtension<ConnectionMode> { inst -> !inst.primaryFirstRaycast }
+                }.addExtension<ConnectionMode> {
+                    PlacementAssistExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num}, paNetworkingObj,
+                        { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->
+                            ConnectionMConstraint(
+                                spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
+                                it.compliance, it.maxForce, it.fixedDistance, it.connectionMode,
+                                listOf(rresults.first.blockPosition, rresults.second.blockPosition)
+                            )
+                        }
+                    )
                 }
             }
         }

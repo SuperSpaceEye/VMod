@@ -40,7 +40,7 @@ open class ClassRegistry<T> {
 
     fun <TT: Any> register(clazz: KClass<TT>) = register(clazz.java as Class<T>)
     fun <TT: Any> typeToSupplier(clazz: KClass<TT>) = typeToSupplier(clazz.java as Class<T>)
-    fun <TT: Any> registerWrapper(clazz: KClass<TT>, wrapper: (item: T) -> T) = registerWrapper(clazz.java as Class<T>, wrapper)
+    inline fun <TT: Any> registerWrapper(clazz: KClass<TT>, crossinline wrapper: (item: TT) -> T) = registerWrapper(clazz.java as Class<T>) { item -> wrapper(item as TT) }
 
     fun typeToIdx(type: Class<T>): Int? =
         strToIdx[type.name] ?: run {

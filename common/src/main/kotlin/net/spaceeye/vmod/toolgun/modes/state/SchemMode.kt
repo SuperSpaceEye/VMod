@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import dev.architectury.event.EventResult
 import dev.architectury.event.events.common.PlayerEvent
 import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.ScrollComponent
@@ -26,14 +27,14 @@ import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
 import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
-import net.spaceeye.vmod.toolgun.modes.eventsHandling.SchemCEH
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
-import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
@@ -50,6 +51,7 @@ import java.nio.file.Paths
 import java.util.UUID
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
+import kotlin.math.sign
 
 const val SCHEM_EXTENSION = "vschem"
 
@@ -302,16 +304,13 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     }
 }
 
-class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemHUD {
+class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
     var rotationAngle: Ref<Double> by get(0, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it as Ref<Double>).it)}, customDeserialize = {buf -> rotationAngle.it = buf.readDouble(); rotationAngle})
-
-    val conn_primary = register { object : C2SConnection<SchemMode>("schem_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
-    val conn_secondary = register { object : C2SConnection<SchemMode>("schem_mode_secondary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<SchemMode>(context.player, buf, ::SchemMode) { item, serverLevel, player, raycastResult -> item.activateSecondaryFunction(serverLevel, player, raycastResult) } } }
 
     override var itemsScroll: ScrollComponent? = null
     override lateinit var parentWindow: UIContainer
 
-    override fun init(type: BaseNetworking.EnvType) {
+    override fun eInit(type: BaseNetworking.EnvType) {
         SchemNetworking.init(this, type)
     }
 
@@ -409,9 +408,32 @@ class SchemMode: BaseMode, SchemGUI, SchemCEH, SchemHUD {
         schem.placeAt(level, player.uuid, pos.toJomlVector3d(), rotation)
     }
 
-    override fun resetState() {
+    override fun eResetState() {
 //        schem = null
 //        shipInfo = null
         rotationAngle.it = 0.0
+    }
+
+    override fun eOnMouseScrollEvent(amount: Double): EventResult {
+        if (shipInfo == null) { return EventResult.pass() }
+
+        rotationAngle.it += scrollAngle * amount.sign
+
+        return EventResult.interruptFalse()
+    }
+
+    companion object {
+        init {
+            ToolgunModes.registerWrapper(SchemMode::class) {
+                it.addExtension<SchemMode> {
+                    BasicConnectionExtension<SchemMode>("schem_mode"
+                        ,allowResetting = true
+                        ,primaryFunction       = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
+                        ,secondaryFunction     = { item, level, player, rr -> item.activateSecondaryFunction(level, player, rr) }
+                        ,primaryClientCallback = { item -> item.shipInfo = null; item.refreshHUD() }
+                    )
+                }
+            }
+        }
     }
 }

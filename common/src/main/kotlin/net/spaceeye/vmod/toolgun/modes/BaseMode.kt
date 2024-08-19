@@ -14,6 +14,8 @@ import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.toolgun.modes.util.serverTryActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 
+//TODO this is somewhat outdated now with ExtendableToolgunMode
+
 interface GUIBuilder {
     val itemName: TranslatableComponent
     fun makeGUISettings(parentWindow: UIContainer)
@@ -44,35 +46,23 @@ interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientEventsHandler 
     fun init(type: BaseNetworking.EnvType) {}
 
     fun refreshHUD() { ClientToolGunState.refreshHUD() }
-
-    //TODO remove
-    fun <T: Serializable> register(constructor: () -> C2SConnection<T>): C2SConnection<T> {
-        val instance = constructor()
-        if (NetworkingRegistrationFunctions.registeredIDs.contains(instance.id.toString())) {return instance}
-        NetworkingRegistrationFunctions.registeredIDs.add(instance.id.toString())
-
-        try { NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler()) } catch (e: NoSuchMethodError) { }
-        return instance
-    }
 }
 
-inline fun <reified T: BaseMode> BaseMode.registerConnection(mode: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) = register {
+inline fun <reified T: BaseMode> BaseMode.registerConnection(mode: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) =
     name idWithConnc {
         object : C2SConnection<T>(it, "toolgun_command") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
                 serverRaycastAndActivate<T>(context.player, buf, ToolgunModes.getMode(mode::class), toExecute)
         }
     }
-}
 
-inline fun <reified T: BaseMode> BaseMode.registerConnection(mode: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) = register {
+inline fun <reified T: BaseMode> BaseMode.registerConnection(mode: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) =
     name idWithConnc {
         object : C2SConnection<T>(name, "toolgun_command") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
                 serverTryActivate<T>(context.player, buf, ToolgunModes.getMode(mode::class), toExecute)
         }
     }
-}
 
 abstract class BaseNetworking <T: BaseMode> {
     var clientObj: T? = null

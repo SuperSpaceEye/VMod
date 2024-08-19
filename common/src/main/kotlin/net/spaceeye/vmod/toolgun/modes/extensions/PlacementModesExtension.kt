@@ -18,8 +18,6 @@ open class PlacementModesExtension(
     val setPosMode: (PositionModes) -> Unit,
     val setPrecisePlacementAssistSideNum: (Int) -> Unit
 ): ToolgunModeExtension {
-    override val typeName: String get() = "PlacementModesExtension"
-
     var posMode: PositionModes = PositionModes.NORMAL
     var precisePlacementAssistSideNum: Int = 3
 
@@ -48,6 +46,11 @@ open class PlacementModesExtension(
         precisePlacementAssistSideNum = buf.readInt()
 
         setPosMode(posMode)
+        setPrecisePlacementAssistSideNum(precisePlacementAssistSideNum)
+    }
+
+    override fun serverSideVerifyLimits() {
+        precisePlacementAssistSideNum = ServerLimits.instance.precisePlacementAssistSides.get(precisePlacementAssistSideNum)
         setPrecisePlacementAssistSideNum(precisePlacementAssistSideNum)
     }
 

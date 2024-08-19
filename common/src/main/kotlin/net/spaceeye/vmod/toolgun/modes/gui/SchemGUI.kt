@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.StrLimit
-import net.spaceeye.vmod.networking.FakePacketContext
+import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
@@ -51,7 +51,7 @@ class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
     }
 }
 
-interface SchemGUI: GUIBuilder {
+interface SchemGUI: GUIBuilder, EGUIBuilder {
     override val itemName get() = SCHEMATIC
 
     var itemsScroll: ScrollComponent?
@@ -115,7 +115,7 @@ interface SchemGUI: GUIBuilder {
         makeScrollItems()
     }
 
-    override fun makeGUISettings(parentWindow: UIContainer) {
+    override fun eMakeGUISettings(parentWindow: UIContainer) {
         this as SchemMode
         this.parentWindow = parentWindow
 

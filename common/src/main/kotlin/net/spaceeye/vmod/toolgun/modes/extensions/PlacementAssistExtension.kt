@@ -21,6 +21,7 @@ import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.util.*
@@ -48,43 +49,43 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import kotlin.math.sign
 
 //TODO revise?
-abstract class PlacementAssistExtension(
+class PlacementAssistExtension(
     showCenteredInBlock: Boolean,
     setPosMode: (PositionModes) -> Unit,
-    setPrecisePlacementAssistSideNum: (Int) -> Unit
+    setPrecisePlacementAssistSideNum: (Int) -> Unit,
+    override val paNetworkingObject: PlacementAssistNetworking,
+    override val paMConstraintBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> MConstraint
 ): PlacementModesExtension(showCenteredInBlock, setPosMode, setPrecisePlacementAssistSideNum),
     PlacementAssistClient, PlacementAssistServerPart, AutoSerializable {
-    override val typeName: String get() = "PlacementAssistExtension"
+    private lateinit var inst: ExtendableToolgunMode
 
-    private lateinit var mode: ExtendableToolgunMode
+    override fun preInit(inst: ExtendableToolgunMode, type: BaseNetworking.EnvType) {
+        this.inst = inst
+        val exts = inst.getExtensionsOfType<BasicConnectionExtension<*>>()
 
-    override fun preInit(mode: ExtendableToolgunMode, type: BaseNetworking.EnvType) {
-        this.mode = mode
-        val exts = mode.getExtensionsOfType<BasicConnectionExtension<*>>()
+        if (exts.isEmpty()) { throw AssertionError("PlacementAssistExtension requires BasicConnectionExtension") }
 
-        if (exts.isEmpty()) { throw AssertionError() }
+        val ext = inst.getExtensionOfType<BasicConnectionExtension<*>>()
 
-        val ext = mode.getExtensionOfType<BasicConnectionExtension<*>>()
-
-        if (ext.primaryFunction != null && ext.secondaryFunction != null) { throw AssertionError() }
+        if (ext.primaryFunction != null && ext.secondaryFunction != null) { throw AssertionError("Both primary and secondary actions of BasicConnectionExtension are used already") }
 
         val activationFn = {mode: ExtendableToolgunMode, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult ->
             mode.getExtensionOfType<PlacementAssistExtension>().activateFunctionPA(level, player, rr)
-            }
+        }
         val clientCallback = { mode: ExtendableToolgunMode ->
             mode.getExtensionOfType<PlacementAssistExtension>().clientHandleMouseClickPA()
             mode.refreshHUD()
         }
 
-        if (ext.primaryFunction == null) {
-            ext.primaryFunction = activationFn
-            ext.primaryClientCallback = clientCallback
-        } else {
+        if (ext.secondaryFunction == null) {
             ext.secondaryFunction = activationFn
             ext.secondaryClientCallback = clientCallback
+        } else {
+            ext.primaryFunction = activationFn
+            ext.primaryClientCallback = clientCallback
         }
 
-        paNetworkingObject.init(mode, type)
+        paNetworkingObject.init(inst, type)
     }
 
     override fun eOnMouseScrollEvent(amount: Double): EventResult {
@@ -93,6 +94,12 @@ abstract class PlacementAssistExtension(
         paAngle.it += paScrollAngle * amount.sign
 
         return EventResult.interruptFalse()
+    }
+
+    override fun eOnKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
+        if (paStage == ThreeClicksActivationSteps.FIRST_RAYCAST) { return false }
+        if (!ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(key, scancode)) { return false }
+        return true
     }
 
     override fun eResetState() {
@@ -253,15 +260,17 @@ open class PlacementAssistNetworking(networkName: String): BaseNetworking<Extend
     }
 }
 
-interface PlacementAssistServerPart: PlacementModesState {
+interface PlacementAssistServerPart {
     var paStage: ThreeClicksActivationSteps
+    var precisePlacementAssistSideNum: Int
+    var posMode: PositionModes
 
     var paAngle: Ref<Double>
 
     var paFirstResult: RaycastFunctions.RaycastResult?
     var paSecondResult: RaycastFunctions.RaycastResult?
 
-    val paMConstraintBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>) -> MConstraint
+    val paMConstraintBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> MConstraint
     val paNetworkingObject: PlacementAssistNetworking
 
     val paDistanceFromBlock: Double
@@ -344,7 +353,7 @@ interface PlacementAssistServerPart: PlacementModesState {
         val shipId1: ShipId = ship1.id
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
-        val constraint = paMConstraintBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult))
+        val constraint = paMConstraintBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult), paDistanceFromBlock)
         level.makeManagedConstraint(constraint){it.addFor(player)}
         paServerResetState()
     }

@@ -17,14 +17,15 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import java.util.function.Supplier
 
-inline fun <reified T: BaseMode> BaseMode.serverTryActivate(
+inline fun <T: BaseMode> BaseMode.serverTryActivate(
     player: Player,
     buf: FriendlyByteBuf,
+    clazz: Class<out T>,
     supplier: Supplier<BaseMode>,
-    noinline fn: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit
+    crossinline fn: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit
 ) = verifyPlayerAccessLevel(player as ServerPlayer) {
     var serverMode = ServerToolGunState.playersStates.getOrPut(player.uuid) { PlayerToolgunState(supplier.get()) }
-    if (serverMode.mode !is T) { serverMode = PlayerToolgunState(supplier.get()); ServerToolGunState.playersStates[player.uuid] = serverMode }
+    if (!clazz.isInstance(serverMode.mode)) { serverMode = PlayerToolgunState(supplier.get()); ServerToolGunState.playersStates[player.uuid] = serverMode }
 
     try {
         serverMode.mode.init(BaseNetworking.EnvType.Server)
@@ -36,20 +37,21 @@ inline fun <reified T: BaseMode> BaseMode.serverTryActivate(
             try {
                 fn(serverMode.mode as T, player.level as ServerLevel, player)
             } catch (e: Exception) {
-                ELOG("Failed to activate function ${fn.javaClass.name} of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
+                ELOG("Failed to activate function of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
             }
         }
     } catch (e: Exception) {
-        ELOG("Failed to activate function ${fn.javaClass.name} of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
+        ELOG("Failed to activate function of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
     }
 }
 
-inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
+inline fun <T : BaseMode> BaseMode.serverRaycastAndActivate(
     player: Player,
     buf: FriendlyByteBuf,
+    clazz: Class<out T>,
     supplier: Supplier<BaseMode>,
-    noinline fn: (T, ServerLevel, ServerPlayer, RaycastFunctions.RaycastResult) -> Unit
-) = serverTryActivate<T>(player, buf, supplier) { item: T, level: ServerLevel, player: ServerPlayer ->
+    crossinline fn: (T, ServerLevel, ServerPlayer, RaycastFunctions.RaycastResult) -> Unit
+) = serverTryActivate<T>(player, buf, clazz, supplier) { item: T, level: ServerLevel, player: ServerPlayer ->
     try {
         val result = RaycastFunctions.raycast(
             level,
@@ -61,6 +63,6 @@ inline fun <reified T : BaseMode> BaseMode.serverRaycastAndActivate(
 
         fn(item, level, player, result)
     } catch (e: Exception) {
-        ELOG("Failed to activate function ${fn.javaClass.name} of ${item.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
+        ELOG("Failed to activate function of ${item.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
     }
 }

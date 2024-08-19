@@ -76,7 +76,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                         ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
                 }.addExtension<ConnectionMode> {
-                    BlockMenuOpeningExtension<ConnectionMode> { inst -> !inst.primaryFirstRaycast }
+                    BlockMenuOpeningExtension<ConnectionMode> { inst -> inst.primaryFirstRaycast }
                 }.addExtension<ConnectionMode> {
                     PlacementAssistExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num}, paNetworkingObj,
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->

@@ -74,8 +74,8 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
                     )
                 }.addExtension<RopeMode> {
                     PlacementModesExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
-                }.addExtension<PhysRopeMode> {
-                    BlockMenuOpeningExtension<PhysRopeMode> { inst -> !inst.primaryFirstRaycast }
+                }.addExtension<RopeMode> {
+                    BlockMenuOpeningExtension<RopeMode> { inst -> inst.primaryFirstRaycast }
                 }
             }
         }

@@ -83,7 +83,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                         ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
                 }.addExtension<HydraulicsMode>{
-                    BlockMenuOpeningExtension<HydraulicsMode> { inst -> !inst.primaryFirstRaycast }
+                    BlockMenuOpeningExtension<HydraulicsMode> { inst -> inst.primaryFirstRaycast }
                 }.addExtension<HydraulicsMode> {
                     PlacementAssistExtension(true, { mode -> it.posMode = mode}, { num -> it.precisePlacementAssistSideNum = num}, HydraulicsNetworking,
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->

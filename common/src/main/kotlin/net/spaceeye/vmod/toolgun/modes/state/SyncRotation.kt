@@ -53,7 +53,7 @@ class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
                         ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
                 }.addExtension<SyncRotation> {
-                    BlockMenuOpeningExtension<SyncRotation> { inst -> !inst.primaryFirstRaycast }
+                    BlockMenuOpeningExtension<SyncRotation> { inst -> inst.primaryFirstRaycast }
                 }
             }
         }

@@ -22,6 +22,7 @@ class ScaleMode: ExtendableToolgunMode(), ScaleGUI, ScaleHUD {
     var scaleAllConnected: Boolean by get(1, true)
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
+        throw RuntimeException("fuck you")
         if (raycastResult.state.isAir) {return}
         level as ServerLevel
         val ship: ServerShip = raycastResult.ship as ServerShip? ?: return

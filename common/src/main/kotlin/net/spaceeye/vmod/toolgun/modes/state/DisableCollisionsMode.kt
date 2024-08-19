@@ -52,7 +52,7 @@ class DisableCollisionsMode: ExtendableToolgunMode(), DisableCollisionHUD, Disab
                         ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
                 }.addExtension<DisableCollisionsMode> {
-                    BlockMenuOpeningExtension<DisableCollisionsMode> { inst -> !inst.primaryFirstRaycast }
+                    BlockMenuOpeningExtension<DisableCollisionsMode> { inst -> inst.primaryFirstRaycast }
                 }
             }
         }

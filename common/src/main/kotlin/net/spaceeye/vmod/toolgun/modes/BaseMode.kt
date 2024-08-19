@@ -48,19 +48,19 @@ interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientEventsHandler 
     fun refreshHUD() { ClientToolGunState.refreshHUD() }
 }
 
-inline fun <reified T: BaseMode> BaseMode.registerConnection(mode: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) =
+inline fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, crossinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) =
     name idWithConnc {
         object : C2SConnection<T>(it, "toolgun_command") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
-                serverRaycastAndActivate<T>(context.player, buf, ToolgunModes.getMode(mode::class), toExecute)
+                serverRaycastAndActivate<T>(context.player, buf, mode::class.java, ToolgunModes.getMode(mode::class), toExecute)
         }
     }
 
-inline fun <reified T: BaseMode> BaseMode.registerConnection(mode: T, name: String, noinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) =
+inline fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, crossinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) =
     name idWithConnc {
         object : C2SConnection<T>(name, "toolgun_command") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
-                serverTryActivate<T>(context.player, buf, ToolgunModes.getMode(mode::class), toExecute)
+                serverTryActivate<T>(context.player, buf, mode::class.java, ToolgunModes.getMode(mode::class), toExecute)
         }
     }
 

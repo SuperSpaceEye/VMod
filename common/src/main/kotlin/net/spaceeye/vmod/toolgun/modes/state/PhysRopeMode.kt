@@ -93,7 +93,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
                 }.addExtension<PhysRopeMode> {
                     PlacementModesExtension(false, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
                 }.addExtension<PhysRopeMode> {
-                    BlockMenuOpeningExtension<PhysRopeMode> { inst -> !inst.primaryFirstRaycast }
+                    BlockMenuOpeningExtension<PhysRopeMode> { inst -> inst.primaryFirstRaycast }
                 }
             }
         }

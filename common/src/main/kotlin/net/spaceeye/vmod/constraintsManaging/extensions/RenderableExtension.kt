@@ -8,6 +8,7 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.MConstraintExtension
 import net.spaceeye.vmod.rendering.RenderingTypes
+import net.spaceeye.vmod.rendering.RenderingTypes.getType
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.Vector3d
@@ -40,7 +41,7 @@ class RenderableExtension(): MConstraintExtension {
     override fun onSerialize(): CompoundTag? {
         val tag = CompoundTag()
         try {
-            tag.putString("rendererType", renderer.typeName)
+            tag.putString("rendererType", renderer.getType())
             tag.putByteArray("renderer", renderer.serialize().accessByteBufWithCorrectSize())
         } catch (e: Exception) { ELOG("FAILED TO SERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}"); return null
         } catch (e: Error) { ELOG("FAILED TO SERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}"); return null }
@@ -51,7 +52,7 @@ class RenderableExtension(): MConstraintExtension {
         if (!tag.contains("renderer")) {return false}
         try {
             val type = tag.getString("rendererType")
-            renderer = RenderingTypes.typeToSupplier(type).get()
+            renderer = RenderingTypes.strTypeToSupplier(type).get()
             renderer.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(tag.getByteArray("renderer"))))
         } catch (e: Exception) { ELOG("FAILED TO DESERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}"); return false
         } catch (e: Error) { ELOG("FAILED TO DESERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}"); return false}
@@ -68,6 +69,4 @@ class RenderableExtension(): MConstraintExtension {
     override fun onDeleteMConstraint(level: ServerLevel) {
         ServerRenderingData.removeRenderer(rID)
     }
-
-    override val typeName: String get() = "RenderableExtension"
 }

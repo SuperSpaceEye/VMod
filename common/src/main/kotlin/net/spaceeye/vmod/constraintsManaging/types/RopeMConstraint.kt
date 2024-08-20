@@ -14,7 +14,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class RopeMConstraint(): TwoShipsMConstraint("RopeMConstraint") {
+class RopeMConstraint(): TwoShipsMConstraint() {
     override lateinit var mainConstraint: VSRopeConstraint
 
     constructor(

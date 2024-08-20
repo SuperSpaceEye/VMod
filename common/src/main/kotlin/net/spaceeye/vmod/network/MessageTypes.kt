@@ -2,30 +2,29 @@ package net.spaceeye.vmod.network
 
 import net.minecraft.nbt.CompoundTag
 import net.spaceeye.vmod.utils.Registry
-import net.spaceeye.vmod.utils.RegistryObject
 
-object MessageTypes: Registry<Message>() {
+object MessageTypes: Registry<Message>(false) {
     init {
-        register(::Signal)
+        register(Signal::class)
     }
 
     fun serialize(msg: Message): CompoundTag {
         val toReturn = CompoundTag()
 
-        toReturn.putString("type", msg.typeName)
+        toReturn.putString("type", typeToString(msg::class.java))
         toReturn.put("data", msg.toNBT())
 
         return toReturn
     }
 
     fun deserialize(tag: CompoundTag): Message {
-        val item = typeToSupplier(tag.getString("type")).get()
+        val item = strTypeToSupplier(tag.getString("type")).get()
         item.fromNBT(tag.getCompound("data"))
         return item
     }
 }
 
-interface Message: RegistryObject {
+interface Message {
     fun toNBT(): CompoundTag
     fun fromNBT(tag: CompoundTag)
 }
@@ -43,6 +42,4 @@ class Signal(): Message {
     override fun fromNBT(tag: CompoundTag) {
         percentage = tag.getDouble("percentage")
     }
-
-    override val typeName = "Signal"
 }

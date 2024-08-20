@@ -25,7 +25,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 import java.util.*
 
-class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint") {
+class PhysRopeMConstraint(): TwoShipsMConstraint() {
     lateinit var constraint: VSRopeConstraint
     override val mainConstraint: VSConstraint get() = constraint
 

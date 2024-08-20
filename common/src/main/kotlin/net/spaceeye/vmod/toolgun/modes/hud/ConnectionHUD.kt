@@ -3,7 +3,7 @@ package net.spaceeye.vmod.toolgun.modes.hud
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
 import net.spaceeye.vmod.toolgun.modes.state.ConnectionMode
 import net.spaceeye.vmod.toolgun.modes.util.SimpleHUD
-import net.spaceeye.vmod.toolgun.modes.util.ThreeClicksActivationSteps.*
+import net.spaceeye.vmod.toolgun.modes.extensions.ThreeClicksActivationSteps.*
 import net.spaceeye.vmod.translate.*
 
 interface ConnectionHUD: SimpleHUD {

@@ -26,7 +26,6 @@ nothing
 ## Add a "wire" thing maybe as an addon to vmod
 
 ## General Code Structure
-* Extract more code from Placement Assist for an easier use
 * Extract more common code (connection/hydraulics)
 * Create "AutoGUIBuilder"
 
@@ -42,9 +41,6 @@ nothing
 
 ## Toolgun Architecture 
 * Make "do" action and its "inverse", so that you can not only undo 
-
-## Toolgun Modes
-* Remake them again to use events for CRI events, reset, etc for an easier additions of PA, etc.
 
 ## Toolgun Menu
 * Expand menu with more GUI components (sliders, drop down options, etc)

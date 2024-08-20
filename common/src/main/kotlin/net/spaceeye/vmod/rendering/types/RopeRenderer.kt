@@ -48,8 +48,6 @@ class RopeRenderer(): BaseRenderer, AutoSerializable {
         this.segments = segments
     }
 
-    override val typeName = "RopeRendering"
-
     override fun renderData(poseStack: PoseStack, camera: Camera) {
         val level = Minecraft.getInstance().level!!
 

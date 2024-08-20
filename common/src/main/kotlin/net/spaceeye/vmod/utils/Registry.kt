@@ -3,24 +3,22 @@ package net.spaceeye.vmod.utils
 import java.util.function.Supplier
 import kotlin.reflect.KClass
 
-interface RegistryObject {
-    val typeName: String
-}
-
 //TODO revise?
-open class ClassRegistry<T> {
+open class Registry<T>(private val useFullNames: Boolean = false) {
     private val typeToSupplier = mutableMapOf<Class<T>, Supplier<T>>()
     private val typeToWrappers = mutableMapOf<Class<T>, MutableList<(T) -> T>>()
     private val suppliers = mutableListOf<Supplier<T>>()
 
-    private val strToIdx = mutableMapOf<String, Int>()
-    private val idxToClass = mutableListOf<Class<T>>()
+    private var strToIdx = mutableMapOf<String, Int>()
+    private var idxToClass = mutableListOf<Class<T>>()
+
+    private fun getName(clazz: Class<*>) = if (useFullNames) clazz.name else clazz.simpleName
 
     fun register(clazz: Class<T>) {
-        if (typeToSupplier.containsKey(clazz)) {throw AssertionError("Type ${clazz.name} was already registered")}
+        if (typeToSupplier.containsKey(clazz)) {throw AssertionError("Type ${getName(clazz)} was already registered")}
 
         idxToClass.add(clazz)
-        strToIdx[clazz.name] = idxToClass.size - 1
+        strToIdx[getName(clazz)] = idxToClass.size - 1
 
         val supplier = Supplier {
             var instance = clazz.getConstructor().newInstance()
@@ -38,69 +36,55 @@ open class ClassRegistry<T> {
     fun typeToSupplier(clazz: Class<T>)
         = typeToSupplier[clazz] ?: throw AssertionError("Type ${clazz.name} wasn't registered")
 
-    fun <TT: Any> register(clazz: KClass<TT>) = register(clazz.java as Class<T>)
-    fun <TT: Any> typeToSupplier(clazz: KClass<TT>) = typeToSupplier(clazz.java as Class<T>)
+    fun register(clazz: KClass<*>) = register(clazz.java as Class<T>)
+    fun typeToSupplier(clazz: KClass<*>) = typeToSupplier(clazz.java as Class<T>)
     inline fun <TT: Any> registerWrapper(clazz: KClass<TT>, crossinline wrapper: (item: TT) -> T) = registerWrapper(clazz.java as Class<T>) { item -> wrapper(item as TT) }
 
-    fun typeToIdx(type: Class<T>): Int? =
-        strToIdx[type.name] ?: run {
+    fun typeToIdx(type: Class<*>): Int =
+        strToIdx[getName(type)] ?: run {
             var superclass = type.superclass
             while (superclass != null) {
-                val idx = strToIdx[superclass.name]
+                val idx = strToIdx[getName(superclass)]
                 if (idx != null) {return@run idx}
                 superclass = superclass.superclass
             }
             null
-        }
-    fun idxToSupplier(idx: Int) = typeToSupplier[idxToClass[idx]]
+        } ?: throw AssertionError("Class ${getName(type)} wasn't registered nor were registered any superclasses")
+    fun idxToSupplier(idx: Int) = typeToSupplier[idxToClass[idx]]!!
     fun idxToType(idx: Int) = idxToClass[idx]
+
+    fun typeToString (type: Class<*>): String = getName(type)
+    fun strTypeToSupplier(strType: String): Supplier<T> { return typeToSupplier[idxToClass[strToIdx[strType] ?: throw AssertionError("Type $strType wasn't registered")]] ?: throw AssertionError("Type $strType wasn't registered") }
+
     fun getSchema(): Map<String, Int> = strToIdx
     fun setSchema(schema: Map<Int, String>) {
         if (!schema.values.containsAll(strToIdx.keys)) {throw AssertionError("Schemas are incompatible")}
         val oldStrToIdx = strToIdx.toMap()
         val oldIdxToClass = idxToClass.toList()
 
-        idxToClass.clear()
-        strToIdx.clear()
+        val maxIdx = schema.keys.max()
+
+        val tIdxToClass = mutableListOf<Class<T>?>()
+        val tStrToIdx = mutableMapOf<String, Int>()
+
+        tIdxToClass.clear()
+        tIdxToClass.addAll(MutableList(maxIdx+1) {null})
+
+        tStrToIdx.clear()
         schema.forEach { (sIdx, sType) ->
-            idxToClass[sIdx] = oldIdxToClass[oldStrToIdx[sType]!!]
-            strToIdx[sType] = sIdx
+            tIdxToClass[sIdx] = oldIdxToClass[oldStrToIdx[sType]!!]
+            tStrToIdx[sType] = sIdx
         }
 
-        val left = oldIdxToClass.toSet().minus(idxToClass.toSet())
+        val left = oldIdxToClass.toSet().minus(tIdxToClass.toSet())
         left.forEach {
-            idxToClass.add(it)
-            strToIdx[it.name] = idxToClass.size - 1
+            tIdxToClass.add(it!!)
+            tStrToIdx[getName(it)] = tIdxToClass.size - 1
         }
+
+        idxToClass = tIdxToClass.map { it!! }.toMutableList()
+        strToIdx = tStrToIdx
     }
 
     fun asList() = suppliers.toList()
-}
-
-//TODO convert all Registry to ClassRegistry
-open class Registry<T: RegistryObject> {
-    private val strToIdx = mutableMapOf<String, Int>()
-    private val idxToStr = mutableMapOf<Int, String>()
-    private val suppliers = mutableListOf<Supplier<T>>()
-
-    fun register(supplier: Supplier<T>) {
-        val type = supplier.get().typeName
-        if (strToIdx[type] != null) {throw AssertionError("Type $type was already registered")}
-
-        suppliers.add(supplier)
-        strToIdx[type] = suppliers.size - 1
-        idxToStr[suppliers.size - 1] = type
-    }
-
-    fun typeToSupplier(type: String) = suppliers[strToIdx[type]!!]
-    fun asList() = suppliers.toList()
-
-    fun typeToIdx(type: String) = strToIdx[type]
-    fun idxToSupplier(idx: Int) = suppliers[idx]
-    fun getSchema(): Map<String, Int> = strToIdx
-    //TODO this will not work
-    fun setSchema(schema: Map<Int, String>) {
-        if (!schema.values.containsAll(strToIdx.keys)) { throw AssertionError("Schemas are incompatible") }
-        schema.forEach {(k, v) -> strToIdx[v] = k}
-    }
 }

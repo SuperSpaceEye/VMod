@@ -19,7 +19,6 @@ import java.util.*
 
 class ServerLimitsSettings: ServerSettingsGUIBuilder {
     override val itemName: TranslatableComponent get() = TranslatableComponent("Server Limits")
-    override val typeName: String get() = "Server Limits"
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         Button(Color(180, 180, 180), "Apply new Server Limits") {

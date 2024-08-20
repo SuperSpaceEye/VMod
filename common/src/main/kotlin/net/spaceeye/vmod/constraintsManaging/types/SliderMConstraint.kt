@@ -14,7 +14,7 @@ import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
 import org.valkyrienskies.core.apigame.constraints.VSConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class SliderMConstraint(): TwoShipsMConstraint("SliderMConstraint") {
+class SliderMConstraint(): TwoShipsMConstraint() {
     lateinit var constraint1: VSAttachmentConstraint
     lateinit var constraint2: VSAttachmentConstraint
     override val mainConstraint: VSConstraint get() = constraint1

@@ -46,8 +46,6 @@ open class A2BRenderer(): BaseRenderer, AutoSerializable {
         this.width = width
     }
 
-    override val typeName = "A2BRenderer"
-
     override fun renderData(poseStack: PoseStack, camera: Camera) {
         val level = Minecraft.getInstance().level!!
 

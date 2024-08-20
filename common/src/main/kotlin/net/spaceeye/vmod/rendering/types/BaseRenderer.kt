@@ -4,12 +4,11 @@ import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
 import net.minecraft.client.renderer.MultiBufferSource
 import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.utils.RegistryObject
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
-interface BaseRenderer: Serializable, RegistryObject {
+interface BaseRenderer: Serializable {
     fun renderData(poseStack: PoseStack, camera: Camera)
     fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer?
     fun scaleBy(by: Double)

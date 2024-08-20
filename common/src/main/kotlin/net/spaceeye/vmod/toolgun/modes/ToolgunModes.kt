@@ -1,10 +1,10 @@
 package net.spaceeye.vmod.toolgun.modes
 
 import net.spaceeye.vmod.toolgun.modes.state.*
-import net.spaceeye.vmod.utils.ClassRegistry
+import net.spaceeye.vmod.utils.Registry
 import kotlin.reflect.KClass
 
-object ToolgunModes: ClassRegistry<BaseMode>() {
+object ToolgunModes: Registry<BaseMode>() {
     init {
         register(ConnectionMode::class)
         register(RopeMode::class)

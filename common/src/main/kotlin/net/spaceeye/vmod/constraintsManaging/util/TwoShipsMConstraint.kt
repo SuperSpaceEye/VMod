@@ -17,7 +17,7 @@ import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
 
-abstract class TwoShipsMConstraint(typeName: String): ExtendableMConstraint(typeName) {
+abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
     abstract val mainConstraint: VSConstraint
 
     val cIDs = mutableListOf<ConstraintId>() // should be used to store VS ids

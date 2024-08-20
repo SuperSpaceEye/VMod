@@ -8,9 +8,9 @@ import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
-import net.spaceeye.vmod.utils.ClassRegistry
+import net.spaceeye.vmod.utils.Registry
 
-object ToolgunExtensions: ClassRegistry<ToolgunModeExtension>() {
+object ToolgunExtensions: Registry<ToolgunModeExtension>() {
     init {
         register(BasicConnectionExtension::class)
         register(PlacementModesExtension::class)

@@ -24,7 +24,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
 
-class HydraulicsMConstraint(): TwoShipsMConstraint("HydraulicsMConstraint"), Tickable {
+class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
     enum class ConnectionMode {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,

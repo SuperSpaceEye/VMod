@@ -15,7 +15,7 @@ import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
 import org.valkyrienskies.core.apigame.constraints.VSTorqueConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class SyncRotationMConstraint(): TwoShipsMConstraint("SyncRotationMConstraint") {
+class SyncRotationMConstraint(): TwoShipsMConstraint() {
     override lateinit var mainConstraint: VSTorqueConstraint
 
     constructor(

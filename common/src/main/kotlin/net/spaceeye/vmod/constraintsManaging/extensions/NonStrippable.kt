@@ -23,5 +23,4 @@ open class NonStrippable: MConstraintExtension {
 
     override fun onMakeMConstraint(level: ServerLevel) {}
     override fun onDeleteMConstraint(level: ServerLevel) {}
-    override val typeName: String get() = "NonStrippable"
 }

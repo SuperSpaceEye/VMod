@@ -20,7 +20,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class ThrusterMConstraint(): ExtendableMConstraint("ThrusterMConstraint"), Tickable {
+class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
     var shipId: ShipId = -1
     var pos = Vector3d()
     var bpos = BlockPos(0, 0, 0)

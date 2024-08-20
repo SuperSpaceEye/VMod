@@ -48,7 +48,12 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 import kotlin.math.sign
 
-//TODO revise?
+enum class ThreeClicksActivationSteps {
+    FIRST_RAYCAST,
+    SECOND_RAYCAST,
+    FINALIZATION
+}
+
 class PlacementAssistExtension(
     showCenteredInBlock: Boolean,
     setPosMode: (PositionModes) -> Unit,

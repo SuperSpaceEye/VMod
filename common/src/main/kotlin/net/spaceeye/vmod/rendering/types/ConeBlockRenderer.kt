@@ -35,8 +35,6 @@ class ConeBlockRenderer(): BlockRenderer, AutoSerializable {
     var rot: Quaterniond by get(2, Quaterniond())
     var scale: Float by get(3, 1.0f)
 
-    override val typeName = "BlockRenderer"
-
     constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId): this() {
         this.pos = pos
         this.rot = rot

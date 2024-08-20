@@ -30,7 +30,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
 
 
     override var wasActivated: Boolean = false
-    override val typeName: String = "TimedA2BRenderer"
 
     constructor(point1: Vector3d,
                 point2: Vector3d,

@@ -8,19 +8,25 @@ import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
+import net.spaceeye.vmod.constraintsManaging.MConstraintTypes
+import net.spaceeye.vmod.constraintsManaging.MExtensionTypes
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
+import net.spaceeye.vmod.network.MessageTypes
 import net.spaceeye.vmod.physgun.ClientPhysgunState
 import net.spaceeye.vmod.physgun.PhysgunItem
 import net.spaceeye.vmod.physgun.ServerPhysgunState
+import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
+import net.spaceeye.vmod.toolgun.modes.ToolgunExtensions
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.sendHUDErrorToOperators
+import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsTypes
 import net.spaceeye.vmod.toolgun.serverSettings.modes.DimensionalGravitySettings
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.closeClientObjects
@@ -47,11 +53,11 @@ object VM {
     @JvmStatic
     fun init() {
         ConfigDelegateRegister.initConfig()
+        initRenderingData()
+        initRegistries()
 
         DimensionalGravitySettings
-        initRenderingData()
         SimpleMessagerNetworking
-        ToolgunModes
         ServerToolGunState
         ServerPhysgunState
         ShipSchematic
@@ -70,6 +76,17 @@ object VM {
     }
 
     var serverStopping = false
+
+    @JvmStatic
+    fun initRegistries() {
+        MConstraintTypes
+        MExtensionTypes
+        MessageTypes
+        RenderingTypes
+        ToolgunExtensions
+        ToolgunModes
+        ServerSettingsTypes
+    }
 
     @JvmStatic
     fun makeEvents() {

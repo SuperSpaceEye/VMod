@@ -19,8 +19,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.*
 
 private fun serializeItem(buf: FriendlyByteBuf, item: Serializable) {
-    item as BaseRenderer
-    buf.writeInt(RenderingTypes.typeToIdx(item.typeName)!!)
+    buf.writeInt(RenderingTypes.typeToIdx(item::class.java as Class<out BaseRenderer>)!!)
     buf.writeByteArray(item.serialize().array())
 }
 

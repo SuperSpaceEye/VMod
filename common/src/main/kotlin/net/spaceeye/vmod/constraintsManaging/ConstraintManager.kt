@@ -9,6 +9,7 @@ import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.WLOG
+import net.spaceeye.vmod.constraintsManaging.MConstraintTypes.getType
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.Serializable
@@ -63,8 +64,8 @@ class ConstraintManager: SavedData() {
                 if (constraint.__saveCounter == saveCounter) { continue }
                 if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
 
-                val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.typeName} with ID ${constraint.mID}"); null } ?: continue
-                ctag.putString("MConstraintType", constraint.typeName)
+                val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.getType()} with ID ${constraint.mID}"); null } ?: continue
+                ctag.putString("MConstraintType", constraint.getType())
                 constraintsTag.add(ctag)
                 constraint.__saveCounter = saveCounter
             }
@@ -94,8 +95,8 @@ class ConstraintManager: SavedData() {
                 for (constraint in group.constraintsToLoad) {
                     if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
 
-                    val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.typeName} with ID ${constraint.mID}"); null } ?: continue
-                    ctag.putString("MConstraintType", constraint.typeName)
+                    val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.getType()} with ID ${constraint.mID}"); null } ?: continue
+                    ctag.putString("MConstraintType", constraint.getType())
                     constraintsTag.add(ctag)
                 }
                 group.wasSaved = true
@@ -159,7 +160,7 @@ class ConstraintManager: SavedData() {
                 ctag as CompoundTag
                 strType = ctag.getString("MConstraintType")
                 val mConstraint = MConstraintTypes
-                    .typeToSupplier(strType)
+                    .strTypeToSupplier(strType)
                     .get()
                     .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${strType}"); null } ?: continue
 
@@ -244,7 +245,7 @@ class ConstraintManager: SavedData() {
         mCon.mID = constraintIdCounter.getID()
 
         tryMakeConstraint(mCon, level, {
-            ELOG("Was not able to create constraint of type ${mCon.typeName} under ID ${mCon.mID}")
+            ELOG("Was not able to create constraint of type ${mCon.getType()} under ID ${mCon.mID}")
             callback(null)
         }) {
             mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
@@ -284,7 +285,7 @@ class ConstraintManager: SavedData() {
 
         mCon.mID = id
         tryMakeConstraint(mCon, level, {
-            ELOG("Was not able to create constraint of type ${mCon.typeName} under ID ${mCon.mID}")
+            ELOG("Was not able to create constraint of type ${mCon.getType()} under ID ${mCon.mID}")
             callback(null)
         }) {
             mCon.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipsConstraints.computeIfAbsent(it) { mutableListOf() }.add(mCon) }
@@ -484,8 +485,8 @@ class ConstraintManager: SavedData() {
                     val constraints = instance.shipsConstraints[ship.id]!!
                     for (constraint in constraints) {
                         if (constraint.__saveCounter == instance.saveCounter) { continue }
-                        val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.typeName} with ID ${constraint.mID}"); null } ?: continue
-                        ctag.putString("MConstraintType", constraint.typeName)
+                        val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.getType()} with ID ${constraint.mID}"); null } ?: continue
+                        ctag.putString("MConstraintType", constraint.getType())
                         constraintsTag.add(ctag)
                         constraint.__saveCounter = instance.saveCounter
                     }
@@ -523,7 +524,7 @@ class ConstraintManager: SavedData() {
                         ctag as CompoundTag
                         strType = ctag.getString("MConstraintType")
                         val mConstraint = MConstraintTypes
-                            .typeToSupplier(strType)
+                            .strTypeToSupplier(strType)
                             .get()
                             .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${strType}"); null } ?: continue
 

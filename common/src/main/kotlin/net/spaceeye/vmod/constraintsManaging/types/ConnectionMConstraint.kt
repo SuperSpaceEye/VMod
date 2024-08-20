@@ -19,7 +19,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class ConnectionMConstraint(): TwoShipsMConstraint("ConnectionMConstraint") {
+class ConnectionMConstraint(): TwoShipsMConstraint() {
     enum class ConnectionModes {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,

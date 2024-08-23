@@ -68,9 +68,9 @@ class ToggleButton(
     buttonName: String, defaultState:
     Boolean, text_scale: Float = 1f,
     var animationTime: Float = 0.5f,
-    fnToActivate: (state: Boolean) -> Unit
-): UIBlock(baseColor) {
-    var activeColor = baseColor
+    val fnToActivate: (state: Boolean) -> Unit
+): UIBlock(if (defaultState) activatedColor else baseColor) {
+    var activeColor = if (defaultState) activatedColor else baseColor
     var state = defaultState
 
     fun setDisplay(activated: Boolean) {
@@ -78,6 +78,14 @@ class ToggleButton(
             true -> activatedColor
             false -> baseColor
         }
+    }
+
+    fun setBtnState(state: Boolean) {
+        this.state = state
+
+        setDisplay(state)
+        fnToActivate(state)
+        updateColor()
     }
 
     fun updateColor() {
@@ -117,11 +125,7 @@ class ToggleButton(
             }
         }
         onMouseClick {
-            state = !state
-
-            setDisplay(state)
-            fnToActivate(state)
-            updateColor()
+            setBtnState(!state)
         }
 
         UIText(buttonName, shadow = false).constrain {

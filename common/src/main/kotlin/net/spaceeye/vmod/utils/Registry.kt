@@ -87,4 +87,5 @@ open class Registry<T>(private val useFullNames: Boolean = false) {
     }
 
     fun asList() = suppliers.toList()
+    fun asTypesList() = idxToClass.toList()
 }

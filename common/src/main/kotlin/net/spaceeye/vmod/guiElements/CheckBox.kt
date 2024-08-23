@@ -16,13 +16,18 @@ class CheckBox(
     baseColor: Color,
     activatedColor: Color,
     name: String,
-    //TODO activated doesn't actually work
     activated: Boolean = false,
     animationTime: Float = 0.5f,
     fnToActivate: (state: Boolean) -> Unit
     ): UIContainer() {
     val holder: UIBlock
     val textArea: UIWrappedText
+
+    fun setState(state: Boolean) {
+        btn.setBtnState(state)
+    }
+
+    private val btn: ToggleButton
 
     init {
         constrain {
@@ -45,7 +50,7 @@ class CheckBox(
             color = Color(0, 0, 0).toConstraint()
         } childOf holder
 
-        ToggleButton(baseColor, activatedColor, " ", activated, animationTime = animationTime) {
+        btn = ToggleButton(baseColor, activatedColor, " ", activated, animationTime = animationTime) {
             fnToActivate(it)
         }.constrain {
             x = SiblingConstraint(2f)

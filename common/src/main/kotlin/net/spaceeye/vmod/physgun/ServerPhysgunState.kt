@@ -120,6 +120,9 @@ object ServerPhysgunState: ServerClosable() {
                 state.rID = -1
                 return@regC2S
             }
+            if (state.mainShipId == -1L && (state.freezeSelected || state.rotate)) {
+                return@regC2S
+            }
             if (state.mainShipId == -1L) {
                 activelySeeking.add(player.uuid)
                 return@regC2S

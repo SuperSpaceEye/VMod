@@ -18,6 +18,7 @@ import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes.getPermission
 import net.spaceeye.vmod.translate.REMOVED
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.ServerClosable
@@ -53,8 +54,16 @@ object ServerToolGunState: ServerClosable() {
                 ||  ToolgunPermissionManager.getAllowedPlayers().contains(player.uuid)
     }
 
-    @JvmStatic inline fun <T> verifyPlayerAccessLevel(player: ServerPlayer, fn: () -> T) {
+    @JvmStatic inline fun verifyPlayerAccessLevel(player: ServerPlayer, fn: () -> Unit) {
         if (!playerHasAccess(player)) {
+            s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
+            return
+        }
+        fn()
+    }
+
+    @JvmStatic fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
+        if (!PlayerAccessManager.hasPermission(player, clazz.getPermission())) {
             s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
             return
         }
@@ -192,6 +201,7 @@ object ServerToolGunState: ServerClosable() {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = C2SAskIfIHaveAccess(); pkt.deserialize(buf)
                 val player = context.player as ServerPlayer
+                //TODO this is dumb
                 val generalAccess = playerHasAccess(player)
 
                 if (!generalAccess) { return s2cResponseToAccessRequest.sendToClient(player, S2CResponseToAccessRequest(pkt.accessTo, pkt.callbackId, false)) }

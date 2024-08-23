@@ -61,15 +61,11 @@ class PhysgunController: ShipForcesInducer {
         }
         rotDiffVector -= Vector3d(physShip.poseVel.omega).smul(dConst)
 
-        val torque = shipsToInfluence.map { ship ->
-            ship as PhysShipImpl
-            ship.poseVel.rot.transform(
-                ship.inertia.momentOfInertiaTensor.transform(
-                    ship.poseVel.rot.transformInverse(rotDiffVector.toJomlVector3d()
-                    )
-                )
+        val torque = physShip.poseVel.rot.transform(
+            physShip.inertia.momentOfInertiaTensor.transform(
+                physShip.poseVel.rot.transformInverse(rotDiffVector.toJomlVector3d())
             )
-        }.reduce { acc, vector3d -> acc.add(vector3d) ; acc }
+        )
 
         physShip.applyInvariantTorque(torque)
 

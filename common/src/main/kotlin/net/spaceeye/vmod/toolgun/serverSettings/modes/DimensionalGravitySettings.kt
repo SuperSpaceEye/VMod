@@ -22,7 +22,6 @@ import net.spaceeye.vmod.vsStuff.VSGravityManager
 import java.awt.Color
 
 class DimensionalGravitySettings: ServerSettingsGUIBuilder {
-    //TODO
     override val itemName: TranslatableComponent get() = TranslatableComponent("Dimensional Gravity")
 
     override fun makeGUISettings(parentWindow: UIContainer) {

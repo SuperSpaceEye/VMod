@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes
 
+import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.modes.state.*
 import net.spaceeye.vmod.utils.Registry
 import kotlin.reflect.KClass
@@ -22,8 +23,18 @@ object ToolgunModes: Registry<BaseMode>() {
         register(ShipRemoverMode::class)
 
         ToolgunExtensions
+        initAccessPermissions()
     }
 
     @JvmStatic
     fun <T: BaseMode> getMode(clazz: KClass<T>) = this.typeToSupplier(clazz)
+
+    private fun initAccessPermissions() {
+        asTypesList().forEach {
+            PlayerAccessManager.addPermission("Allow ${it.simpleName}")
+        }
+    }
+
+    @JvmStatic
+    fun Class<BaseMode>.getPermission() = "Allow ${this.simpleName}"
 }

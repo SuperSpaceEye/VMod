@@ -12,22 +12,13 @@ import org.valkyrienskies.physics_api.ConstraintId
 
 object VSConstraintsTracker: ServerClosable() {
     val idToShips = mutableMapOf<Int, Pair<ShipId, ShipId>>()
-    val shipToIds = mutableMapOf<ShipId, MutableList<Int>>()
+    val shipToIds: Map<Long, Set<Int>> get() = (ServerLevelHolder.shipObjectWorld!! as ShipObjectWorldAccessor).shipIdToConstraints
 
     fun addNewConstraint(constraint: VSConstraint, constraintId: VSConstraintId) {
-        shipToIds.getOrPut(constraint.shipId0) { mutableListOf() }.add(constraintId)
-        shipToIds.getOrPut(constraint.shipId1) { mutableListOf() }.add(constraintId)
-
         idToShips[constraintId] = Pair(constraint.shipId0, constraint.shipId1)
     }
 
     fun removeConstraint(constraint: VSConstraint, constraintId: ConstraintId) {
-        val one = shipToIds[constraint.shipId0]
-        if (one != null) {one.remove(constraintId); if (one.isEmpty()) {shipToIds.remove(constraint.shipId0)}}
-
-        val two = shipToIds[constraint.shipId1]
-        if (two != null) {two.remove(constraintId); if (two.isEmpty()) {shipToIds.remove(constraint.shipId1)}}
-
         idToShips.remove(constraintId)
     }
 
@@ -41,15 +32,14 @@ object VSConstraintsTracker: ServerClosable() {
 
     fun getVSConstraints(ids: List<VSConstraintId>): List<Pair<VSConstraintId, VSConstraint?>> {
         val acc = ServerLevelHolder.server!!.shipObjectWorld as ShipObjectWorldAccessor
-        return ids.map { Pair(it, acc.constraintsAcc[it]) }
+        return ids.map { Pair(it, acc.constraints[it]) }
     }
 
-    fun getIdsOfShip(shipId: ShipId): List<Int> {
-        return shipToIds.getOrDefault(shipId, listOf())
+    fun getIdsOfShip(shipId: ShipId): Set<Int> {
+        return shipToIds.getOrDefault(shipId, setOf())
     }
 
     override fun close() {
-        shipToIds.clear()
         idToShips.clear()
     }
 }

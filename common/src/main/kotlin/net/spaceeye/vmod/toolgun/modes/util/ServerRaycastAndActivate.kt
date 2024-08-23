@@ -23,7 +23,7 @@ inline fun <T: BaseMode> BaseMode.serverTryActivate(
     clazz: Class<out T>,
     supplier: Supplier<BaseMode>,
     crossinline fn: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit
-) = verifyPlayerAccessLevel(player as ServerPlayer) {
+) = verifyPlayerAccessLevel(player as ServerPlayer, clazz as Class<BaseMode>) {
     var serverMode = ServerToolGunState.playersStates.getOrPut(player.uuid) { PlayerToolgunState(supplier.get()) }
     if (!clazz.isInstance(serverMode.mode)) { serverMode = PlayerToolgunState(supplier.get()); ServerToolGunState.playersStates[player.uuid] = serverMode }
 

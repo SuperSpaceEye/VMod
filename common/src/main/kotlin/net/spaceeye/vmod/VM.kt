@@ -20,20 +20,18 @@ import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.toolgun.ToolgunItem
+import net.spaceeye.vmod.toolgun.*
 import net.spaceeye.vmod.toolgun.modes.ToolgunExtensions
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
-import net.spaceeye.vmod.toolgun.sendHUDErrorToOperators
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsTypes
-import net.spaceeye.vmod.toolgun.serverSettings.modes.DimensionalGravitySettings
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.valkyrienskies.core.impl.game.ships.ShipObjectServerWorld
+import org.valkyrienskies.mod.common.shipObjectWorld
 
 fun ILOG(s: String) = VM.logger.info(s)
 fun WLOG(s: String) = VM.logger.warn(s)
@@ -56,7 +54,6 @@ object VM {
         initRenderingData()
         initRegistries()
 
-        DimensionalGravitySettings
         SimpleMessagerNetworking
         ServerToolGunState
         ServerPhysgunState
@@ -111,9 +108,11 @@ object VM {
             serverStopping = false
             ServerLevelHolder.server = server
             ServerLevelHolder.overworldServerLevel = server.overworld()
+            ServerLevelHolder.shipObjectWorld = server.shipObjectWorld as ShipObjectServerWorld
             ConstraintManager.initNewInstance()
 
             VSGravityManager
+            PlayerAccessManager.afterInit()
         }
 
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {

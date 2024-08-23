@@ -25,7 +25,7 @@ interface Serializable {
     fun serialize(): FriendlyByteBuf
     fun deserialize(buf: FriendlyByteBuf)
 
-    fun getBuffer() = FriendlyByteBuf(Unpooled.buffer(512))
+    fun getBuffer() = FriendlyByteBuf(Unpooled.buffer(64))
 }
 
 private val hasher = MessageDigest.getInstance("MD5")
@@ -94,6 +94,18 @@ abstract class S2CConnection<T : Serializable>(id: String, connectionName: Strin
     fun sendToClients(players: Iterable<ServerPlayer>, packet: T) = NetworkManager.sendToPlayers(players, id, packet.serialize())
 }
 
+inline fun <reified T: Serializable>makeC2S(name: String, connName: String, crossinline doProcess: (ServerPlayer) -> Boolean, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
+    object : C2SConnection<T>(name, connName) {
+        override fun serverHandler(buf: FriendlyByteBuf, context: PacketContext) {
+            val player = context.player as ServerPlayer
+            if (!doProcess(player)) {return}
+
+            val pkt = T::class.java.getConstructor().newInstance()
+            pkt.deserialize(buf)
+            fn(pkt, context.player as ServerPlayer)
+        }
+    }
+
 inline fun <reified T: Serializable>makeC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
     object : C2SConnection<T>(name, connName) {
         override fun serverHandler(buf: FriendlyByteBuf, context: PacketContext) {
@@ -112,6 +124,7 @@ inline fun <reified T: Serializable>makeS2C(name: String, connName: String, cros
         }
     }
 
+inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline doProcess: (ServerPlayer) -> Boolean, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(it, connName, doProcess, fn)}
 inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(it, connName, fn)}
 inline fun <reified T: Serializable>regS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C(it, connName, fn)}
 

@@ -16,6 +16,8 @@ import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
+import kotlin.math.ceil
+import kotlin.math.max
 
 class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     enum class StripModes {
@@ -23,7 +25,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         StripInRadius
     }
 
-    var radius: Int by get(0, 1, {ServerLimits.instance.stripRadius.get(it as Int)})
+    var radius: Double by get(0, 1.0, {ServerLimits.instance.stripRadius.get(it as Double)})
     var mode: StripModes by get(1, StripModes.StripAll)
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
@@ -48,7 +50,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         val instance = ConstraintManager.getInstance()
 
         val b = raycastResult.blockPosition
-        val r = radius
+        val r = max(ceil(radius).toInt(), 1)
 
         for (x in b.x-r .. b.x+r) {
         for (y in b.y-r .. b.y+r) {
@@ -56,13 +58,19 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
             val list = instance.tryGetIdsOfPosition(BlockPos(x, y, z)) ?: continue
             val temp = mutableListOf<ManagedConstraintId>()
             temp.addAll(list)
-            temp.forEach {
-                val mc = level.getManagedConstraint(it)
+            temp.forEach {const ->
+                val mc = level.getManagedConstraint(const)
+                //TODO make "Strippable" instead of NonStrippable
                 if (mc is ExtendableMConstraint && mc.getExtensionsOfType<NonStrippable>().isNotEmpty()) { return@forEach }
-                level.removeManagedConstraint(it)
+                mc!!.getAttachmentPoints().forEach {
+                    if ((it - raycastResult.globalHitPos!!).dist() <= radius) {
+                        level.removeManagedConstraint(const)
+                    }
+                }
             }
         } } }
     }
+
 
     companion object {
         init {

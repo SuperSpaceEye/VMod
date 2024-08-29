@@ -4,6 +4,7 @@ import dev.architectury.networking.NetworkManager
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.*
@@ -33,7 +34,7 @@ class ServerLimitsInstance: AutoSerializable {
     val extensionDistance: DoubleLimit by get(3, DoubleLimit(0.001))
     val extensionSpeed: DoubleLimit by get(4, DoubleLimit(0.001))
     val distanceFromBlock: DoubleLimit by get(5, DoubleLimit(0.0001))
-    val stripRadius: IntLimit by get(6, IntLimit(1, 10))
+    val stripRadius: DoubleLimit by get(6, DoubleLimit(0.0, 10.0))
     val scale: DoubleLimit by get(7, DoubleLimit(0.001))
     val precisePlacementAssistSides: IntLimit by get(8, IntLimit(2, 11))
 
@@ -73,7 +74,14 @@ object ServerLimits {
             return
         }
         val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
-        _instance.deserialize(buf)
+        try {
+            val temp = ServerLimitsInstance()
+            temp.deserialize(buf)
+            _instance = temp
+        } catch (e: Exception) {
+            ELOG("Failed to deserialize Server Limits")
+            save(_instance)
+        }
     }
 
     fun updateFromServer() { c2sRequestServerLimits.sendToServer(EmptyPacket()) }

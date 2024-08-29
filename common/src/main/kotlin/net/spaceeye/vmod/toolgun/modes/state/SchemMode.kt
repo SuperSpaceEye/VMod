@@ -424,6 +424,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
 
     companion object {
         init {
+            SchemNetworking
             ToolgunModes.registerWrapper(SchemMode::class) {
                 it.addExtension<SchemMode> {
                     BasicConnectionExtension<SchemMode>("schem_mode"

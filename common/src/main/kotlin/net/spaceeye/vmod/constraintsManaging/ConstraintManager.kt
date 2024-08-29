@@ -303,11 +303,12 @@ class ConstraintManager: SavedData() {
         return posToMId.getItemsAt(pos)
     }
 
-    fun disableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId, callback: (() -> Unit)? = null) {
-        level.shipObjectWorld.disableCollisionBetweenBodies(shipId1, shipId2)
+    fun disableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId, callback: (() -> Unit)? = null): Boolean {
+        if (!level.shipObjectWorld.disableCollisionBetweenBodies(shipId1, shipId2)) { return false }
 
         idToDisabledCollisions.getOrPut(shipId1) { mutableMapOf() }.compute (shipId2) { _, pair-> if (pair == null) { MutablePair(1, mutableListOf(callback)) } else { pair.left++; pair.right.add(callback); pair } }
         idToDisabledCollisions.getOrPut(shipId2) { mutableMapOf() }.compute (shipId1) { _, pair-> if (pair == null) { MutablePair(1, mutableListOf(callback)) } else { pair.left++; pair.right.add(callback); pair } }
+        return true
     }
 
     fun enableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId) {

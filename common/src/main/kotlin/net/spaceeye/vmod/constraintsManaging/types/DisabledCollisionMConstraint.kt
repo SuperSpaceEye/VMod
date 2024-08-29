@@ -48,13 +48,12 @@ class DisabledCollisionMConstraint(): MConstraint {
 
     private var beingRemoved = false
     override fun onMakeMConstraint(level: ServerLevel): Boolean {
-        level.disableCollisionBetween(shipId1, shipId2) {
+        return level.disableCollisionBetween(shipId1, shipId2) {
             if (!beingRemoved) {
                 beingRemoved = true
                 level.removeManagedConstraint(this)
             }
         }
-        return true
     }
     override fun onDeleteMConstraint(level: ServerLevel) {
         beingRemoved = true

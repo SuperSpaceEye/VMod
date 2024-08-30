@@ -41,6 +41,7 @@ nothing
 
 ## Toolgun Architecture 
 * Make "do" action and its "inverse", so that you can not only undo 
+* Remove NonStrippable and make ToolgunStrippable instead
 
 ## Toolgun Menu
 * Expand menu with more GUI components (sliders, drop down options, etc)

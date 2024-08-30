@@ -168,7 +168,8 @@ class ConstraintManager: SavedData() {
 
                 constraints.add(mConstraint)
                 count++
-                } catch (e: Exception) { ELOG("Failed to load constraint of type $strType\n${e.stackTraceToString()}") }
+                } catch (e: Exception) { ELOG("Failed to load constraint of type $strType\n${e.stackTraceToString()}")
+                } catch (e: Error    ) { ELOG("Failed to load constraint of type $strType\n${e.stackTraceToString()}")}
             }
             toLoadConstraints[shipId.toLong()] = constraints
         }
@@ -533,7 +534,8 @@ class ConstraintManager: SavedData() {
 
                         constraints.add(mConstraint)
                         count++
-                        } catch (e: Exception) { ELOG("Failed to load constraint of type ${strType}\n${e.stackTraceToString()}") }
+                        } catch (e: Exception) { ELOG("Failed to load constraint of type ${strType}\n${e.stackTraceToString()}")
+                        } catch (e: Error    ) { ELOG("Failed to load constraint of type $strType\n${e.stackTraceToString()}")}
                     }
                     toInitConstraints.addAll(constraints)
                 }

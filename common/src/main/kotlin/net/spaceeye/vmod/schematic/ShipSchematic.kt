@@ -99,7 +99,7 @@ object ShipSchematic {
     fun getGlobalMap(name: String): Map<String, Any>? = allEvents[name]?.globalMap
 
     // Is called on copy, before blocks were copied
-    internal fun onCopy(level: ServerLevel, shipsToBeSaved: List<ServerShip>): List<Pair<String, Serializable>> {
+    fun onCopy(level: ServerLevel, shipsToBeSaved: List<ServerShip>): List<Pair<String, Serializable>> {
         val toRemove = mutableListOf<String>()
         val toReturn = mutableListOf<Pair<String, Serializable>>()
 
@@ -128,7 +128,7 @@ object ShipSchematic {
     }
 
     // Is called after all ServerShips are created, but blocks haven't been placed yet, so VS didn't "create them"
-    internal fun onPasteBeforeBlocksAreLoaded(level: ServerLevel, emptyShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, Serializable>>) {
+    fun onPasteBeforeBlocksAreLoaded(level: ServerLevel, emptyShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, Serializable>>) {
         val toRemove = mutableListOf<String>()
         val filesMap = files.toMap()
 
@@ -154,7 +154,7 @@ object ShipSchematic {
     }
 
     // Is called after all ServerShips are created with blocks placed in shipyard
-    internal fun onPasteAfterBlocksAreLoaded(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, Serializable>>) {
+    fun onPasteAfterBlocksAreLoaded(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, files: List<Pair<String, Serializable>>) {
         val toRemove = mutableListOf<String>()
         val filesMap = files.toMap()
 

@@ -8,9 +8,19 @@ import net.minecraft.world.level.block.state.BlockState
 import org.valkyrienskies.core.api.ships.ServerShip
 
 interface ICopyableBlock {
+    /**
+     * Should be called on copy
+     * @return If returns tag, then copy fn should save that tag. If returns null, then copy fn should get save tag from block entity itself.
+     */
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, be: BlockEntity?, shipsBeingCopied: List<ServerShip>): CompoundTag?
-    // calling delayLoading will delay loading of block entity until all ship blocks were created
-    // return of this function is a callback that will be called after all ships were created and all delayed block entities were loaded
-    fun onPaste(level: ServerLevel, pos: BlockPos, state: BlockState, oldToNewId: Map<Long, Long>, tag: CompoundTag?, delayLoading: () -> Unit): ((BlockEntity?) -> Unit)?
-    fun onPasteNoTag(level: ServerLevel, pos: BlockPos, state: BlockState, oldToNewId: Map<Long, Long>) {}
+    /**
+     * Should be called after all ships are created and all blocks are placed, but block entities are not loaded.
+     * @param finalCallbackAdder Allows adding a callback that will be called after all ships were created, all blocks were placed, and all block entities were loaded
+     */
+    fun onPaste(level: ServerLevel, pos: BlockPos, state: BlockState, oldShipIdToNewId: Map<Long, Long>, tag: CompoundTag?, finalCallbackAdder: (callback: (BlockEntity?) -> Unit) -> Unit)
+
+    /**
+     * Should be called for simple blocks
+     */
+    fun onPasteNoTag(level: ServerLevel, pos: BlockPos, state: BlockState, oldShipIdToNewId: Map<Long, Long>) {}
 }

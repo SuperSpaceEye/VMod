@@ -4,6 +4,7 @@ import dev.architectury.event.events.common.TickEvent
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.chunk.LevelChunk
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
@@ -46,7 +47,7 @@ object SchematicActionsQueue: ServerClosable() {
         var currentChunk = 0
 
         var afterPasteCallbacks = mutableListOf<() -> Unit>()
-        var delayedBlockEntityLoading = mutableListOf<() -> Unit>()
+        var delayedBlockEntityLoading = SchemBlockData<() -> Unit>()
 
         private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: SchemBlockData<BlockItem>, blockPalette: BlockPaletteHashMapV1, flatExtraData: List<CompoundTag>, offset: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
@@ -64,20 +65,18 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.putInt("y", pos.y)
                     tag.putInt("z", pos.z)
 
-                    var delayLoading = false
-                    val bcb = if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag) { delayLoading = true } else null
-                    val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state) { delayLoading = true }
-                    val fn = {
+                    var bcb: ((BlockEntity?) -> Unit)? = null
+                    if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag) { bcb = it }
+                    val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state)
+                    delayedBlockEntityLoading.add(pos.x, pos.y, pos.z) {
                         val be = level.getChunkAt(pos).getBlockEntity(pos)
                         be?.load(tag) ?: run {
                             ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
                         }
-                        cb?.let { afterPasteCallbacks.add { cb(be) } }
-                        bcb?.let { afterPasteCallbacks.add { bcb(be) } }
+                        cb?.let  { afterPasteCallbacks.add { it(be) } }
+                        bcb?.let { afterPasteCallbacks.add { it(be) } }
                         Unit
                     }
-                    if (!delayLoading) {fn(); return@chunkForEach}
-                    delayedBlockEntityLoading.add(fn)
                 }
             }
         }
@@ -109,7 +108,7 @@ object SchematicActionsQueue: ServerClosable() {
                 currentShip++
                 if (getNow_ms() - start > timeout) { return false }
             }
-            delayedBlockEntityLoading.forEach { it() }
+            delayedBlockEntityLoading.forEach { _, _, _, it -> it() }
             afterPasteCallbacks.forEach { it() }
 
             return true

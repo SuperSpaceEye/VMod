@@ -154,7 +154,7 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
 
         tag!!.putUUID("VMOD SCHEM COMPAT", syncUUID)
     }
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: () -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (!tag.contains("VMOD SCHEM COMPAT")) {return}
         val syncUUID = tag.getUUID("VMOD SCHEM COMPAT")
 

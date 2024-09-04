@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.containers.ShipSchematicV1
-import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
+import net.spaceeye.vmod.schematic.api.interfaces.IShipSchematic
 import org.valkyrienskies.core.api.ships.ServerShip
 import java.util.function.Supplier
 
@@ -32,18 +32,21 @@ private data class Events(
 )
 
 object ShipSchematic {
+    //TODO redo
     const val currentSchematicVersion: Int = 1
 
+    //TODO redo
     private val schematicVersions = mapOf<Int, Supplier<IShipSchematic>>(
             Pair(1, Supplier { ShipSchematicV1() } )
     )
 
-
+    //TODO redo
     fun getSchematicConstructor(version: Int = currentSchematicVersion): Supplier<IShipSchematic> {
         val schem = schematicVersions[version] ?: throw AssertionError("Invalid schematic version")
         return schem
     }
 
+    //TODO redo
     fun getSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
         val buffer = Unpooled.wrappedBuffer(bytes)
 

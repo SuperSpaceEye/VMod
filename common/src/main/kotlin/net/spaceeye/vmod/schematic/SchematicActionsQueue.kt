@@ -9,8 +9,12 @@ import net.minecraft.world.level.chunk.LevelChunk
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
+import net.spaceeye.vmod.schematic.api.containers.v1.SchemBlockData
+import net.spaceeye.vmod.schematic.api.containers.v1.BlockItem
+import net.spaceeye.vmod.schematic.api.interfaces.IBlockStatePalette
 import net.spaceeye.vmod.schematic.containers.*
-import net.spaceeye.vmod.schematic.icontainers.ICopyableBlock
+import net.spaceeye.vmod.schematic.api.interfaces.ICopyableBlock
+import net.spaceeye.vmod.schematic.api.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
 import org.joml.primitives.AABBi
@@ -33,13 +37,13 @@ object SchematicActionsQueue: ServerClosable() {
 
     fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
 
-    fun queueShipsCreationEvent(level: ServerLevel, uuid: UUID, ships: List<Pair<ServerShip, Long>>, schematicV1: ShipSchematicV1, postPlacementFn: () -> Unit) {
+    fun queueShipsCreationEvent(level: ServerLevel, uuid: UUID, ships: List<Pair<ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: () -> Unit) {
         placeData[uuid] = SchemPlacementItem(level, schematicV1, ships, postPlacementFn)
     }
 
     class SchemPlacementItem(
         val level: ServerLevel,
-        val schematicV1: ShipSchematicV1,
+        val schematicV1: IShipSchematicDataV1,
         val ships: List<Pair<ServerShip, Long>>,
         val postPlacementFn: () -> Unit
     ) {
@@ -49,7 +53,7 @@ object SchematicActionsQueue: ServerClosable() {
         var afterPasteCallbacks = mutableListOf<() -> Unit>()
         var delayedBlockEntityLoading = SchemBlockData<() -> Unit>()
 
-        private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: SchemBlockData<BlockItem>, blockPalette: BlockPaletteHashMapV1, flatExtraData: List<CompoundTag>, offset: MVector3d) {
+        private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: SchemBlockData<BlockItem>, blockPalette: IBlockStatePalette, flatTagData: List<CompoundTag>, offset: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
                 val pos = BlockPos(x + offset.x, y + offset.y, z + offset.z)
                 val state = blockPalette.fromId(it.paletteId) ?: run {
@@ -60,7 +64,7 @@ object SchematicActionsQueue: ServerClosable() {
                 level.getChunkAt(pos).setBlockState(pos, state, false)
                 if (block is ICopyableBlock) block.onPasteNoTag(level, pos, state, oldToNewId)
                 if (it.extraDataId != -1) {
-                    val tag = flatExtraData[it.extraDataId]
+                    val tag = flatTagData[it.extraDataId]
                     tag.putInt("x", pos.x)
                     tag.putInt("y", pos.y)
                     tag.putInt("z", pos.z)
@@ -86,7 +90,7 @@ object SchematicActionsQueue: ServerClosable() {
                 val ship = ships[currentShip].first
                 val currentBlockData = schematicV1.blockData[ships[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
                 val blockPalette = schematicV1.blockPalette
-                val flatExtraData = schematicV1.flatExtraData.map { it.copy() }
+                val flatExtraData = schematicV1.flatTagData.map { it.copy() }
                 val oldToNewId = ships.associate { Pair(it.second, it.first.id) }
                 currentBlockData.updateKeys()
 
@@ -119,7 +123,7 @@ object SchematicActionsQueue: ServerClosable() {
         level: ServerLevel,
         uuid: UUID,
         ships: List<ServerShip>,
-        schematicV1: ShipSchematicV1,
+        schematicV1: IShipSchematicDataV1,
         padBoundary: Boolean,
         postPlacementFn: () -> Unit) {
         saveData[uuid] = SchemSaveItem(level, schematicV1, ships, postPlacementFn, padBoundary)
@@ -127,7 +131,7 @@ object SchematicActionsQueue: ServerClosable() {
 
     class SchemSaveItem(
         val level: ServerLevel,
-        val schematicV1: ShipSchematicV1,
+        val schematicV1: IShipSchematicDataV1,
         val ships: List<ServerShip>,
         val postCopyFn: () -> Unit,
         val padBoundary: Boolean
@@ -146,7 +150,7 @@ object SchematicActionsQueue: ServerClosable() {
         var cz = 0
 
         private fun saveChunk(level: ServerLevel, chunk: LevelChunk, ships: List<ServerShip>,
-                              data: SchemBlockData<BlockItem>, flatExtraData: MutableList<CompoundTag>, blockPalette: BlockPaletteHashMapV1,
+                              data: SchemBlockData<BlockItem>, flatExtraData: MutableList<CompoundTag>, blockPalette: IBlockStatePalette,
                               chunkMin: BlockPos, cX: Int, cZ: Int,
                               minX: Int, maxX: Int, minZ: Int, maxZ: Int, minY: Int, maxY: Int) {
             for (y in minY until maxY) {
@@ -185,7 +189,7 @@ object SchematicActionsQueue: ServerClosable() {
 
         fun save(start: Long, timeout: Long): Boolean {
             val blockData = schematicV1.blockData
-            val fed = schematicV1.flatExtraData
+            val fed = schematicV1.flatTagData
             val blockPalette = schematicV1.blockPalette
 
             while (currentShip < ships.size) {

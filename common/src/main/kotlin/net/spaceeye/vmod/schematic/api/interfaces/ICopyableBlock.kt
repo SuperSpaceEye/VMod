@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.schematic.icontainers
+package net.spaceeye.vmod.schematic.api.interfaces
 
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag

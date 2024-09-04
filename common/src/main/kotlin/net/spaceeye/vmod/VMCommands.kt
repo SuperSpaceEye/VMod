@@ -15,6 +15,7 @@ import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.minecraft.network.chat.TextComponent
 import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.schematic.interfaces.SchemPlaceAtMakeFrom
 import net.spaceeye.vmod.shipForceInducers.GravityController
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
@@ -157,6 +158,7 @@ object VMCommands {
             ELOG("failed to place schematic because it's null.")
             return 1
         }
+        schem as SchemPlaceAtMakeFrom
 
         placeUUID = UUID(placeUUID.mostSignificantBits, placeUUID.leastSignificantBits + 1)
 

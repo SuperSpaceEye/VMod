@@ -21,10 +21,10 @@ import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.containers.ShipInfo
-import net.spaceeye.vmod.schematic.containers.ShipSchematicInfo
-import net.spaceeye.vmod.schematic.icontainers.IShipSchematic
-import net.spaceeye.vmod.schematic.icontainers.IShipSchematicInfo
+import net.spaceeye.vmod.schematic.api.containers.v1.ShipInfo
+import net.spaceeye.vmod.schematic.api.containers.v1.ShipSchematicInfo
+import net.spaceeye.vmod.schematic.api.interfaces.IShipSchematic
+import net.spaceeye.vmod.schematic.api.interfaces.IShipSchematicInfo
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
@@ -32,6 +32,7 @@ import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.schematic.interfaces.SchemPlaceAtMakeFrom
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -272,11 +273,11 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
         override fun serialize(): FriendlyByteBuf {
             val buf = getBuffer()
 
-            buf.writeVector3d(Vector3d(shipInfo.maxObjectEdge))
-            buf.writeCollection(shipInfo.shipInfo) { buf, item ->
+            buf.writeVector3d(Vector3d(shipInfo.maxObjectPos))
+            buf.writeCollection(shipInfo.shipsInfo) { buf, item ->
                 buf.writeVector3d(Vector3d(item.relPositionToCenter))
-                buf.writeAABBi(item.shipBounds)
-                buf.writeVector3d(Vector3d(item.posInShip))
+                buf.writeAABBi(item.shipAABB)
+                buf.writeVector3d(Vector3d(item.positionInShip))
                 buf.writeDouble(item.shipScale)
                 buf.writeQuatd(item.rotation)
             }
@@ -341,16 +342,16 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
 
             val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
 
-            val data = info.shipInfo.map {
+            val data = info.shipsInfo.map {
                 Pair(ShipTransformImpl(
                     it.relPositionToCenter,
-                    it.posInShip,
+                    it.positionInShip,
                     it.rotation,
                     JVector3d(it.shipScale, it.shipScale, it.shipScale)
-                ), it.shipBounds)
+                ), it.shipAABB)
             }
 
-            renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectEdge), rotationAngle, center, data)
+            renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectPos), rotationAngle, center, data)
 
             rID = ClientRenderingData.addClientsideRenderer(renderer!!)
 
@@ -379,7 +380,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             ServerPlayerSchematics.schematics.remove(player.uuid)
             null
         } ?: return
-        val schem = ShipSchematic.getSchematicConstructor().get()
+        val schem = ShipSchematic.getSchematicConstructor().get() as SchemPlaceAtMakeFrom
         RandomEvents.serverOnTick.on { (it), unregister ->
             schem.makeFrom(player.level as ServerLevel, player.uuid, serverCaughtShip) {
                 SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
@@ -398,13 +399,14 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
         val info = schem.getInfo()
 
         val hitPos = raycastResult.worldHitPos!!
-        val pos = hitPos + (raycastResult.worldNormalDirection!! * info.maxObjectEdge.y)
+        val pos = hitPos + (raycastResult.worldNormalDirection!! * info.maxObjectPos.y)
 
         val rotation = Quaterniond()
             .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))
             .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
             .normalize()
 
+        schem as SchemPlaceAtMakeFrom
         schem.placeAt(level, player.uuid, pos.toJomlVector3d(), rotation)
     }
 

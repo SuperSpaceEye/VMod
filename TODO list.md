@@ -2,6 +2,10 @@
 
 nothing
 
+# Maybe
+
+* Add an "attachment cleaner" to remove attachments before closing server
+
 # Do Eventually
 
 ## Rendering

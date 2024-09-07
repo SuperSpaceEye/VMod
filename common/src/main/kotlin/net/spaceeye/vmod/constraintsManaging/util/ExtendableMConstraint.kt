@@ -41,7 +41,9 @@ abstract class ExtendableMConstraint(): MConstraint {
 
 
     final override var mID: ManagedConstraintId = -1
-    //DO NOT TOUCH IT
+    /**
+     * DO NOT TOUCH IT
+     */
     @set:Internal
     @get:Internal
     final override var __saveCounter: Int = -1

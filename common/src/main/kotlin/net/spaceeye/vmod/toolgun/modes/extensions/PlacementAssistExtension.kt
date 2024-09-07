@@ -327,7 +327,7 @@ interface PlacementAssistServerPart {
             paFirstResult.globalNormalDirection!!.y == -1.0 -> -paFirstResult.globalNormalDirection!!
             else -> paFirstResult.globalNormalDirection!!
         }
-        val dir2 = if (ship2 != null) { transformDirectionShipToWorld(ship2, paSecondResult.globalNormalDirection!!) } else paSecondResult.globalNormalDirection!!
+        val dir2 = paSecondResult.worldNormalDirection!!
 
         val angle = Quaterniond(AxisAngle4d(paAngle.it, dir2.toJomlVector3d()))
 
@@ -347,8 +347,8 @@ interface PlacementAssistServerPart {
         // we cannot modify position in ship, we can, however, modify position in world
         // this translates ship so that after teleportation its spoint1 will be at rpoint2
         val point = rpoint2 - (
-                posShipToWorld(ship1, spoint1, newTransform) - Vector3d(ship1.transform.positionInWorld)
-                )
+            posShipToWorld(ship1, spoint1, newTransform) - Vector3d(ship1.transform.positionInWorld)
+        ) + dir2.normalize() * paDistanceFromBlock
 
         teleportShipWithConnected(level, ship1, point, rotation)
 

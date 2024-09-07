@@ -6,17 +6,18 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.commonCopy
 import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.dc
+import net.spaceeye.vmod.constraintsManaging.util.mc
+import net.spaceeye.vmod.constraintsManaging.util.sc
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
-import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSAttachmentConstraint
-import org.valkyrienskies.core.apigame.constraints.VSConstraint
+import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class SliderMConstraint(): TwoShipsMConstraint() {
-    lateinit var constraint1: VSAttachmentConstraint
-    lateinit var constraint2: VSAttachmentConstraint
+    lateinit var constraint1: VSForceConstraint
+    lateinit var constraint2: VSForceConstraint
+    lateinit var rconstraint: VSRopeConstraint
     override val mainConstraint: VSConstraint get() = constraint1
 
     constructor(
@@ -33,16 +34,25 @@ class SliderMConstraint(): TwoShipsMConstraint() {
 
         attachmentPoints: List<BlockPos>,
     ): this() {
-        constraint1 = VSAttachmentConstraint(
-            axisShipId, sliderShipId, compliance,
-            axisSpos1.toJomlVector3d(), sliderSpos1.toJomlVector3d(),
-            maxForce, 0.0
+        val dir = axisSpos2 - axisSpos1
+        val length = dir.dist() / 2
+        dir.snormalize()
+
+        val sliderCenterPos = sliderSpos1 + (sliderSpos2 - sliderSpos1) / 2
+        val axisCenterPos = axisSpos1 + (axisSpos2 - axisSpos1) / 2
+
+        rconstraint = VSRopeConstraint(axisShipId, sliderShipId, compliance,
+            axisCenterPos.toJomlVector3d(), sliderCenterPos.toJomlVector3d(), maxForce, length
         )
 
-        constraint2 = VSAttachmentConstraint(
-            axisShipId, sliderShipId, compliance,
+        constraint1 = VSSlideConstraint(axisShipId, sliderShipId, compliance,
+            axisSpos1.toJomlVector3d(), sliderSpos1.toJomlVector3d(),
+            maxForce, dir.snormalize().toJomlVector3d(), 1e20,
+        )
+
+        constraint2 = VSSlideConstraint(axisShipId, sliderShipId, compliance,
             axisSpos2.toJomlVector3d(), sliderSpos2.toJomlVector3d(),
-            maxForce, 0.0
+            maxForce, dir.snormalize().toJomlVector3d(), 1e20,
         )
 
         attachmentPoints_.addAll(attachmentPoints)
@@ -64,30 +74,31 @@ class SliderMConstraint(): TwoShipsMConstraint() {
         }
     }
 
-    // it doesn't need to do anything
-    override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
+    override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
+        level.shipObjectWorld.removeConstraint(cIDs[2])
+        rconstraint = rconstraint.copy(ropeLength = rconstraint.ropeLength * scaleBy)
+        cIDs[2] = level.shipObjectWorld.createNewConstraint(rconstraint)!!
+    }
 
     override fun iNbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
-        tag.put("c1", VSConstraintSerializationUtil.serializeConstraint(constraint1) ?: return null)
-        tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(constraint2) ?: return null)
+        sc("c1", constraint1, tag) {return null}
+        sc("c2", constraint2, tag) {return null}
+        sc("c3", rconstraint, tag) {return null}
         return tag
     }
 
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        VSConstraintDeserializationUtil.tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); constraint1 = (VSConstraintDeserializationUtil.deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-        VSConstraintDeserializationUtil.tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); constraint2 = (VSConstraintDeserializationUtil.deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
+        dc("c1", ::constraint1, tag, lastDimensionIds) {return null}
+        dc("c2", ::constraint2, tag, lastDimensionIds) {return null}
+        dc("c3", ::rconstraint, tag, lastDimensionIds) {return null}
         return this
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        cIDs.add(level.shipObjectWorld.createNewConstraint(constraint1) ?: clean(level) ?: return false)
-        cIDs.add(level.shipObjectWorld.createNewConstraint(constraint2) ?: clean(level) ?: return false)
-
+        mc(constraint1, cIDs, level) {return false}
+        mc(constraint2, cIDs, level) {return false}
+        mc(rconstraint, cIDs, level) {return false}
         return true
-    }
-
-    override fun iOnDeleteMConstraint(level: ServerLevel) {
-        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
     }
 }

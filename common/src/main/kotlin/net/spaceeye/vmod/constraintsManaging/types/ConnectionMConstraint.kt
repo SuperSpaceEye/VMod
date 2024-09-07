@@ -5,6 +5,9 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.dc
+import net.spaceeye.vmod.constraintsManaging.util.mc
+import net.spaceeye.vmod.constraintsManaging.util.sc
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getHingeRotation
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
@@ -176,11 +179,11 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
 
         tag.putInt("mode", connectionMode.ordinal)
 
-        tag.put("c1", VSConstraintSerializationUtil.serializeConstraint(aconstraint1) ?: return null)
+        sc("c1", aconstraint1, tag) {return null}
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return tag}
 
-        tag.put("c2", VSConstraintSerializationUtil.serializeConstraint(aconstraint2) ?: return null)
-        tag.put("c3", VSConstraintSerializationUtil.serializeConstraint(rconstraint) ?: return null)
+        sc("c2", aconstraint2, tag) {return null}
+        sc("c3", rconstraint, tag) {return null}
 
         return tag
     }
@@ -188,25 +191,21 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         connectionMode = ConnectionModes.values()[tag.getInt("mode")]
 
-        tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); aconstraint1 = (deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSAttachmentConstraint
+        dc("c1", ::aconstraint1, tag, lastDimensionIds) {return null}
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return this}
 
-        tryConvertDimensionId(tag["c2"] as CompoundTag, lastDimensionIds); aconstraint2 = (deserializeConstraint(tag["c2"] as CompoundTag) ?: return null) as VSAttachmentConstraint
-        tryConvertDimensionId(tag["c3"] as CompoundTag, lastDimensionIds); rconstraint  = (deserializeConstraint(tag["c3"] as CompoundTag) ?: return null) as VSTorqueConstraint
+        dc("c2", ::aconstraint2, tag, lastDimensionIds) {return null}
+        dc("c3", ::rconstraint, tag, lastDimensionIds) {return null}
 
         return this
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1) ?: clean(level) ?: return false)
+        mc(aconstraint1, cIDs, level) {return false}
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) { return true }
-        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2) ?: clean(level) ?: return false)
-        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint ) ?: clean(level) ?: return false)
+        mc(aconstraint2, cIDs, level) {return false}
+        mc(rconstraint , cIDs, level) {return false}
 
         return true
-    }
-
-    override fun iOnDeleteMConstraint(level: ServerLevel) {
-        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
     }
 }

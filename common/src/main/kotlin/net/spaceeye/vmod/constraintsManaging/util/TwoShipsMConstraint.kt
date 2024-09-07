@@ -67,4 +67,11 @@ abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
         return null
     }
+
+    /**
+     * IF YOU'RE OVERRIDING THIS REMEMBER TO CALL SUPER METHOD
+     */
+    override fun iOnDeleteMConstraint(level: ServerLevel) {
+        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
+    }
 }

@@ -148,8 +148,13 @@ object ClientPlayerSchematics {
     }
 
     fun loadSchematic(path: Path): IShipSchematic? {
-        val bytes = Files.readAllBytes(path)
-        return ShipSchematic.getSchematicFromBytes(bytes)
+        try {
+            val bytes = Files.readAllBytes(path)
+            return ShipSchematic.getSchematicFromBytes(bytes)
+        } catch (e: Exception) {
+            ELOG("Failed to load file because ${e.stackTraceToString()}")
+            return null
+        }
     }
 
     fun saveSchematic(name: String, schematic: IShipSchematic): Boolean {

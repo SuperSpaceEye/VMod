@@ -12,12 +12,8 @@ import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ConnectionHUD
 import net.spaceeye.vmod.networking.SerializableItem.get
-import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.*
-import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistNetworking
+import net.spaceeye.vmod.toolgun.modes.extensions.*
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.utils.*
@@ -74,6 +70,8 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                         ,allowResetting = true
                         ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
+                        ,blockPrimary   = {inst -> inst.getExtensionOfType<PlacementAssistExtension>().paStage != ThreeClicksActivationSteps.FIRST_RAYCAST}
+                        ,blockSecondary = {inst -> inst.primaryFirstRaycast}
                     )
                 }.addExtension<ConnectionMode> {
                     BlockMenuOpeningExtension<ConnectionMode> { inst -> inst.primaryFirstRaycast }
@@ -83,7 +81,8 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                             ConnectionMConstraint(
                                 spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
                                 it.compliance, it.maxForce, it.fixedDistance, it.connectionMode,
-                                listOf(rresults.first.blockPosition, rresults.second.blockPosition)
+                                listOf(rresults.first.blockPosition, rresults.second.blockPosition),
+                                rresults.second.worldNormalDirection!!
                             )
                         }
                     )

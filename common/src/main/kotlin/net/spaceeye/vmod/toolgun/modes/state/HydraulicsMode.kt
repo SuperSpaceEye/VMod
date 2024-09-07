@@ -2,29 +2,25 @@ package net.spaceeye.vmod.toolgun.modes.state
 
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.types.A2BRenderer
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.extensions.*
 import net.spaceeye.vmod.toolgun.modes.gui.HydraulicsGUI
 import net.spaceeye.vmod.toolgun.modes.hud.HydraulicsHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
-import net.spaceeye.vmod.networking.SerializableItem.get
-import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
-import net.spaceeye.vmod.toolgun.modes.ToolgunModes
-import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistNetworking
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
+
 
 object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 
@@ -81,6 +77,8 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                         ,allowResetting = true
                         ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
+                        ,blockPrimary   = {inst -> inst.getExtensionOfType<PlacementAssistExtension>().paStage != ThreeClicksActivationSteps.FIRST_RAYCAST}
+                        ,blockSecondary = {inst -> inst.primaryFirstRaycast}
                     )
                 }.addExtension<HydraulicsMode>{
                     BlockMenuOpeningExtension<HydraulicsMode> { inst -> inst.primaryFirstRaycast }
@@ -92,7 +90,8 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                                 it.compliance, it.maxForce,
                                 paDistanceFromBlock, paDistanceFromBlock + it.extensionDistance,
                                 it.extensionSpeed, it.channel, it.connectionMode,
-                                listOf(rresults.first.blockPosition, rresults.second.blockPosition)
+                                listOf(rresults.first.blockPosition, rresults.second.blockPosition),
+                                rresults.second.worldNormalDirection!!
                             ).addExtension(RenderableExtension(A2BRenderer(
                                 ship1?.id ?: -1L,
                                 ship2?.id ?: -1L,

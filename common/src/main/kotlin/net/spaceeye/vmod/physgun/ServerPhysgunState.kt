@@ -262,7 +262,8 @@ object ServerPhysgunState: ServerClosable() {
                 traversedIds.remove(ship.id)
 
                 state.caughtShipIds.clear()
-                state.caughtShipIds.addAll(traversedIds)
+                //TODO finish this
+//                state.caughtShipIds.addAll(traversedIds)
 
                 val controller = PhysgunController.getOrCreate(ship)
 

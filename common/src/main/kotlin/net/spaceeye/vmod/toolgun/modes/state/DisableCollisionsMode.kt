@@ -50,6 +50,7 @@ class DisableCollisionsMode: ExtendableToolgunMode(), DisableCollisionHUD, Disab
                         ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,secondaryFunction     = { inst, level, player, rr -> inst.activateSecondaryFunction(level, player, rr)}
                         ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
+                        ,blockSecondary = {inst -> inst.primaryFirstRaycast}
                     )
                 }.addExtension<DisableCollisionsMode> {
                     BlockMenuOpeningExtension<DisableCollisionsMode> { inst -> inst.primaryFirstRaycast }

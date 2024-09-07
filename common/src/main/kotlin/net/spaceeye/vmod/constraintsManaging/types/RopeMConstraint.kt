@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.mc
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
@@ -75,11 +76,7 @@ class RopeMConstraint(): TwoShipsMConstraint() {
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        cIDs.add(level.shipObjectWorld.createNewConstraint(mainConstraint) ?: return false)
+        mc(mainConstraint, cIDs, level) {return false}
         return true
-    }
-
-    override fun iOnDeleteMConstraint(level: ServerLevel) {
-        level.shipObjectWorld.removeConstraint(cIDs[0])
     }
 }

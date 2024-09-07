@@ -23,6 +23,8 @@ class BasicConnectionExtension<T: ExtendableToolgunMode>(
     var secondaryClientCallback: ((inst: T) -> Unit)? = null,
     var resetClientCallback: ((inst: T) -> Unit)? = { mode -> mode.resetState(); mode.refreshHUD() },
 
+    var blockPrimary: (inst: T) -> Boolean = {false},
+    var blockSecondary: (inst: T) -> Boolean = {false}
     ): ToolgunModeExtension {
     private var primaryConn: C2SConnection<T>? = null
     private var secondaryConn: C2SConnection<T>? = null
@@ -54,14 +56,18 @@ class BasicConnectionExtension<T: ExtendableToolgunMode>(
         if (action != GLFW.GLFW_PRESS) {return EventResult.pass()}
 
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && primaryConn != null) {
-            primaryClientCallback?.invoke(inst as T)
-            primaryConn!!.sendToServer(inst as T)
+            if (!blockPrimary(inst as T)) {
+                primaryClientCallback?.invoke(inst as T)
+                primaryConn!!.sendToServer(inst as T)
+            }
             return EventResult.interruptFalse()
         }
 
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && secondaryConn != null) {
-            secondaryClientCallback?.invoke(inst as T)
-            secondaryConn!!.sendToServer(inst as T)
+            if (!blockSecondary(inst as T)) {
+                secondaryClientCallback?.invoke(inst as T)
+                secondaryConn!!.sendToServer(inst as T)
+            }
             return EventResult.interruptFalse()
         }
 

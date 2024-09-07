@@ -45,6 +45,10 @@ subprojects {
             parchment("org.parchmentmc.data:parchment-${rootProject.minecraft_version}:2022.11.06@zip")
         })
     }
+
+    kotlin {
+        jvmToolchain(17)
+    }
 }
 
 allprojects {

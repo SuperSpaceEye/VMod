@@ -5,15 +5,15 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.dc
+import net.spaceeye.vmod.constraintsManaging.util.mc
+import net.spaceeye.vmod.constraintsManaging.util.sc
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
-import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
 import org.valkyrienskies.core.apigame.constraints.VSTorqueConstraint
-import org.valkyrienskies.mod.common.shipObjectWorld
 
 class SyncRotationMConstraint(): TwoShipsMConstraint() {
     override lateinit var mainConstraint: VSTorqueConstraint
@@ -59,7 +59,7 @@ class SyncRotationMConstraint(): TwoShipsMConstraint() {
 
         tag.putInt("mID", mID)
 
-        tag.put("c1", VSConstraintSerializationUtil.serializeConstraint(mainConstraint) ?: return null)
+        sc("c1", mainConstraint, tag) {return null}
 
         return tag
     }
@@ -67,17 +67,13 @@ class SyncRotationMConstraint(): TwoShipsMConstraint() {
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         mID = tag.getInt("mID")
 
-        VSConstraintDeserializationUtil.tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); mainConstraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSTorqueConstraint
+        dc("c1", ::mainConstraint, tag, lastDimensionIds) {return null}
 
         return this
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        cIDs.add(level.shipObjectWorld.createNewConstraint(mainConstraint) ?: clean(level) ?: return false)
+        mc(mainConstraint, cIDs, level) {return false}
         return true
-    }
-
-    override fun iOnDeleteMConstraint(level: ServerLevel) {
-        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
     }
 }

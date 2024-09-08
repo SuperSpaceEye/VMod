@@ -49,6 +49,8 @@ class Vector3d(x:Number, y:Number, z:Number) {
     inline fun toBlockPos(): BlockPos {return BlockPos(x, y, z) }
     inline fun toMCVec3(): MCVec3 {return MCVec3(x, y, z)}
 
+    inline fun copy() = Vector3d(x, y, z)
+
     inline override fun toString(): String = "{${x} ${y} ${z}}"
 
     inline fun abs  (dest: Vector3d): Vector3d {dest.x = kotlin.math.abs(x)  ; dest.y = kotlin.math.abs(y)  ; dest.z = kotlin.math.abs(z)  ; return dest}

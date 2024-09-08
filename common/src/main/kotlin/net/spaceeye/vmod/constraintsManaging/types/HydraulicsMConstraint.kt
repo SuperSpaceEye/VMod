@@ -11,7 +11,8 @@ import net.spaceeye.vmod.constraintsManaging.util.mc
 import net.spaceeye.vmod.constraintsManaging.util.sc
 import net.spaceeye.vmod.network.*
 import net.spaceeye.vmod.utils.*
-import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.utils.vs.copy
+import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShip
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.Ship
@@ -30,11 +31,11 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
         FREE_ORIENTATION
     }
 
-    lateinit var aconstraint1: VSAttachmentConstraint
-    lateinit var aconstraint2: VSAttachmentConstraint
+    lateinit var constraint1: VSAttachmentConstraint
+    lateinit var constraint2: VSAttachmentConstraint
     lateinit var rconstraint: VSTorqueConstraint
 
-    override val mainConstraint: VSConstraint get() = aconstraint1
+    override val mainConstraint: VSConstraint get() = constraint1
 
     var minLength: Double = -1.0
     var maxLength: Double = -1.0
@@ -90,7 +91,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
 
         attachmentPoints_ = attachmentPoints.toMutableList()
 
-        aconstraint1 = VSAttachmentConstraint(
+        constraint1 = VSAttachmentConstraint(
             shipId0, shipId1,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
@@ -106,7 +107,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
         val dir1 = this.dir1!!
         val dir2 = this.dir2!!
 
-        aconstraint2 = VSAttachmentConstraint(
+        constraint2 = VSAttachmentConstraint(
             shipId0, shipId1,
             compliance,
             (spoint1 + dir1 * minLength / 2).toJomlVector3d(),
@@ -157,17 +158,29 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
     }
 
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        return commonCopy(level, mapped, aconstraint1, attachmentPoints_) {
-            nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints ->
-            val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
-            val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
+        val new = HydraulicsMConstraint()
 
-            val ret = HydraulicsMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, minLength, maxLength, extensionSpeed, channel, connectionMode, newAttachmentPoints, null, dir1, dir2)
-            ret.addDist = addDist
-            ret.extendedDist = extendedDist
-            ret.extensionSpeed = extensionSpeed
-            return@commonCopy ret
-        }
+        new.attachmentPoints_ = copyAttachmentPoints(constraint1, attachmentPoints_, level, mapped)
+
+        new.constraint1 = constraint1.copy(level, mapped) ?: return null
+        new.constraint2 = constraint2.copy(level, mapped) ?: return null
+        new.rconstraint = rconstraint.copy(mapped) ?: return null
+
+        new.minLength = minLength
+        new.maxLength = maxLength
+
+        new.extensionSpeed = extensionSpeed
+        new.extendedDist = extendedDist
+
+        new.addDist = addDist
+        new.channel = channel
+
+        new.connectionMode = connectionMode
+
+        new.dir1 = dir1?.copy()
+        new.dir2 = dir2?.copy()
+
+        return new
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
@@ -175,15 +188,15 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
         extendedDist *= scaleBy
         addDist *= scaleBy
 
-        aconstraint1 = aconstraint1.copy(fixedDistance = aconstraint1.fixedDistance * scaleBy)
+        constraint1 = constraint1.copy(fixedDistance = constraint1.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[0])
-        cIDs[0] = level.shipObjectWorld.createNewConstraint(aconstraint1)!!
+        cIDs[0] = level.shipObjectWorld.createNewConstraint(constraint1)!!
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
 
-        aconstraint2 = aconstraint2.copy(fixedDistance = aconstraint2.fixedDistance * scaleBy)
+        constraint2 = constraint2.copy(fixedDistance = constraint2.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[1])
-        cIDs[1] = level.shipObjectWorld.createNewConstraint(aconstraint2)!!
+        cIDs[1] = level.shipObjectWorld.createNewConstraint(constraint2)!!
     }
 
     override fun iNbtSerialize(): CompoundTag? {
@@ -197,13 +210,13 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
         tag.putString("channel", channel)
         tag.putInt("constraintMode", connectionMode.ordinal)
 
-        sc("c1", aconstraint1, tag) {return null}
+        sc("c1", constraint1, tag) {return null}
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return tag}
 
         tag.putVector3d("dir1", dir1!!.toJomlVector3d())
         tag.putVector3d("dir2", dir2!!.toJomlVector3d())
 
-        sc("c2", aconstraint2, tag) {return null}
+        sc("c2", constraint2, tag) {return null}
         sc("c3", rconstraint, tag) {return null}
 
         return tag
@@ -219,13 +232,13 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
 
         connectionMode = if (tag.contains("constraintMode")) {ConnectionMode.values()[tag.getInt("constraintMode")]} else {ConnectionMode.FIXED_ORIENTATION}
 
-        dc("c1", ::aconstraint1, tag, lastDimensionIds) {return null}
+        dc("c1", ::constraint1, tag, lastDimensionIds) {return null}
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return this}
 
         dir1 = Vector3d(tag.getVector3d("dir1")!!)
         dir2 = Vector3d(tag.getVector3d("dir2")!!)
 
-        dc("c2", ::aconstraint2, tag, lastDimensionIds) {return null}
+        dc("c2", ::constraint2, tag, lastDimensionIds) {return null}
         dc("c3", ::rconstraint, tag, lastDimensionIds) {return null}
 
         return this
@@ -282,19 +295,19 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
         val shipObjectWorld = server.shipObjectWorld
 
         if (!shipObjectWorld.removeConstraint(cIDs[0])) {return}
-        aconstraint1 = aconstraint1.copy(fixedDistance = minLength + extendedDist)
-        cIDs[0] = shipObjectWorld.createNewConstraint(aconstraint1) ?: return
+        constraint1 = constraint1.copy(fixedDistance = minLength + extendedDist)
+        cIDs[0] = shipObjectWorld.createNewConstraint(constraint1) ?: return
 
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return}
 
         if (!shipObjectWorld.removeConstraint(cIDs[1])) {return}
 
-        aconstraint2 = aconstraint2.copy(
+        constraint2 = constraint2.copy(
             fixedDistance = (minLength + extendedDist) * 2,
-            localPos0 = (Vector3d(aconstraint1.localPos0) + dir1!! * (minLength + extendedDist) / 2).toJomlVector3d(),
-            localPos1 = (Vector3d(aconstraint1.localPos1) + dir2!! * (minLength + extendedDist) / 2).toJomlVector3d()
+            localPos0 = (Vector3d(constraint1.localPos0) + dir1!! * (minLength + extendedDist) / 2).toJomlVector3d(),
+            localPos1 = (Vector3d(constraint1.localPos1) + dir2!! * (minLength + extendedDist) / 2).toJomlVector3d()
         )
-        cIDs[1] = shipObjectWorld.createNewConstraint(aconstraint2) ?: return
+        cIDs[1] = shipObjectWorld.createNewConstraint(constraint2) ?: return
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
@@ -305,9 +318,9 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
             signalTick(msg)
         }
 
-        mc(aconstraint1, cIDs, level) {return false}
+        mc(constraint1, cIDs, level) {return false}
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return true}
-        mc(aconstraint2, cIDs, level) {return false}
+        mc(constraint2, cIDs, level) {return false}
         mc(rconstraint, cIDs, level) {return false}
 
         return true

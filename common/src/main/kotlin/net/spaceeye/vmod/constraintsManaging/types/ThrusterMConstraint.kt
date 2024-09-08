@@ -14,6 +14,7 @@ import net.spaceeye.vmod.shipForceInducers.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getVector3d
 import net.spaceeye.vmod.utils.putVector3d
+import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId

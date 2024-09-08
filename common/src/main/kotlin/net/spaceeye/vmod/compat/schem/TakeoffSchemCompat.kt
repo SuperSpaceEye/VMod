@@ -5,8 +5,8 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.constraintsManaging.getCenterPos
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.vs.getCenterPos
 import net.takeoff.TakeoffBlocks
 import net.takeoff.blockentity.BearingBlockEntity
 import org.valkyrienskies.core.api.ships.ServerShip

@@ -10,12 +10,7 @@ import net.spaceeye.vmod.constraintsManaging.util.mc
 import net.spaceeye.vmod.constraintsManaging.util.sc
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getHingeRotation
-import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.deserializeConstraint
-import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
-import net.spaceeye.vmod.utils.vs.copy
-import net.spaceeye.vmod.utils.vs.posShipToWorld
-import net.spaceeye.vmod.utils.vs.posWorldToShip
+import net.spaceeye.vmod.utils.vs.*
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -29,11 +24,11 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
         FREE_ORIENTATION
     }
 
-    lateinit var aconstraint1: VSAttachmentConstraint
-    lateinit var aconstraint2: VSAttachmentConstraint
+    lateinit var constraint1: VSAttachmentConstraint
+    lateinit var constraint2: VSAttachmentConstraint
     lateinit var rconstraint: VSTorqueConstraint
 
-    override val mainConstraint: VSConstraint get() = aconstraint1
+    override val mainConstraint: VSConstraint get() = constraint1
 
     var fixedLength: Double = 0.0
     var connectionMode: ConnectionModes = ConnectionModes.FIXED_ORIENTATION
@@ -62,7 +57,7 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
         this.fixedLength = if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength
         attachmentPoints_ = attachmentPoints.toMutableList()
 
-        aconstraint1 = VSAttachmentConstraint(
+        constraint1 = VSAttachmentConstraint(
             shipId0, shipId1,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
@@ -85,7 +80,7 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
         val spoint1 = if (ship1 != null) posWorldToShip(ship1, rpoint1) else Vector3d(rpoint1)
         val spoint2 = if (ship2 != null) posWorldToShip(ship2, rpoint2) else Vector3d(rpoint2)
 
-        aconstraint2 = VSAttachmentConstraint(
+        constraint2 = VSAttachmentConstraint(
             shipId0, shipId1,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
@@ -113,65 +108,52 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
         cIDs.clear()
 
-        val shipIds = mutableListOf(aconstraint1.shipId0, aconstraint1.shipId1)
+        val shipIds = mutableListOf(constraint1.shipId0, constraint1.shipId1)
         val localPoints = mutableListOf(
-            if (connectionMode == ConnectionModes.FREE_ORIENTATION) {listOf(aconstraint1.localPos0)} else {listOf(aconstraint1.localPos0, aconstraint2.localPos0)},
-            if (connectionMode == ConnectionModes.FREE_ORIENTATION) {listOf(aconstraint1.localPos1)} else {listOf(aconstraint1.localPos1, aconstraint2.localPos1)},
+            if (connectionMode == ConnectionModes.FREE_ORIENTATION) {listOf(constraint1.localPos0)} else {listOf(constraint1.localPos0, constraint2.localPos0)},
+            if (connectionMode == ConnectionModes.FREE_ORIENTATION) {listOf(constraint1.localPos1)} else {listOf(constraint1.localPos1, constraint2.localPos1)},
         )
         updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
 
-        aconstraint1 = aconstraint1.copy(shipIds[0], shipIds[1], aconstraint1.compliance, localPoints[0][0], localPoints[1][0])
-        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint1)!!)
+        constraint1 = constraint1.copy(shipIds[0], shipIds[1], constraint1.compliance, localPoints[0][0], localPoints[1][0])
+        cIDs.add(level.shipObjectWorld.createNewConstraint(constraint1)!!)
 
 //        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
 //        renderer = ServerRenderingData.getRenderer(rID)
 
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return}
-        aconstraint2 = aconstraint2.copy(shipIds[0], shipIds[1], aconstraint2.compliance, localPoints[0][1], localPoints[1][1])
-        cIDs.add(level.shipObjectWorld.createNewConstraint(aconstraint2)!!)
+        constraint2 = constraint2.copy(shipIds[0], shipIds[1], constraint2.compliance, localPoints[0][1], localPoints[1][1])
+        cIDs.add(level.shipObjectWorld.createNewConstraint(constraint2)!!)
 
         rconstraint = rconstraint.copy(shipIds[0], shipIds[1])
 
         cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint)!!)
     }
 
-    //TODO it's probably wrong?
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        return commonCopy(level, mapped, aconstraint1, attachmentPoints_) {
-            nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints ->
+        val new = ConnectionMConstraint()
 
-            val rpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, localPos0) } else localPos0
-            val rpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, localPos1) } else localPos1
+        new.fixedLength = fixedLength
+        new.connectionMode = connectionMode
+        new.attachmentPoints_ = copyAttachmentPoints(constraint1, attachmentPoints_, level, mapped)
 
-            if (connectionMode == ConnectionModes.FREE_ORIENTATION) {
-                return@commonCopy ConnectionMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, aconstraint1.fixedDistance, connectionMode, newAttachmentPoints)
-            }
+        new.constraint1 = constraint1.copy(level, mapped) ?: return null
+        new.constraint2 = constraint2.copy(level, mapped) ?: return null
+        new.rconstraint = rconstraint .copy(mapped) ?: return null
 
-            // Why? if the mode chosen is hinge and its points are very close to each other, due to inaccuracy the
-            // direction will be wrong after copy. So instead use supporting constraint to get the direction.
-            commonCopy(level, mapped, aconstraint2, attachmentPoints_) {
-                _, _, _, _, slocalPos0, slocalPos1, _ ->
-
-                val srpoint1 = if (nShip1 != null) { posShipToWorld(nShip1, slocalPos0) } else slocalPos0
-                val srpoint2 = if (nShip2 != null) { posShipToWorld(nShip2, slocalPos1) } else slocalPos1
-
-                val dir = srpoint1 - srpoint2
-
-                ConnectionMConstraint(localPos0, localPos1, rpoint1, rpoint2, nShip1, nShip2, nShip1Id, nShip2Id, aconstraint1.compliance, aconstraint1.maxForce, aconstraint1.fixedDistance, connectionMode, newAttachmentPoints, dir)
-            }
-        }
+        return new
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
-        aconstraint1 = aconstraint1.copy(fixedDistance = aconstraint1.fixedDistance * scaleBy)
+        constraint1 = constraint1.copy(fixedDistance = constraint1.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[0])
-        cIDs[0] = level.shipObjectWorld.createNewConstraint(aconstraint1)!!
+        cIDs[0] = level.shipObjectWorld.createNewConstraint(constraint1)!!
 
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return}
 
-        aconstraint2 = aconstraint2.copy(fixedDistance = aconstraint2.fixedDistance * scaleBy)
+        constraint2 = constraint2.copy(fixedDistance = constraint2.fixedDistance * scaleBy)
         level.shipObjectWorld.removeConstraint(cIDs[1])
-        cIDs[1] = level.shipObjectWorld.createNewConstraint(aconstraint2)!!
+        cIDs[1] = level.shipObjectWorld.createNewConstraint(constraint2)!!
     }
 
     override fun iNbtSerialize(): CompoundTag? {
@@ -179,10 +161,10 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
 
         tag.putInt("mode", connectionMode.ordinal)
 
-        sc("c1", aconstraint1, tag) {return null}
+        sc("c1", constraint1, tag) {return null}
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return tag}
 
-        sc("c2", aconstraint2, tag) {return null}
+        sc("c2", constraint2, tag) {return null}
         sc("c3", rconstraint, tag) {return null}
 
         return tag
@@ -191,20 +173,20 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         connectionMode = ConnectionModes.values()[tag.getInt("mode")]
 
-        dc("c1", ::aconstraint1, tag, lastDimensionIds) {return null}
+        dc("c1", ::constraint1, tag, lastDimensionIds) {return null}
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return this}
 
-        dc("c2", ::aconstraint2, tag, lastDimensionIds) {return null}
+        dc("c2", ::constraint2, tag, lastDimensionIds) {return null}
         dc("c3", ::rconstraint, tag, lastDimensionIds) {return null}
 
         return this
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        mc(aconstraint1, cIDs, level) {return false}
+        mc(constraint1, cIDs, level) {return false}
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) { return true }
-        mc(aconstraint2, cIDs, level) {return false}
-        mc(rconstraint , cIDs, level) {return false}
+        mc(constraint2, cIDs, level) {return false}
+        mc(rconstraint, cIDs, level) {return false}
 
         return true
     }

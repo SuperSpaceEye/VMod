@@ -4,12 +4,13 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
-import net.spaceeye.vmod.constraintsManaging.commonCopy
 import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.dc
 import net.spaceeye.vmod.constraintsManaging.util.mc
 import net.spaceeye.vmod.constraintsManaging.util.sc
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.vs.copy
+import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -63,15 +64,15 @@ class SliderMConstraint(): TwoShipsMConstraint() {
     }
 
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        return commonCopy(level, mapped, constraint1, listOf(attachmentPoints_[0], attachmentPoints_[1])) {
-            _, _, _, _, axis1, ship1, newAPPair1 ->
-            commonCopy(level, mapped, constraint2, listOf(attachmentPoints_[2], attachmentPoints_[3])) {
-                nShip1Id, nShip2Id, nShip1, nShip2, axis2, ship2, newAPPair2 ->
-                SliderMConstraint(nShip1Id, nShip2Id, axis1, axis2, ship1, ship2,
-                    constraint1.compliance, constraint1.maxForce,
-                    listOf(newAPPair1[0], newAPPair1[1], newAPPair2[0], newAPPair2[1]))
-            }
-        }
+        val new = SliderMConstraint()
+
+        new.attachmentPoints_ = copyAttachmentPoints(constraint1, attachmentPoints_, level, mapped)
+
+        new.constraint1 = constraint1.copy(level, mapped) ?: return null
+        new.constraint2 = constraint2.copy(level, mapped) ?: return null
+        new.rconstraint = rconstraint.copy(level, mapped) ?: return null
+
+        return new
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {

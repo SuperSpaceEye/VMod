@@ -11,7 +11,7 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.api.containers.v1.SchemBlockData
+import net.spaceeye.vmod.schematic.api.containers.v1.ChunkyBlockData
 import net.spaceeye.vmod.schematic.api.containers.v1.BlockItem
 import net.spaceeye.vmod.schematic.api.containers.v1.BlockPaletteHashMapV1
 import net.spaceeye.vmod.schematic.api.containers.v1.ShipInfo
@@ -47,7 +47,7 @@ class ShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemPlaceAtMakeF
 
     override var blockPalette: IBlockStatePalette = BlockPaletteHashMapV1()
 
-    override var blockData = mutableMapOf<ShipId, SchemBlockData<BlockItem>>()
+    override var blockData = mutableMapOf<ShipId, ChunkyBlockData<BlockItem>>()
     override var flatTagData = mutableListOf<CompoundTag>()
 
     override var extraData = mutableListOf<Pair<String, Serializable>>()
@@ -385,7 +385,7 @@ interface SchemSerializeDataV1Impl: IShipSchematic, IShipSchematicDataV1 {
 
         for (k in gridDataTag.allKeys) {
             val dataTag = gridDataTag.get(k) as ListTag
-            val data = blockData.getOrPut(k.toLong()) { SchemBlockData() }
+            val data = blockData.getOrPut(k.toLong()) { ChunkyBlockData() }
 
             dataTag.forEach {blockTag ->
                 blockTag as CompoundTag

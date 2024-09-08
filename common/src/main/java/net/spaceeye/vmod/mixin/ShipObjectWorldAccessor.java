@@ -12,6 +12,5 @@ import java.util.Set;
 @Mixin(ShipObjectServerWorld.class)
 public interface ShipObjectWorldAccessor {
     @Accessor("constraints") @NotNull Map<Integer, VSConstraint> getConstraints();
-    //TODO use this
     @Accessor("shipIdToConstraints") @NotNull Map<Long, Set<Integer>> getShipIdToConstraints();
 }

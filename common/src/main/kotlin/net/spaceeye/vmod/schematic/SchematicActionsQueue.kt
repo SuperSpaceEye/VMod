@@ -9,7 +9,7 @@ import net.minecraft.world.level.chunk.LevelChunk
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
-import net.spaceeye.vmod.schematic.api.containers.v1.SchemBlockData
+import net.spaceeye.vmod.schematic.api.containers.v1.ChunkyBlockData
 import net.spaceeye.vmod.schematic.api.containers.v1.BlockItem
 import net.spaceeye.vmod.schematic.api.interfaces.IBlockStatePalette
 import net.spaceeye.vmod.schematic.containers.*
@@ -51,9 +51,9 @@ object SchematicActionsQueue: ServerClosable() {
         var currentChunk = 0
 
         var afterPasteCallbacks = mutableListOf<() -> Unit>()
-        var delayedBlockEntityLoading = SchemBlockData<() -> Unit>()
+        var delayedBlockEntityLoading = ChunkyBlockData<() -> Unit>()
 
-        private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: SchemBlockData<BlockItem>, blockPalette: IBlockStatePalette, flatTagData: List<CompoundTag>, offset: MVector3d) {
+        private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: ChunkyBlockData<BlockItem>, blockPalette: IBlockStatePalette, flatTagData: List<CompoundTag>, offset: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
                 val pos = BlockPos(x + offset.x, y + offset.y, z + offset.z)
                 val state = blockPalette.fromId(it.paletteId) ?: run {
@@ -150,7 +150,7 @@ object SchematicActionsQueue: ServerClosable() {
         var cz = 0
 
         private fun saveChunk(level: ServerLevel, chunk: LevelChunk, ships: List<ServerShip>,
-                              data: SchemBlockData<BlockItem>, flatExtraData: MutableList<CompoundTag>, blockPalette: IBlockStatePalette,
+                              data: ChunkyBlockData<BlockItem>, flatExtraData: MutableList<CompoundTag>, blockPalette: IBlockStatePalette,
                               chunkMin: BlockPos, cX: Int, cZ: Int,
                               minX: Int, maxX: Int, minZ: Int, maxZ: Int, minY: Int, maxY: Int) {
             for (y in minY until maxY) {
@@ -194,7 +194,7 @@ object SchematicActionsQueue: ServerClosable() {
 
             while (currentShip < ships.size) {
                 val ship = ships[currentShip]
-                val data = blockData.getOrPut(ship.id) { SchemBlockData() }
+                val data = blockData.getOrPut(ship.id) { ChunkyBlockData() }
 
                 val boundsAABB = AABBi(ship.shipAABB!!)
 

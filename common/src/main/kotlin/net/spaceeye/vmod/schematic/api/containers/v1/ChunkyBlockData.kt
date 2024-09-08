@@ -2,8 +2,7 @@ package net.spaceeye.vmod.schematic.api.containers.v1
 
 import net.minecraft.core.BlockPos
 
-//TODO rename
-open class SchemBlockData<T>() {
+open class ChunkyBlockData<T>() {
     val blocks = mutableMapOf<BlockPos, MutableMap<BlockPos, T>>()
     val sortedChunkKeys = mutableListOf<BlockPos>()
 

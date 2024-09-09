@@ -1,5 +1,7 @@
 package net.spaceeye.vmod.utils
 
+import net.spaceeye.vmod.DLOG
+import net.spaceeye.vmod.WLOG
 import java.util.function.Supplier
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
@@ -38,7 +40,11 @@ open class Registry<T>(private val useFullNames: Boolean = false) {
         = typeToSupplier[clazz] ?: throw AssertionError("Type ${clazz.name} wasn't registered")
 
     fun register(clazz: KClass<*>) {
-        clazz.companionObjectInstance // will initialize companion object if exists
+        // will initialize companion object if exists
+        try {
+            clazz.companionObjectInstance
+        } catch (e: Exception) { WLOG("An exception occurred during initialization of companion object of ${clazz.simpleName} but it probably doesn't mean anything. Stack trace in debug.log."); DLOG("\n${e.stackTraceToString()}")
+        } catch (e: Error) { WLOG("An error occurred during initialization of companion object of ${clazz.simpleName} but it probably doesn't mean anything. Stack trace in debug.log."); DLOG("\n${e.stackTraceToString()}")  }
         register(clazz.java as Class<T>)
     }
     fun typeToSupplier(clazz: KClass<*>) = typeToSupplier(clazz.java as Class<T>)

@@ -37,8 +37,6 @@ class SchemOutlinesRenderer(
     val center: ShipTransformImpl,
     val ships: List<Pair<ShipTransform, AABBic>>
 ): BaseRenderer {
-    override val typeName get() = "SchemOutlinesRenderer"
-
     val aabbPoints = mutableListOf(Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d())
 
     val level = Minecraft.getInstance().level!!

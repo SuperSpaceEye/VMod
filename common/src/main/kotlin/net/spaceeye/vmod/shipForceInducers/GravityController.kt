@@ -36,6 +36,7 @@ class GravityController(
         physShip as PhysShipImpl
 
         val forceDiff = (gravityVector - VS_DEFAULT_GRAVITY) * physShip.inertia.shipMass
+        if (forceDiff.sqrDist() < Float.MIN_VALUE) return
 
         physShip.applyInvariantForce(forceDiff.toJomlVector3d())
     }

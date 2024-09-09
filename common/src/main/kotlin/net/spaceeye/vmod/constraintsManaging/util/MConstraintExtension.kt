@@ -4,11 +4,10 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MExtensionTypes
-import net.spaceeye.vmod.utils.RegistryObject
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
-interface MConstraintExtension: RegistryObject {
+interface MConstraintExtension {
     fun onInit(obj: ExtendableMConstraint)
 
     fun onAfterMoveShipyardPositions(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
@@ -31,6 +30,7 @@ interface MConstraintExtension: RegistryObject {
     fun onDeleteMConstraint(level: ServerLevel)
 
     companion object {
-        fun fromType(type: String) = MExtensionTypes.typeToSupplier(type).get()
+        fun fromType(type: String) = MExtensionTypes.strTypeToSupplier(type)!!.get()
+        fun MConstraintExtension.toType() = MExtensionTypes.typeToString(this::class.java)!!
     }
 }

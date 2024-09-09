@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import net.spaceeye.vmod.physgun.PlayerPhysgunState
-import net.spaceeye.vmod.physgun.playerRotToQuat
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.rotateVecByQuat
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.*
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -35,8 +35,8 @@ class PhysgunController: ShipForcesInducer {
             return lock.unlock()
         }
 
-        val shipsToInfluence = mutableListOf(physShip)
-        state.caughtShipIds.forEach { shipsToInfluence.add(lookupPhysShip(it) ?: return@forEach) }
+        val shipsToInfluence = mutableListOf<PhysShipImpl>()
+        state.caughtShipIds.forEach { shipsToInfluence.add(lookupPhysShip(it) as PhysShipImpl ?: return@forEach) }
 
         physShip as PhysShipImpl
         val pConst = 160.0
@@ -48,11 +48,10 @@ class PhysgunController: ShipForcesInducer {
         val idealPosDiff = idealPos - currentPos
         val posDiff = idealPosDiff * pConst
 
-        shipsToInfluence.forEach { ship ->
-            val mass = (ship as PhysShipImpl).inertia.shipMass
-            val force = (posDiff - (Vector3d(ship.poseVel.vel) * dConst)) * mass
-            ship.applyInvariantForce(force.toJomlVector3d())
-        }
+
+        val mass = (physShip).inertia.shipMass
+        val force = (posDiff - (Vector3d(physShip.poseVel.vel) * dConst)) * mass
+        physShip.applyInvariantForce(force.toJomlVector3d())
 
         val rotDiff = state.idealRotation.mul(physShip.transform.shipToWorldRotation.invert(Quaterniond()), Quaterniond()).normalize().invert()
         val rotDiffVector = Vector3d(rotDiff.x * 2.0, rotDiff.y * 2.0, rotDiff.z * 2.0).smul(pConst)
@@ -61,17 +60,51 @@ class PhysgunController: ShipForcesInducer {
         }
         rotDiffVector -= Vector3d(physShip.poseVel.omega).smul(dConst)
 
-        val torque = shipsToInfluence.map { ship ->
-            ship as PhysShipImpl
-            ship.poseVel.rot.transform(
-                ship.inertia.momentOfInertiaTensor.transform(
-                    ship.poseVel.rot.transformInverse(rotDiffVector.toJomlVector3d()
-                    )
+//        val inertia = shipsToInfluence
+//            .filter { it != physShip }
+//            .map {
+//                Pair(
+//                    Matrix3d(it._inertia.momentOfInertiaTensor),
+//                    Vector3d(
+//                        it.transform.positionInWorld.sub(
+//                            physShip.transform.positionInWorld,
+//                            org.joml.Vector3d()
+//                        )
+//                    ).dist().pow(2.0)
+//                )
+//            }
+//            .reduce { acc, matrix3dc ->
+//                val r = matrix3dc.second
+//                acc.first.add(matrix3dc.first.mulComponentWise(Matrix3d(r, 0.0, 0.0, 0.0, r, 0.0, 0.0, 0.0, r), Matrix3d()))
+//                acc
+//            }.first
+
+//        val inertia = shipsToInfluence
+//            .filter { it != physShip }
+//            .map { it._inertia.momentOfInertiaTensor }
+//            .reduce { acc, matrix3dc ->
+//                acc.add(matrix3dc, Matrix3d())
+//            }
+
+        val torque = physShip.poseVel.rot.transform(
+                physShip.inertia.momentOfInertiaTensor.transform(
+                    physShip.poseVel.rot.transformInverse(rotDiffVector.toJomlVector3d())
                 )
             )
-        }.reduce { acc, vector3d -> acc.add(vector3d) ; acc }
 
         physShip.applyInvariantTorque(torque)
+
+        shipsToInfluence
+            .filter { it != physShip }
+            .forEach {
+                val dir = it.transform.positionInWorld.sub(physShip.transform.positionInWorld, org.joml.Vector3d())
+                val rotatedDir = rotateVecByQuat(dir, rotDiff)
+                val diff = -Vector3d(rotatedDir.sub(dir)) * 5 * 0
+
+                val mass = (it as PhysShipImpl).inertia.shipMass
+                val force = (diff + posDiff - (Vector3d(it.poseVel.vel) * dConst)) * mass
+                it.applyInvariantForce(force.toJomlVector3d())
+            }
 
         lock.unlock()
     }

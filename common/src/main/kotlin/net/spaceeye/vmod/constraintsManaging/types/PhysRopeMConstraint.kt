@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.constraintsManaging.types
 
+import gg.essential.elementa.state.map
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.*
 import net.minecraft.server.level.ServerLevel
@@ -12,9 +13,7 @@ import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.PhysRopeRenderer
 import net.spaceeye.vmod.utils.*
-import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
-import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
-import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.utils.vs.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.joml.Vector3dc
@@ -25,7 +24,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 import java.util.*
 
-class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint") {
+class PhysRopeMConstraint(): TwoShipsMConstraint() {
     lateinit var constraint: VSRopeConstraint
     override val mainConstraint: VSConstraint get() = constraint
 
@@ -94,17 +93,17 @@ class PhysRopeMConstraint(): TwoShipsMConstraint("PhysRopeMConstraint") {
     }
 
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        return commonCopy(level, mapped, constraint, attachmentPoints_) {
-                nShip1Id, nShip2Id, nShip1, nShip2, localPos0, localPos1, newAttachmentPoints->
-            val con = PhysRopeMConstraint(
-                nShip1?.id ?: constraint.shipId0, nShip2?.id ?: constraint.shipId1,
-                constraint.compliance, localPos0.toJomlVector3d(), localPos1.toJomlVector3d(),
-                constraint.maxForce, constraint.ropeLength, segments, massPerSegment, radius,
-                newAttachmentPoints)
+        val new = PhysRopeMConstraint()
 
-            con.ropeLength = ropeLength
-            con
-        }
+        new.attachmentPoints_ = copyAttachmentPoints(constraint, attachmentPoints_, level, mapped)
+        new.constraint = constraint.copy(level, mapped) ?: return null
+
+        new.ropeLength = ropeLength
+        new.segments = segments
+        new.massPerSegment = massPerSegment
+        new.radius = radius
+
+        return new
     }
 
     //TODO the way it works is pretty stupid, redo when possible

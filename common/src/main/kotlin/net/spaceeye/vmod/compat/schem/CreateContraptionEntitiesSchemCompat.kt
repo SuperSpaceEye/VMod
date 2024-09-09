@@ -12,12 +12,12 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.constraintsManaging.getCenterPos
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.joml.primitives.AABBd
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.util.toAABBd
@@ -154,7 +154,7 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
 
         tag!!.putUUID("VMOD SCHEM COMPAT", syncUUID)
     }
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: () -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (!tag.contains("VMOD SCHEM COMPAT")) {return}
         val syncUUID = tag.getUUID("VMOD SCHEM COMPAT")
 

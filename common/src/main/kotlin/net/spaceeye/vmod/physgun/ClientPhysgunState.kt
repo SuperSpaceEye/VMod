@@ -15,21 +15,21 @@ object ClientPhysgunState {
     var lastIsHoldingRotateKey = false
     var lastPreciseRotation = false
 
-    private fun sendPrimaryState(activate: Boolean): EventResult {
+    private fun sendPrimaryState(activate: Boolean): Boolean {
         pkt.primaryActivated = activate
 
-        return EventResult.interruptFalse()
+        return true
     }
-    private fun sendSecondaryState(activate: Boolean): EventResult {
+    private fun sendSecondaryState(activate: Boolean): Boolean {
         pkt.freezeSelected = activate
 
-        return EventResult.interruptFalse()
+        return true
     }
 
-    private fun sendTrinaryState(): EventResult{
+    private fun sendTrinaryState(): Boolean{
         pkt.freezeAll = true
 
-        return EventResult.interruptFalse()
+        return true
     }
 
     private fun sendScrollState(amount: Double): EventResult {
@@ -53,7 +53,7 @@ object ClientPhysgunState {
                     tempQuat = Minecraft.getInstance().gameRenderer.mainCamera.rotation().toJoml()
                     pkt.quatDiff = Minecraft.getInstance().gameRenderer.mainCamera.rotation().toJoml()
                 }
-                pkt.rotate = (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT) && pkt.primaryActivated
+                pkt.rotate = (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT) && (pkt.primaryActivated || pkt.rotate)
                 pkt.rotate
             }
             GLFW.GLFW_KEY_LEFT_SHIFT -> {
@@ -66,30 +66,31 @@ object ClientPhysgunState {
     }
 
     internal fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {
-        return when(button) {
-            GLFW.GLFW_MOUSE_BUTTON_LEFT -> {
-                when (action) {
-                    GLFW.GLFW_PRESS   -> sendPrimaryState(true)
-                    GLFW.GLFW_RELEASE -> sendPrimaryState(false)
-                    else -> EventResult.pass()
-                }
+        val left = if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            when (action) {
+                GLFW.GLFW_PRESS   -> sendPrimaryState(true)
+                GLFW.GLFW_RELEASE -> sendPrimaryState(false)
+                else -> false
             }
-            GLFW.GLFW_MOUSE_BUTTON_RIGHT -> {
-                when (action) {
-                    GLFW.GLFW_PRESS   -> sendSecondaryState(true)
-                    GLFW.GLFW_RELEASE -> sendSecondaryState(false)
-                    else -> EventResult.pass()
-                }
+        } else false
+
+        val right = if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            when (action) {
+                GLFW.GLFW_PRESS   -> sendSecondaryState(true)
+                GLFW.GLFW_RELEASE -> sendSecondaryState(false)
+                else -> false
             }
-            GLFW.GLFW_MOUSE_BUTTON_MIDDLE -> {
-                when (action) {
-                    GLFW.GLFW_PRESS -> sendTrinaryState()
-                    GLFW.GLFW_RELEASE -> EventResult.pass()
-                    else -> EventResult.pass()
-                }
+        } else false
+
+        val middle = if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+            when (action) {
+                GLFW.GLFW_PRESS -> sendTrinaryState()
+                GLFW.GLFW_RELEASE -> false
+                else -> false
             }
-            else -> EventResult.pass()
-        }
+        } else false
+
+        return if (left || right || middle) EventResult.interruptFalse() else EventResult.pass()
     }
 
     private var lastX = 0.0

@@ -1,29 +1,40 @@
 package net.spaceeye.vmod.toolgun.modes
 
+import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.modes.state.*
+import net.spaceeye.vmod.utils.Registry
+import kotlin.reflect.KClass
 
-// SHOULD BE INITIALIZED BEFORE OTHER OBJECTS
-object ToolgunModes {
-    val modes = listOf<BaseMode>(
-        ConnectionMode(),
-        RopeMode(),
-        HydraulicsMode(),
-        PhysRopeMode(),
-        SliderMode(),
-        SyncRotation(),
-
-        ThrusterMode(),
-        GravChangerMode(),
-        DisableCollisionsMode(),
-        SchemMode(),
-        ScaleMode(),
-        StripMode(),
-        ShipRemoverMode()
-    )
-    var initialized = false
+object ToolgunModes: Registry<BaseMode>() {
     init {
-        initialized = true
+        register(ConnectionMode::class)
+        register(RopeMode::class)
+        register(HydraulicsMode::class)
+        register(PhysRopeMode::class)
+        register(SliderMode::class)
+        register(SyncRotation::class)
 
-        modes.forEach { it.init(BaseNetworking.EnvType.Client) }
+        register(ThrusterMode::class)
+        register(GravChangerMode::class)
+        register(DisableCollisionsMode::class)
+        register(SchemMode::class)
+        register(ScaleMode::class)
+        register(StripMode::class)
+        register(ShipRemoverMode::class)
+
+        ToolgunExtensions
+        initAccessPermissions()
     }
+
+    @JvmStatic
+    fun <T: BaseMode> getMode(clazz: KClass<T>) = this.typeToSupplier(clazz)
+
+    private fun initAccessPermissions() {
+        asTypesList().forEach {
+            PlayerAccessManager.addPermission("Allow ${it.simpleName}")
+        }
+    }
+
+    @JvmStatic
+    fun Class<BaseMode>.getPermission() = "Allow ${this.simpleName}"
 }

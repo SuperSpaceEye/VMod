@@ -120,6 +120,4 @@ class PrecisePlacementAssistRenderer(
     override fun deserialize(buf: FriendlyByteBuf) { throw AssertionError("Shouldn't be deserialized") }
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
     override fun scaleBy(by: Double) { throw AssertionError("Shouldn't be scaled") }
-
-    override val typeName: String get() = "PointsPlacementAssist"
 }

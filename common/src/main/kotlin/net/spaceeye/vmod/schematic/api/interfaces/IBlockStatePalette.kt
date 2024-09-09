@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.schematic.icontainers
+package net.spaceeye.vmod.schematic.api.interfaces
 
 import net.minecraft.world.level.block.state.BlockState
 
@@ -7,7 +7,6 @@ interface IBlockStatePalette {
     fun fromId(id: Int): BlockState?
 
     fun getPaletteSize(): Int
-    val paletteVersion: Int
 
     fun setPalette(newPalette: List<Pair<Int, BlockState>>)
 }

@@ -8,12 +8,12 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
-import net.spaceeye.vmod.constraintsManaging.updatePosition
 import net.spaceeye.vmod.networking.AutoSerializable
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
+import net.spaceeye.vmod.utils.vs.updatePosition
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -45,8 +45,6 @@ open class A2BRenderer(): BaseRenderer, AutoSerializable {
         this.color = color
         this.width = width
     }
-
-    override val typeName = "A2BRenderer"
 
     override fun renderData(poseStack: PoseStack, camera: Camera) {
         val level = Minecraft.getInstance().level!!

@@ -9,15 +9,15 @@ import gg.essential.elementa.constraints.ChildBasedSizeConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.toolgun.modes.BaseMode
-import net.spaceeye.vmod.toolgun.modes.HUDBuilder
+import net.spaceeye.vmod.toolgun.modes.EHUDBuilder
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
-interface SimpleHUD: HUDBuilder {
+interface SimpleHUD: EHUDBuilder {
     fun makeSubText(makeText: (String) -> Unit)
     fun makeSubText(makeText: (String) -> Unit, textHolder: UIContainer) { makeSubText(makeText) }
 
-    override fun makeHUD(screen: UIContainer) {
+    override fun eMakeHUD(screen: UIContainer) {
         this as BaseMode
 
         val background = GradientComponent(

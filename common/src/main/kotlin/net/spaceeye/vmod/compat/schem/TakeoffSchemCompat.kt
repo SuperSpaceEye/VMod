@@ -5,8 +5,8 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.constraintsManaging.getCenterPos
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.vs.getCenterPos
 import net.takeoff.TakeoffBlocks
 import net.takeoff.blockentity.BearingBlockEntity
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -23,7 +23,7 @@ class TakeoffSchemCompat: SchemCompatItem {
         tag.putLong("VMOD_INJECT_otherId", level.getShipManagingPos(BlockPos.of(tag.getLong("otherPos")))?.id ?: return)
     }
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: () -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (   state.block != TakeoffBlocks.BEARING.get()
             && state.block != TakeoffBlocks.BEARING_TOP.get()
             ) { return }

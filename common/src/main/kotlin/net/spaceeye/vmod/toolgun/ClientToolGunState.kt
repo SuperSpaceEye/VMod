@@ -10,11 +10,15 @@ import net.minecraft.client.gui.GuiGraphics
 import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.BaseNetworking
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.EmptyPacket
 import org.lwjgl.glfw.GLFW
 
 object ClientToolGunState : ClientClosable() {
+    val modes = ToolgunModes.asList().map { it.get() }.map { it.init(BaseNetworking.EnvType.Client); it }
+
     private var _currentMode: BaseMode? = null
     var currentMode: BaseMode?
         get() = _currentMode
@@ -67,16 +71,16 @@ object ClientToolGunState : ClientClosable() {
     }
 
     //TODO events should also have try catches so that it doesn't ever crash
-    internal fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): EventResult {
-        val eventResult = if (currentMode == null) { EventResult.pass() } else { currentMode!!.onKeyEvent(keyCode, scanCode, action, modifiers) }
-        if (eventResult != EventResult.pass()) { return eventResult }
+    internal fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): Boolean {
+        val cancel = if (currentMode == null) { false } else { currentMode!!.onKeyEvent(keyCode, scanCode, action, modifiers) }
+        if (cancel) { return true }
 
         if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_CONSTRAINT.matches(keyCode, scanCode)) {
             ServerToolGunState.c2sRequestRemoveLastConstraint.sendToServer(EmptyPacket())
-            return EventResult.interruptFalse()
+            return true
         }
 
-        return EventResult.pass()
+        return false
     }
 
     internal fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {

@@ -5,17 +5,18 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.dc
+import net.spaceeye.vmod.constraintsManaging.util.mc
+import net.spaceeye.vmod.constraintsManaging.util.sc
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
-import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
+import net.spaceeye.vmod.utils.vs.copy
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
 import org.valkyrienskies.core.apigame.constraints.VSTorqueConstraint
-import org.valkyrienskies.mod.common.shipObjectWorld
 
-class SyncRotationMConstraint(): TwoShipsMConstraint("SyncRotationMConstraint") {
+class SyncRotationMConstraint(): TwoShipsMConstraint() {
     override lateinit var mainConstraint: VSTorqueConstraint
 
     constructor(
@@ -40,16 +41,9 @@ class SyncRotationMConstraint(): TwoShipsMConstraint("SyncRotationMConstraint") 
     }
 
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        if (!mapped.keys.contains(mainConstraint.shipId0) && !mapped.keys.contains(mainConstraint.shipId1)) return null
-
-        return SyncRotationMConstraint(
-            mapped[mainConstraint.shipId0]!!,
-            mapped[mainConstraint.shipId1]!!,
-            mainConstraint.localRot0.invert(Quaterniond()),
-            mainConstraint.localRot1.invert(Quaterniond()),
-            mainConstraint.compliance,
-            mainConstraint.maxTorque
-        )
+        val new = SyncRotationMConstraint()
+        new.mainConstraint = mainConstraint.copy(mapped) ?: return null
+        return new
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
@@ -59,7 +53,7 @@ class SyncRotationMConstraint(): TwoShipsMConstraint("SyncRotationMConstraint") 
 
         tag.putInt("mID", mID)
 
-        tag.put("c1", VSConstraintSerializationUtil.serializeConstraint(mainConstraint) ?: return null)
+        sc("c1", mainConstraint, tag) {return null}
 
         return tag
     }
@@ -67,17 +61,13 @@ class SyncRotationMConstraint(): TwoShipsMConstraint("SyncRotationMConstraint") 
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         mID = tag.getInt("mID")
 
-        VSConstraintDeserializationUtil.tryConvertDimensionId(tag["c1"] as CompoundTag, lastDimensionIds); mainConstraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag["c1"] as CompoundTag) ?: return null) as VSTorqueConstraint
+        dc("c1", ::mainConstraint, tag, lastDimensionIds) {return null}
 
         return this
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        cIDs.add(level.shipObjectWorld.createNewConstraint(mainConstraint) ?: clean(level) ?: return false)
+        mc(mainConstraint, cIDs, level) {return false}
         return true
-    }
-
-    override fun iOnDeleteMConstraint(level: ServerLevel) {
-        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
     }
 }

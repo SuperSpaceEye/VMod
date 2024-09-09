@@ -42,18 +42,18 @@ class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
                 // we do it like this because we need for toolgun to handle keys first to prevent
                 // user from opening menu or smth in the middle of using some mode
                 if (!guiIsOpened) {
-                    val res = ClientToolGunState.handleKeyEvent(keyCode, scanCode, action, modifiers)
-                    if (res != EventResult.pass()) {return@on true}
+                    val cancel = ClientToolGunState.handleKeyEvent(keyCode, scanCode, action, modifiers)
+                    if (cancel) {return@on true}
 
                     if (isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
                         ClientToolGunState.openGUI()
-                        return@on false
+                        return@on true
                     }
                 }
 
                 if (guiIsOpened && isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
                     ClientToolGunState.closeGUI()
-                    return@on false
+                    return@on true
                 }
 
                 return@on false

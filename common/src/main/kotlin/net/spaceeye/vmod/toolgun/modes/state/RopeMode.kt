@@ -1,7 +1,5 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import dev.architectury.networking.NetworkManager
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
@@ -9,34 +7,34 @@ import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.RopeMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.networking.C2SConnection
 import net.spaceeye.vmod.rendering.types.RopeRenderer
-import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.RopeGUI
 import net.spaceeye.vmod.toolgun.modes.hud.RopeHUD
-import net.spaceeye.vmod.toolgun.modes.eventsHandling.RopeCEH
-import net.spaceeye.vmod.toolgun.modes.util.PlacementModesState
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
-import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 
-class RopeMode: BaseMode, RopeCEH, RopeGUI, RopeHUD, PlacementModesState {
+class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
     var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
     var fixedDistance: Double by get(2, -1.0, {ServerLimits.instance.fixedDistance.get(it as Double)})
 
-    override var posMode: PositionModes by get(3, PositionModes.NORMAL)
-    override var precisePlacementAssistSideNum: Int by get(4, 3, {ServerLimits.instance.precisePlacementAssistSides.get(it as Int)})
-    var primaryFirstRaycast: Boolean by get(5, false)
+    var primaryFirstRaycast: Boolean by get(3, false)
 
-    var segments: Int by get(6, 16)
-    var width: Double by get(7, .2)
+    var segments: Int by get(4, 16)
+    var width: Double by get(5, .2)
 
-    val conn_primary = register { object : C2SConnection<RopeMode>("rope_mode_primary", "toolgun_command") { override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = serverRaycastAndActivate<RopeMode>(context.player, buf, ::RopeMode) { item, serverLevel, player, raycastResult -> item.activatePrimaryFunction(serverLevel, player, raycastResult) } } }
 
-    override var precisePlacementAssistRendererId: Int = -1
+    var posMode: PositionModes = PositionModes.NORMAL
+    var precisePlacementAssistSideNum: Int = 3
+
     var previousResult: RaycastFunctions.RaycastResult? = null
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
@@ -60,8 +58,26 @@ class RopeMode: BaseMode, RopeCEH, RopeGUI, RopeHUD, PlacementModesState {
         resetState()
     }
 
-    override fun resetState() {
+    override fun eResetState() {
         previousResult = null
         primaryFirstRaycast = false
+    }
+
+    companion object {
+        init {
+            ToolgunModes.registerWrapper(RopeMode::class) {
+                it.addExtension<RopeMode> {
+                    BasicConnectionExtension<RopeMode>("rope_mode"
+                        ,allowResetting = true
+                        ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                        ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
+                    )
+                }.addExtension<RopeMode> {
+                    PlacementModesExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
+                }.addExtension<RopeMode> {
+                    BlockMenuOpeningExtension<RopeMode> { inst -> inst.primaryFirstRaycast }
+                }
+            }
+        }
     }
 }

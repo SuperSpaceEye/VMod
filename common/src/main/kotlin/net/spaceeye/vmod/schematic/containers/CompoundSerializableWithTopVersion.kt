@@ -17,6 +17,8 @@ class CompoundSerializableWithTopVersion(var tag: CompoundTag, val version: Int)
         return FriendlyByteBuf(buffer.buffer())
     }
 
+    //TODO figure out wtf i meant here
+
     // version was already written before calling fromBytes
     override fun deserialize(buf: FriendlyByteBuf) {
         val buffer = ByteBufInputStream(buf)

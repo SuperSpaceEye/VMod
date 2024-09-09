@@ -10,7 +10,7 @@ import java.awt.Color
 import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
 
 open class SerializableItemDelegate <T : Any>(
@@ -38,7 +38,7 @@ open class SerializableItemDelegate <T : Any>(
 interface AutoSerializable: Serializable {
     @NonExtendable
     fun getSerializableItems() =
-        this::class.declaredMemberProperties.mapNotNull { item ->
+        this::class.memberProperties.mapNotNull { item ->
             val javaField = item.javaField
             if (javaField == null || !SerializableItemDelegate::class.java.isAssignableFrom(javaField.type)) return@mapNotNull null
 

@@ -1,18 +1,17 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import gg.essential.elementa.components.UIContainer
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.util.SimpleHUD
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class ShipRemoverMode: BasicMode<ShipRemoverMode>("ship_remover"), SimpleHUD {
-    override fun getPrimaryFunction(): ((mode: ShipRemoverMode, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit)? =
-        {mode, level, player, rr -> (mode).activatePrimaryFunction(level, player, rr)}
-
+class ShipRemoverMode: ExtendableToolgunMode(), SimpleHUD {
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.ship == null) {return}
         level.shipObjectWorld.deleteShip(raycastResult.ship as ServerShip)
@@ -20,8 +19,17 @@ class ShipRemoverMode: BasicMode<ShipRemoverMode>("ship_remover"), SimpleHUD {
 
     override val itemName get() = Component.literal("Ship Remover")
 
-    override fun makeGUISettings(parentWindow: UIContainer) {}
-    override fun makeSubText(makeText: (String) -> Unit) {
-        makeText("LMB to delete ship")
+    override fun makeSubText(makeText: (String) -> Unit) {}
+
+    companion object {
+        init {
+            ToolgunModes.registerWrapper(ShipRemoverMode::class) {
+                it.addExtension<ShipRemoverMode> {
+                    BasicConnectionExtension<ShipRemoverMode>("ship_remover"
+                        ,primaryFunction = { mode, level, player, rr -> mode.activatePrimaryFunction(level, player, rr) }
+                    )
+                }
+            }
+        }
     }
 }

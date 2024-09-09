@@ -62,7 +62,7 @@ fun calculatePrecise(raycastResult: RaycastFunctions.RaycastResult, precisePlace
     return points.minBy { (it - point).sqrDist() }
 }
 
-fun BaseMode.serverRaycastAndActivateFn(
+inline fun BaseMode.serverRaycastAndActivateFn(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,
     level: Level,
@@ -79,7 +79,7 @@ fun BaseMode.serverRaycastAndActivateFn(
     if (raycastResult.state.isAir) {return}
 
     val ship = raycastResult.ship as ServerShip?
-    val shipId = raycastResult.shipId!!
+    val shipId = raycastResult.shipId
 
     val spoint = getModePosition(mode, raycastResult, precisePlacementAssistSideNum)
     val rpoint = if (ship == null) spoint else posShipToWorld(ship, Vector3d(spoint))
@@ -87,7 +87,7 @@ fun BaseMode.serverRaycastAndActivateFn(
     fnToActivate(level, shipId, ship, spoint, rpoint, raycastResult)
 }
 
-fun BaseMode.serverRaycast2PointsFnActivation(
+inline fun BaseMode.serverRaycast2PointsFnActivation(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,
     level: Level,
@@ -118,8 +118,8 @@ fun BaseMode.serverRaycast2PointsFnActivation(
     if (ship1 == null && ship2 == null) { resetFn(); return }
     if (ship1 == ship2) { resetFn(); return }
 
-    val shipId1: ShipId = previousResult.shipId!!
-    val shipId2: ShipId = raycastResult.shipId!!
+    val shipId1: ShipId = previousResult.shipId
+    val shipId2: ShipId = raycastResult.shipId
 
     val (spoint1, spoint2) = getModePositions(mode, previousResult, raycastResult, precisePlacementAssistSideNum)
 

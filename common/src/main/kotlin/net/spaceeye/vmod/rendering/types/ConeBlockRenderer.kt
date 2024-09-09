@@ -10,12 +10,12 @@ import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.VMBlocks
-import net.spaceeye.vmod.constraintsManaging.updatePosition
 import net.spaceeye.vmod.networking.AutoSerializable
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingStuff
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
+import net.spaceeye.vmod.utils.vs.updatePosition
 import org.joml.Quaterniond
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
@@ -35,8 +35,6 @@ class ConeBlockRenderer(): BlockRenderer, AutoSerializable {
     var pos: Vector3d by get(1, Vector3d())
     var rot: Quaterniond by get(2, Quaterniond())
     var scale: Float by get(3, 1.0f)
-
-    override val typeName = "BlockRenderer"
 
     constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId): this() {
         this.pos = pos

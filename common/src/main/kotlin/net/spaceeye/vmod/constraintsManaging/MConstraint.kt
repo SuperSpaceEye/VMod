@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.utils.RegistryObject
 import net.spaceeye.vmod.utils.Vector3d
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.joml.Vector3dc
@@ -17,7 +16,7 @@ interface Tickable {
     fun tick(server: MinecraftServer, unregister: () -> Unit)
 }
 
-interface MConstraint: RegistryObject {
+interface MConstraint {
     var mID: ManagedConstraintId
     //DO NOT TOUCH IT
     @set:Internal

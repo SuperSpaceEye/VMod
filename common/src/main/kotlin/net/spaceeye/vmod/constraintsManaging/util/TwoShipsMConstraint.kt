@@ -17,7 +17,7 @@ import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.physics_api.ConstraintId
 
-abstract class TwoShipsMConstraint(typeName: String): ExtendableMConstraint(typeName) {
+abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
     abstract val mainConstraint: VSConstraint
 
     val cIDs = mutableListOf<ConstraintId>() // should be used to store VS ids
@@ -66,5 +66,12 @@ abstract class TwoShipsMConstraint(typeName: String): ExtendableMConstraint(type
     protected fun <T> clean(level: ServerLevel): T? {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
         return null
+    }
+
+    /**
+     * IF YOU'RE OVERRIDING THIS REMEMBER TO CALL SUPER METHOD
+     */
+    override fun iOnDeleteMConstraint(level: ServerLevel) {
+        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
     }
 }

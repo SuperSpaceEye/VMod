@@ -1,10 +1,10 @@
-package net.spaceeye.vmod.schematic.containers
+package net.spaceeye.vmod.schematic.api.containers.v1
 
 import net.minecraft.util.CrudeIncrementalIntIdentityHashBiMap
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.schematic.icontainers.IBlockStatePalette
+import net.spaceeye.vmod.schematic.api.interfaces.IBlockStatePalette
 
-class BlockPaletteHashMapV1(bits: Int = 1): IBlockStatePalette {
+open class BlockPaletteHashMapV1(bits: Int = 1): IBlockStatePalette {
     var statePaletteMap: CrudeIncrementalIntIdentityHashBiMap<BlockState> = CrudeIncrementalIntIdentityHashBiMap.create(1 shl bits)
 
     override fun toId(state: BlockState): Int {
@@ -16,7 +16,6 @@ class BlockPaletteHashMapV1(bits: Int = 1): IBlockStatePalette {
     override fun fromId(id: Int): BlockState? = statePaletteMap.byId(id)
 
     override fun getPaletteSize(): Int = statePaletteMap.size()
-    override val paletteVersion: Int = 1
 
     override fun setPalette(newPalette: List<Pair<Int, BlockState>>) {
         statePaletteMap.clear()

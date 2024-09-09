@@ -47,7 +47,6 @@ class PhysRopeRenderer(): BaseRenderer, AutoSerializable {
 
     var entities = mutableListOf<PhysRopeComponentEntity?>()
 
-    override val typeName = "PhysRopeRenderer"
 
     constructor(shipId1: ShipId, shipId2: ShipId,
                 point1: Vector3d, point2: Vector3d,

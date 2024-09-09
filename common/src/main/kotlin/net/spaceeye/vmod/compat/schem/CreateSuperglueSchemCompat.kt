@@ -11,11 +11,11 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.AABB
-import net.spaceeye.vmod.constraintsManaging.getCenterPos
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.ShipSchematic
 import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.joml.primitives.AABBd
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.util.toAABBd
@@ -98,5 +98,5 @@ class CreateSuperglueSchemCompat: SchemCompatItem {
 
 
     override fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit) {}
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: () -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {}
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {}
 }

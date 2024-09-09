@@ -14,13 +14,14 @@ import net.spaceeye.vmod.shipForceInducers.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getVector3d
 import net.spaceeye.vmod.utils.putVector3d
+import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class ThrusterMConstraint(): ExtendableMConstraint("ThrusterMConstraint"), Tickable {
+class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
     var shipId: ShipId = -1
     var pos = Vector3d()
     var bpos = BlockPos(0, 0, 0)

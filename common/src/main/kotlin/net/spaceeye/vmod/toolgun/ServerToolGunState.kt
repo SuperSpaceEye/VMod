@@ -11,10 +11,14 @@ import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.networking.NetworkingRegisteringFunctions
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
+import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
+import net.spaceeye.vmod.toolgun.modes.BaseNetworking
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes.getPermission
 import net.spaceeye.vmod.translate.REMOVED
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.ServerClosable
@@ -35,9 +39,14 @@ fun sendHUDErrorToOperators(error: String) {
     }
 }
 
-object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
+object ServerToolGunState: ServerClosable() {
     val playersStates = ConcurrentHashMap<UUID, PlayerToolgunState>()
     val playersConstraintsStack = ConcurrentHashMap<UUID, MutableList<ManagedConstraintId>>()
+
+    init {
+        // it needs to initialize all c2s and s2c receivers
+        ToolgunModes.asList().forEach { it.get().init(BaseNetworking.EnvType.Server) }
+    }
 
     @JvmStatic fun playerHasAccess(player: ServerPlayer): Boolean {
         return      player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_TOOLGUN_PERMISSION_LEVEL)
@@ -45,8 +54,16 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
                 ||  ToolgunPermissionManager.getAllowedPlayers().contains(player.uuid)
     }
 
-    @JvmStatic inline fun <T> verifyPlayerAccessLevel(player: ServerPlayer, fn: () -> T) {
-        if (!playerHasAccess(player)) {
+    @JvmStatic inline fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
+        if (!PlayerAccessManager.hasPermission(player, clazz.getPermission())) {
+            s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
+            return
+        }
+        fn()
+    }
+
+    @JvmStatic inline fun verifyPlayerAccessLevel(player: ServerPlayer, permission: String, fn: () -> Unit) {
+        if (!PlayerAccessManager.hasPermission(player, permission)) {
             s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
             return
         }
@@ -70,7 +87,7 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
 
     val c2sRequestRemoveLastConstraint = "request_remove_last_constraint" idWithConnc {
         object : C2SConnection<EmptyPacket>(it, "server_toolgun") {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = verifyPlayerAccessLevel(context.player as ServerPlayer) {
+            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = verifyPlayerAccessLevel(context.player as ServerPlayer, "request_remove_last_constraint") {
                 val stack = playersConstraintsStack[context.player.uuid] ?: return
                 var item: ManagedConstraintId = stack.removeLastOrNull() ?: return
 
@@ -184,6 +201,7 @@ object ServerToolGunState: ServerClosable(), NetworkingRegisteringFunctions {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
                 val pkt = C2SAskIfIHaveAccess(); pkt.deserialize(buf)
                 val player = context.player as ServerPlayer
+                //TODO this is dumb
                 val generalAccess = playerHasAccess(player)
 
                 if (!generalAccess) { return s2cResponseToAccessRequest.sendToClient(player, S2CResponseToAccessRequest(pkt.accessTo, pkt.callbackId, false)) }

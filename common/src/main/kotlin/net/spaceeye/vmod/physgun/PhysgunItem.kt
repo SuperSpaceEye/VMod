@@ -2,6 +2,8 @@ package net.spaceeye.vmod.physgun
 
 import dev.architectury.event.EventResult
 import dev.architectury.event.events.client.ClientRawInputEvent
+import dev.architectury.utils.EnvExecutor
+import net.fabricmc.api.EnvType
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.spaceeye.vmod.VMItems
@@ -25,22 +27,6 @@ class PhysgunItem: Item(Properties().`arch$tab`(VMItems.TAB).stacksTo(1)) {
                 return@on ClientPhysgunState.handleKeyEvent(keyCode, scanCode, action, modifiers)
             }
 
-            ClientRawInputEvent.MOUSE_CLICKED_PRE.register {
-                    client, button, action, mods ->
-                if (!playerIsUsingPhysgun()) {return@register EventResult.pass()}
-                if (client.screen != null) {return@register EventResult.pass()}
-
-                return@register ClientPhysgunState.handleMouseButtonEvent(button, action, mods)
-            }
-
-            ClientRawInputEvent.MOUSE_SCROLLED.register {
-                    client, amount ->
-                if (!playerIsUsingPhysgun()) {return@register EventResult.pass()}
-                if (client.screen != null) {return@register EventResult.pass()}
-
-                return@register ClientPhysgunState.handleMouseScrollEvent(amount)
-            }
-
             RandomEvents.mouseMove.on {
                 pos, _ ->
                 if (!playerIsUsingPhysgun()) {return@on false}
@@ -49,7 +35,24 @@ class PhysgunItem: Item(Properties().`arch$tab`(VMItems.TAB).stacksTo(1)) {
                 return@on ClientPhysgunState.handleMouseMovement(pos.x, pos.y)
             }
 
-            ClientPhysgunState.makeEvents()
+            EnvExecutor.runInEnv(EnvType.CLIENT) { Runnable{
+                ClientRawInputEvent.MOUSE_CLICKED_PRE.register {
+                        client, button, action, mods ->
+                    if (!playerIsUsingPhysgun()) {return@register EventResult.pass()}
+                    if (client.screen != null) {return@register EventResult.pass()}
+
+                    return@register ClientPhysgunState.handleMouseButtonEvent(button, action, mods)
+                }
+
+                ClientRawInputEvent.MOUSE_SCROLLED.register {
+                        client, amount ->
+                    if (!playerIsUsingPhysgun()) {return@register EventResult.pass()}
+                    if (client.screen != null) {return@register EventResult.pass()}
+
+                    return@register ClientPhysgunState.handleMouseScrollEvent(amount)
+                }
+                ClientPhysgunState.makeEvents()
+            }}
         }
     }
 }

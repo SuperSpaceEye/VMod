@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
+import net.spaceeye.vmod.constraintsManaging.util.MConstraintExtension.Companion.toType
 import net.spaceeye.vmod.utils.Vector3d
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.NonExtendable
@@ -13,7 +14,7 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 
-abstract class ExtendableMConstraint(final override val typeName: String): MConstraint {
+abstract class ExtendableMConstraint(): MConstraint {
     abstract fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
     // SHOULDN'T RETURN GROUND SHIPID
     abstract fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId>
@@ -40,7 +41,9 @@ abstract class ExtendableMConstraint(final override val typeName: String): MCons
 
 
     final override var mID: ManagedConstraintId = -1
-    //DO NOT TOUCH IT
+    /**
+     * DO NOT TOUCH IT
+     */
     @set:Internal
     @get:Internal
     final override var __saveCounter: Int = -1
@@ -108,7 +111,7 @@ abstract class ExtendableMConstraint(final override val typeName: String): MCons
 
         val extensionsTag = CompoundTag()
         _extensions.forEach {
-            extensionsTag.put(it.typeName, it.onSerialize() ?: return@forEach)
+            extensionsTag.put(it.toType(), it.onSerialize() ?: return@forEach)
         }
 
         saveTag.put("Extensions", extensionsTag)

@@ -159,6 +159,4 @@ class PhysgunRayRenderer(): BaseRenderer, TimedRenderer, PositionDependentRender
     override fun scaleBy(by: Double) {
         TODO("Not yet implemented")
     }
-
-    override val typeName: String = "PhysgunRayRenderer"
 }

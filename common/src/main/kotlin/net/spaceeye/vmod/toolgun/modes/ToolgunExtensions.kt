@@ -3,7 +3,7 @@ package net.spaceeye.vmod.toolgun.modes
 import dev.architectury.event.events.common.PlayerEvent
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.networking.makeS2C
+import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
@@ -44,7 +44,7 @@ object ToolgunExtensions: Registry<ToolgunModeExtension>() {
             schema = buf.readCollection({mutableListOf<Pair<String, Int>>()}) {Pair(buf.readUtf(), buf.readInt())}.toMap()
         }
     }
-    val s2cSetSchema = makeS2C<S2CSetToolgunExtensionsSchema>("set_schema", "toolgun_extensions") {
+    val s2cSetSchema = regS2C<S2CSetToolgunExtensionsSchema>("set_schema", "toolgun_extensions") {
         setSchema(it.schema.map { Pair(it.value, it.key) }.toMap())
     }
 }

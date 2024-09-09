@@ -54,16 +54,16 @@ object ServerToolGunState: ServerClosable() {
                 ||  ToolgunPermissionManager.getAllowedPlayers().contains(player.uuid)
     }
 
-    @JvmStatic inline fun verifyPlayerAccessLevel(player: ServerPlayer, fn: () -> Unit) {
-        if (!playerHasAccess(player)) {
+    @JvmStatic inline fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
+        if (!PlayerAccessManager.hasPermission(player, clazz.getPermission())) {
             s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
             return
         }
         fn()
     }
 
-    @JvmStatic fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
-        if (!PlayerAccessManager.hasPermission(player, clazz.getPermission())) {
+    @JvmStatic inline fun verifyPlayerAccessLevel(player: ServerPlayer, permission: String, fn: () -> Unit) {
+        if (!PlayerAccessManager.hasPermission(player, permission)) {
             s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
             return
         }
@@ -87,7 +87,7 @@ object ServerToolGunState: ServerClosable() {
 
     val c2sRequestRemoveLastConstraint = "request_remove_last_constraint" idWithConnc {
         object : C2SConnection<EmptyPacket>(it, "server_toolgun") {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = verifyPlayerAccessLevel(context.player as ServerPlayer) {
+            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) = verifyPlayerAccessLevel(context.player as ServerPlayer, "request_remove_last_constraint") {
                 val stack = playersConstraintsStack[context.player.uuid] ?: return
                 var item: ManagedConstraintId = stack.removeLastOrNull() ?: return
 

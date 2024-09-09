@@ -12,6 +12,7 @@ import net.spaceeye.vmod.constraintsManaging.MConstraintTypes
 import net.spaceeye.vmod.constraintsManaging.MExtensionTypes
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
+import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.MessageTypes
 import net.spaceeye.vmod.physgun.ClientPhysgunState
 import net.spaceeye.vmod.physgun.PhysgunItem
@@ -55,6 +56,7 @@ object VM {
         initRegistries()
 
         SimpleMessagerNetworking
+        ServerLimits
         ServerToolGunState
         ServerPhysgunState
         ShipSchematic

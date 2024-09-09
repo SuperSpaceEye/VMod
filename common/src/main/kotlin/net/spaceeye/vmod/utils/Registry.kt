@@ -2,6 +2,7 @@ package net.spaceeye.vmod.utils
 
 import java.util.function.Supplier
 import kotlin.reflect.KClass
+import kotlin.reflect.full.companionObjectInstance
 
 //TODO revise?
 open class Registry<T>(private val useFullNames: Boolean = false) {
@@ -36,7 +37,10 @@ open class Registry<T>(private val useFullNames: Boolean = false) {
     fun typeToSupplier(clazz: Class<T>)
         = typeToSupplier[clazz] ?: throw AssertionError("Type ${clazz.name} wasn't registered")
 
-    fun register(clazz: KClass<*>) = register(clazz.java as Class<T>)
+    fun register(clazz: KClass<*>) {
+        clazz.companionObjectInstance // will initialize companion object if exists
+        register(clazz.java as Class<T>)
+    }
     fun typeToSupplier(clazz: KClass<*>) = typeToSupplier(clazz.java as Class<T>)
     inline fun <TT: Any> registerWrapper(clazz: KClass<TT>, crossinline wrapper: (item: TT) -> T) = registerWrapper(clazz.java as Class<T>) { item -> wrapper(item as TT) }
 

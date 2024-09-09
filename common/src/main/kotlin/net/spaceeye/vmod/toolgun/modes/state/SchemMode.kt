@@ -386,12 +386,9 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             null
         } ?: return
         val schem = ShipSchematic.getSchematicConstructor().get() as SchemPlaceAtMakeFrom
-        RandomEvents.serverOnTick.on { (it), unregister ->
-            schem.makeFrom(player.level as ServerLevel, player.uuid, serverCaughtShip) {
-                SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
-                ServerPlayerSchematics.schematics[player.uuid] = schem
-            }
-            unregister()
+        schem.makeFrom(player.level as ServerLevel, player.uuid, serverCaughtShip) {
+            SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
+            ServerPlayerSchematics.schematics[player.uuid] = schem
         }
     }
 

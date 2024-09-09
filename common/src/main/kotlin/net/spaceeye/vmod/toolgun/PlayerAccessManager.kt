@@ -1,10 +1,15 @@
 package net.spaceeye.vmod.toolgun
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import dev.architectury.event.events.common.LifecycleEvent
 import dev.architectury.event.events.common.PlayerEvent
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.utils.getMapper
 import java.util.UUID
 
 data class PlayerAccessState(val uuid: UUID, val nickname: String, var role: String)
@@ -72,12 +77,22 @@ object PlayerAccessManager {
     var rolesPermissions = mutableMapOf<String, MutableSet<String>>()
     var playersRoles = mutableMapOf<UUID, PlayerAccessState>()
 
+    @JsonIgnore
     val allPermissions = mutableSetOf<String>()
     val allRoles = mutableListOf<String>()
+    @JsonIgnore
     const val defaultRoleName = "default"
 
     init {
         PlayerEvent.PLAYER_JOIN.register { getPlayerState(it) }
+
+        LifecycleEvent.SERVER_STOPPING.register {
+            save()
+        }
+
+        LifecycleEvent.SERVER_STARTING.register {
+            load()
+        }
     }
 
 
@@ -91,6 +106,7 @@ object PlayerAccessManager {
         }
 
     @Synchronized fun hasPermission(player: ServerPlayer, permission: String): Boolean {
+        if (player.hasPermissions(4)) {return true}
         val state = getPlayerState(player)
         val permissions = rolesPermissions[state.role] ?: return false
         return permissions.contains(permission)
@@ -99,6 +115,13 @@ object PlayerAccessManager {
     @Synchronized fun setPlayerRole(player: ServerPlayer, role: String): Boolean {
         if (!rolesPermissions.containsKey(role)) {return false}
         val state = getPlayerState(player)
+        state.role = role
+        return true
+    }
+
+    @Synchronized fun setPlayerRole(player: UUID, role: String): Boolean {
+        val state = playersRoles[player] ?: return false
+        if (!rolesPermissions.containsKey(role)) {return false}
         state.role = role
         return true
     }
@@ -113,6 +136,11 @@ object PlayerAccessManager {
 
     @Synchronized fun setRole(role: String, permissions: MutableSet<String>) {
         rolesPermissions[role] = permissions
+    }
+
+    @Synchronized fun removeRole(role: String): Boolean {
+        if (role == defaultRoleName) {return false}
+        return rolesPermissions.remove(role) != null
     }
 
     @Synchronized fun addPermission(permission: String) {
@@ -132,10 +160,35 @@ object PlayerAccessManager {
     }
 
     @Synchronized fun save() {
-        
+        val mapper = getMapper()
+        val data = mapper.writeValueAsBytes(this)
+        ExternalDataUtil.writeObject("role_data.json", data)
     }
 
     @Synchronized fun load() {
+        val mapper = getMapper()
+        try {
+            val data = ExternalDataUtil.readObject("role_data.json") ?: return ELOG("Failed to load role data as role_data.json doesn't exist!")
+            val obj = mapper.readValue(data, this::class.java)
 
+            val allRolesSet = allRoles.toSet()
+            allRoles.addAll(obj.allRoles.filter { !allRolesSet.contains(it) })
+
+            if (!allPermissions.containsAll(obj.allPermissionsList)) {
+                ELOG("FUCK")
+            }
+
+            val permissionsToAdd = obj.allPermissionsList.filter { !allPermissions.contains(it) }
+            allPermissionsList.addAll(permissionsToAdd)
+            allPermissions.addAll(permissionsToAdd)
+
+            rolesPermissions = obj.rolesPermissions
+            playersRoles = obj.playersRoles
+
+        } catch (e: Exception) {
+            ELOG("Failed to load role data because of exception:\n${e.stackTraceToString()}")
+        } catch (e: Error) {
+            ELOG("Failed to load role data because of error:\n${e.stackTraceToString()}")
+        }
     }
 }

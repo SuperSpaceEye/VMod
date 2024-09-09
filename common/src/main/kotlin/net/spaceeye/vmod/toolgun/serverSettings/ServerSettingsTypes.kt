@@ -11,7 +11,6 @@ object ServerSettingsTypes: Registry<ServerSettingsGUIBuilder>() {
         register(ServerLimitsSettings::class)
         register(DimensionalGravitySettings::class)
         register(RolesPermissionsSettings::class)
-        register(PlayersRolesSettings::class)
         register(PlayerRoleManager::class)
     }
 }

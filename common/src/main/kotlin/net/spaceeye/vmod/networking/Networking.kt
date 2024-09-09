@@ -34,6 +34,7 @@ fun Serializable.hash() = hasher.digest(serialize().accessByteBufWithCorrectSize
 object NetworkingRegistrationFunctions {
     val registeredIDs = mutableSetOf<String>()
 
+    @Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regS2C"))
     @JvmStatic inline infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
         val instance = constructor(this)
         if (registeredIDs.contains(instance.id.toString())) {return instance}
@@ -44,6 +45,7 @@ object NetworkingRegistrationFunctions {
         return instance
     }
 
+    @Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regC2S"))
     @JvmStatic inline infix fun <TT: Serializable> String.idWithConnc(constructor: (String) -> C2SConnection<TT>): C2SConnection<TT> {
         val instance = constructor(this)
         if (registeredIDs.contains(instance.id.toString())) {return instance}
@@ -94,11 +96,15 @@ abstract class S2CConnection<T : Serializable>(id: String, connectionName: Strin
     fun sendToClients(players: Iterable<ServerPlayer>, packet: T) = NetworkManager.sendToPlayers(players, id, packet.serialize())
 }
 
-inline fun <reified T: Serializable>makeC2S(name: String, connName: String, crossinline doProcess: (ServerPlayer) -> Boolean, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
+@Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regC2S"))
+inline fun <reified T: Serializable>makeC2S(name: String, connName: String,
+                                            crossinline doProcess: (ServerPlayer) -> Boolean,
+                                            crossinline rejectCallback: (ServerPlayer) -> Unit = {},
+                                            crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
     object : C2SConnection<T>(name, connName) {
         override fun serverHandler(buf: FriendlyByteBuf, context: PacketContext) {
             val player = context.player as ServerPlayer
-            if (!doProcess(player)) {return}
+            if (!doProcess(player)) {return rejectCallback(player)}
 
             val pkt = T::class.java.getConstructor().newInstance()
             pkt.deserialize(buf)
@@ -106,6 +112,7 @@ inline fun <reified T: Serializable>makeC2S(name: String, connName: String, cros
         }
     }
 
+@Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regC2S"))
 inline fun <reified T: Serializable>makeC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
     object : C2SConnection<T>(name, connName) {
         override fun serverHandler(buf: FriendlyByteBuf, context: PacketContext) {
@@ -115,6 +122,7 @@ inline fun <reified T: Serializable>makeC2S(name: String, connName: String, cros
         }
     }
 
+@Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regS2C"))
 inline fun <reified T: Serializable>makeS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit ) =
     object : S2CConnection<T>(name, connName) {
         override fun clientHandler(buf: FriendlyByteBuf, context: PacketContext) {
@@ -124,7 +132,7 @@ inline fun <reified T: Serializable>makeS2C(name: String, connName: String, cros
         }
     }
 
-inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline doProcess: (ServerPlayer) -> Boolean, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(it, connName, doProcess, fn)}
+inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline doProcess: (ServerPlayer) -> Boolean, crossinline rejectCallback: (ServerPlayer) -> Unit = {}, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(it, connName, doProcess, rejectCallback, fn)}
 inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(it, connName, fn)}
 inline fun <reified T: Serializable>regS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C(it, connName, fn)}
 

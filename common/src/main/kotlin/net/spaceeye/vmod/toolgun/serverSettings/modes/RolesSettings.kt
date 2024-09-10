@@ -9,7 +9,7 @@ import gg.essential.elementa.constraints.ChildBasedSizeConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.StrLimit
 import net.spaceeye.vmod.networking.Serializable
@@ -73,8 +73,7 @@ class NewRoleForm(
 }
 
 class RolesPermissionsSettings: ServerSettingsGUIBuilder {
-    override val itemName: TranslatableComponent
-        get() = TranslatableComponent("Roles Settings")
+    override val itemName get() = Component.literal("Roles Settings")
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         callback = null

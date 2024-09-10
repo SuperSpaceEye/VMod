@@ -8,7 +8,7 @@ import gg.essential.elementa.constraints.FillConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.networking.Serializable
@@ -22,8 +22,7 @@ import java.awt.Color
 import java.util.UUID
 
 class PlayerRoleManager: ServerSettingsGUIBuilder {
-    override val itemName: TranslatableComponent
-        get() = TranslatableComponent("Player Role Manager")
+    override val itemName get() = Component.literal("Player Role Manager")
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         callback = { data ->

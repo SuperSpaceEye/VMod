@@ -6,7 +6,6 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.opposite
 import net.spaceeye.vmod.utils.Either
 import net.spaceeye.vmod.utils.readVarLongArray
 import net.spaceeye.vmod.utils.writeVarLongArray

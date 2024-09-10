@@ -17,10 +17,9 @@ import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
-import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
@@ -225,42 +224,32 @@ interface PlacementAssistClient {
 }
 
 open class PlacementAssistNetworking(networkName: String): BaseNetworking<ExtendableToolgunMode>() {
-    val s2cHandleFailure = "handle_failure" idWithConns {
-        object : S2CConnection<EmptyPacket>(it, networkName) {
-            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val obj = clientObj ?: return
-                obj.resetState()
-            }
-        }
+    val s2cHandleFailure = regS2C<EmptyPacket>("handle_failure", networkName) {
+        clientObj?.resetState()
     }
 
     // Client has no information about constraints, so server should send it to the client
-    val s2cSendTraversalInfo = "send_traversal_info" idWithConns {
-        object : S2CConnection<S2CSendTraversalInfo>(it, networkName) {
-            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val pkt = S2CSendTraversalInfo(buf)
-                val mobj = clientObj!!
-                val obj = mobj.getExtensionOfType<PlacementAssistExtension>()
+    val s2cSendTraversalInfo = regS2C<S2CSendTraversalInfo>("send_traversal_info", networkName) {pkt->
+        val mobj = clientObj!!
+        val obj = mobj.getExtensionOfType<PlacementAssistExtension>()
 
-                if (obj.paCaughtShip == null) {return}
+        if (obj.paCaughtShip == null) { return@regS2C }
 
-                if (obj.paCaughtShips != null) {
-                    obj.paCaughtShips?.forEach {
-                        Minecraft.getInstance().shipObjectWorld.allShips.getById(it)?.transformProvider = null
-                    }
-                }
-
-                val primaryTransform = obj.paCaughtShip!!.transformProvider
-                if (primaryTransform !is PlacementAssistTransformProvider) { return }
-
-                obj.paCaughtShips = pkt.data.filter { it != obj.paCaughtShip!!.id }.toLongArray()
-                val clientShipObjectWorld = Minecraft.getInstance().shipObjectWorld
-
-                obj.paCaughtShips!!.forEach {
-                    val ship = clientShipObjectWorld.allShips.getById(it)
-                    ship?.transformProvider = CenteredAroundPlacementAssistTransformProvider(primaryTransform, ship!!)
-                }
+        if (obj.paCaughtShips != null) {
+            obj.paCaughtShips?.forEach {
+                Minecraft.getInstance().shipObjectWorld.allShips.getById(it)?.transformProvider = null
             }
+        }
+
+        val primaryTransform = obj.paCaughtShip!!.transformProvider
+        if (primaryTransform !is PlacementAssistTransformProvider) { return@regS2C }
+
+        obj.paCaughtShips = pkt.data.filter { it != obj.paCaughtShip!!.id }.toLongArray()
+        val clientShipObjectWorld = Minecraft.getInstance().shipObjectWorld
+
+        obj.paCaughtShips!!.forEach {
+            val ship = clientShipObjectWorld.allShips.getById(it)
+            ship?.transformProvider = CenteredAroundPlacementAssistTransformProvider(primaryTransform, ship!!)
         }
     }
 }

@@ -11,8 +11,6 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VM
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import java.security.MessageDigest
 
 interface Connection {
@@ -31,48 +29,46 @@ interface Serializable {
 private val hasher = MessageDigest.getInstance("MD5")
 fun Serializable.hash() = hasher.digest(serialize().accessByteBufWithCorrectSize())
 
-object NetworkingRegistrationFunctions {
-    val registeredIDs = mutableSetOf<String>()
+val registeredIDs = mutableSetOf<String>()
 
-    @Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regS2C"))
-    @JvmStatic inline infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
-        val instance = constructor(this)
-        if (registeredIDs.contains(instance.id.toString())) {return instance}
-        registeredIDs.add(instance.id.toString())
-        try { // Why? so that if it's registered on dedicated client/server it won't die
-            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
-        } catch(e: NoSuchMethodError) {}
-        return instance
-    }
+@Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regS2C"))
+inline infix fun <TT: Serializable> String.idWithConns(constructor: (String) -> S2CConnection<TT>): S2CConnection<TT> {
+    val instance = constructor(this)
+    if (registeredIDs.contains(instance.id.toString())) {return instance}
+    registeredIDs.add(instance.id.toString())
+    try { // Why? so that if it's registered on dedicated client/server it won't die
+        NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+    } catch(e: NoSuchMethodError) {}
+    return instance
+}
 
-    @Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regC2S"))
-    @JvmStatic inline infix fun <TT: Serializable> String.idWithConnc(constructor: (String) -> C2SConnection<TT>): C2SConnection<TT> {
-        val instance = constructor(this)
-        if (registeredIDs.contains(instance.id.toString())) {return instance}
-        registeredIDs.add(instance.id.toString())
-        try { // Why? so that if it's registered on dedicated client/server it won't die
-            NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
-        } catch(e: NoSuchMethodError) {}
-        return instance
-    }
+@Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regC2S"))
+inline infix fun <TT: Serializable> String.idWithConnc(constructor: (String) -> C2SConnection<TT>): C2SConnection<TT> {
+    val instance = constructor(this)
+    if (registeredIDs.contains(instance.id.toString())) {return instance}
+    registeredIDs.add(instance.id.toString())
+    try { // Why? so that if it's registered on dedicated client/server it won't die
+        NetworkManager.registerReceiver(instance.side, instance.id, instance.getHandler())
+    } catch(e: NoSuchMethodError) {}
+    return instance
+}
 
-    @JvmStatic inline fun <T: Serializable> registerTR(id: String, registeringSide: Side, constructor: (String) -> TRConnection<T>): TRConnection<T> {
-        val instance = constructor(id)
-        try {
-            // handler should be on the opposite side of the intended invocation side.
-            if (registeringSide == instance.invocationSide.opposite()) {
-                if (registeredIDs.contains(instance.id.toString())) {return instance}
-                registeredIDs.add(instance.id.toString())
-                NetworkManager.registerReceiver(instance.invocationSide, instance.id, instance.getHandler())
-            }
-        } catch (e: NoSuchMethodError) {}
-        return instance
-    }
+inline fun <T: Serializable> registerTR(id: String, registeringSide: Side, constructor: (String) -> TRConnection<T>): TRConnection<T> {
+    val instance = constructor(id)
+    try {
+        // handler should be on the opposite side of the intended invocation side.
+        if (registeringSide == instance.invocationSide.opposite()) {
+            if (registeredIDs.contains(instance.id.toString())) {return instance}
+            registeredIDs.add(instance.id.toString())
+            NetworkManager.registerReceiver(instance.invocationSide, instance.id, instance.getHandler())
+        }
+    } catch (e: NoSuchMethodError) {}
+    return instance
+}
 
-    @JvmStatic fun Side.opposite() = when (this) {
-        Side.S2C -> Side.C2S
-        Side.C2S -> Side.S2C
-    }
+fun Side.opposite() = when (this) {
+    Side.S2C -> Side.C2S
+    Side.C2S -> Side.S2C
 }
 
 abstract class C2SConnection<T : Serializable>(id: String, connectionName: String): Connection {
@@ -106,7 +102,7 @@ inline fun <reified T: Serializable>makeC2S(name: String, connName: String,
             val player = context.player as ServerPlayer
             if (!doProcess(player)) {return rejectCallback(player)}
 
-            val pkt = T::class.java.getConstructor().newInstance()
+            val pkt = T::class.constructor(buf)
             pkt.deserialize(buf)
             fn(pkt, context.player as ServerPlayer)
         }
@@ -116,7 +112,7 @@ inline fun <reified T: Serializable>makeC2S(name: String, connName: String,
 inline fun <reified T: Serializable>makeC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
     object : C2SConnection<T>(name, connName) {
         override fun serverHandler(buf: FriendlyByteBuf, context: PacketContext) {
-            val pkt = T::class.java.getConstructor().newInstance()
+            val pkt = T::class.constructor(buf)
             pkt.deserialize(buf)
             fn(pkt, context.player as ServerPlayer)
         }
@@ -126,7 +122,7 @@ inline fun <reified T: Serializable>makeC2S(name: String, connName: String, cros
 inline fun <reified T: Serializable>makeS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit ) =
     object : S2CConnection<T>(name, connName) {
         override fun clientHandler(buf: FriendlyByteBuf, context: PacketContext) {
-            val pkt = T::class.java.getConstructor().newInstance()
+            val pkt = T::class.constructor(buf)
             pkt.deserialize(buf)
             fn(pkt)
         }

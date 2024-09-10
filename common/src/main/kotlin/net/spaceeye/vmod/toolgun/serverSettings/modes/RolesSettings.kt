@@ -12,6 +12,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.StrLimit
+import net.spaceeye.vmod.networking.AutoSerializable
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
@@ -123,9 +124,7 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
                         parentWindow.clearChildren()
                         makeGUISettings(parentWindow)
                     }
-                    val pkt = C2SNewRole()
-                    pkt.name = form!!.name
-                    c2sTryAddNewRole.sendToServer(pkt)
+                    c2sTryAddNewRole.sendToServer(C2SNewRole(form!!.name))
                 }, {
                     parentWindow.removeChild(form!!)
                 })
@@ -146,9 +145,7 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
                         parentWindow.clearChildren()
                         makeGUISettings(parentWindow)
                     }
-                    val pkt = C2SRemoveRole()
-                    pkt.roleName = role
-                    c2sTryRemoveRole.sendToServer(pkt)
+                    c2sTryRemoveRole.sendToServer(C2SRemoveRole(role))
                 } constrain {
                     x = 2f.pixels
                     y = SiblingConstraint() + 2f.pixels
@@ -200,8 +197,8 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
 
         val c2sTryRemoveRole = regC2S<C2SRemoveRole>("try_remove_role", "player_roles_settings", {
             it.hasPermissions(4)
-        }) {pkt, player ->
-            PlayerAccessManager.removeRole(pkt.roleName)
+        }) {(roleName), player ->
+            PlayerAccessManager.removeRole(roleName)
             s2cRoleWasRemoved.sendToClient(player, EmptyPacket())
         }
 
@@ -211,8 +208,8 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
         }
 
         val c2sTryAddNewRole = regC2S<C2SNewRole>("try_add_new_role", "player_roles_settings",
-            {player -> player.hasPermissions(4)}) {pkt, player ->
-            PlayerAccessManager.addRole(pkt.name)
+            {player -> player.hasPermissions(4)}) {(name), player ->
+            PlayerAccessManager.addRole(name)
             s2cRoleWasAdded.sendToClient(player, EmptyPacket())
         }
 
@@ -221,19 +218,7 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
             callback = null
         }
 
-        class C2SNewRole(): Serializable {
-            var name: String = ""
-
-            override fun serialize(): FriendlyByteBuf {
-                val buf = getBuffer()
-                buf.writeUtf(name)
-                return buf
-            }
-
-            override fun deserialize(buf: FriendlyByteBuf) {
-                name = buf.readUtf()
-            }
-        }
+        data class C2SNewRole(var name: String): AutoSerializable
 
         class C2SRolesSettingsUpdate(): Serializable {
             var rolesPermissions = mutableMapOf<String, MutableSet<String>>()
@@ -268,20 +253,6 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
             }
         }
 
-        class C2SRemoveRole(): Serializable {
-            var roleName: String = ""
-
-            override fun serialize(): FriendlyByteBuf {
-                val buf = getBuffer()
-
-                buf.writeUtf(roleName)
-
-                return buf
-            }
-
-            override fun deserialize(buf: FriendlyByteBuf) {
-                roleName = buf.readUtf()
-            }
-        }
+        data class C2SRemoveRole(var roleName: String): AutoSerializable
     }
 }

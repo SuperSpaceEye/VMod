@@ -13,10 +13,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.*
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
@@ -246,29 +243,21 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     }
 
     // transmitter can't begin transmitting data to receiver by itself
-    val c2sLoadSchematic = "load_schematic" idWithConnc {
-        object : C2SConnection<EmptyPacket>(it, networkName) {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val lastReq = ServerPlayerSchematics.loadRequests[context.player.uuid]
-                if (lastReq != null && getNow_ms() - lastReq < 10000L) { return }
-
-                ServerPlayerSchematics.loadRequests[context.player.uuid] = getNow_ms()
-                ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(ServerPlayerSchematics.SendLoadRequest(context.player.uuid), context)
-            }
-        }
+    val c2sLoadSchematic = regC2S<EmptyPacket>("load_schematic", networkName, {player ->
+        val lastReq = ServerPlayerSchematics.loadRequests[player.uuid]
+        lastReq == null || getNow_ms() - lastReq > 10000L
+    }) {pkt, player ->
+        ServerPlayerSchematics.loadRequests[player.uuid] = getNow_ms()
+        ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(ServerPlayerSchematics.SendLoadRequest(player.uuid), FakePacketContext(player))
     }
 
-    val s2cSendShipInfo = "send_ship_info" idWithConns {
-        object : S2CConnection<S2CSendShipInfo>(it, networkName) {
-            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val mode = ClientToolGunState.currentMode ?: return
-                if (mode !is SchemMode) {return}
-                val pkt = S2CSendShipInfo(buf)
-                mode.shipInfo = pkt.shipInfo
-            }
-        }
+    val s2cSendShipInfo = regS2C<S2CSendShipInfo>("send_ship_info", networkName) {pkt ->
+        val mode = ClientToolGunState.currentMode ?: return@regS2C
+        if (mode !is SchemMode) { return@regS2C }
+        mode.shipInfo = pkt.shipInfo
     }
 
+    //TODO ?
     class S2CSendShipInfo(): Serializable {
         lateinit var shipInfo: IShipSchematicInfo
 

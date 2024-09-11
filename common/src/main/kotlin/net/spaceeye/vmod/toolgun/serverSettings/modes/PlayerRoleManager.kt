@@ -11,6 +11,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
+import net.spaceeye.vmod.networking.AutoSerializable
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
@@ -46,15 +47,11 @@ class PlayerRoleManager: ServerSettingsGUIBuilder {
 
                 val change = makeDropDown("Roles", ctn, 2f, 2f, data.allRoles.map {
                     DItem(it, it == item.role) {
-                        val pkt = C2SChangePlayerRole()
-                        pkt.newRole = it
-                        pkt.uuid = item.uuid
-
                         callback = { data ->
                             text.setText("${item.nickname} ${data.playersRoles[item.uuid]?.role}")
                         }
 
-                        c2sChangePlayerRole.sendToServer(pkt)
+                        c2sChangePlayerRole.sendToServer(C2SChangePlayerRole(it, item.uuid))
                     }
                 }) constrain {
                     width = FillConstraint()
@@ -84,21 +81,6 @@ class PlayerRoleManager: ServerSettingsGUIBuilder {
             s2cSendPlayersRolesData.sendToClient(player, PlayersRolesData())
         }
 
-        class C2SChangePlayerRole(): Serializable {
-            lateinit var newRole: String
-            lateinit var uuid: UUID
-
-            override fun serialize(): FriendlyByteBuf {
-                val buf = getBuffer()
-                buf.writeUtf(newRole)
-                buf.writeUUID(uuid)
-                return buf
-            }
-
-            override fun deserialize(buf: FriendlyByteBuf) {
-                newRole = buf.readUtf()
-                uuid = buf.readUUID()
-            }
-        }
+        data class C2SChangePlayerRole(var newRole: String, var uuid: UUID): AutoSerializable
     }
 }

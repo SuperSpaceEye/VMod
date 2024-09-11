@@ -26,7 +26,7 @@ abstract class ExtendableMConstraint(): MConstraint {
     abstract fun iGetAttachmentPoints(): List<Vector3d>
 
     // is called on ship splitting
-    abstract fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId)
+    open fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
 
     abstract fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint?
 

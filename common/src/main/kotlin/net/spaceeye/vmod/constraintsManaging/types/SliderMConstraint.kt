@@ -59,10 +59,6 @@ class SliderMConstraint(): TwoShipsMConstraint() {
         attachmentPoints_.addAll(attachmentPoints)
     }
 
-    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        throw NotImplementedError()
-    }
-
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         val new = SliderMConstraint()
 

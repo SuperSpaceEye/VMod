@@ -36,10 +36,6 @@ class SyncRotationMConstraint(): TwoShipsMConstraint() {
             )
     }
 
-    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        throw NotImplementedError()
-    }
-
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         val new = SyncRotationMConstraint()
         new.mainConstraint = mainConstraint.copy(mapped) ?: return null

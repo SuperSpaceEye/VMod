@@ -98,27 +98,6 @@ class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
         controller.removeThruster(thrusterId)
     }
 
-    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        throw NotImplementedError()
-        if (previous != bpos) {return}
-
-        val oShip = level.shipObjectWorld.loadedShips.getById(shipId) ?: return
-        val oController = ThrustersController.getOrCreate(oShip)
-        oController.removeThruster(thrusterId)
-
-//        ServerRenderingData.removeRenderer(rID)
-
-        shipId = newShipId
-        pos = (pos - Vector3d(bpos) + Vector3d(new))
-        bpos = new
-
-        val nShip = level.shipObjectWorld.loadedShips.getById(newShipId) ?: level.shipObjectWorld.allShips.getById(newShipId) ?: return
-        val nController = ThrustersController.getOrCreate(nShip)
-        thrusterId = nController.newThruster(pos, forceDir, force)
-
-//        rID = ServerRenderingData.addRenderer(shipId, shipId, renderer!!)
-    }
-
     override fun iNbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
         tag.putInt("managedId", mID)

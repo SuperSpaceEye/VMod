@@ -62,7 +62,7 @@ object ClientPlayerSchematics {
         NetworkManager.Side.C2S,
         0
     ) {
-        override fun requestPacketConstructor() = SendSchemRequest()
+        override fun requestPacketConstructor() = SendSchemRequest(UUID(0L, 0L))
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
         override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
@@ -83,7 +83,7 @@ object ClientPlayerSchematics {
         NetworkManager.Side.C2S,
         VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
-        override fun requestPacketConstructor() = ServerPlayerSchematics.SendLoadRequest()
+        override fun requestPacketConstructor() = ServerPlayerSchematics.SendLoadRequest(UUID(0L, 0L))
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
@@ -120,21 +120,7 @@ object ClientPlayerSchematics {
         }
     }
 
-    class SendSchemRequest(): Serializable {
-        lateinit var uuid: UUID
-        constructor(player: Player): this() {this.uuid = player.uuid}
-
-        override fun serialize(): FriendlyByteBuf {
-            val buf = getBuffer()
-
-            buf.writeUUID(uuid)
-
-            return buf
-        }
-        override fun deserialize(buf: FriendlyByteBuf) {
-            uuid = buf.readUUID()
-        }
-    }
+    data class SendSchemRequest(var uuid: UUID): AutoSerializable
 
     fun listSchematics(): List<Path> {
         try {
@@ -169,7 +155,7 @@ object ServerPlayerSchematics: ServerClosable() {
         NetworkManager.Side.S2C,
         VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
-        override fun requestPacketConstructor() = ClientPlayerSchematics.SendSchemRequest()
+        override fun requestPacketConstructor() = ClientPlayerSchematics.SendSchemRequest(UUID(0L, 0L))
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
@@ -187,7 +173,7 @@ object ServerPlayerSchematics: ServerClosable() {
         NetworkManager.Side.S2C,
         0
     ) {
-        override fun requestPacketConstructor() = SendLoadRequest()
+        override fun requestPacketConstructor() = SendLoadRequest(UUID(0L, 0L))
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
         override fun transmitterRequestProcessor(req: SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
@@ -201,23 +187,7 @@ object ServerPlayerSchematics: ServerClosable() {
 
     val loadRequests = mutableMapOf<UUID, Long>()
 
-    class SendLoadRequest(): Serializable {
-        lateinit var requestUUID: UUID
-
-        constructor(uuid: UUID): this() {requestUUID = uuid}
-        constructor(buf: FriendlyByteBuf): this() {deserialize(buf)}
-
-        override fun serialize(): FriendlyByteBuf {
-            val buf = getBuffer()
-
-            buf.writeUUID(requestUUID)
-
-            return buf
-        }
-        override fun deserialize(buf: FriendlyByteBuf) {
-            requestUUID = buf.readUUID()
-        }
-    }
+    data class SendLoadRequest(var requestUUID: UUID): AutoSerializable
 
     val schematics = mutableMapOf<UUID, IShipSchematic?>()
 

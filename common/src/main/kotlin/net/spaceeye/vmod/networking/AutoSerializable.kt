@@ -155,7 +155,7 @@ fun <T: Serializable> KClass<T>.constructor(buf: FriendlyByteBuf? = null): T {
 
     val delegates = members.map {
         val clazz = it.returnType.jvmErasure
-        typeToFns[clazz]!!.i2
+        typeToFns[clazz]!!.second
     }
 
     val items = delegates.map { it.invoke(buf) }
@@ -168,7 +168,7 @@ typealias DeserializeFn<T> = ((buf: FriendlyByteBuf) -> T)
 
 object SerializableItem {
     val typeToDelegate = mutableMapOf<KClass<*>, (pos: Int, default: Any, verification: ((it: Any) -> Any)) -> SerializableItemDelegate<*>>()
-    val typeToFns = mutableMapOf<KClass<*>, Tuple2<SerializeFn, DeserializeFn<*>>>()
+    val typeToFns = mutableMapOf<KClass<*>, Pair<SerializeFn, DeserializeFn<*>>>()
 
     @JvmStatic fun <T: Any> registerSerializationItem(
         type: KClass<*>,
@@ -176,7 +176,7 @@ object SerializableItem {
         deserialize: ((buf: FriendlyByteBuf) -> T)) {
         typeToDelegate[type] = { pos: Int, default: Any, verification: (it: Any) -> Any ->
             SerializableItemDelegate(pos, default, verification, serialize, deserialize) }
-        typeToFns[type] = Tuple.of(serialize, deserialize)
+        typeToFns[type] = Pair(serialize, deserialize)
     }
 
     init {
@@ -211,20 +211,5 @@ object SerializableItem {
         }
 
         return SerializableItemDelegate(pos, default, verification, customSerialize!!, customDeserialize!!)
-    }
-
-    //TODO think about it
-    @JvmStatic
-    inline fun <reified T: Any> get(pos: Int, default: List<T>,
-                                    noinline verification: ((it: Any) -> List<T>) = {it as List<T>},
-                                    noinline customSerialize: ((it: Any, buf: FriendlyByteBuf) -> Unit)? = null,
-                                    noinline customDeserialize: ((buf: FriendlyByteBuf) -> List<T>)? = null): SerializableItemDelegate<List<T>> {
-        val (ser, deser) = if (customSerialize != null && customDeserialize != null) { Tuple.of(customSerialize, customDeserialize) } else { typeToFns[T::class]!! }
-        return SerializableItemDelegate(pos, default, verification, {it, buf ->
-            it as List<*>
-            buf.writeCollection(it) {buf, it -> ser(it!!, buf) }
-        }, {buf ->
-            buf.readCollection({ mutableListOf() }) {buf -> deser(buf) as T}
-        })
     }
 }

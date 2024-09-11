@@ -73,8 +73,6 @@ nothing
 ## Hydraulics
 * Make it more stable
 * Fix the bug that crashes VS
-* Fix bad copying
-* Fix bad scaling
 * Redo it
 
 ## Elastic

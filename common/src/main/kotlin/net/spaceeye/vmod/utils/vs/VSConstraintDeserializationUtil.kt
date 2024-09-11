@@ -135,12 +135,17 @@ object VSConstraintDeserializationUtil {
         return makeConstraint(cTag, cData)
     }
 
-    //if constraint is between world and ship, then world's id should be in the second shipId of the constraint
     fun tryConvertDimensionId(tag: CompoundTag, lastDimensionIds: Map<Long, String>) {
-        if (!tag.contains("shipId1")) {return}
+        if (!tag.contains("shipId1") || !tag.contains("shipId0")) {return}
 
-        val id = tag.getLong("shipId1")
-        val dimensionIdStr = lastDimensionIds[id] ?: return
-        tag.putLong("shipId1", ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[dimensionIdStr]!!)
+        tag.getLong("shipId0")?.let { id ->
+            val dimensionIdStr = lastDimensionIds[id] ?: return@let
+            tag.putLong("shipId0", ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[dimensionIdStr]!!)
+        }
+
+        tag.getLong("shipId1")?.let { id ->
+            val dimensionIdStr = lastDimensionIds[id] ?: return@let
+            tag.putLong("shipId1", ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable[dimensionIdStr]!!)
+        }
     }
 }

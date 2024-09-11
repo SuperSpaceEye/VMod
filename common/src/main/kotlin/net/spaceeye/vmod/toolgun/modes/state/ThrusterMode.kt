@@ -5,6 +5,7 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.constraintsManaging.extensions.SignalActivator
 import net.spaceeye.vmod.constraintsManaging.types.ThrusterMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
@@ -46,7 +47,9 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
             force, channel
         ).addExtension(RenderableExtension(ConeBlockRenderer(
             basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), 1.0f, ship.id
-        )))){it.addFor(player)}
+        ))).addExtension(SignalActivator(
+            "channel", "percentage"
+        ))){it.addFor(player)}
     }
 
     companion object {
@@ -57,7 +60,7 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
                         ,primaryFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )
                 }.addExtension<ThrusterMode> {
-                    PlacementModesExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
+                    PlacementModesExtension(false, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
                 }
             }
         }

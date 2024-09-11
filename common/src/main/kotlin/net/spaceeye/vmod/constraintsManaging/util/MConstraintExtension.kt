@@ -2,10 +2,15 @@ package net.spaceeye.vmod.constraintsManaging.util
 
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MExtensionTypes
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
+
+interface TickableMConstraintExtension: MConstraintExtension {
+    fun tick(server: MinecraftServer)
+}
 
 interface MConstraintExtension {
     fun onInit(obj: ExtendableMConstraint)

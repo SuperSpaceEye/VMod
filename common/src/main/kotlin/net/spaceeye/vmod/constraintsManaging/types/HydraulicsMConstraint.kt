@@ -4,13 +4,8 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.constraintsManaging.*
-import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
-import net.spaceeye.vmod.constraintsManaging.util.dc
-import net.spaceeye.vmod.constraintsManaging.util.mc
-import net.spaceeye.vmod.constraintsManaging.util.sc
-import net.spaceeye.vmod.network.*
+import net.spaceeye.vmod.constraintsManaging.util.*
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.copy
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
@@ -21,7 +16,6 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 import kotlin.math.abs
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
 
@@ -223,22 +217,10 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
     }
 
     var wasDeleted = false
-    var fnToUse: (() -> Boolean)? = null
     var lastExtended: Double = 0.0
-
-    // ======================================================================================
-
     var targetPercentage = 0.0
 
-    var totalPercentage = 0.0
-    var numMessages = 0
-
-    private fun signalFn(): Boolean {
-        if (numMessages != 0) {
-            targetPercentage = totalPercentage / numMessages
-            numMessages = 0
-            totalPercentage = 0.0
-        }
+    private fun tryExtendDist(): Boolean {
         val length = maxLength - minLength
 
         val currentPercentage = extendedDist / length
@@ -249,23 +231,13 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
         return true
     }
 
-    private fun signalTick(msg: Message) {
-        if (msg !is Signal) { return }
-
-        totalPercentage = min(max(msg.percentage, 0.0), 1.0)
-        numMessages++
-
-        fnToUse = ::signalFn
-    }
-
-    // ======================================================================================
-
     override fun tick(server: MinecraftServer, unregister: () -> Unit) {
         if (wasDeleted) {
             unregister()
             return
         }
-        if (fnToUse != null) { if (!fnToUse!!()) {fnToUse = null} }
+        getExtensionsOfType<TickableMConstraintExtension>().forEach { it.tick(server) }
+        if (!tryExtendDist()) {return}
 
         if (lastExtended == extendedDist) {return}
         lastExtended = extendedDist
@@ -289,12 +261,6 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), Tickable {
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        MessagingNetwork.register(channel) {
-            msg, unregister ->
-            if (wasDeleted) {unregister(); return@register}
-
-            signalTick(msg)
-        }
 
         mc(constraint1, cIDs, level) {return false}
         if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return true}

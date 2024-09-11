@@ -20,7 +20,7 @@ abstract class DataStream<
     val partByteAmount: Int = 30000,
     ) {
 
-    abstract fun requestPacketConstructor(): TRequest
+    abstract fun requestPacketConstructor(buf: FriendlyByteBuf): TRequest
     abstract fun dataPacketConstructor(): TData
 
     // if returns null, then will do nothing
@@ -65,7 +65,7 @@ abstract class DataStream<
     val r2tRequestData = registerTR("request_data", currentSide) {
         object : TRConnection<TRequest>(it, streamName, transmitterSide.opposite()) {
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) = verifyUUIDHasAccess(context) {
-                val pkt = requestPacketConstructor()
+                val pkt = requestPacketConstructor(buf)
                 pkt.deserialize(buf)
                 val data = transmitterRequestProcessor(pkt, context) ?: return
 

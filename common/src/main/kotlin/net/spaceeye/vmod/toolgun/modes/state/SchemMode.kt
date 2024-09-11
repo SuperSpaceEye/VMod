@@ -33,6 +33,7 @@ import net.spaceeye.vmod.schematic.interfaces.SchemPlaceAtMakeFrom
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics.SendLoadRequest
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
@@ -62,9 +63,9 @@ object ClientPlayerSchematics {
         NetworkManager.Side.C2S,
         0
     ) {
-        override fun requestPacketConstructor() = SendSchemRequest(UUID(0L, 0L))
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Save Schem Transmission Failed") }
         override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
 
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
@@ -83,10 +84,10 @@ object ClientPlayerSchematics {
         NetworkManager.Side.C2S,
         VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
-        override fun requestPacketConstructor() = ServerPlayerSchematics.SendLoadRequest(UUID(0L, 0L))
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Load Schem Transmission Failed") }
 
         override fun transmitterRequestProcessor(req: ServerPlayerSchematics.SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = ClientToolGunState.currentMode?.let { mode ->
@@ -155,9 +156,9 @@ object ServerPlayerSchematics: ServerClosable() {
         NetworkManager.Side.S2C,
         VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
-        override fun requestPacketConstructor() = ClientPlayerSchematics.SendSchemRequest(UUID(0L, 0L))
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = ClientPlayerSchematics.SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Save Schem Transmission Failed") }
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
@@ -173,9 +174,9 @@ object ServerPlayerSchematics: ServerClosable() {
         NetworkManager.Side.S2C,
         0
     ) {
-        override fun requestPacketConstructor() = SendLoadRequest(UUID(0L, 0L))
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Load Schem Transmission Failed") }
         override fun transmitterRequestProcessor(req: SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 

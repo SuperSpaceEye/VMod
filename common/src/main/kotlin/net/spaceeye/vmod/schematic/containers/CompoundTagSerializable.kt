@@ -13,7 +13,8 @@ class CompoundTagSerializable(var tag: CompoundTag? = null): Serializable {
     override fun serialize(): FriendlyByteBuf {
         val buffer = ByteBufOutputStream(Unpooled.buffer())
         NbtIo.writeCompressed(tag, buffer)
-        return FriendlyByteBuf(buffer.buffer())
+        //Is it efficient? No. But do i care? Also no.
+        return FriendlyByteBuf(Unpooled.wrappedBuffer(FriendlyByteBuf(buffer.buffer()).accessByteBufWithCorrectSize()))
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {

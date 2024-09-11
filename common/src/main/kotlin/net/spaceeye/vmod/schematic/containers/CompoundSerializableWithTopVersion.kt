@@ -14,7 +14,8 @@ class CompoundSerializableWithTopVersion(var tag: CompoundTag, val version: Int)
         val buffer = ByteBufOutputStream(Unpooled.buffer())
         buffer.writeInt(version)
         NbtIo.writeCompressed(tag, buffer)
-        return FriendlyByteBuf(buffer.buffer())
+        //Is it efficient? No. But do i care? Also no.
+        return FriendlyByteBuf(Unpooled.wrappedBuffer(FriendlyByteBuf(buffer.buffer()).accessByteBufWithCorrectSize()))
     }
 
     //TODO figure out wtf i meant here

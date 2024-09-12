@@ -60,32 +60,6 @@ class PhysgunController: ShipForcesInducer {
         }
         rotDiffVector -= Vector3d(physShip.poseVel.omega).smul(dConst)
 
-//        val inertia = shipsToInfluence
-//            .filter { it != physShip }
-//            .map {
-//                Pair(
-//                    Matrix3d(it._inertia.momentOfInertiaTensor),
-//                    Vector3d(
-//                        it.transform.positionInWorld.sub(
-//                            physShip.transform.positionInWorld,
-//                            org.joml.Vector3d()
-//                        )
-//                    ).dist().pow(2.0)
-//                )
-//            }
-//            .reduce { acc, matrix3dc ->
-//                val r = matrix3dc.second
-//                acc.first.add(matrix3dc.first.mulComponentWise(Matrix3d(r, 0.0, 0.0, 0.0, r, 0.0, 0.0, 0.0, r), Matrix3d()))
-//                acc
-//            }.first
-
-//        val inertia = shipsToInfluence
-//            .filter { it != physShip }
-//            .map { it._inertia.momentOfInertiaTensor }
-//            .reduce { acc, matrix3dc ->
-//                acc.add(matrix3dc, Matrix3d())
-//            }
-
         val torque = physShip.poseVel.rot.transform(
                 physShip.inertia.momentOfInertiaTensor.transform(
                     physShip.poseVel.rot.transformInverse(rotDiffVector.toJomlVector3d())
@@ -95,11 +69,10 @@ class PhysgunController: ShipForcesInducer {
         physShip.applyInvariantTorque(torque)
 
         shipsToInfluence
-            .filter { it != physShip }
             .forEach {
-                val dir = it.transform.positionInWorld.sub(physShip.transform.positionInWorld, org.joml.Vector3d())
+                val dir = ((idealPos - Vector3d(it.transform.positionInWorld))).toJomlVector3d()
                 val rotatedDir = rotateVecByQuat(dir, rotDiff)
-                val diff = -Vector3d(rotatedDir.sub(dir)) * 5 * 0
+                val diff = Vector3d(rotatedDir.sub(dir)) * 80.0
 
                 val mass = (it as PhysShipImpl).inertia.shipMass
                 val force = (diff + posDiff - (Vector3d(it.poseVel.vel) * dConst)) * mass

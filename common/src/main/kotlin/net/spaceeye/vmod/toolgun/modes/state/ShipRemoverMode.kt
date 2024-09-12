@@ -1,12 +1,12 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
-import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.util.SimpleHUD
+import net.spaceeye.vmod.translate.SHIP_REMOVER
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -17,8 +17,7 @@ class ShipRemoverMode: ExtendableToolgunMode(), SimpleHUD {
         level.shipObjectWorld.deleteShip(raycastResult.ship as ServerShip)
     }
 
-    override val itemName: TranslatableComponent
-        get() = TranslatableComponent("Ship Remover")
+    override val itemName = SHIP_REMOVER
 
     override fun makeSubText(makeText: (String) -> Unit) {}
 

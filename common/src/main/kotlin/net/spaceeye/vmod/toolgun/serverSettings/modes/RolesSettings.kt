@@ -9,7 +9,6 @@ import gg.essential.elementa.constraints.ChildBasedSizeConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.StrLimit
 import net.spaceeye.vmod.networking.AutoSerializable
@@ -19,6 +18,7 @@ import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.RolePermissionsData
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsGUIBuilder
+import net.spaceeye.vmod.translate.*
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.FakeKProperty
 import java.awt.Color
@@ -38,7 +38,7 @@ class NewRoleForm(
             height = 50.pixels
         }
 
-        val entry = makeTextEntry("Role Name", ::name, 2f, 2f, this, StrLimit(50))
+        val entry = makeTextEntry(ROLE_NAME.get(), ::name, 2f, 2f, this, StrLimit(50))
         entry.focus()
 
         val btns = UIContainer() constrain {
@@ -49,7 +49,7 @@ class NewRoleForm(
             height = ChildBasedMaxSizeConstraint()
         }
 
-        Button(Color.GRAY.brighter().brighter(), "Ok") {
+        Button(Color.GRAY.brighter().brighter(), OK.get()) {
             onOk(name)
         } constrain {
             x = SiblingConstraint(2f)
@@ -59,7 +59,7 @@ class NewRoleForm(
             height = ChildBasedSizeConstraint()
         } childOf btns
 
-        Button(Color.GRAY.brighter().brighter(), "Cancel") {
+        Button(Color.GRAY.brighter().brighter(), CANCEL.get()) {
             onCancel()
         } constrain {
             x = SiblingConstraint(2f)
@@ -74,15 +74,14 @@ class NewRoleForm(
 }
 
 class RolesPermissionsSettings: ServerSettingsGUIBuilder {
-    override val itemName: TranslatableComponent
-        get() = TranslatableComponent("Roles Settings")
+    override val itemName = ROLES_SETTINGS
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         callback = null
         state = null
 
         dataCallback = { state ->
-            Button(Color(180, 180, 180), "Apply new Role Permissions") {
+            Button(Color(180, 180, 180), APPLY_NEW_ROLE_PERMISSIONS.get()) {
                 c2sTryUpdateRolesSettings.sendToServer(C2SRolesSettingsUpdate(state.rolesPermissions))
             } constrain {
                 x = 2f.pixels
@@ -100,7 +99,7 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
                 height = ChildBasedMaxSizeConstraint()
             } childOf parentWindow
 
-            Button(Color(180, 180, 180), "Enable All") {
+            Button(Color(180, 180, 180), ENABLE_ALL.get()) {
                 currentDisplayed.forEach { if (it is CheckBox) it.setState(true) }
             } constrain {
                 x = SiblingConstraint(2f)
@@ -108,7 +107,7 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
                 width = 50.percent
             } childOf enableDisableButtonsHolder
 
-            Button(Color(180, 180, 180), "Disable All") {
+            Button(Color(180, 180, 180), DISABLE_ALL.get()) {
                 currentDisplayed.forEach { if (it is CheckBox) it.setState(false) }
             } constrain {
                 x = SiblingConstraint(2f)
@@ -116,7 +115,7 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
                 width = 50.percent
             } childOf enableDisableButtonsHolder
 
-            Button(Color(180, 180, 180), "New Role") {
+            Button(Color(180, 180, 180), NEW_ROLE.get()) {
                 var form: NewRoleForm? = null
                 form = NewRoleForm({
                     if (callback != null) {return@NewRoleForm}
@@ -135,11 +134,11 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
                 width = 98.percent
             } childOf parentWindow
 
-            DropDown("Roles", state.rolesPermissions.map { (role, permissions) -> DItem(role, false) {
+            DropDown(ROLES.get(), state.rolesPermissions.map { (role, permissions) -> DItem(role, false) {
                 currentDisplayed.forEach { parentWindow.removeChild(it) }
                 currentDisplayed.clear()
 
-                currentDisplayed.add(Button(Color(180, 0, 0), "Remove") {
+                currentDisplayed.add(Button(Color(180, 0, 0), REMOVE.get()) {
                     if (callback != null) {return@Button}
                     callback = {
                         parentWindow.clearChildren()

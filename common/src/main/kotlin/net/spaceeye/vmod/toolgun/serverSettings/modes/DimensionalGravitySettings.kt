@@ -4,21 +4,24 @@ import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsGUIBuilder
+import net.spaceeye.vmod.translate.APPLY_NEW_GRAVITY_SETTINGS
+import net.spaceeye.vmod.translate.DIMENSIONAL_GRAVITY
+import net.spaceeye.vmod.translate.LEVELS
+import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import java.awt.Color
 
 class DimensionalGravitySettings: ServerSettingsGUIBuilder {
-    override val itemName: TranslatableComponent get() = TranslatableComponent("Dimensional Gravity")
+    override val itemName = DIMENSIONAL_GRAVITY
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         callback = {
-            Button(Color(180, 180, 180), "Apply new Gravity Settings") {
+            Button(Color(180, 180, 180), APPLY_NEW_GRAVITY_SETTINGS.get()) {
                 c2sTryUpdateGravityVectors.sendToServer(C2STryUpdateGravityVectors())
             } constrain {
                 x = 2f.pixels
@@ -28,7 +31,7 @@ class DimensionalGravitySettings: ServerSettingsGUIBuilder {
             } childOf parentWindow
 
             val currentDisplayed = mutableListOf<TextEntry>()
-            DropDown("Levels", vectorData.map { DItem(it.first.removePrefix("minecraft:dimension:"), false) {
+            DropDown(LEVELS.get(), vectorData.map { DItem(it.first.removePrefix("minecraft:dimension:"), false) {
                 currentDisplayed.forEach { parentWindow.removeChild(it) }
                 currentDisplayed.clear()
 

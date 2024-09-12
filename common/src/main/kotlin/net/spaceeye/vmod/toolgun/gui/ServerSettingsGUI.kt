@@ -12,6 +12,7 @@ import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsTypes
+import net.spaceeye.vmod.translate.YOU_DONT_HAVE_ACCESS_TO_THIS
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
@@ -95,7 +96,7 @@ class ServerSettingsGUI(val mainWindow: UIBlock): ToolgunWindow {
 
         ServerToolGunState.checkIfIHaveAccess(ServerToolGunState.AccessTo.ServerSettings) {
             if (!it) {
-                UIText("You don't have access to this", false) constrain {
+                UIText(YOU_DONT_HAVE_ACCESS_TO_THIS.get(), false) constrain {
                     x = CenterConstraint()
                     y = CenterConstraint()
 

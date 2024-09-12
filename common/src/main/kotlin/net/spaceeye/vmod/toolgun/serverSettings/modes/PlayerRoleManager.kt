@@ -4,24 +4,23 @@ import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.components.UIText
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
-import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.PlayersRolesData
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsGUIBuilder
+import net.spaceeye.vmod.translate.PLAYER_ROLE_MANAGER
+import net.spaceeye.vmod.translate.ROLES
+import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.EmptyPacket
 import java.awt.Color
 import java.util.UUID
 
 class PlayerRoleManager: ServerSettingsGUIBuilder {
-    override val itemName: TranslatableComponent
-        get() = TranslatableComponent("Player Role Manager")
+    override val itemName = PLAYER_ROLE_MANAGER
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         callback = { data ->
@@ -42,7 +41,7 @@ class PlayerRoleManager: ServerSettingsGUIBuilder {
                     color = Color.BLACK.toConstraint()
                 } childOf ctn
 
-                val change = makeDropDown("Roles", ctn, 2f, 2f, data.allRoles.map {
+                val change = makeDropDown(ROLES.get(), ctn, 2f, 2f, data.allRoles.map {
                     DItem(it, it == item.role) {
                         callback = { data ->
                             text.setText("${item.nickname} ${data.playersRoles[item.uuid]?.role}")

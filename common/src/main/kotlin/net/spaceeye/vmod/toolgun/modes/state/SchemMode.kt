@@ -271,7 +271,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
 }
 
 class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
-    var rotationAngle: Ref<Double> by get(0, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it as Ref<Double>).it)}, customDeserialize = {buf -> rotationAngle.it = buf.readDouble(); rotationAngle})
+    var rotationAngle: Ref<Double> by get(0, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> val rotationAngle = Ref(0.0) ; rotationAngle.it = buf.readDouble(); rotationAngle})
 
     override var itemsScroll: ScrollComponent? = null
     override lateinit var parentWindow: UIContainer

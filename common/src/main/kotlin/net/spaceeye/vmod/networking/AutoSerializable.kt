@@ -171,41 +171,49 @@ object SerializableItem {
     val typeToFns = mutableMapOf<KClass<*>, Pair<SerializeFn, DeserializeFn<*>>>()
 
     @JvmStatic fun <T: Any> registerSerializationItem(
-        type: KClass<*>,
-        serialize: ((it: Any, buf: FriendlyByteBuf) -> Unit),
+        type: KClass<T>,
+        serialize: ((it: T, buf: FriendlyByteBuf) -> Unit),
         deserialize: ((buf: FriendlyByteBuf) -> T)) {
+        serialize as (Any, FriendlyByteBuf) -> Unit
         typeToDelegate[type] = { pos: Int, default: Any, verification: (it: Any) -> Any ->
             SerializableItemDelegate(pos, default, verification, serialize, deserialize) }
         typeToFns[type] = Pair(serialize, deserialize)
     }
 
+    @JvmStatic fun <T: Enum<*>> registerSerializationEnum(type: KClass<T>) {
+        registerSerializationItem(type, {it, buf -> buf.writeEnum(it) }, {buf -> buf.readEnum(type.java as Class<out Enum<*>>) as T })
+    }
+
     init {
-        registerSerializationItem(Quaterniond::class, {it, buf -> buf.writeQuatd(it as Quaterniond)}) {buf -> buf.readQuatd()}
-        registerSerializationItem(Vector3d::class, {it, buf -> buf.writeVector3d(it as Vector3d)}) {buf -> buf.readVector3d()}
-        registerSerializationItem(Boolean::class, {it, buf -> buf.writeBoolean(it as Boolean)}) {buf -> buf.readBoolean()}
-        registerSerializationItem(Double::class, {it, buf -> buf.writeDouble(it as Double)}) {buf -> buf.readDouble()}
-        registerSerializationItem(String::class, {it, buf -> buf.writeUtf(it as String)}) {buf -> buf.readUtf()}
-        registerSerializationItem(Color::class, {it, buf -> buf.writeColor(it as Color)}) {buf -> buf.readColor()}
-        registerSerializationItem(Float::class, {it, buf -> buf.writeFloat(it as Float)}) {buf -> buf.readFloat()}
-        registerSerializationItem(Long::class, {it, buf -> buf.writeLong(it as Long)}) {buf -> buf.readLong()}
-        registerSerializationItem(UUID::class, {it, buf -> buf.writeUUID(it as UUID)}) {buf -> buf.readUUID()}
-        registerSerializationItem(Int::class, {it, buf -> buf.writeInt(it as Int)}) {buf -> buf.readInt()}
+        registerSerializationItem(Quaterniond::class, {it, buf -> buf.writeQuatd(it)}) {buf -> buf.readQuatd()}
+        registerSerializationItem(Vector3d::class, {it, buf -> buf.writeVector3d(it)}) {buf -> buf.readVector3d()}
+        registerSerializationItem(Boolean::class, {it, buf -> buf.writeBoolean(it)}) {buf -> buf.readBoolean()}
+        registerSerializationItem(Double::class, {it, buf -> buf.writeDouble(it)}) {buf -> buf.readDouble()}
+        registerSerializationItem(String::class, {it, buf -> buf.writeUtf(it)}) {buf -> buf.readUtf()}
+        registerSerializationItem(Color::class, {it, buf -> buf.writeColor(it)}) {buf -> buf.readColor()}
+        registerSerializationItem(Float::class, {it, buf -> buf.writeFloat(it)}) {buf -> buf.readFloat()}
+        registerSerializationItem(Long::class, {it, buf -> buf.writeLong(it)}) {buf -> buf.readLong()}
+        registerSerializationItem(UUID::class, {it, buf -> buf.writeUUID(it)}) {buf -> buf.readUUID()}
+        registerSerializationItem(Int::class, {it, buf -> buf.writeInt(it)}) {buf -> buf.readInt()}
     }
 
     /**
      * Should be used in the body of the AutoSerializable class
      */
     @JvmStatic fun <T: Any> get(pos: Int, default: T,
-                                verification: ((it: Any) -> T) = {it as T},
-                                customSerialize: ((it: Any, buf: FriendlyByteBuf) -> Unit)? = null,
+                                verification: ((it: T) -> T) = {it},
+                                customSerialize: ((it: T, buf: FriendlyByteBuf) -> Unit)? = null,
                                 customDeserialize: ((buf: FriendlyByteBuf) -> T)? = null): SerializableItemDelegate<T> {
+        verification as (Any) -> T
+        customSerialize as ((Any, FriendlyByteBuf) -> Unit)?
+
         val res = typeToDelegate[default::class]
         if (res != null) return res.invoke(pos, default, verification) as SerializableItemDelegate<T>
 
 
         when (default) {
             is Enum<*> -> {
-                val enumClass = default.javaClass as Class<out Enum<*>>;
+                val enumClass = default.javaClass as Class<out Enum<*>>
                 return SerializableItemDelegate(pos, default, verification, {it, buf -> buf.writeEnum(it as Enum<*>)}) {buf -> buf.readEnum(enumClass) as T }
             }
         }

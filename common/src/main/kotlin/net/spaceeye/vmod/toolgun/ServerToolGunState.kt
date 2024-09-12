@@ -7,6 +7,7 @@ import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
 import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.*
+import net.spaceeye.vmod.networking.SerializableItem.registerSerializationEnum
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
@@ -38,6 +39,8 @@ object ServerToolGunState: ServerClosable() {
     init {
         // it needs to initialize all c2s and s2c receivers
         ToolgunModes.asList().forEach { it.get().init(BaseNetworking.EnvType.Server) }
+
+        registerSerializationEnum(AccessTo::class)
     }
 
     @JvmStatic fun playerHasAccess(player: ServerPlayer): Boolean {

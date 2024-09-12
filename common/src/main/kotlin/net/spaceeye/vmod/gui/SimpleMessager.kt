@@ -20,6 +20,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.blockentities.SimpleMessagerBlockEntity
+import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.*
@@ -265,14 +266,15 @@ object SimpleMessagerGUI: ClientClosable() {
             open = false
         }
 
-        ClientRawInputEvent.KEY_PRESSED.register {
-            client, keyCode, scanCode, action, modifiers ->
+        RandomEvents.keyPress.on {
+                (keyCode, scanCode, action, modifiers), _ ->
             if (gui != null && Minecraft.getInstance().screen == gui) {
-                if (action == GLFW.GLFW_PRESS && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
+                if (action == GLFW.GLFW_PRESS && (ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
                     Minecraft.getInstance().setScreen(null)
+                    return@on true
                 }
             }
-            return@register EventResult.pass()
+            return@on false
         }
     }
 }
@@ -315,7 +317,6 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
     var entry: TextEntry
 
     init {
-        UIText("Press TAB to close", shadow = false) constrain {x = CenterConstraint(); y = SiblingConstraint() + 2f.pixels; color = Color.BLACK.toConstraint()} childOf itemsHolder
         entry = makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, itemsHolder, ServerLimits.instance.channelLength)
         msg = Signal()
     }

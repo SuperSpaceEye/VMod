@@ -37,13 +37,15 @@ class ServerLimitsInstance: AutoSerializable {
     val physRopeRadius: DoubleLimit by get(11, DoubleLimit(0.01, 10.0))
 
     val channelLength: StrLimit by get(12, StrLimit(50))
+
+    val thrusterScale: DoubleLimit by get(13, DoubleLimit(0.1, 10.0))
 }
 
 object ServerLimits {
     init {
-        SerializableItem.registerSerializationItem(DoubleLimit::class, {it: Any, buf: FriendlyByteBuf -> it as DoubleLimit; buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) {buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
-        SerializableItem.registerSerializationItem(IntLimit::class, {it: Any, buf: FriendlyByteBuf -> it as IntLimit; buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) {buf -> IntLimit(buf.readInt(), buf.readInt())}
-        SerializableItem.registerSerializationItem(StrLimit::class, {it: Any, buf: FriendlyByteBuf -> it as StrLimit; buf.writeInt(it.sizeLimit)}) {buf -> StrLimit(buf.readInt())}
+        SerializableItem.registerSerializationItem(DoubleLimit::class, {it, buf -> buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) {buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
+        SerializableItem.registerSerializationItem(IntLimit::class, {it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) {buf -> IntLimit(buf.readInt(), buf.readInt())}
+        SerializableItem.registerSerializationItem(StrLimit::class, {it, buf -> buf.writeInt(it.sizeLimit)}) {buf -> StrLimit(buf.readInt())}
     }
     private var _instance = ServerLimitsInstance()
     var wasLoaded = false

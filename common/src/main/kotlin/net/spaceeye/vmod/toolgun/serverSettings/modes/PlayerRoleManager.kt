@@ -2,10 +2,7 @@ package net.spaceeye.vmod.toolgun.serverSettings.modes
 
 import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.components.UIText
-import gg.essential.elementa.constraints.CenterConstraint
-import gg.essential.elementa.constraints.ChildBasedSizeConstraint
-import gg.essential.elementa.constraints.FillConstraint
-import gg.essential.elementa.constraints.SiblingConstraint
+import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.TranslatableComponent
@@ -35,7 +32,7 @@ class PlayerRoleManager: ServerSettingsGUIBuilder {
                     y = SiblingConstraint(2f)
 
                     width = 100.percent - 2.pixels
-                    height = ChildBasedSizeConstraint()
+                    height = ChildBasedMaxSizeConstraint()
                 }
 
                 val text = UIText("${item.nickname} ${item.role}", false) constrain {

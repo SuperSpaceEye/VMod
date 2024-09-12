@@ -129,9 +129,9 @@ class PlacementAssistExtension(
         super<AutoSerializable>.deserialize(buf)
     }
 
-    override var paDistanceFromBlock: Double by get(0, 0.01, {ServerLimits.instance.distanceFromBlock.get(it as Double)})
+    override var paDistanceFromBlock: Double by get(0, 0.01, {ServerLimits.instance.distanceFromBlock.get(it)})
     override var paStage: ThreeClicksActivationSteps by get(1, ThreeClicksActivationSteps.FIRST_RAYCAST)
-    override var paAngle: Ref<Double> by get(2, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it as Ref<Double>).it)}, customDeserialize = {buf -> paAngle.it = buf.readDouble(); paAngle})
+    override var paAngle: Ref<Double> by get(2, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> paAngle.it = buf.readDouble(); paAngle})
     override var paScrollAngle: Double by get(3, Math.toRadians(10.0))
 
 

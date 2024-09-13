@@ -4,8 +4,6 @@ import dev.architectury.networking.NetworkManager
 import dev.architectury.networking.NetworkManager.PacketContext
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.opposite
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.registerTR
 import net.spaceeye.vmod.utils.Either
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
@@ -22,7 +20,7 @@ abstract class DataStream<
     val partByteAmount: Int = 30000,
     ) {
 
-    abstract fun requestPacketConstructor(): TRequest
+    abstract fun requestPacketConstructor(buf: FriendlyByteBuf): TRequest
     abstract fun dataPacketConstructor(): TData
 
     // if returns null, then will do nothing
@@ -67,7 +65,7 @@ abstract class DataStream<
     val r2tRequestData = registerTR("request_data", currentSide) {
         object : TRConnection<TRequest>(it, streamName, transmitterSide.opposite()) {
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) = verifyUUIDHasAccess(context) {
-                val pkt = requestPacketConstructor()
+                val pkt = requestPacketConstructor(buf)
                 pkt.deserialize(buf)
                 val data = transmitterRequestProcessor(pkt, context) ?: return
 

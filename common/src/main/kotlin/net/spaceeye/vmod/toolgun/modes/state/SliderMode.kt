@@ -22,8 +22,9 @@ import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.RaycastFunctions
 
 class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
-    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
-    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
+    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it) })
+    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it) })
+
 
     var posMode: PositionModes = PositionModes.NORMAL
     var precisePlacementAssistSideNum: Int = 3

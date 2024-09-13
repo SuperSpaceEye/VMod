@@ -11,7 +11,6 @@ import net.spaceeye.vmod.toolgun.modes.hud.PhysRopeHUD
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePositions
 import net.spaceeye.vmod.networking.SerializableItem.get
-import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -26,15 +25,15 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
-    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
-    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
-    var fixedDistance: Double by get(2, -1.0, {ServerLimits.instance.fixedDistance.get(it as Double)})
+    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it) })
+    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it) })
+    var fixedDistance: Double by get(2, -1.0, {ServerLimits.instance.fixedDistance.get(it)})
 
     var primaryFirstRaycast: Boolean by get(3, false)
 
-    var segments: Int by get(4, 16, {ServerLimits.instance.physRopeSegments.get(it as Int)})
-    var massPerSegment: Double by get(5, 1000.0, {ServerLimits.instance.physRopeMassPerSegment.get(it as Double)})
-    var radius: Double by get(6, 0.5, {ServerLimits.instance.physRopeRadius.get(it as Double)})
+    var segments: Int by get(4, 16, {ServerLimits.instance.physRopeSegments.get(it)})
+    var massPerSegment: Double by get(5, 1000.0, {ServerLimits.instance.physRopeMassPerSegment.get(it)})
+    var radius: Double by get(6, 0.5, {ServerLimits.instance.physRopeRadius.get(it)})
 
 
     var posMode: PositionModes = PositionModes.NORMAL

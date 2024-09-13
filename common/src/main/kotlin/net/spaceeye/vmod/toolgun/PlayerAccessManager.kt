@@ -33,7 +33,7 @@ class RolePermissionsData(): Serializable {
                 buf.writeCollection(it.second) { buf, it -> buf.writeVarInt(schema[it]!!) }
             }
         }
-        return buf
+        return FriendlyByteBuf(Unpooled.wrappedBuffer(buf.accessByteBufWithCorrectSize()))
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
@@ -60,7 +60,7 @@ class PlayersRolesData(): Serializable {
             buf.writeCollection(PlayerAccessManager.allRoles) { buf, it -> buf.writeUtf(it) }
         }
 
-        return buf
+        return FriendlyByteBuf(Unpooled.wrappedBuffer(buf.accessByteBufWithCorrectSize()))
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
@@ -72,14 +72,23 @@ class PlayersRolesData(): Serializable {
     }
 }
 
-object PlayerAccessManager {
+class PlayerAccessMangerState {
     var allPermissionsList = mutableListOf<String>()
     var rolesPermissions = mutableMapOf<String, MutableSet<String>>()
     var playersRoles = mutableMapOf<UUID, PlayerAccessState>()
+    var allRoles = mutableListOf<String>()
+}
+
+object PlayerAccessManager {
+    var state = PlayerAccessMangerState()
+
+    var allPermissionsList get() = state.allPermissionsList; set(value) {state.allPermissionsList = value}
+    var rolesPermissions get() = state.rolesPermissions; set(value) {state.rolesPermissions = value}
+    var playersRoles get() = state.playersRoles; set(value) {state.playersRoles = value}
+    var allRoles get() = state.allRoles; set(value) {state.allRoles = value}
 
     @JsonIgnore
     val allPermissions = mutableSetOf<String>()
-    val allRoles = mutableListOf<String>()
     @JsonIgnore
     const val defaultRoleName = "default"
 
@@ -169,7 +178,7 @@ object PlayerAccessManager {
         val mapper = getMapper()
         try {
             val data = ExternalDataUtil.readObject("role_data.json") ?: return ELOG("Failed to load role data as role_data.json doesn't exist!")
-            val obj = mapper.readValue(data, this::class.java)
+            val obj = mapper.readValue(data, PlayerAccessMangerState::class.java)
 
             val allRolesSet = allRoles.toSet()
             allRoles.addAll(obj.allRoles.filter { !allRolesSet.contains(it) })

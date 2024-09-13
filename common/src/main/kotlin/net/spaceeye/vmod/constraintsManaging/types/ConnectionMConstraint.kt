@@ -102,34 +102,6 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
         }
     }
 
-    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        throw NotImplementedError()
-        if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
-        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        cIDs.clear()
-
-        val shipIds = mutableListOf(constraint1.shipId0, constraint1.shipId1)
-        val localPoints = mutableListOf(
-            if (connectionMode == ConnectionModes.FREE_ORIENTATION) {listOf(constraint1.localPos0)} else {listOf(constraint1.localPos0, constraint2.localPos0)},
-            if (connectionMode == ConnectionModes.FREE_ORIENTATION) {listOf(constraint1.localPos1)} else {listOf(constraint1.localPos1, constraint2.localPos1)},
-        )
-        updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
-
-        constraint1 = constraint1.copy(shipIds[0], shipIds[1], constraint1.compliance, localPoints[0][0], localPoints[1][0])
-        cIDs.add(level.shipObjectWorld.createNewConstraint(constraint1)!!)
-
-//        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
-//        renderer = ServerRenderingData.getRenderer(rID)
-
-        if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return}
-        constraint2 = constraint2.copy(shipIds[0], shipIds[1], constraint2.compliance, localPoints[0][1], localPoints[1][1])
-        cIDs.add(level.shipObjectWorld.createNewConstraint(constraint2)!!)
-
-        rconstraint = rconstraint.copy(shipIds[0], shipIds[1])
-
-        cIDs.add(level.shipObjectWorld.createNewConstraint(rconstraint)!!)
-    }
-
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         val new = ConnectionMConstraint()
 

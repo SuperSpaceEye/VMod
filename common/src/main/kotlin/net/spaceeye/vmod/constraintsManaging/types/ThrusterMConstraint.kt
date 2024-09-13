@@ -7,9 +7,7 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
-import net.spaceeye.vmod.network.Message
-import net.spaceeye.vmod.network.MessagingNetwork
-import net.spaceeye.vmod.network.Signal
+import net.spaceeye.vmod.constraintsManaging.util.TickableMConstraintExtension
 import net.spaceeye.vmod.shipForceInducers.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getVector3d
@@ -76,12 +74,6 @@ class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         val ship = level.shipObjectWorld.loadedShips.getById(shipId) ?: return false
 
-        MessagingNetwork.register(channel) {
-            msg, unregister ->
-            if (wasRemoved) {unregister(); return@register}
-            signalTick(msg)
-        }
-
         val controller = ThrustersController.getOrCreate(ship)
 
         thrusterId = controller.newThruster(pos, forceDir, force)
@@ -96,27 +88,6 @@ class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
         val controller = ThrustersController.getOrCreate(ship)
 
         controller.removeThruster(thrusterId)
-    }
-
-    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        throw NotImplementedError()
-        if (previous != bpos) {return}
-
-        val oShip = level.shipObjectWorld.loadedShips.getById(shipId) ?: return
-        val oController = ThrustersController.getOrCreate(oShip)
-        oController.removeThruster(thrusterId)
-
-//        ServerRenderingData.removeRenderer(rID)
-
-        shipId = newShipId
-        pos = (pos - Vector3d(bpos) + Vector3d(new))
-        bpos = new
-
-        val nShip = level.shipObjectWorld.loadedShips.getById(newShipId) ?: level.shipObjectWorld.allShips.getById(newShipId) ?: return
-        val nController = ThrustersController.getOrCreate(nShip)
-        thrusterId = nController.newThruster(pos, forceDir, force)
-
-//        rID = ServerRenderingData.addRenderer(shipId, shipId, renderer!!)
     }
 
     override fun iNbtSerialize(): CompoundTag? {
@@ -150,16 +121,14 @@ class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
         return this
     }
 
-    private fun signalTick(msg: Message) {
-        if (msg !is Signal) {return}
-        percentage = msg.percentage
-    }
-
     private var wasRemoved = false
     private var lastPercentage = percentage
 
     override fun tick(server: MinecraftServer, unregister: () -> Unit) {
         if (wasRemoved) {unregister(); return}
+
+        getExtensionsOfType<TickableMConstraintExtension>().forEach { it.tick(server) }
+
         if (lastPercentage == percentage) {return}
         lastPercentage = percentage
 

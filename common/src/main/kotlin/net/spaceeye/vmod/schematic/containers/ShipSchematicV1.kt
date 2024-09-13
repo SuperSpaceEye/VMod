@@ -271,7 +271,7 @@ interface SchemSerializeDataV1Impl: IShipSchematic, IShipSchematicDataV1 {
     private fun serializeExtraData(tag: CompoundTag) {
         val extraDataTag = CompoundTag()
 
-        extraData.forEach { (name, file) -> extraDataTag.putByteArray(name, file.serialize().array()) }
+        extraData.forEach { (name, file) -> extraDataTag.putByteArray(name, file.serialize().accessByteBufWithCorrectSize()) }
 
         tag.put("extraData", extraDataTag)
     }

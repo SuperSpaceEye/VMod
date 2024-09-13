@@ -95,6 +95,7 @@ object ClientToolGunState : ClientClosable() {
 
     private var screen: ScreenWindow? = null
 
+    //TODO make a unified way of using those
     internal fun addHUDError(str: String) {
         screen?.addError(str)
     }

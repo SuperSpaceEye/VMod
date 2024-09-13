@@ -11,7 +11,6 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.networking.*
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.rendering.types.*
 import org.valkyrienskies.core.impl.hooks.VSEvents
@@ -62,13 +61,8 @@ class ClientSynchronisedRenderingData:
         remove(ReservedRenderingPages.ClientsideRenderingObjects, id)
     }
 
-    val s2cSetSchema = "rendering_data" idWithConns {
-        object : S2CConnection<ServerSetRenderingSchemaPacket>(it, "client_synchronised") {
-            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val packet = ServerSetRenderingSchemaPacket(buf)
-                RenderingTypes.setSchema(packet.schema.map { Pair(it.value, it.key) }.toMap())
-            }
-        }
+    val s2cSetSchema = regS2C<ServerSetRenderingSchemaPacket>("rendering_data", "client_synchronised") {pkt ->
+        RenderingTypes.setSchema(pkt.schema.map { Pair(it.value, it.key) }.toMap())
     }
 }
 class ServerSynchronisedRenderingData:

@@ -35,24 +35,6 @@ class RopeMConstraint(): TwoShipsMConstraint() {
         attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
-    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        throw NotImplementedError()
-        if (previous != attachmentPoints_[0] && previous != attachmentPoints_[1]) {return}
-        level.shipObjectWorld.removeConstraint(cIDs[0])
-
-        val shipIds = mutableListOf(mainConstraint.shipId0, mainConstraint.shipId1)
-        val localPoints = mutableListOf(
-            listOf(mainConstraint.localPos0),
-            listOf(mainConstraint.localPos1)
-        )
-        updatePositions(newShipId, previous, new, attachmentPoints_, shipIds, localPoints)
-
-        mainConstraint = mainConstraint.copy(shipIds[0], shipIds[1], mainConstraint.compliance, localPoints[0][0], localPoints[1][0])
-
-        cIDs[0] = level.shipObjectWorld.createNewConstraint(mainConstraint)!!
-//        renderer = updateRenderer(localPoints[0][0], localPoints[1][0], shipIds[0], shipIds[1], rID)
-    }
-
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         val new = RopeMConstraint()
 

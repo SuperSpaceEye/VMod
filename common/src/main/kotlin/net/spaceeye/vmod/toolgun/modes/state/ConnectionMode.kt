@@ -2,11 +2,11 @@ package net.spaceeye.vmod.toolgun.modes.state
 
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.ConnectionMConstraint
+import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUI
@@ -22,13 +22,13 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
 class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
-    var compliance: Double by get(0, 1e-20, {ServerLimits.instance.compliance.get(it as Double)})
-    var maxForce: Double by get(1, 1e10, {ServerLimits.instance.maxForce.get(it as Double)})
-    var width: Double by get(2, .2)
+    var compliance: Double by get(0, 1e-20, {ServerLimits.instance.compliance.get(it)})
+    var maxForce: Double by get(1, 1e10, {ServerLimits.instance.maxForce.get(it)})
+    var width: Double by get(2, .2, {DoubleLimit(0.01).get(it)}) //TODO
 
     var color: Color by get(3, Color(62, 62, 62, 255))
 
-    var fixedDistance: Double by get(4, -1.0, {ServerLimits.instance.fixedDistance.get(it as Double)})
+    var fixedDistance: Double by get(4, -1.0, {ServerLimits.instance.fixedDistance.get(it)})
     var connectionMode: ConnectionMConstraint.ConnectionModes by get(5, ConnectionMConstraint.ConnectionModes.FIXED_ORIENTATION)
     var primaryFirstRaycast: Boolean by get(6, false)
 

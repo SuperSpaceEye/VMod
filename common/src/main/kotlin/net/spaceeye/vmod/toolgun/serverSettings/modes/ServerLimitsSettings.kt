@@ -5,7 +5,6 @@ import gg.essential.elementa.components.UIText
 import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
-import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
@@ -13,15 +12,18 @@ import net.spaceeye.vmod.limits.IntLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.limits.StrLimit
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsGUIBuilder
+import net.spaceeye.vmod.translate.APPLY_NEW_SERVER_LIMITS
+import net.spaceeye.vmod.translate.SERVER_LIMITS
+import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.FakeKProperty
 import java.awt.Color
 import java.util.*
 
 class ServerLimitsSettings: ServerSettingsGUIBuilder {
-    override val itemName get() = Component.literal("Server Limits")
+    override val itemName = SERVER_LIMITS
 
     override fun makeGUISettings(parentWindow: UIContainer) {
-        Button(Color(180, 180, 180), "Apply new Server Limits") {
+        Button(Color(180, 180, 180), APPLY_NEW_SERVER_LIMITS.get()) {
             ServerLimits.tryUpdateToServer()
         } constrain {
             x = CenterConstraint()

@@ -174,7 +174,7 @@ class ConstraintManager: SavedData() {
             toLoadConstraints[shipId.toLong()] = constraints
         }
         constraintIdCounter.setCounter(maxId + 1)
-        WLOG("Loaded $count constraints")
+        WLOG("Deserialized $count constraints")
     }
 
     private fun groupLoadedData() {

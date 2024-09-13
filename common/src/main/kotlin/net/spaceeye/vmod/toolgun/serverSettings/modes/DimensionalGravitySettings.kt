@@ -1,33 +1,27 @@
 package net.spaceeye.vmod.toolgun.serverSettings.modes
 
-import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.Component
-import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.guiElements.*
-import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
-import net.spaceeye.vmod.networking.S2CConnection
-import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsGUIBuilder
+import net.spaceeye.vmod.translate.APPLY_NEW_GRAVITY_SETTINGS
+import net.spaceeye.vmod.translate.DIMENSIONAL_GRAVITY
+import net.spaceeye.vmod.translate.LEVELS
+import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import java.awt.Color
 
 class DimensionalGravitySettings: ServerSettingsGUIBuilder {
-    //TODO
-    override val itemName get() = Component.literal("Dimensional Gravity")
+    override val itemName = DIMENSIONAL_GRAVITY
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         callback = {
-            Button(Color(180, 180, 180), "Apply new Gravity Settings") {
+            Button(Color(180, 180, 180), APPLY_NEW_GRAVITY_SETTINGS.get()) {
                 c2sTryUpdateGravityVectors.sendToServer(C2STryUpdateGravityVectors())
             } constrain {
                 x = 2f.pixels
@@ -37,7 +31,7 @@ class DimensionalGravitySettings: ServerSettingsGUIBuilder {
             } childOf parentWindow
 
             val currentDisplayed = mutableListOf<TextEntry>()
-            DropDown("Levels", vectorData.map { DItem(it.first.removePrefix("minecraft:dimension:"), false) {
+            DropDown(LEVELS.get(), vectorData.map { DItem(it.first.removePrefix("minecraft:dimension:"), false) {
                 currentDisplayed.forEach { parentWindow.removeChild(it) }
                 currentDisplayed.clear()
 
@@ -85,45 +79,23 @@ class DimensionalGravitySettings: ServerSettingsGUIBuilder {
             }
         }
 
-        val c2sRequestGravityVectors = "request_gravity_vectors" idWithConnc {
-            object : C2SConnection<EmptyPacket>(it, "gravity_settings") {
-                override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                    s2cSendGravityVectors.sendToClient(context.player as ServerPlayer, S2CSendGravityVectors())
-                }
-            }
+        val c2sRequestGravityVectors = regC2S<EmptyPacket>("request_gravity_vectors", "gravity_settings") {pkt, player ->
+            s2cSendGravityVectors.sendToClient(player, S2CSendGravityVectors())
         }
 
-        val s2cSendGravityVectors = "send_gravity_vectors" idWithConns {
-            object : S2CConnection<S2CSendGravityVectors>(it, "gravity_settings") {
-                override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                    S2CSendGravityVectors().deserialize(buf)
-                    callback?.invoke()
-                    callback = null
-                }
-            }
+        val s2cSendGravityVectors = regS2C<S2CSendGravityVectors>("send_gravity_vectors", "gravity_settings") {pkt ->
+            callback?.invoke()
+            callback = null
         }
 
-        val c2sTryUpdateGravityVectors = "try_update_gravity_vectors" idWithConnc {
-            object : C2SConnection<C2STryUpdateGravityVectors>(it, "gravity_settings") {
-                override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                    val player = context.player as ServerPlayer
-                    if (!(ServerToolGunState.playerHasAccess(player) && player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_CHANGING_SERVER_SETTINGS_LEVEL))) {
-                        s2cDimensionalGravityUpdateWasRejected.sendToClient(player, EmptyPacket())
-                        return
-                    }
-
-                    vectorData.forEach { VSGravityManager.setGravity(it.first, it.second) }
-                }
-            }
+        val c2sTryUpdateGravityVectors = regC2S<C2STryUpdateGravityVectors>("try_update_gravity_vectors", "gravity_settings",
+            {it.hasPermissions(4)}, { s2cDimensionalGravityUpdateWasRejected.sendToClient(it, EmptyPacket())}) { pkt, player ->
+            vectorData.forEach { VSGravityManager.setGravity(it.first, it.second) }
         }
 
-        private val s2cDimensionalGravityUpdateWasRejected = "dimensional_gravity_update_was_rejected" idWithConns {
-            object : S2CConnection<EmptyPacket>(it, "gravity_settings") {
-                override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                    ClientToolGunState.closeGUI()
-                    ClientToolGunState.addHUDError("Dimensional Gravity update was rejected")
-                }
-            }
+        val s2cDimensionalGravityUpdateWasRejected = regS2C<EmptyPacket>("dimensional_gravity_update_was_rejected", "gravity_settings") {
+            ClientToolGunState.closeGUI()
+            ClientToolGunState.addHUDError("Dimensional Gravity update was rejected")
         }
     }
 }

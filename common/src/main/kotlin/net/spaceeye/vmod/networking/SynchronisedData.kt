@@ -6,7 +6,6 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.opposite
 import net.spaceeye.vmod.utils.Either
 import net.spaceeye.vmod.utils.readVarLongArray
 import net.spaceeye.vmod.utils.writeVarLongArray
@@ -156,7 +155,7 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
         currentSide,
         partByteMaxAmount
     ) {
-        override fun requestPacketConstructor(): R2TSynchronizationTickData = R2TSynchronizationTickData()
+        override fun requestPacketConstructor(buf: FriendlyByteBuf): R2TSynchronizationTickData = R2TSynchronizationTickData()
         override fun dataPacketConstructor(): T2RSynchronizationTickData = T2RSynchronizationTickData(itemWriter, itemReader)
 
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { throw AssertionError() }
@@ -316,7 +315,7 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
         currentSide,
         partByteMaxAmount
     ) {
-        override fun requestPacketConstructor(): R2TSynchronizationTickData = R2TSynchronizationTickData()
+        override fun requestPacketConstructor(buf: FriendlyByteBuf): R2TSynchronizationTickData = R2TSynchronizationTickData()
         override fun dataPacketConstructor(): T2RSynchronizationTickData = T2RSynchronizationTickData(itemWriter, itemReader)
         override fun transmitterRequestProcessor(req: R2TSynchronizationTickData, ctx: NetworkManager.PacketContext): Either<T2RSynchronizationTickData, RequestFailurePkt>? { throw AssertionError() }
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("IT SHOULDN'T BE POSSIBLE TO REACH THIS. HOW DID YOU DO THIS.") }

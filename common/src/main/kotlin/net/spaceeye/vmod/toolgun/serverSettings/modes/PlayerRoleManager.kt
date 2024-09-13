@@ -2,27 +2,25 @@ package net.spaceeye.vmod.toolgun.serverSettings.modes
 
 import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.components.UIText
-import gg.essential.elementa.constraints.CenterConstraint
-import gg.essential.elementa.constraints.ChildBasedSizeConstraint
-import gg.essential.elementa.constraints.FillConstraint
-import gg.essential.elementa.constraints.SiblingConstraint
+import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
-import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
-import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.networking.AutoSerializable
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.PlayersRolesData
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsGUIBuilder
+import net.spaceeye.vmod.translate.PLAYER_ROLE_MANAGER
+import net.spaceeye.vmod.translate.ROLES
+import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.EmptyPacket
 import java.awt.Color
 import java.util.UUID
 
 class PlayerRoleManager: ServerSettingsGUIBuilder {
-    override val itemName get() = Component.literal("Player Role Manager")
+    override val itemName = PLAYER_ROLE_MANAGER
 
     override fun makeGUISettings(parentWindow: UIContainer) {
         callback = { data ->
@@ -33,7 +31,7 @@ class PlayerRoleManager: ServerSettingsGUIBuilder {
                     y = SiblingConstraint(2f)
 
                     width = 100.percent - 2.pixels
-                    height = ChildBasedSizeConstraint()
+                    height = ChildBasedMaxSizeConstraint()
                 }
 
                 val text = UIText("${item.nickname} ${item.role}", false) constrain {
@@ -43,17 +41,13 @@ class PlayerRoleManager: ServerSettingsGUIBuilder {
                     color = Color.BLACK.toConstraint()
                 } childOf ctn
 
-                val change = makeDropDown("Roles", ctn, 2f, 2f, data.allRoles.map {
+                val change = makeDropDown(ROLES.get(), ctn, 2f, 2f, data.allRoles.map {
                     DItem(it, it == item.role) {
-                        val pkt = C2SChangePlayerRole()
-                        pkt.newRole = it
-                        pkt.uuid = item.uuid
-
                         callback = { data ->
                             text.setText("${item.nickname} ${data.playersRoles[item.uuid]?.role}")
                         }
 
-                        c2sChangePlayerRole.sendToServer(pkt)
+                        c2sChangePlayerRole.sendToServer(C2SChangePlayerRole(it, item.uuid))
                     }
                 }) constrain {
                     width = FillConstraint()
@@ -83,21 +77,6 @@ class PlayerRoleManager: ServerSettingsGUIBuilder {
             s2cSendPlayersRolesData.sendToClient(player, PlayersRolesData())
         }
 
-        class C2SChangePlayerRole(): Serializable {
-            lateinit var newRole: String
-            lateinit var uuid: UUID
-
-            override fun serialize(): FriendlyByteBuf {
-                val buf = getBuffer()
-                buf.writeUtf(newRole)
-                buf.writeUUID(uuid)
-                return buf
-            }
-
-            override fun deserialize(buf: FriendlyByteBuf) {
-                newRole = buf.readUtf()
-                uuid = buf.readUUID()
-            }
-        }
+        data class C2SChangePlayerRole(var newRole: String, var uuid: UUID): AutoSerializable
     }
 }

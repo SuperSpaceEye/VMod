@@ -63,11 +63,6 @@ abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
         return super.nbtDeserialize(tag, lastDimensionIds)
     }
 
-    protected fun <T> clean(level: ServerLevel): T? {
-        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
-        return null
-    }
-
     /**
      * IF YOU'RE OVERRIDING THIS REMEMBER TO CALL SUPER METHOD
      */

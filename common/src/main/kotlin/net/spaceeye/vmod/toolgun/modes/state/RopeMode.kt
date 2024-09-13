@@ -6,6 +6,8 @@ import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.RopeMConstraint
+import net.spaceeye.vmod.limits.DoubleLimit
+import net.spaceeye.vmod.limits.IntLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.RopeRenderer
 import net.spaceeye.vmod.toolgun.modes.gui.RopeGUI
@@ -22,14 +24,14 @@ import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 
 class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
-    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
-    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
-    var fixedDistance: Double by get(2, -1.0, {ServerLimits.instance.fixedDistance.get(it as Double)})
+    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it) })
+    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it) })
+    var fixedDistance: Double by get(2, -1.0, {ServerLimits.instance.fixedDistance.get(it)})
 
     var primaryFirstRaycast: Boolean by get(3, false)
 
-    var segments: Int by get(4, 16)
-    var width: Double by get(5, .2)
+    var segments: Int by get(4, 16, { IntLimit(1, 100).get(it)})
+    var width: Double by get(5, .2, { DoubleLimit(0.01).get(it)})
 
 
     var posMode: PositionModes = PositionModes.NORMAL

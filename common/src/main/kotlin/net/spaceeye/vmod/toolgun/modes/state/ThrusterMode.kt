@@ -5,7 +5,9 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.constraintsManaging.extensions.SignalActivator
 import net.spaceeye.vmod.constraintsManaging.types.ThrusterMConstraint
+import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
 import net.spaceeye.vmod.toolgun.modes.gui.ThrusterGUI
@@ -23,8 +25,10 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 
 //TODO finish this mf
 class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
-    var force: Double by get(0, 10000.0)
-    var channel: String by get(1, "thruster", {ServerLimits.instance.channelLength.get(it as String)})
+    var force: Double by get(0, 10000.0, {DoubleLimit(1.0, 1e100).get(it)})
+    var channel: String by get(1, "thruster", {ServerLimits.instance.channelLength.get(it)})
+    var scale: Double by get(2, 1.0, {ServerLimits.instance.thrusterScale.get(it)})
+
 
     var posMode: PositionModes = PositionModes.NORMAL
     var precisePlacementAssistSideNum: Int = 3
@@ -45,8 +49,10 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
             -raycastResult.globalNormalDirection!!,
             force, channel
         ).addExtension(RenderableExtension(ConeBlockRenderer(
-            basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), 1.0f, ship.id
-        )))){it.addFor(player)}
+            basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id
+        ))).addExtension(SignalActivator(
+            "channel", "percentage"
+        ))){it.addFor(player)}
     }
 
     companion object {
@@ -57,7 +63,7 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
                         ,primaryFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )
                 }.addExtension<ThrusterMode> {
-                    PlacementModesExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
+                    PlacementModesExtension(false, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
                 }
             }
         }

@@ -13,10 +13,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.*
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConnc
-import net.spaceeye.vmod.networking.NetworkingRegistrationFunctions.idWithConns
 import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
@@ -36,6 +33,7 @@ import net.spaceeye.vmod.schematic.interfaces.SchemPlaceAtMakeFrom
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics.SendLoadRequest
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
@@ -65,9 +63,9 @@ object ClientPlayerSchematics {
         NetworkManager.Side.C2S,
         0
     ) {
-        override fun requestPacketConstructor() = SendSchemRequest()
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Save Schem Transmission Failed") }
         override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
 
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
@@ -86,10 +84,10 @@ object ClientPlayerSchematics {
         NetworkManager.Side.C2S,
         VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
-        override fun requestPacketConstructor() = ServerPlayerSchematics.SendLoadRequest()
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Load Schem Transmission Failed") }
 
         override fun transmitterRequestProcessor(req: ServerPlayerSchematics.SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = ClientToolGunState.currentMode?.let { mode ->
@@ -123,21 +121,7 @@ object ClientPlayerSchematics {
         }
     }
 
-    class SendSchemRequest(): Serializable {
-        lateinit var uuid: UUID
-        constructor(player: Player): this() {this.uuid = player.uuid}
-
-        override fun serialize(): FriendlyByteBuf {
-            val buf = getBuffer()
-
-            buf.writeUUID(uuid)
-
-            return buf
-        }
-        override fun deserialize(buf: FriendlyByteBuf) {
-            uuid = buf.readUUID()
-        }
-    }
+    data class SendSchemRequest(var uuid: UUID): AutoSerializable
 
     fun listSchematics(): List<Path> {
         try {
@@ -172,9 +156,9 @@ object ServerPlayerSchematics: ServerClosable() {
         NetworkManager.Side.S2C,
         VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
-        override fun requestPacketConstructor() = ClientPlayerSchematics.SendSchemRequest()
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = ClientPlayerSchematics.SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Save Schem Transmission Failed") }
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
@@ -190,9 +174,9 @@ object ServerPlayerSchematics: ServerClosable() {
         NetworkManager.Side.S2C,
         0
     ) {
-        override fun requestPacketConstructor() = SendLoadRequest()
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Transmission Failed") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Load Schem Transmission Failed") }
         override fun transmitterRequestProcessor(req: SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
@@ -204,23 +188,7 @@ object ServerPlayerSchematics: ServerClosable() {
 
     val loadRequests = mutableMapOf<UUID, Long>()
 
-    class SendLoadRequest(): Serializable {
-        lateinit var requestUUID: UUID
-
-        constructor(uuid: UUID): this() {requestUUID = uuid}
-        constructor(buf: FriendlyByteBuf): this() {deserialize(buf)}
-
-        override fun serialize(): FriendlyByteBuf {
-            val buf = getBuffer()
-
-            buf.writeUUID(requestUUID)
-
-            return buf
-        }
-        override fun deserialize(buf: FriendlyByteBuf) {
-            requestUUID = buf.readUUID()
-        }
-    }
+    data class SendLoadRequest(var requestUUID: UUID): AutoSerializable
 
     val schematics = mutableMapOf<UUID, IShipSchematic?>()
 
@@ -246,29 +214,21 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     }
 
     // transmitter can't begin transmitting data to receiver by itself
-    val c2sLoadSchematic = "load_schematic" idWithConnc {
-        object : C2SConnection<EmptyPacket>(it, networkName) {
-            override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val lastReq = ServerPlayerSchematics.loadRequests[context.player.uuid]
-                if (lastReq != null && getNow_ms() - lastReq < 10000L) { return }
-
-                ServerPlayerSchematics.loadRequests[context.player.uuid] = getNow_ms()
-                ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(ServerPlayerSchematics.SendLoadRequest(context.player.uuid), context)
-            }
-        }
+    val c2sLoadSchematic = regC2S<EmptyPacket>("load_schematic", networkName, {player ->
+        val lastReq = ServerPlayerSchematics.loadRequests[player.uuid]
+        lastReq == null || getNow_ms() - lastReq > 10000L
+    }) {pkt, player ->
+        ServerPlayerSchematics.loadRequests[player.uuid] = getNow_ms()
+        ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(ServerPlayerSchematics.SendLoadRequest(player.uuid), FakePacketContext(player))
     }
 
-    val s2cSendShipInfo = "send_ship_info" idWithConns {
-        object : S2CConnection<S2CSendShipInfo>(it, networkName) {
-            override fun clientHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
-                val mode = ClientToolGunState.currentMode ?: return
-                if (mode !is SchemMode) {return}
-                val pkt = S2CSendShipInfo(buf)
-                mode.shipInfo = pkt.shipInfo
-            }
-        }
+    val s2cSendShipInfo = regS2C<S2CSendShipInfo>("send_ship_info", networkName) {pkt ->
+        val mode = ClientToolGunState.currentMode ?: return@regS2C
+        if (mode !is SchemMode) { return@regS2C }
+        mode.shipInfo = pkt.shipInfo
     }
 
+    //TODO ?
     class S2CSendShipInfo(): Serializable {
         lateinit var shipInfo: IShipSchematicInfo
 
@@ -311,7 +271,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
 }
 
 class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
-    var rotationAngle: Ref<Double> by get(0, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it as Ref<Double>).it)}, customDeserialize = {buf -> rotationAngle.it = buf.readDouble(); rotationAngle})
+    var rotationAngle: Ref<Double> by get(0, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> val rotationAngle = Ref(0.0) ; rotationAngle.it = buf.readDouble(); rotationAngle})
 
     override var itemsScroll: ScrollComponent? = null
     override lateinit var parentWindow: UIContainer

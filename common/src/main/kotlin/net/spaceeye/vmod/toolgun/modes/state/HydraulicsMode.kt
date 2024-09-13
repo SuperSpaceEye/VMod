@@ -4,8 +4,10 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.constraintsManaging.extensions.SignalActivator
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint
+import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.types.A2BRenderer
@@ -27,17 +29,17 @@ object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
     var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
-    var width: Double by get(2, .2)
+    var width: Double by get(2, .2, { DoubleLimit(0.01).get(it)})
 
     var color: Color by get(3, Color(62, 62, 200, 255))
 
-    var fixedMinLength: Double by get(4, -1.0, {ServerLimits.instance.fixedDistance.get(it as Double)})
+    var fixedMinLength: Double by get(4, -1.0, {ServerLimits.instance.fixedDistance.get(it)})
     var connectionMode: HydraulicsMConstraint.ConnectionMode by get(5, HydraulicsMConstraint.ConnectionMode.FIXED_ORIENTATION)
     var primaryFirstRaycast: Boolean by get(6, false)
 
-    var extensionDistance: Double by get(13, 5.0, {ServerLimits.instance.extensionDistance.get(it as Double)})
-    var extensionSpeed: Double by get(14, 1.0, {ServerLimits.instance.extensionSpeed.get(it as Double)})
-    var channel: String by get(15, "hydraulics", {ServerLimits.instance.channelLength.get(it as String)})
+    var extensionDistance: Double by get(13, 5.0, {ServerLimits.instance.extensionDistance.get(it)})
+    var extensionSpeed: Double by get(14, 1.0, {ServerLimits.instance.extensionSpeed.get(it)})
+    var channel: String by get(15, "hydraulics", {ServerLimits.instance.channelLength.get(it)})
 
     var posMode = PositionModes.NORMAL
     var precisePlacementAssistSideNum = 3
@@ -59,7 +61,9 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
             ship2?.id ?: -1L,
             spoint1, spoint2,
             color, width
-        )))){it.addFor(player)}
+        ))).addExtension(SignalActivator(
+            "channel", "targetPercentage"
+        ))){it.addFor(player)}
 
         resetState()
     }
@@ -97,7 +101,9 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                                 ship2?.id ?: -1L,
                                 spoint1, spoint2,
                                 it.color, it.width
-                            )))
+                            ))).addExtension(SignalActivator(
+                                "channel", "targetPercentage"
+                            ))
                         }
                     )
                 }

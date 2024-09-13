@@ -5,11 +5,11 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.SyncRotationMConstraint
+import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.gui.SyncRotationGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SyncRotationHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.networking.SerializableItem.get
-import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -18,9 +18,8 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import org.joml.Quaterniond
 
 class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
-    var compliance: Double by get(0, 1e-20)
-    var maxForce: Double by get(1, 1e20)
-
+    var compliance: Double by get(0, 1e-20, {ServerLimits.instance.compliance.get(it)})
+    var maxForce: Double by get(1, 1e20, {ServerLimits.instance.maxForce.get(it)})
     var primaryFirstRaycast: Boolean by get(2, false)
 
 

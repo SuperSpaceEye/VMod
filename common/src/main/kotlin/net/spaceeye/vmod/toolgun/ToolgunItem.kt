@@ -51,7 +51,7 @@ class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
                     }
                 }
 
-                if (guiIsOpened && isPressed && ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
+                if (guiIsOpened && isPressed && (ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
                     ClientToolGunState.closeGUI()
                     return@on true
                 }

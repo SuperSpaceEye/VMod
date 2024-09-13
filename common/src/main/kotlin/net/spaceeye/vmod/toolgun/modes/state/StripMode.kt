@@ -25,7 +25,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         StripInRadius
     }
 
-    var radius: Double by get(0, 1.0, {ServerLimits.instance.stripRadius.get(it as Double)})
+    var radius: Double by get(0, 1.0, {ServerLimits.instance.stripRadius.get(it)})
     var mode: StripModes by get(1, StripModes.StripAll)
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {

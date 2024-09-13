@@ -81,7 +81,7 @@ object ServerToolGunState: ServerClosable() {
         val stack = playersConstraintsStack[player.uuid] ?: return@regC2S
         var item: ManagedConstraintId = stack.removeLastOrNull() ?: return@regC2S
 
-        val level = player.level as ServerLevel
+        val level = player.serverLevel() as ServerLevel
 
         RandomEvents.serverOnTick.on {
                 _, unsubscribe ->
@@ -95,7 +95,7 @@ object ServerToolGunState: ServerClosable() {
                 }
             }
 
-            player.sendMessage(REMOVED, player.uuid)
+            player.sendSystemMessage(REMOVED)
         }
     }
 

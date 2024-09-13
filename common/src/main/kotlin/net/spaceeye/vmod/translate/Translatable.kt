@@ -2,15 +2,12 @@ package net.spaceeye.vmod.translate
 
 import net.minecraft.client.resources.language.I18n
 import net.minecraft.network.chat.Component
-import net.minecraft.network.chat.TranslatableComponent
-import net.spaceeye.vmod.ELOG
 
 //TODO create automatic generation of en_us.json ?
 
-private inline fun makeComponent(s: String) = TranslatableComponent(s)
-inline fun TranslatableComponent.get(): String = I18n.get(this.key)
-inline fun Component.get(): String = if (this is TranslatableComponent) {this.get()} else { ELOG(".get() WAS CALLED ON A NOT TRANSLATABLE COMPONENT");"Not a translatable component."}
-inline fun makeFake(s: String) = TranslatableComponent(s)
+private inline fun makeComponent(s: String) = Component.translatable(s)
+inline fun Component.get(): String = I18n.get(this.string)
+inline fun makeFake(s: String) = Component.literal(s)
 
 private const val path = "vmod.gui."
 private inline fun t(s: String) = makeComponent(path+s)

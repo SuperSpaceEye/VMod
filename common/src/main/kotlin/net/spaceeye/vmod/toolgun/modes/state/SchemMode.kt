@@ -17,7 +17,7 @@ import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
-import net.spaceeye.vmod.schematic.ShipSchematic
+import net.spaceeye.vmod.schematic.api.ShipSchematic
 import net.spaceeye.vmod.schematic.api.containers.v1.ShipInfo
 import net.spaceeye.vmod.schematic.api.containers.v1.ShipSchematicInfo
 import net.spaceeye.vmod.schematic.api.interfaces.IShipSchematic
@@ -29,6 +29,7 @@ import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.schematic.containers.VModShipSchematicV1
 import net.spaceeye.vmod.schematic.interfaces.SchemPlaceAtMakeFrom
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
@@ -92,12 +93,13 @@ object ClientPlayerSchematics {
         override fun transmitterRequestProcessor(req: ServerPlayerSchematics.SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = ClientToolGunState.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
-                mode.schem?.let { SchemHolder(it.serialize().serialize(), req.requestUUID) }
+                mode.schem?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!, req.requestUUID) }
             }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
         }
     }
 
+    //TODO convert to AutoSerializable
     class SchemHolder(): Serializable {
         lateinit var data: ByteBuf
         lateinit var uuid: UUID
@@ -143,7 +145,7 @@ object ClientPlayerSchematics {
 
     fun saveSchematic(name: String, schematic: IShipSchematic): Boolean {
         try {
-            Files.write(Paths.get("VMod-Schematics/${name}"), schematic.serialize().serialize().array())
+            Files.write(Paths.get("VMod-Schematics/${name}"), ShipSchematic.writeSchematicToBuffer(schematic)!!.array())
         } catch (e: IOException) {return false}
         return true
     }
@@ -163,7 +165,7 @@ object ServerPlayerSchematics: ServerClosable() {
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
         override fun transmitterRequestProcessor(req: ClientPlayerSchematics.SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
-            val res = schematics[req.uuid] ?.let { SchemHolder(it.serialize().serialize()) }
+            val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
         }
     }
@@ -345,7 +347,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             ServerPlayerSchematics.schematics.remove(player.uuid)
             null
         } ?: return
-        val schem = ShipSchematic.getSchematicConstructor().get() as SchemPlaceAtMakeFrom
+        val schem = VModShipSchematicV1()
         schem.makeFrom(player.level as ServerLevel, player.uuid, serverCaughtShip) {
             SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
             ServerPlayerSchematics.schematics[player.uuid] = schem

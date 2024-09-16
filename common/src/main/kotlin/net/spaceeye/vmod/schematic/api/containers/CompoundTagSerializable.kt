@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.schematic.containers
+package net.spaceeye.vmod.schematic.api.containers
 
 import io.netty.buffer.ByteBufInputStream
 import io.netty.buffer.ByteBufOutputStream
@@ -12,7 +12,7 @@ import java.io.IOException
 class CompoundTagSerializable(var tag: CompoundTag? = null): Serializable {
     override fun serialize(): FriendlyByteBuf {
         val buffer = ByteBufOutputStream(Unpooled.buffer())
-        NbtIo.writeCompressed(tag, buffer)
+        NbtIo.writeCompressed(tag!!, buffer)
         //Is it efficient? No. But do i care? Also no.
         return FriendlyByteBuf(Unpooled.wrappedBuffer(FriendlyByteBuf(buffer.buffer()).accessByteBufWithCorrectSize()))
     }

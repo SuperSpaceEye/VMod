@@ -13,8 +13,8 @@ import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
+import net.spaceeye.vmod.schematic.api.ShipSchematic
+import net.spaceeye.vmod.schematic.api.containers.CompoundTagSerializable
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.getCenterPos
@@ -29,7 +29,7 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
     val pasteSync = mutableMapOf<UUID, Entity>()
 
     init {
-        ShipSchematic.registerCopyPasteEvents("Create Contraption Entities Schem Compat", ::onCopyEvent, {_, _, _, _, _ ->}, ::onBeforePaste)
+        ShipSchematic.registerCopyPasteEvents("Create Contraption Entities Schem Compat", ::onCopyEvent, { _, _, _, _, _ ->}, ::onBeforePaste)
     }
 
     override fun close() {

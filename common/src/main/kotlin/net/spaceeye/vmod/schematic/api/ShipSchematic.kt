@@ -1,27 +1,27 @@
-package net.spaceeye.vmod.schematic
+package net.spaceeye.vmod.schematic.api
 
+import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.schematic.containers.ShipSchematicV1
 import net.spaceeye.vmod.schematic.api.interfaces.IShipSchematic
 import org.valkyrienskies.core.api.ships.ServerShip
-import java.util.function.Supplier
 
 typealias CopyEventSignature = (
-        level: ServerLevel,
-        shipsToBeSaved: List<ServerShip>,
-        globalMap: MutableMap<String, Any>,
-        unregister: () -> Unit
-        ) -> Serializable?
+    level: ServerLevel,
+    shipsToBeSaved: List<ServerShip>,
+    globalMap: MutableMap<String, Any>,
+    unregister: () -> Unit
+) -> Serializable?
 typealias PasteEventSignature = (
-        level: ServerLevel,
-        loadedShips: List<Pair<ServerShip, Long>>,
-        file: Serializable?,
-        globalMap: MutableMap<String, Any>,
-        unregister: () -> Unit
-        ) -> Unit
+    level: ServerLevel,
+    loadedShips: List<Pair<ServerShip, Long>>,
+    file: Serializable?,
+    globalMap: MutableMap<String, Any>,
+    unregister: () -> Unit
+) -> Unit
 
 private data class Events(
     val copyEvent: CopyEventSignature,
@@ -32,26 +32,34 @@ private data class Events(
 )
 
 object ShipSchematic {
-    //TODO redo
-    const val currentSchematicVersion: Int = 1
+    const val schematicIdentifier = "vschem"
 
-    //TODO redo
-    private val schematicVersions = mapOf<Int, Supplier<IShipSchematic>>(
-            Pair(1, Supplier { ShipSchematicV1() } )
-    )
+    @JvmStatic
+    fun writeSchematicToBuffer(schematic: IShipSchematic): ByteBuf? {
+        val buf = FriendlyByteBuf(Unpooled.buffer())
 
-    //TODO redo
-    fun getSchematicConstructor(version: Int = currentSchematicVersion): Supplier<IShipSchematic> {
-        val schem = schematicVersions[version] ?: throw AssertionError("Invalid schematic version")
-        return schem
+        val serialized = try {
+            schematic.serialize().serialize()
+        } catch (e: Exception) { ELOG("Failed to load schematic with exception:\n${e.stackTraceToString()}"); return null
+        } catch (e: Error) { ELOG("Failed to load schematic with error:\n${e.stackTraceToString()}"); return null }
+
+        buf.writeUtf(schematicIdentifier)
+        buf.writeUtf(SchematicRegistry.typeToString(schematic::class.java))
+        buf.writeBytes(serialized)
+
+        return Unpooled.wrappedBuffer(buf.accessByteBufWithCorrectSize())
     }
 
-    //TODO redo
+    @JvmStatic
     fun getSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
-        val buffer = Unpooled.wrappedBuffer(bytes)
+        val buffer = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
 
         val schematic = try {
-            getSchematicConstructor(buffer.readInt()).get()
+            val identifier = buffer.readUtf()
+            //TODO
+            if (identifier != schematicIdentifier) {throw AssertionError()}
+
+            SchematicRegistry.strTypeToSupplier(buffer.readUtf()).get()
         } catch (e: AssertionError) {return null
         } catch (e: Exception) { ELOG("Failed to load schematic with exception:\n${e.stackTraceToString()}"); return null
         } catch (e: Error) { ELOG("Failed to load schematic with error:\n${e.stackTraceToString()}"); return null }
@@ -69,7 +77,7 @@ object ShipSchematic {
     private val allEvents = mutableMapOf<String, Events>()
     private val toAddEvent = mutableMapOf<String, MutableList<String>>()
 
-    fun registerCopyPasteEvents(name: String, onCopy: CopyEventSignature, onPasteAfter: PasteEventSignature, onPasteBefore: PasteEventSignature = {_, _, _, _, _ ->}) {
+    fun registerCopyPasteEvents(name: String, onCopy: CopyEventSignature, onPasteAfter: PasteEventSignature, onPasteBefore: PasteEventSignature = { _, _, _, _, _ ->}) {
         val events = Events(onCopy, onPasteBefore, onPasteAfter)
         rootEvents[name] = events
         allEvents[name] = events
@@ -81,7 +89,7 @@ object ShipSchematic {
         }
     }
 
-    fun registerOrderedCopyPasteEvents(name: String, after: String, onCopy: CopyEventSignature, onPasteAfter: PasteEventSignature, onPasteBefore: PasteEventSignature = {_, _, _, _, _ ->}) {
+    fun registerOrderedCopyPasteEvents(name: String, after: String, onCopy: CopyEventSignature, onPasteAfter: PasteEventSignature, onPasteBefore: PasteEventSignature = { _, _, _, _, _ ->}) {
         val events = Events(onCopy, onPasteBefore, onPasteAfter)
         allEvents[name] = events
 

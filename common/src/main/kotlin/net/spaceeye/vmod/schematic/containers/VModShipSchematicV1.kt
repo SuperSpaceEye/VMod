@@ -10,7 +10,8 @@ import net.minecraft.world.level.block.Blocks
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
-import net.spaceeye.vmod.schematic.ShipSchematic
+import net.spaceeye.vmod.schematic.api.ShipSchematic
+import net.spaceeye.vmod.schematic.api.containers.CompoundTagSerializable
 import net.spaceeye.vmod.schematic.api.containers.v1.ChunkyBlockData
 import net.spaceeye.vmod.schematic.api.containers.v1.BlockItem
 import net.spaceeye.vmod.schematic.api.containers.v1.BlockPaletteHashMapV1
@@ -42,9 +43,7 @@ import java.util.UUID
 
 typealias MVector3d = net.spaceeye.vmod.utils.Vector3d
 
-class ShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemPlaceAtMakeFromV1Impl, SchemSerializeDataV1Impl {
-    override val schematicVersion: Int = 1
-
+class VModShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemPlaceAtMakeFromV1Impl, SchemSerializeDataV1Impl {
     override var blockPalette: IBlockStatePalette = BlockPaletteHashMapV1()
 
     override var blockData = mutableMapOf<ShipId, ChunkyBlockData<BlockItem>>()
@@ -219,7 +218,7 @@ interface SchemSerializeDataV1Impl: IShipSchematic, IShipSchematicDataV1 {
         serializeGridDataInfo(saveTag)
         serializeExtraBlockData(saveTag)
 
-        return CompoundSerializableWithTopVersion(saveTag, schematicVersion)
+        return CompoundTagSerializable(saveTag)
     }
 
     override fun deserialize(buf: ByteBuf): Boolean {

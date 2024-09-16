@@ -9,6 +9,7 @@ import net.minecraft.world.level.chunk.LevelChunk
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
+import net.spaceeye.vmod.schematic.api.SchematicRegistry
 import net.spaceeye.vmod.schematic.api.containers.v1.ChunkyBlockData
 import net.spaceeye.vmod.schematic.api.containers.v1.BlockItem
 import net.spaceeye.vmod.schematic.api.interfaces.IBlockStatePalette
@@ -23,6 +24,11 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 object SchematicActionsQueue: ServerClosable() {
+    init {
+        //why here? idk
+        SchematicRegistry.register(VModShipSchematicV1::class)
+    }
+
     private val placeData = mutableMapOf<UUID, SchemPlacementItem>()
     private val saveData = mutableMapOf<UUID, SchemSaveItem>()
     private val unfreezeData = ConcurrentHashMap<UUID, SchemUnfreezeShips>()

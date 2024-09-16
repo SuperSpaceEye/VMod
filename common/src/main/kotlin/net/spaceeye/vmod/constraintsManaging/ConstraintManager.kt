@@ -13,8 +13,8 @@ import net.spaceeye.vmod.constraintsManaging.MConstraintTypes.getType
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
+import net.spaceeye.vmod.schematic.api.ShipSchematic
+import net.spaceeye.vmod.schematic.api.containers.CompoundTagSerializable
 import net.spaceeye.vmod.utils.PosMap
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.ServerLevelHolder

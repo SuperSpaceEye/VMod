@@ -4,9 +4,6 @@ import io.netty.buffer.ByteBuf
 import net.spaceeye.vmod.networking.Serializable
 
 interface IShipSchematic {
-    //TODO redo this
-    val schematicVersion: Int
-
     fun getInfo(): IShipSchematicInfo
 
     fun serialize(): Serializable

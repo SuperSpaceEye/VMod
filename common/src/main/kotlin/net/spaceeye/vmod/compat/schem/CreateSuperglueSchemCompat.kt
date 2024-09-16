@@ -12,8 +12,8 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.AABB
 import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
+import net.spaceeye.vmod.schematic.api.ShipSchematic
+import net.spaceeye.vmod.schematic.api.containers.CompoundTagSerializable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.joml.primitives.AABBd

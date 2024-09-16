@@ -1,6 +1,6 @@
 plugins {
     id "architectury-plugin" version "3.4-SNAPSHOT"
-    id "dev.architectury.loom" version "1.1-SNAPSHOT" apply false
+    id "dev.architectury.loom" version "1.7-SNAPSHOT" apply false
 
     // Adds the Kotlin Gradle plugin
     id 'org.jetbrains.kotlin.jvm' version '1.8.21'
@@ -36,6 +36,8 @@ subprojects {
             }
         }
     }
+
+    tasks.named("ideaSyncTask").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":common:build") }
 
     dependencies {
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
@@ -73,6 +75,8 @@ allprojects {
         options.encoding = "UTF-8"
         options.release = 17
     }
+
+    tasks.named("build").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":common:build") }
 
     java {
         withSourcesJar()

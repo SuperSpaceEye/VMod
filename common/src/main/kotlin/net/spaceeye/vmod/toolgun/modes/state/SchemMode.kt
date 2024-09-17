@@ -16,6 +16,7 @@ import net.spaceeye.valkyrien_ship_schematics.containers.v1.ShipInfo
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.ShipSchematicInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematicInfo
+import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.*
@@ -30,7 +31,8 @@ import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.schematic.containers.VModShipSchematicV1
-import net.spaceeye.vmod.schematic.interfaces.SchemPlaceAtMakeFrom
+import net.spaceeye.vmod.schematic.containers.makeFrom
+import net.spaceeye.vmod.schematic.containers.placeAt
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -327,7 +329,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
     private var schem_: IShipSchematic? = null
     var schem: IShipSchematic?
         get() = schem_
-        set(value) {schem_ = value; shipInfo = value?.getInfo()}
+        set(value) {schem_ = value; shipInfo = value?.info}
 
     var filename = ""
 
@@ -349,7 +351,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
         } ?: return
         val schem = VModShipSchematicV1()
         schem.makeFrom(player.level as ServerLevel, player.uuid, serverCaughtShip) {
-            SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
+            SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.info!!))
             ServerPlayerSchematics.schematics[player.uuid] = schem
         }
     }
@@ -360,7 +362,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
         //TODO
         if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}
 
-        val info = schem.getInfo()
+        val info = schem.info!!
 
         val hitPos = raycastResult.worldHitPos!!
         val pos = hitPos + (raycastResult.worldNormalDirection!! * info.maxObjectPos.y)
@@ -370,8 +372,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
             .normalize()
 
-        schem as SchemPlaceAtMakeFrom
-        schem.placeAt(level, player.uuid, pos.toJomlVector3d(), rotation)
+        (schem as IShipSchematicDataV1).placeAt(level, player.uuid, pos.toJomlVector3d(), rotation) {}
     }
 
     override fun eResetState() {

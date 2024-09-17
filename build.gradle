@@ -37,7 +37,7 @@ subprojects {
         }
     }
 
-    tasks.named("ideaSyncTask").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":common:build") }
+    tasks.named("ideaSyncTask").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":$project.name:build") }
 
     dependencies {
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
@@ -76,7 +76,7 @@ allprojects {
         options.release = 17
     }
 
-    tasks.named("build").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":common:build") }
+    tasks.named("build").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":$project.name:build") }
 
     java {
         withSourcesJar()

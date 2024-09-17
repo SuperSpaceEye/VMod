@@ -1,9 +1,9 @@
 package net.spaceeye.vmod.schematic.interfaces
 
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.schematic.api.interfaces.IShipSchematic
-import net.spaceeye.vmod.schematic.api.interfaces.v1.IShipSchematicDataV1
-import net.spaceeye.vmod.schematic.api.interfaces.IShipSchematicInfo
+import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
+import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematicInfo
+import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import org.joml.Quaterniondc
 import org.joml.Vector3d
 import org.valkyrienskies.core.api.ships.ServerShip

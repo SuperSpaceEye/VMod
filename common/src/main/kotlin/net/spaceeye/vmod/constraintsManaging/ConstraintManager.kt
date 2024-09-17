@@ -6,15 +6,15 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.saveddata.SavedData
+import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
+import net.spaceeye.valkyrien_ship_schematics.containers.CompoundTagSerializable
+import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.constraintsManaging.MConstraintTypes.getType
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.RandomEvents
-import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.schematic.api.ShipSchematic
-import net.spaceeye.vmod.schematic.api.containers.CompoundTagSerializable
 import net.spaceeye.vmod.utils.PosMap
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.ServerLevelHolder
@@ -500,7 +500,7 @@ class ConstraintManager: SavedData() {
                 instance.saveDimensionIds(tag)
 
                 CompoundTagSerializable(tag)
-            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
+            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: ISerializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
                 if (loadFile == null) {return@registerCopyPasteEvents}
                 val instance = getInstance()
 

@@ -12,9 +12,9 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.schematic.api.ShipSchematic
-import net.spaceeye.vmod.schematic.api.containers.CompoundTagSerializable
+import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
+import net.spaceeye.valkyrien_ship_schematics.containers.CompoundTagSerializable
+import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.getCenterPos
@@ -37,7 +37,7 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
         pasteSync.clear()
     }
 
-    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit): Serializable? {
+    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit): ISerializable? {
         val entities = shipsToBeSaved
             .mapNotNull {ship -> Pair(ship.id,
                 level
@@ -94,7 +94,7 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
         return CompoundTagSerializable(tag)
     }
 
-    private fun onBeforePaste(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit) {
+    private fun onBeforePaste(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: ISerializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit) {
         if (file == null) {return}
         val data = CompoundTagSerializable()
         data.deserialize(file.serialize())

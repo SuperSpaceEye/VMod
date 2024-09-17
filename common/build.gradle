@@ -7,7 +7,7 @@ repositories {
 }
 
 dependencies {
-    implementation "net.spaceeye:valkyrien-ship-schematics:1.0"
+    modImplementation "net.spaceeye:valkyrien-ship-schematics:1.0"
 
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'

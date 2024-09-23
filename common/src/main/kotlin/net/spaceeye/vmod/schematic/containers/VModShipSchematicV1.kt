@@ -55,12 +55,14 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, 
         return false
     }
 
+    //TODO change onPasteBeforeBlocksAreLoaded to be on "per ship" basis so that you can make ships as you need instead of all at once
+    // also have a onPasteBeforeBlockEntitiesAreLoaded
     ShipSchematic.onPasteBeforeBlocksAreLoaded(level, ships, extraData)
     SchematicActionsQueue.queueShipsCreationEvent(level, uuid, ships, this) {
         ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData)
 
-        val ships = ships.map { it.first }
-        ships.zip(newTransforms).forEach {
+        val createdShips = ships.map { it.first }.onEach { VSMasslessShipsProcessor.shipsToBeCreated.remove(it.id) }
+        createdShips.zip(newTransforms).forEach {
                 (it, transform) ->
             val toPos = MVector3d(transform.positionInWorld) + MVector3d(pos)
             level.shipObjectWorld.teleportShip(it, ShipTeleportDataImpl(
@@ -70,9 +72,9 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, 
                 newScale = MVector3d(it.transform.shipToWorldScaling).avg(),
             ))
         }
-        ships.forEach { VSMasslessShipsProcessor.shipsToBeCreated.remove(it.id) }
-        postPlaceFn(ships)
-        SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, ships, 10)
+
+        postPlaceFn(createdShips)
+        SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, createdShips, 10)
     }
 
     return true
@@ -93,6 +95,7 @@ private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotati
         val newTransform = rotateAroundCenter(center, thisTransform, rotation)
         newTransforms.add(newTransform)
 
+        //TODO this is probably wrong?
         val toPos = MVector3d(newTransform.positionInWorld) + MVector3d(pos)
 
         val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(), false, it.shipScale, level.dimensionId)

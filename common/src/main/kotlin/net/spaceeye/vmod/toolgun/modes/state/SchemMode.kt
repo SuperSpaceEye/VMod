@@ -57,6 +57,22 @@ import kotlin.math.sign
 
 const val SCHEM_EXTENSION = "vschem"
 
+//TODO remove
+//probably works? and if it doesn't, oh well
+private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
+    if (bytes[3].toInt() == 1) {
+        val inst = VModShipSchematicV1()
+
+        val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
+        buf.readInt()
+
+        inst.deserialize(buf)
+        return inst
+    } else {
+        return ShipSchematic.getSchematicFromBytes(bytes)
+    }
+}
+
 //TODO Add rate limit
 object ClientPlayerSchematics {
     //TODO add handling logic for receiverDataTransmissionFailed
@@ -74,7 +90,7 @@ object ClientPlayerSchematics {
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
             ClientToolGunState.currentMode?.let {
                 if (it !is SchemMode) {return@let}
-                it.schem = ShipSchematic.getSchematicFromBytes(data!!.data.array())
+                it.schem = bcGetSchematicFromBytes(data!!.data.array())
                 it.saveSchem(listSchematics())
                 it.reloadScrollItems()
             }
@@ -138,7 +154,7 @@ object ClientPlayerSchematics {
     fun loadSchematic(path: Path): IShipSchematic? {
         try {
             val bytes = Files.readAllBytes(path)
-            return ShipSchematic.getSchematicFromBytes(bytes)
+            return bcGetSchematicFromBytes(bytes)
         } catch (e: Exception) {
             ELOG("Failed to load file because ${e.stackTraceToString()}")
             return null
@@ -185,7 +201,7 @@ object ServerPlayerSchematics: ServerClosable() {
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
-            schematics[data!!.uuid] = ShipSchematic.getSchematicFromBytes(data.data.array())
+            schematics[data!!.uuid] = bcGetSchematicFromBytes(data.data.array())
             loadRequests.remove(data.uuid)
         }
     }

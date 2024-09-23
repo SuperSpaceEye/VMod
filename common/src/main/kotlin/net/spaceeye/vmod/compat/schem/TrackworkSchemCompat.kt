@@ -14,7 +14,7 @@ class TrackworkSchemCompat: SchemCompatItem {
 
     private var blocksSet: Set<Block>? = null
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (Boolean) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (blocksSet == null) {
             blocksSet = setOf(
                 TrackBlocks.LARGE_SUSPENSION_TRACK.get()

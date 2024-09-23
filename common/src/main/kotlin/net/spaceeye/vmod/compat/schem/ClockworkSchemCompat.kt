@@ -144,7 +144,7 @@ class ClockworkSchemCompat(): SchemCompatItem {
 
     override fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit) {}
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (Boolean) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (state.block != ClockworkBlocks.PHYS_BEARING.get()) {return}
         val id = tag.getLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID)
         val mapped = oldToNewId[id] ?: -1

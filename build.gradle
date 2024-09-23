@@ -37,7 +37,7 @@ subprojects {
         }
     }
 
-    tasks.named("ideaSyncTask").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":$project.name:build") }
+//    tasks.named("ideaSyncTask").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":$project.name:build") }
 
     dependencies {
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"

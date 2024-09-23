@@ -53,7 +53,6 @@ nothing
 
 ## Custom Access Levels
 * Allow op users to change server settings of VMod from toolgun menu.
-* Add different access levels
 * Make special commands for op users
     * Clean every mconstraint of acc level.
     * Set limit for total mconstraints of acc level.
@@ -73,7 +72,6 @@ nothing
 ## Hydraulics
 * Make it more stable
 * Fix the bug that crashes VS
-* Redo it
 
 ## Elastic
 A rope that can stretch or push (if option is chosen)

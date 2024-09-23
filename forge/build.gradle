@@ -66,8 +66,9 @@ repositories {
     mavenCentral()
 }
 
-
 dependencies {
+    include(modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.name:1.0"))
+
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
 

@@ -3,6 +3,7 @@ package net.spaceeye.vmod.shipForceInducers
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.physgun.PlayerPhysgunState
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.rotateVecByQuat
@@ -27,6 +28,10 @@ class PhysgunController: ShipForcesInducer {
     override fun applyForcesAndLookupPhysShips(physShip: PhysShip, lookupPhysShip: (ShipId) -> PhysShip?) {
         val state = sharedState ?: return
 
+        val pConst = state.pConst
+        val dConst = state.dConst
+        val iConst = state.iConst
+
         val lock = state.lock
         if (!lock.tryLock()) {return}
 
@@ -39,8 +44,6 @@ class PhysgunController: ShipForcesInducer {
         state.caughtShipIds.forEach { shipsToInfluence.add(lookupPhysShip(it) as PhysShipImpl ?: return@forEach) }
 
         physShip as PhysShipImpl
-        val pConst = 160.0
-        val dConst = 20.0
 
         val idealPos = state.playerPos + state.playerDir * state.distanceFromPlayer
         val currentPos = Vector3d(physShip.transform.shipToWorld.transformPosition(state.fromPos.x, state.fromPos.y, state.fromPos.z, org.joml.Vector3d()))
@@ -72,9 +75,9 @@ class PhysgunController: ShipForcesInducer {
             .forEach {
                 val dir = ((idealPos - Vector3d(it.transform.positionInWorld))).toJomlVector3d()
                 val rotatedDir = rotateVecByQuat(dir, rotDiff)
-                val diff = Vector3d(rotatedDir.sub(dir)) * 80.0
+                val diff = Vector3d(rotatedDir.sub(dir)) * iConst
 
-                val mass = (it as PhysShipImpl).inertia.shipMass
+                val mass = it.inertia.shipMass
                 val force = (diff + posDiff - (Vector3d(it.poseVel.vel) * dConst)) * mass
                 it.applyInvariantForce(force.toJomlVector3d())
             }

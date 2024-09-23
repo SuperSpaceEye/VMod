@@ -11,17 +11,18 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
+import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
+import net.spaceeye.valkyrien_ship_schematics.containers.v1.ShipInfo
+import net.spaceeye.valkyrien_ship_schematics.containers.v1.ShipSchematicInfo
+import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
+import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematicInfo
+import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
-import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.api.containers.v1.ShipInfo
-import net.spaceeye.vmod.schematic.api.containers.v1.ShipSchematicInfo
-import net.spaceeye.vmod.schematic.api.interfaces.IShipSchematic
-import net.spaceeye.vmod.schematic.api.interfaces.IShipSchematicInfo
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
@@ -29,7 +30,9 @@ import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.networking.SerializableItem.get
-import net.spaceeye.vmod.schematic.interfaces.SchemPlaceAtMakeFrom
+import net.spaceeye.vmod.schematic.containers.VModShipSchematicV1
+import net.spaceeye.vmod.schematic.containers.makeFrom
+import net.spaceeye.vmod.schematic.containers.placeAt
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -54,6 +57,22 @@ import kotlin.math.sign
 
 const val SCHEM_EXTENSION = "vschem"
 
+//TODO remove
+//probably works? and if it doesn't, oh well
+private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
+    if (bytes[3].toInt() == 1) {
+        val inst = VModShipSchematicV1()
+
+        val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
+        buf.readInt()
+
+        inst.deserialize(buf)
+        return inst
+    } else {
+        return ShipSchematic.getSchematicFromBytes(bytes)
+    }
+}
+
 //TODO Add rate limit
 object ClientPlayerSchematics {
     //TODO add handling logic for receiverDataTransmissionFailed
@@ -71,7 +90,7 @@ object ClientPlayerSchematics {
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
             ClientToolGunState.currentMode?.let {
                 if (it !is SchemMode) {return@let}
-                it.schem = ShipSchematic.getSchematicFromBytes(data!!.data.array())
+                it.schem = bcGetSchematicFromBytes(data!!.data.array())
                 it.saveSchem(listSchematics())
                 it.reloadScrollItems()
             }
@@ -92,12 +111,13 @@ object ClientPlayerSchematics {
         override fun transmitterRequestProcessor(req: ServerPlayerSchematics.SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = ClientToolGunState.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
-                mode.schem?.let { SchemHolder(it.serialize().serialize(), req.requestUUID) }
+                mode.schem?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!, req.requestUUID) }
             }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
         }
     }
 
+    //TODO convert to AutoSerializable
     class SchemHolder(): Serializable {
         lateinit var data: ByteBuf
         lateinit var uuid: UUID
@@ -134,7 +154,7 @@ object ClientPlayerSchematics {
     fun loadSchematic(path: Path): IShipSchematic? {
         try {
             val bytes = Files.readAllBytes(path)
-            return ShipSchematic.getSchematicFromBytes(bytes)
+            return bcGetSchematicFromBytes(bytes)
         } catch (e: Exception) {
             ELOG("Failed to load file because ${e.stackTraceToString()}")
             return null
@@ -143,7 +163,7 @@ object ClientPlayerSchematics {
 
     fun saveSchematic(name: String, schematic: IShipSchematic): Boolean {
         try {
-            Files.write(Paths.get("VMod-Schematics/${name}"), schematic.serialize().serialize().array())
+            Files.write(Paths.get("VMod-Schematics/${name}"), ShipSchematic.writeSchematicToBuffer(schematic)!!.array())
         } catch (e: IOException) {return false}
         return true
     }
@@ -163,7 +183,7 @@ object ServerPlayerSchematics: ServerClosable() {
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
         override fun transmitterRequestProcessor(req: ClientPlayerSchematics.SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
-            val res = schematics[req.uuid] ?.let { SchemHolder(it.serialize().serialize()) }
+            val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
         }
     }
@@ -181,7 +201,7 @@ object ServerPlayerSchematics: ServerClosable() {
         override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
 
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
-            schematics[data!!.uuid] = ShipSchematic.getSchematicFromBytes(data.data.array())
+            schematics[data!!.uuid] = bcGetSchematicFromBytes(data.data.array())
             loadRequests.remove(data.uuid)
         }
     }
@@ -325,7 +345,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
     private var schem_: IShipSchematic? = null
     var schem: IShipSchematic?
         get() = schem_
-        set(value) {schem_ = value; shipInfo = value?.getInfo()}
+        set(value) {schem_ = value; shipInfo = value?.info}
 
     var filename = ""
 
@@ -345,9 +365,9 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             ServerPlayerSchematics.schematics.remove(player.uuid)
             null
         } ?: return
-        val schem = ShipSchematic.getSchematicConstructor().get() as SchemPlaceAtMakeFrom
+        val schem = VModShipSchematicV1()
         schem.makeFrom(player.level() as ServerLevel, player.uuid, serverCaughtShip) {
-            SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.getInfo()))
+            SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.info!!))
             ServerPlayerSchematics.schematics[player.uuid] = schem
         }
     }
@@ -358,7 +378,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
         //TODO
         if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}
 
-        val info = schem.getInfo()
+        val info = schem.info!!
 
         val hitPos = raycastResult.worldHitPos!!
         val pos = hitPos + (raycastResult.worldNormalDirection!! * info.maxObjectPos.y)
@@ -368,8 +388,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
             .normalize()
 
-        schem as SchemPlaceAtMakeFrom
-        schem.placeAt(level, player.uuid, pos.toJomlVector3d(), rotation)
+        (schem as IShipSchematicDataV1).placeAt(level, player.uuid, pos.toJomlVector3d(), rotation) {}
     }
 
     override fun eResetState() {

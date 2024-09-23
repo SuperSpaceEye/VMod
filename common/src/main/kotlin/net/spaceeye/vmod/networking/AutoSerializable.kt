@@ -1,5 +1,7 @@
 package net.spaceeye.vmod.networking
 
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.networking.SerializableItem.typeToDelegate
 import net.spaceeye.vmod.networking.SerializableItem.typeToFns
@@ -185,8 +187,10 @@ object SerializableItem {
     }
 
     init {
+        registerSerializationItem(FriendlyByteBuf::class, {it, buf -> buf.writeByteArray(it.accessByteBufWithCorrectSize())}) {buf -> FriendlyByteBuf(Unpooled.wrappedBuffer(buf.readByteArray())) }
         registerSerializationItem(Quaterniond::class, {it, buf -> buf.writeQuatd(it)}) {buf -> buf.readQuatd()}
         registerSerializationItem(Vector3d::class, {it, buf -> buf.writeVector3d(it)}) {buf -> buf.readVector3d()}
+        registerSerializationItem(ByteBuf::class, {it, buf -> buf.writeByteArray(it.array())}) {buf -> Unpooled.wrappedBuffer(buf.readByteArray())}
         registerSerializationItem(Boolean::class, {it, buf -> buf.writeBoolean(it)}) {buf -> buf.readBoolean()}
         registerSerializationItem(Double::class, {it, buf -> buf.writeDouble(it)}) {buf -> buf.readDouble()}
         registerSerializationItem(String::class, {it, buf -> buf.writeUtf(it)}) {buf -> buf.readUtf()}

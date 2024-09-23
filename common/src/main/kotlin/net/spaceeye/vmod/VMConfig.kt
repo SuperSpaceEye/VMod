@@ -2,6 +2,7 @@ package net.spaceeye.vmod
 
 import net.spaceeye.vmod.config.*
 
+//TODO revise
 object VMConfig {
     lateinit var server_config_holder: AbstractConfigBuilder
     lateinit var client_config_holder: AbstractConfigBuilder
@@ -38,15 +39,23 @@ object VMConfig {
 
         var DIMENSION_GRAVITY_VALUES: String by CString("", "DO NOT CHANGE")
 
+        val PHYSGUN = ServerPhysgunSettings()
         val TOOLGUN = ServerToolgunSettings()
         val PERMISSIONS = Permissions()
         val SCHEMATICS = Schematics()
+
+        class ServerPhysgunSettings(): ConfigSubDirectory() {
+            val GRAB_ALL_CONNECTED_SHIPS: Boolean by CBool(true, "A bit buggy.")
+            val PCONST: Double   by CDouble(160.0, "Restart to apply", 0.0 to Double.MAX_VALUE)
+            val DCONST: Double   by CDouble(20.0 , "Restart to apply", 0.0 to Double.MAX_VALUE)
+            val IDKCONST: Double by CDouble(90.0 , "Restart to apply", 0.0 to Double.MAX_VALUE)
+        }
 
         class ServerToolgunSettings: ConfigSubDirectory() {
             val MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "No Comment", Pair(1.0, Double.MAX_VALUE))
 
             //TODO use this
-            val MAX_SHIPS_ALLOWED_TO_COPY: Int by CInt(-1, "Number of connected ships a player can copy in one request. <=0 for unlimited.")
+            val MAX_SHIPS_ALLOWED_TO_COPY: Int by CInt(-1, "Number of connected ships a player can copy in one request. <=0 for unlimited.", do_show = false)
 
             val SCHEMATIC_PACKET_PART_SIZE: Int by CInt(30000, "Reload the game for change to take the effect.", Pair(512, 1000000))
         }
@@ -57,7 +66,7 @@ object VMConfig {
             var VMOD_TOOLGUN_PERMISSION_LEVEL: Int by CInt(2, "No Comment", Pair(0, 4))
             var VMOD_CHANGING_SERVER_SETTINGS_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
 
-            //using config to store shit
+            //TODO using config to store shit
             var ALWAYS_ALLOWED: String by CString("", "DO NOT CHANGE")
             var ALWAYS_DISALLOWED: String by CString("", "DO NOT CHANGE")
         }

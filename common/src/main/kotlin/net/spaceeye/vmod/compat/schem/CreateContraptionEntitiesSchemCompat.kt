@@ -12,9 +12,9 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
+import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
+import net.spaceeye.valkyrien_ship_schematics.containers.CompoundTagSerializable
+import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.getCenterPos
@@ -29,7 +29,7 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
     val pasteSync = mutableMapOf<UUID, Entity>()
 
     init {
-        ShipSchematic.registerCopyPasteEvents("Create Contraption Entities Schem Compat", ::onCopyEvent, {_, _, _, _, _ ->}, ::onBeforePaste)
+        ShipSchematic.registerCopyPasteEvents("Create Contraption Entities Schem Compat", ::onCopyEvent, { _, _, _, _, _ ->}, ::onBeforePaste)
     }
 
     override fun close() {
@@ -37,7 +37,7 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
         pasteSync.clear()
     }
 
-    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit): Serializable? {
+    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit): ISerializable? {
         val entities = shipsToBeSaved
             .mapNotNull {ship -> Pair(ship.id,
                 level
@@ -94,7 +94,7 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
         return CompoundTagSerializable(tag)
     }
 
-    private fun onBeforePaste(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit) {
+    private fun onBeforePaste(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: ISerializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit) {
         if (file == null) {return}
         val data = CompoundTagSerializable()
         data.deserialize(file.serialize())
@@ -154,9 +154,11 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
 
         tag!!.putUUID("VMOD SCHEM COMPAT", syncUUID)
     }
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (Boolean) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (!tag.contains("VMOD SCHEM COMPAT")) {return}
         val syncUUID = tag.getUUID("VMOD SCHEM COMPAT")
+
+        delayLoading(false)
 
         afterPasteCallbackSetter {be ->
             val entity = pasteSync[syncUUID] ?: return@afterPasteCallbackSetter

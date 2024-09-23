@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.physgun
 
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.AutoSerializable
@@ -51,7 +52,11 @@ data class PlayerPhysgunState(
     var fromPos: Vector3d = Vector3d(),
     var idealRotation: Quaterniond = Quaterniond(),
     var mainShipId: ShipId = -1,
-    var caughtShipIds: MutableList<ShipId> = mutableListOf()
+    var caughtShipIds: MutableList<ShipId> = mutableListOf(),
+
+    var pConst: Double = VMConfig.SERVER.PHYSGUN.PCONST,
+    var dConst: Double = VMConfig.SERVER.PHYSGUN.DCONST,
+    var iConst: Double = VMConfig.SERVER.PHYSGUN.IDKCONST,
 ) {
     fun fromPkt(player: ServerPlayer, pkt: ServerPhysgunState.C2SPhysgunStateChanged) {
         serverPlayer = player
@@ -64,6 +69,10 @@ data class PlayerPhysgunState(
 
         quatDiff = pkt.quatDiff
         increaseDistanceBy = pkt.increaseDistanceBy
+
+        pConst = VMConfig.SERVER.PHYSGUN.PCONST
+        dConst = VMConfig.SERVER.PHYSGUN.DCONST
+        iConst = VMConfig.SERVER.PHYSGUN.IDKCONST
     }
 }
 
@@ -263,7 +272,9 @@ object ServerPhysgunState: ServerClosable() {
 
                 state.caughtShipIds.clear()
                 //TODO finish this
-                state.caughtShipIds.addAll(traversedIds)
+                if (VMConfig.SERVER.PHYSGUN.GRAB_ALL_CONNECTED_SHIPS) {
+                    state.caughtShipIds.addAll(traversedIds)
+                }
 
                 val controller = PhysgunController.getOrCreate(ship)
 

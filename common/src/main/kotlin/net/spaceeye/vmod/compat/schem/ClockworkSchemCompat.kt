@@ -10,9 +10,9 @@ import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.networking.Serializable
-import net.spaceeye.vmod.schematic.ShipSchematic
-import net.spaceeye.vmod.schematic.containers.CompoundTagSerializable
+import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
+import net.spaceeye.valkyrien_ship_schematics.containers.CompoundTagSerializable
+import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.valkyrienskies.clockwork.ClockworkBlocks
@@ -49,7 +49,7 @@ class ClockworkSchemCompat(): SchemCompatItem {
             ).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 
-    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit): Serializable {
+    private fun onCopyEvent(level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit): ISerializable {
         val tag = CompoundTag()
 
         val tagData = ListTag()
@@ -87,7 +87,7 @@ class ClockworkSchemCompat(): SchemCompatItem {
         return CompoundTagSerializable(tag)
     }
 
-    private fun onPasteBeforeEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: Serializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit) {
+    private fun onPasteBeforeEvent(level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, file: ISerializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit) {
         val data = CompoundTagSerializable()
         data.deserialize(file!!.serialize())
         val tag = data.tag ?: return
@@ -144,7 +144,7 @@ class ClockworkSchemCompat(): SchemCompatItem {
 
     override fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit) {}
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (Boolean) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (state.block != ClockworkBlocks.PHYS_BEARING.get()) {return}
         val id = tag.getLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID)
         val mapped = oldToNewId[id] ?: -1

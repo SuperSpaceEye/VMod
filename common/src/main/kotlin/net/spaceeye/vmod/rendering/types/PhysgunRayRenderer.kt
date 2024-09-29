@@ -9,6 +9,7 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.renderer.GameRenderer
+import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.networking.AutoSerializable
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
@@ -32,18 +33,27 @@ fun closestPointOnALineToAnotherPoint(originPoint: Vector3d, linePoint1: Vector3
     return linePoint1 + wdir * t
 }
 
-class PhysgunRayRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer, AutoSerializable {
-    var player: UUID by get(0, UUID(0L, 0L))
-    var shipId: Long by get(1, -1L)
-    var hitPosInShipyard: Vector3d by get(2, Vector3d())
+class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer {
+    class State: AutoSerializable {
+        var player: UUID by get(0, UUID(0L, 0L))
+        var shipId: Long by get(1, -1L)
+        var hitPosInShipyard: Vector3d by get(2, Vector3d())
+        var timestampOfBeginning: Long by get(4, -1)
+        var activeFor_ms: Long by get(5, Long.MAX_VALUE)
+    }
+    val state = State()
+
+    override var timestampOfBeginning get() = state.timestampOfBeginning; set(value) {state.timestampOfBeginning = value}
+    override val activeFor_ms get() = state.activeFor_ms
+
+    override fun serialize() = state.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
 
     override val renderingPosition: Vector3d
         get() {
-            val player = Minecraft.getInstance().level!!.getPlayerByUUID(player) ?: return Vector3d(999999999, 999999999, 999999999)
+            val player = Minecraft.getInstance().level!!.getPlayerByUUID(state.player) ?: return Vector3d(999999999, 999999999, 999999999)
             return Vector3d(player.eyePosition)
         }
-    override var timestampOfBeginning: Long by get(4, -1)
-    override var activeFor_ms: Long by get(5, Long.MAX_VALUE)
     override var wasActivated: Boolean = false
 
     fun lerp(a: Vector3d, b: Vector3d, f: Double) = a * (1.0 - f) + b * f
@@ -57,9 +67,9 @@ class PhysgunRayRenderer(): BaseRenderer, TimedRenderer, PositionDependentRender
     }
 
     override fun renderData(poseStack: PoseStack, camera: Camera) {
-        val targetUUID = player
+        val targetUUID = state.player
 
-        val player = Minecraft.getInstance().level!!.getPlayerByUUID(player) ?: return
+        val player = Minecraft.getInstance().level!!.getPlayerByUUID(state.player) ?: return
 
         val level = player.level as ClientLevel
 
@@ -95,11 +105,11 @@ class PhysgunRayRenderer(): BaseRenderer, TimedRenderer, PositionDependentRender
 
         val raycastPos = raycastResult.worldHitPos ?: (point1 + dir * 100.0)
 
-        val point2 = if (shipId == -1L) {
+        val point2 = if (state.shipId == -1L) {
             raycastPos
         } else {
-            level.shipObjectWorld.loadedShips.getById(shipId)?.let {
-                posShipToWorldRender(it, hitPosInShipyard)
+            level.shipObjectWorld.loadedShips.getById(state.shipId)?.let {
+                posShipToWorldRender(it, state.hitPosInShipyard)
             } ?: return
         }
 

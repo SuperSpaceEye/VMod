@@ -39,10 +39,10 @@ open class Registry<T>(private val useFullNames: Boolean = false) {
     fun typeToSupplier(clazz: Class<T>)
         = typeToSupplier[clazz] ?: throw AssertionError("Type ${clazz.name} wasn't registered")
 
-    fun register(clazz: KClass<*>) {
+    fun register(clazz: KClass<*>, tryInitCompanionObject: Boolean = true) {
         // will initialize companion object if exists
         try {
-            clazz.companionObjectInstance
+            if (tryInitCompanionObject) clazz.companionObjectInstance
         } catch (e: Exception) { WLOG("An exception occurred during initialization of companion object of ${clazz.simpleName} but it probably doesn't mean anything. Stack trace in debug.log."); DLOG("\n${e.stackTraceToString()}")
         } catch (e: Error) { WLOG("An error occurred during initialization of companion object of ${clazz.simpleName} but it probably doesn't mean anything. Stack trace in debug.log."); DLOG("\n${e.stackTraceToString()}")  }
         register(clazz.java as Class<T>)

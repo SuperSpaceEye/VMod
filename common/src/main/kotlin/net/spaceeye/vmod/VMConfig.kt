@@ -45,10 +45,10 @@ object VMConfig {
         val SCHEMATICS = Schematics()
 
         class ServerPhysgunSettings(): ConfigSubDirectory() {
-            val GRAB_ALL_CONNECTED_SHIPS: Boolean by CBool(true, "A bit buggy.")
-            val PCONST: Double   by CDouble(160.0, "Restart to apply", 0.0 to Double.MAX_VALUE)
-            val DCONST: Double   by CDouble(20.0 , "Restart to apply", 0.0 to Double.MAX_VALUE)
-            val IDKCONST: Double by CDouble(90.0 , "Restart to apply", 0.0 to Double.MAX_VALUE)
+            val GRAB_ALL_CONNECTED_SHIPS: Boolean by CBool(false, "A bit buggy.")
+            val PCONST: Double   by CDouble(160.0, "a", 0.0 to Double.MAX_VALUE)
+            val DCONST: Double   by CDouble(20.0 , "a", 0.0 to Double.MAX_VALUE)
+            val IDKCONST: Double by CDouble(90.0 , "a", 0.0 to Double.MAX_VALUE)
         }
 
         class ServerToolgunSettings: ConfigSubDirectory() {

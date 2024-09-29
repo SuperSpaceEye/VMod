@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
+import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.networking.AutoSerializable
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
@@ -19,17 +20,31 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class RopeRenderer(): BaseRenderer, AutoSerializable {
-    var shipId1: Long by get(0, -1L)
-    var shipId2: Long by get(1, -1L)
+class RopeRenderer(): BaseRenderer {
+    class State: AutoSerializable {
+        var shipId1: Long by get(0, -1L)
+        var shipId2: Long by get(1, -1L)
 
-    var point1: Vector3d by get(2, Vector3d())
-    var point2: Vector3d by get(3, Vector3d())
+        var point1: Vector3d by get(2, Vector3d())
+        var point2: Vector3d by get(3, Vector3d())
 
-    var length: Double by get(4, 0.0)
+        var length: Double by get(4, 0.0)
 
-    var width: Double by get(5, .2)
-    var segments: Int by get(6, 16)
+        var width: Double by get(5, .2)
+        var segments: Int by get(6, 16)
+    }
+    val state = State()
+
+    inline var shipId1 get() = state.shipId1; set(value) {state.shipId1 = value}
+    inline var shipId2 get() = state.shipId2; set(value) {state.shipId2 = value}
+    inline var point1 get() = state.point1; set(value) {state.point1 = value}
+    inline var point2 get() = state.point2; set(value) {state.point2 = value}
+    inline var length get() = state.length; set(value) {state.length = value}
+    inline var width get() = state.width; set(value) {state.width = value}
+    inline var segments get() = state.segments; set(value) {state.segments = value}
+
+    override fun serialize() = state.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
 
     constructor(shipId1: Long,
                 shipId2: Long,

@@ -16,3 +16,9 @@ inline fun transformDirectionWorldToShip(ship: Ship, dir: Vector3d): Vector3d = 
 
 inline fun transformDirectionShipToWorldRender(ship: ClientShip, dir: Vector3d): Vector3d = Vector3d(ship.renderTransform.shipToWorld.transformDirection(dir.toJomlVector3d(), org.joml.Vector3d()))
 inline fun transformDirectionWorldToShipRender(ship: ClientShip, dir: Vector3d): Vector3d = Vector3d(ship.renderTransform.worldToShip.transformDirection(dir.toJomlVector3d(), org.joml.Vector3d()))
+
+inline fun transformDirectionShipToWorldNoScaling(ship: Ship, dir: Vector3d): Vector3d = Vector3d(ship.transform.transformDirectionNoScalingFromShipToWorld(dir.toJomlVector3d(), org.joml.Vector3d()))
+inline fun transformDirectionWorldToShipNoScaling(ship: Ship, dir: Vector3d): Vector3d = Vector3d(ship.transform.transformDirectionNoScalingFromWorldToShip(dir.toJomlVector3d(), org.joml.Vector3d()))
+
+inline fun transformDirectionShipToWorldRenderNoScaling(ship: ClientShip, dir: Vector3d): Vector3d = Vector3d(ship.renderTransform.transformDirectionNoScalingFromShipToWorld(dir.toJomlVector3d(), org.joml.Vector3d()))
+inline fun transformDirectionWorldToShipRenderNoScaling(ship: ClientShip, dir: Vector3d): Vector3d = Vector3d(ship.renderTransform.transformDirectionNoScalingFromWorldToShip(dir.toJomlVector3d(), org.joml.Vector3d()))

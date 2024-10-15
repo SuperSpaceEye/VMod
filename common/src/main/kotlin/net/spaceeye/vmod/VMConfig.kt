@@ -39,16 +39,18 @@ object VMConfig {
 
         var DIMENSION_GRAVITY_VALUES: String by CString("", "DO NOT CHANGE")
 
+        var CONSTRAINT_CREATION_ATTEMPTS: Int by CInt(12000, "The amount of ticks VMod will try to create constraint if it failed to create one. Why is it needed? VS lags sometimes and fails to create constraints, idk why.", 20 to Int.MAX_VALUE)
+
         val PHYSGUN = ServerPhysgunSettings()
         val TOOLGUN = ServerToolgunSettings()
         val PERMISSIONS = Permissions()
         val SCHEMATICS = Schematics()
 
         class ServerPhysgunSettings(): ConfigSubDirectory() {
-            val GRAB_ALL_CONNECTED_SHIPS: Boolean by CBool(true, "A bit buggy.")
-            val PCONST: Double   by CDouble(160.0, "Restart to apply", 0.0 to Double.MAX_VALUE)
-            val DCONST: Double   by CDouble(20.0 , "Restart to apply", 0.0 to Double.MAX_VALUE)
-            val IDKCONST: Double by CDouble(90.0 , "Restart to apply", 0.0 to Double.MAX_VALUE)
+            val GRAB_ALL_CONNECTED_SHIPS: Boolean by CBool(false, "A bit buggy.")
+            val PCONST: Double   by CDouble(160.0, "a", 0.0 to Double.MAX_VALUE)
+            val DCONST: Double   by CDouble(20.0 , "a", 0.0 to Double.MAX_VALUE)
+            val IDKCONST: Double by CDouble(90.0 , "a", 0.0 to Double.MAX_VALUE)
         }
 
         class ServerToolgunSettings: ConfigSubDirectory() {

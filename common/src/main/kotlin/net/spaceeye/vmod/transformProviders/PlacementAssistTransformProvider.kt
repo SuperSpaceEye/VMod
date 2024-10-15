@@ -43,18 +43,14 @@ class PlacementAssistTransformProvider(
     ): ShipTransform? {
         //TODO think of a better way
         if (!ToolgunItem.playerIsUsingToolgun()) {return null}
-        val secondResult = RaycastFunctions.raycast(
+        val secondResult = RaycastFunctions.renderRaycast(
             level,
             RaycastFunctions.Source(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.position)
             ),
             raycastDistance,
-            ignoreShipIds,
-            {ship, dir -> transformDirectionShipToWorldRender(ship as ClientShip, dir) },
-            {ship, dir -> transformDirectionWorldToShipRender(ship as ClientShip, dir) },
-            {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },
-            {ship, pos, transform -> posWorldToShipRender(ship as ClientShip, pos, transform) }
+            ignoreShipIds
         )
         rresult2 = secondResult
 

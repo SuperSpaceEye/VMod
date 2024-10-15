@@ -21,6 +21,7 @@ import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.joml.primitives.AABBd
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.util.toAABBd
+import org.valkyrienskies.mod.common.getShipManaging
 import org.valkyrienskies.mod.common.util.toMinecraft
 import java.util.*
 
@@ -42,7 +43,8 @@ class CreateContraptionEntitiesSchemCompat: SchemCompatItem, ServerClosable() {
             .mapNotNull {ship -> Pair(ship.id,
                 level
                     .getEntities(null, ship.shipAABB?.toAABBd(AABBd())?.toMinecraft() ?: return@mapNotNull null)
-                    .filterIsInstance<AbstractContraptionEntity>())
+                    .filterIsInstance<AbstractContraptionEntity>()
+                    .filter { ship == it.getShipManaging() })
             }
 
         if (entities.isEmpty()) return null

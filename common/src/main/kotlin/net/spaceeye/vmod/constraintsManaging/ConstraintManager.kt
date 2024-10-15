@@ -11,6 +11,7 @@ import net.spaceeye.valkyrien_ship_schematics.containers.CompoundTagSerializable
 import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.constraintsManaging.MConstraintTypes.getType
 import net.spaceeye.vmod.events.AVSEvents
@@ -225,7 +226,7 @@ class ConstraintManager: SavedData() {
         }
 
         var attempts = 0
-        val maxAttempts = 100
+        val maxAttempts = VMConfig.SERVER.CONSTRAINT_CREATION_ATTEMPTS
         RandomEvents.serverOnTick.on { _, unsubscribe ->
             if (attempts > maxAttempts) {
                 onFailure()

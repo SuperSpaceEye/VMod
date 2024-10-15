@@ -149,5 +149,6 @@ class ClockworkSchemCompat(): SchemCompatItem {
         val id = tag.getLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID)
         val mapped = oldToNewId[id] ?: -1
         tag.putLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID, mapped)
+        delayLoading(false)
     }
 }

@@ -49,18 +49,13 @@ class SchemOutlinesRenderer(
 
         val width = 0.05
 
-        val raycastResult = RaycastFunctions.raycast(
+        val raycastResult = RaycastFunctions.renderRaycast(
             level,
             RaycastFunctions.Source(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
                 Vector3d(Minecraft.getInstance().player!!.eyePosition)
             ),
-            raycastDistance,
-            setOf(),
-            {ship, dir -> transformDirectionShipToWorldRender(ship as ClientShip, dir) },
-            {ship, dir -> transformDirectionWorldToShipRender(ship as ClientShip, dir) },
-            {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },
-            {ship, pos, transform -> posWorldToShipRender(ship as ClientShip, pos, transform) }
+            raycastDistance
         )
 
         val hitPos = raycastResult.worldHitPos ?: return

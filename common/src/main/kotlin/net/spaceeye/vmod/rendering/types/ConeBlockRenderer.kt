@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.texture.OverlayTexture
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.VMBlocks
 import net.spaceeye.vmod.networking.AutoSerializable
@@ -30,11 +31,22 @@ object A {
     val testState = VMBlocks.CONE_THRUSTER.get().defaultBlockState()
 }
 
-class ConeBlockRenderer(): BlockRenderer, AutoSerializable {
-    var shipId: Long by get(0, -1L)
-    var pos: Vector3d by get(1, Vector3d())
-    var rot: Quaterniond by get(2, Quaterniond())
-    var scale: Float by get(3, 1.0f)
+class ConeBlockRenderer(): BlockRenderer {
+    class State: AutoSerializable {
+        var shipId: Long by get(0, -1L)
+        var pos: Vector3d by get(1, Vector3d())
+        var rot: Quaterniond by get(2, Quaterniond())
+        var scale: Float by get(3, 1.0f)
+    }
+    val state = State()
+
+    override fun serialize() = state.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
+
+    inline var shipId get() = state.shipId; set(value) {state.shipId = value}
+    inline var pos get() = state.pos; set(value) {state.pos = value}
+    inline var rot get() = state.rot; set(value) {state.rot = value}
+    inline var scale get() = state.scale; set(value) {state.scale = value}
 
     constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId): this() {
         this.pos = pos

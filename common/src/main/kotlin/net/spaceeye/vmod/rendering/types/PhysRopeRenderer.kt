@@ -27,24 +27,33 @@ import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-class PhysRopeRenderer(): BaseRenderer, AutoSerializable {
-    var shipId1: Long by get(0, -1L)
-    var shipId2: Long by get(1, -1)
+class PhysRopeRenderer(): BaseRenderer {
+    class State: AutoSerializable {
+        var shipId1: Long by get(0, -1L)
+        var shipId2: Long by get(1, -1)
 
-    var point1: Vector3d by get(2, Vector3d())
-    var point2: Vector3d by get(3, Vector3d())
+        var point1: Vector3d by get(2, Vector3d())
+        var point2: Vector3d by get(3, Vector3d())
 
-    var color: Color by get(4, Color(0))
+        var color: Color by get(4, Color(0))
 
-    var width: Double by get(5, .2)
-    var chainLength: Double by get(6, 1.0)
+        var width: Double by get(5, .2)
+        var chainLength: Double by get(6, 1.0)
 
-    var sides: Int by get(7, 8)
+        var sides: Int by get(7, 8)
+    }
+    val state = State()
+
+    inline var shipId1 get() = state.shipId1; set(value) {state.shipId1 = value}
+    inline var shipId2 get() = state.shipId2; set(value) {state.shipId2 = value}
+    inline var point1 get() = state.point1; set(value) {state.point1 = value}
+    inline var point2 get() = state.point2; set(value) {state.point2 = value}
+    inline var color get() = state.color; set(value) {state.color = value}
+    inline var width get() = state.width; set(value) {state.width = value}
+    inline var chainLength get() = state.chainLength; set(value) {state.chainLength = value}
+    inline var sides get() = state.sides; set(value) {state.sides = value}
 
     var ids = listOf<Int>()
-
-
-
     var entities = mutableListOf<PhysRopeComponentEntity?>()
 
 
@@ -155,13 +164,13 @@ class PhysRopeRenderer(): BaseRenderer, AutoSerializable {
     private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, ) = makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse)
 
     override fun serialize(): FriendlyByteBuf {
-        val buf = super.serialize()
+        val buf = state.serialize()
         buf.writeCollection(ids) { buf, id -> buf.writeInt(id)}
         return buf
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
-        super.deserialize(buf)
+        state.deserialize(buf)
 
         ids = buf.readCollection({ mutableListOf() }) {buf.readInt()}
 

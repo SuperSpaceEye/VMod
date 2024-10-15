@@ -15,10 +15,7 @@ import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.vs.posShipToWorldRender
-import net.spaceeye.vmod.utils.vs.posWorldToShipRender
-import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorldRender
-import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShipRender
+import net.spaceeye.vmod.utils.vs.*
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
@@ -89,18 +86,12 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
         val color = Color(0, 0, 255, 100)
         val width = 0.1
 
-        val raycastResult = RaycastFunctions.raycast(
-            level,
+        val raycastResult = RaycastFunctions.renderRaycast(level,
             RaycastFunctions.Source(
                 dir,
                 if (inFirstPerson) Vector3d(camera.position) else Vector3d(player.eyePosition)
             ),
-            100.0,
-            setOf(),
-            {ship, dir -> transformDirectionShipToWorldRender(ship as ClientShip, dir) },
-            {ship, dir -> transformDirectionWorldToShipRender(ship as ClientShip, dir) },
-            {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },
-            {ship, pos, transform -> posWorldToShipRender(ship as ClientShip, pos, transform) }
+            100.0
         )
 
         val raycastPos = raycastResult.worldHitPos ?: (point1 + dir * 100.0)

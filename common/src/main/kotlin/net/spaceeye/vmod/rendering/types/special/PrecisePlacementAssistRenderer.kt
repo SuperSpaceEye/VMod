@@ -15,10 +15,7 @@ import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.createSpacedPoints
-import net.spaceeye.vmod.utils.vs.posShipToWorldRender
-import net.spaceeye.vmod.utils.vs.posWorldToShipRender
-import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorldRender
-import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShipRender
+import net.spaceeye.vmod.utils.vs.*
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
@@ -34,18 +31,12 @@ class PrecisePlacementAssistRenderer(
     override fun renderData(poseStack: PoseStack, camera: Camera) {
         if (!ToolgunItem.playerIsUsingToolgun()) {return}
 
-        val raycastResult = RaycastFunctions.raycast(
-            level,
+        val raycastResult = RaycastFunctions.renderRaycast(level,
             RaycastFunctions.Source(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
                 Vector3d(Minecraft.getInstance().player!!.eyePosition)
             ),
-            20.0,
-            setOf(),
-            {ship, dir -> transformDirectionShipToWorldRender(ship as ClientShip, dir) },
-            {ship, dir -> transformDirectionWorldToShipRender(ship as ClientShip, dir) },
-            {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },
-            {ship, pos, transform -> posWorldToShipRender(ship as ClientShip, pos, transform) }
+            20.0
         )
 
         val state = raycastResult.state

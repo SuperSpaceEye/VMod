@@ -9,9 +9,6 @@ import net.spaceeye.vmod.utils.createSpacedPoints
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.mod.common.dimensionId
-import org.valkyrienskies.mod.common.getShipManagingPos
-import org.valkyrienskies.mod.common.shipObjectWorld
 
 enum class PositionModes {
     NORMAL,

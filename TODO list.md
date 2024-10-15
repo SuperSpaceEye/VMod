@@ -8,6 +8,9 @@ nothing
 
 # Do Eventually
 
+# Phys rope
+* fix incorrect loading
+
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
 * Add clientside validation 

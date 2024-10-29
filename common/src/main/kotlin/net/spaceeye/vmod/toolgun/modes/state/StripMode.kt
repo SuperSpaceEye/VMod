@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.*
-import net.spaceeye.vmod.constraintsManaging.extensions.NonStrippable
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
@@ -41,7 +41,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
 
         level.getAllManagedConstraintIdsOfShipId(ship.id).forEach {
             val mc = level.getManagedConstraint(it)
-            if (mc is ExtendableMConstraint && mc.getExtensionsOfType<NonStrippable>().isNotEmpty()) { return@forEach }
+            if (mc !is ExtendableMConstraint || mc.getExtensionsOfType<Strippable>().isEmpty()) { return@forEach }
             level.removeManagedConstraint(it)
         }
     }
@@ -60,8 +60,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
             temp.addAll(list)
             temp.forEach {const ->
                 val mc = level.getManagedConstraint(const)
-                //TODO make "Strippable" instead of NonStrippable
-                if (mc is ExtendableMConstraint && mc.getExtensionsOfType<NonStrippable>().isNotEmpty()) { return@forEach }
+                if (mc !is ExtendableMConstraint || mc.getExtensionsOfType<Strippable>().isEmpty()) { return@forEach }
                 mc!!.getAttachmentPoints().forEach {
                     if ((it - raycastResult.globalHitPos!!).dist() <= radius) {
                         level.removeManagedConstraint(const)

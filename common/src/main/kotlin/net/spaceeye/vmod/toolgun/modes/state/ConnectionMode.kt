@@ -4,6 +4,7 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.ConnectionMConstraint
 import net.spaceeye.vmod.limits.DoubleLimit
@@ -51,7 +52,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
             ship2?.id ?: -1L,
             spoint1, spoint2,
             color, width
-        )))){it.addFor(player)}
+        ))).addExtension(Strippable())){it.addFor(player)}
 
         resetState()
     }
@@ -83,7 +84,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                                 it.compliance, it.maxForce, it.fixedDistance, it.connectionMode,
                                 listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                                 rresults.second.worldNormalDirection!!
-                            )
+                            ).addExtension(Strippable())
                         }
                     )
                 }

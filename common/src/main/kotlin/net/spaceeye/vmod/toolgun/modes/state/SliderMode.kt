@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.SliderMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
@@ -70,7 +71,7 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
             compliance, maxForce, setOf(
                 axisRes1.blockPosition, shipRes1.blockPosition,
                 axisRes2.blockPosition, shipRes2.blockPosition).toList()
-        )){it.addFor(player)}
+        ).addExtension(Strippable())){it.addFor(player)}
 
         sresetState(player)
     }

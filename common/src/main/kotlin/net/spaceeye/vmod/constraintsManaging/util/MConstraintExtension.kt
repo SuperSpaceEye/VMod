@@ -19,7 +19,8 @@ interface MConstraintExtension {
 
     fun onBeforeCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>) {}
     //should add new extension to new MConstraint
-    fun onAfterCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableMConstraint) {}
+    //TODO maybe just have return be MConstraintExtension? which then will be added to new instead of manually adding it at the end?
+    fun onAfterCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableMConstraint)
 
     fun onBeforeOnScaleByMConstraint(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
 

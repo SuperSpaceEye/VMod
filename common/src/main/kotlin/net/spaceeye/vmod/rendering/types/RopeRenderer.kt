@@ -63,7 +63,12 @@ class RopeRenderer(): BaseRenderer {
         this.segments = segments
     }
 
-    override fun renderData(poseStack: PoseStack, camera: Camera) {
+    private var highlightTimestamp = 0L
+    override fun highlightUntil(until: Long) {
+        if (until > highlightTimestamp) highlightTimestamp = until
+    }
+
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
         val level = Minecraft.getInstance().level!!
 
         val ship1 = if (shipId1 != -1L) { level.shipObjectWorld.loadedShips.getById(shipId1) ?: return } else null
@@ -80,6 +85,9 @@ class RopeRenderer(): BaseRenderer {
         RenderSystem.depthMask(true)
         RenderSystem.setShader(GameRenderer::getPositionTexShader)
         RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
+        if (timestamp < highlightTimestamp) {
+            RenderSystem.setShaderColor(1f, 0f, 0f, 1f)
+        }
 
         vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
 
@@ -99,8 +107,11 @@ class RopeRenderer(): BaseRenderer {
         )
 
         tesselator.end()
-
         poseStack.popPose()
+
+        if (timestamp < highlightTimestamp) {
+            RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
+        }
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {

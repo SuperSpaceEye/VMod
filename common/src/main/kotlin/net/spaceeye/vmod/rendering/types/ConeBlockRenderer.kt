@@ -24,6 +24,7 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.util.toMinecraft
+import java.awt.Color
 
 
 object A {
@@ -54,7 +55,12 @@ class ConeBlockRenderer(): BlockRenderer {
         this.shipId = shipId
     }
 
-    override fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource) {
+    private var highlightTimestamp = 0L
+    override fun highlightUntil(until: Long) {
+        if (until > highlightTimestamp) highlightTimestamp = until
+    }
+
+    override fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource, timestamp: Long) {
         val level = Minecraft.getInstance().level!!
 
         RenderSystem.enableDepthTest()
@@ -85,7 +91,7 @@ class ConeBlockRenderer(): BlockRenderer {
         val combinedLightIn = LightTexture.pack(0, level.getBrightness(LightLayer.SKY, rpoint.toBlockPos()))
         val combinedOverlayIn = OverlayTexture.NO_OVERLAY
 
-        RenderingStuff.blockRenderer.renderSingleBlock(A.testState, poseStack, buffer, combinedLightIn, combinedOverlayIn)
+        RenderingStuff.renderSingleBlock(A.testState, poseStack, buffer, combinedLightIn, combinedOverlayIn, if (timestamp < highlightTimestamp) Color(255, 0, 0) else Color(255, 255, 255))
 
         poseStack.popPose()
     }

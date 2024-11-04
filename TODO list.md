@@ -31,7 +31,6 @@ nothing
 ## Add a "wire" thing maybe as an addon to vmod
 
 ## General Code Structure
-* Extract more common code (connection/hydraulics)
 * Create "AutoGUIBuilder"
 
 ## Ticking Constraints
@@ -39,7 +38,6 @@ nothing
 
 ## HUD Rendering
 * Add info window for like part weight, total weight, connections, etc
-* Add popup messages things
 
 ## Sounds
 * Add sounds and shit
@@ -47,7 +45,6 @@ nothing
 ## Toolgun Architecture 
 * Make "do" action and its "inverse", so that you can not only undo
 * Add "redo" after first one
-* Remove NonStrippable and make ToolgunStrippable instead
 
 ## Toolgun Menu
 * Expand menu with more GUI components (sliders, drop down options, etc)

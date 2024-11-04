@@ -42,11 +42,22 @@ abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
     }
 
     override fun iGetVSIds(): Set<VSConstraintId> = cIDs.toSet()
-    override fun iGetAttachmentPositions(): List<BlockPos> = attachmentPoints_
-    override fun iGetAttachmentPoints(): List<Vector3d> = when (mainConstraint) {
-        is VSForceConstraint -> listOf(
+    override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> = if (shipId == -1L) attachmentPoints_ else {
+        when (shipId) {
+            mainConstraint.shipId0 -> listOf(attachmentPoints_[0])
+            mainConstraint.shipId1 -> listOf(attachmentPoints_[1])
+            else -> listOf()
+        }
+    }
+    override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> = when (mainConstraint) {
+        is VSForceConstraint -> if (shipId == -1L) listOf(
             Vector3d((mainConstraint as VSForceConstraint).localPos0),
             Vector3d((mainConstraint as VSForceConstraint).localPos1))
+        else when(shipId) {
+            mainConstraint.shipId0 -> listOf(Vector3d((mainConstraint as VSForceConstraint).localPos0))
+            mainConstraint.shipId1 -> listOf(Vector3d((mainConstraint as VSForceConstraint).localPos1))
+            else -> listOf()
+        }
         else -> listOf()
     }
 

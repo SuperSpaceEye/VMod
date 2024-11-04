@@ -21,9 +21,9 @@ abstract class ExtendableMConstraint(): MConstraint {
 
     // positions to which constraint is "attached" to the ship/world
     // is needed for strip tool, moving constraints on ship splitting
-    abstract fun iGetAttachmentPositions(): List<BlockPos>
+    abstract fun iGetAttachmentPositions(shipId: Long): List<BlockPos>
 
-    abstract fun iGetAttachmentPoints(): List<Vector3d>
+    abstract fun iGetAttachmentPoints(shipId: Long): List<Vector3d>
 
     // is called on ship splitting
     open fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
@@ -70,12 +70,12 @@ abstract class ExtendableMConstraint(): MConstraint {
         return iAttachedToShips(dimensionIds)
     }
 
-    final override fun getAttachmentPositions(): List<BlockPos> {
-        return iGetAttachmentPositions()
+    final override fun getAttachmentPositions(shipId: Long): List<BlockPos> {
+        return iGetAttachmentPositions(shipId)
     }
 
-    final override fun getAttachmentPoints(): List<Vector3d> {
-        return iGetAttachmentPoints()
+    final override fun getAttachmentPoints(shipId: Long): List<Vector3d> {
+        return iGetAttachmentPoints(shipId)
     }
 
     final override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {

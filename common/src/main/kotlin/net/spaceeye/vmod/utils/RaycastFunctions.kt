@@ -159,7 +159,7 @@ object RaycastFunctions {
             worldCenteredHitPos = posShipToWorld(ship, globalCenteredHitPos, null)
         }
 
-        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection, ship, if (level is ServerLevel) ship?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!! else -1)
+        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection, ship, ship?.id ?: if (level is ServerLevel) level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!! else -1)
     }
 
     fun Level.clipIncludeShips(

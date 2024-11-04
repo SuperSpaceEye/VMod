@@ -65,7 +65,7 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
         this.renderingPosition = renderingPosition
     }
 
-    override fun renderData(poseStack: PoseStack, camera: Camera) {
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 

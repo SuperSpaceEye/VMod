@@ -187,7 +187,7 @@ object SerializableItem {
     }
 
     init {
-        registerSerializationItem(FriendlyByteBuf::class, {it, buf -> buf.writeByteArray(it.accessByteBufWithCorrectSize())}) {buf -> FriendlyByteBuf(Unpooled.wrappedBuffer(buf.readByteArray())) }
+        registerSerializationItem(FriendlyByteBuf::class, {it, buf -> buf.writeByteArray(it.accessByteBufWithCorrectSize())}) {buf -> FriendlyByteBuf(Unpooled.wrappedBuffer(buf.readByteArray()))}
         registerSerializationItem(Quaterniond::class, {it, buf -> buf.writeQuatd(it)}) {buf -> buf.readQuatd()}
         registerSerializationItem(Vector3d::class, {it, buf -> buf.writeVector3d(it)}) {buf -> buf.readVector3d()}
         registerSerializationItem(ByteBuf::class, {it, buf -> buf.writeByteArray(it.array())}) {buf -> Unpooled.wrappedBuffer(buf.readByteArray())}
@@ -199,6 +199,11 @@ object SerializableItem {
         registerSerializationItem(Long::class, {it, buf -> buf.writeLong(it)}) {buf -> buf.readLong()}
         registerSerializationItem(UUID::class, {it, buf -> buf.writeUUID(it)}) {buf -> buf.readUUID()}
         registerSerializationItem(Int::class, {it, buf -> buf.writeInt(it)}) {buf -> buf.readInt()}
+
+        registerSerializationItem(IntArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeInt(it)}}) {buf -> buf.readCollection({mutableListOf<Int>()}) {buf.readInt()}.toIntArray()}
+        registerSerializationItem(LongArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeLong(it)}}) {buf -> buf.readCollection({mutableListOf<Long>()}) {buf.readInt()}.toLongArray()}
+        registerSerializationItem(FloatArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeFloat(it)}}) {buf -> buf.readCollection({mutableListOf<Float>()}) {buf.readInt()}.toFloatArray()}
+        registerSerializationItem(DoubleArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeDouble(it)}}) {buf -> buf.readCollection({mutableListOf<Double>()}) {buf.readInt()}.toDoubleArray()}
     }
 
     /**

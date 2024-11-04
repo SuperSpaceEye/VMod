@@ -30,8 +30,11 @@ object RandomEvents {
     //why? arch event is cringe and doesn't actually cancel mc keybinds
     val keyPress = CancellableEventEmitter<OnKeyPress>()
 
+    val clientPreRender = SafeEventEmitter<ClientPreRender>()
+
     data class ServerOnTick(val server: MinecraftServer)
     data class ClientOnTick(val minecraft: Minecraft)
     data class OnMouseMove(val x: Double, val y: Double)
     data class OnKeyPress(val key: Int, val scanCode: Int, val action: Int, val modifiers: Int)
+    data class ClientPreRender(val timestamp: Long)
 }

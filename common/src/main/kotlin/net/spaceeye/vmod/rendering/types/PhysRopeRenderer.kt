@@ -76,7 +76,12 @@ class PhysRopeRenderer(): BaseRenderer {
             this.ids = uuids
         }
 
-    override fun renderData(poseStack: PoseStack, camera: Camera) {
+    private var highlightTimestamp = 0L
+    override fun highlightUntil(until: Long) {
+        if (until > highlightTimestamp) highlightTimestamp = until
+    }
+
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
         val level = Minecraft.getInstance().level!!
 
         val tesselator = Tesselator.getInstance()
@@ -88,6 +93,9 @@ class PhysRopeRenderer(): BaseRenderer {
         RenderSystem.depthMask(true)
         RenderSystem.setShader(GameRenderer::getPositionTexShader)
         RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
+        if (timestamp < highlightTimestamp) {
+            RenderSystem.setShaderColor(0f, 1f, 0f, 0.5f)
+        }
 
         vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
         poseStack.pushPose()
@@ -157,6 +165,10 @@ class PhysRopeRenderer(): BaseRenderer {
 
         tesselator.end()
         poseStack.popPose()
+
+        if (timestamp < highlightTimestamp) {
+            RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
+        }
 
         RenderSystem.enableCull()
     }

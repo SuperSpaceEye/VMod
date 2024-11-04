@@ -1,10 +1,8 @@
 package net.spaceeye.vmod.rendering.types
 
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import com.mojang.blaze3d.vertex.PoseStack
-import com.mojang.blaze3d.vertex.Tesselator
-import com.mojang.blaze3d.vertex.VertexFormat
+import com.mojang.blaze3d.vertex.*
+import com.mojang.math.Matrix4f
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
@@ -59,7 +57,12 @@ open class A2BRenderer(): BaseRenderer {
     override fun serialize() = state.serialize()
     override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
 
-    override fun renderData(poseStack: PoseStack, camera: Camera) {
+    private var highlightTimestamp = 0L
+    override fun highlightUntil(until: Long) {
+        if (until > highlightTimestamp) highlightTimestamp = until
+    }
+
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
         val level = Minecraft.getInstance().level!!
 
         val ship1 = if (shipId1 != -1L) { level.shipObjectWorld.loadedShips.getById(shipId1) ?: return } else null
@@ -76,6 +79,8 @@ open class A2BRenderer(): BaseRenderer {
         RenderSystem.depthMask(true)
         RenderSystem.setShader(GameRenderer::getPositionColorShader)
         RenderSystem.enableBlend()
+
+        val color = if (timestamp < highlightTimestamp) Color(255, 0, 0, 255) else color
 
         val light = Int.MAX_VALUE
 

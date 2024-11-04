@@ -24,6 +24,8 @@ class RenderableExtension(): MConstraintExtension {
         this.renderer = renderer
     }
 
+    fun getRID(): Int = rID
+
     override fun onInit(obj: ExtendableMConstraint) {
         this.obj = obj
     }
@@ -63,7 +65,7 @@ class RenderableExtension(): MConstraintExtension {
     override fun onMakeMConstraint(level: ServerLevel) {
         val ids = obj.attachedToShips(listOf())
         ServerRenderingData.removeRenderer(rID)
-        rID = ServerRenderingData.addRenderer(ids[0], ids[1], renderer)
+        rID = ServerRenderingData.addRenderer(ids[0], if (ids.size > 1) {ids[1]} else {ids[0]}, renderer)
     }
 
     override fun onDeleteMConstraint(level: ServerLevel) {

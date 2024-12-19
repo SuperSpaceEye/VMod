@@ -30,9 +30,9 @@ import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.networking.SerializableItem.get
-import net.spaceeye.vmod.schematic.containers.VModShipSchematicV1
-import net.spaceeye.vmod.schematic.containers.makeFrom
-import net.spaceeye.vmod.schematic.containers.placeAt
+import net.spaceeye.vmod.schematic.VModShipSchematicV1
+import net.spaceeye.vmod.schematic.makeFrom
+import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension

@@ -16,7 +16,7 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.minecraft.network.chat.TextComponent
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.schematic.containers.placeAt
+import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.shipForceInducers.GravityController
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunPermissionManager

@@ -63,6 +63,7 @@ nothing
 ## Schematic
 * Copy entities (maybe, idfk)
 * Copy phys entities (not very important rn)
+* Right now schematic logic assumes default mc world height. Make it not do that
 
 ## Rope Constraint
 * Add ability to change rendering modes

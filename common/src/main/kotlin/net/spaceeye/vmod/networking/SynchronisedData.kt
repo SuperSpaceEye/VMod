@@ -199,7 +199,7 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
     val itemWriter: (buf: FriendlyByteBuf, item: Serializable) -> Unit,
     val itemReader: (buf: FriendlyByteBuf) -> Serializable
 ) {
-    private val cachedData = mutableMapOf<Long, MutableMap<Int, T>>()
+    protected val cachedData = mutableMapOf<Long, MutableMap<Int, T>>()
     @Volatile private var dataChanged = false
 
     //if item null then remove it

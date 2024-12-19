@@ -53,7 +53,7 @@ class ClientSynchronisedRenderingData:
     fun getItem(idx: Int) = idToItem[idx]
 
     override fun onClear() { idToItem.clear() }
-    override fun onRemove(page: Long) { getData()[page]?.forEach {idToItem.remove(it.key)} }
+    override fun onRemove(page: Long) { cachedData[page]?.forEach {idToItem.remove(it.key)} }
     override fun onRemove(page: Long, idx: Int) { idToItem.remove(idx) }
     override fun onAdd(page: Long, idx: Int, item: BaseRenderer) { idToItem[idx] = item }
 

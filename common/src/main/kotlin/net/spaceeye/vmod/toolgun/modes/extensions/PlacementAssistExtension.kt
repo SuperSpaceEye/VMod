@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.addFor
@@ -197,7 +198,9 @@ interface PlacementAssistClient {
         if (placementTransform !is PlacementAssistTransformProvider) {paClientResetState(); return}
 
         paAngle.it = 0.0
-        paCaughtShip.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle)
+        try {
+            paCaughtShip.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle)
+        } catch (e: Exception) { ELOG("HOW TF DID YOU DO THIS???????????????????????????\n${e.stackTraceToString()}"); paClientResetState(); return}
 
         val shipObjectWorld = Minecraft.getInstance().shipObjectWorld
         paCaughtShips.forEach {

@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.extensions
 
 import dev.architectury.event.EventResult
-import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIContainer
 import net.minecraft.client.Minecraft
 import net.minecraft.network.FriendlyByteBuf

@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.valkyrienskies.clockwork.ClockworkBlocks
+import org.valkyrienskies.clockwork.content.contraptions.phys.bearing.PhysBearingBlockEntity
 import org.valkyrienskies.clockwork.util.ClockworkConstants
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -31,6 +32,10 @@ class ClockworkSchemCompat(): SchemCompatItem {
                     .add(getCenterPos(ship.transform.positionInShip.x().toInt(), ship.transform.positionInShip.z().toInt()).toJomlVector3d())
             )
             tag
+        }
+
+        afterPasteCallbackSetter {
+            (it as PhysBearingBlockEntity?)?.tryRefresh()
         }
     }
 }

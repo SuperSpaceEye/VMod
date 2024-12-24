@@ -52,8 +52,8 @@ class PhysgunController: ShipForcesInducer {
         val posDiff = idealPosDiff * pConst
 
 
-        val mass = (physShip).inertia.shipMass
-        val force = (posDiff - (Vector3d(physShip.poseVel.vel) * dConst)) * mass
+        val mass = (physShip).mass
+        val force = (posDiff - (Vector3d(physShip.velocity) * dConst)) * mass
         physShip.applyInvariantForce(force.toJomlVector3d())
 
         val rotDiff = state.idealRotation.mul(physShip.transform.shipToWorldRotation.invert(Quaterniond()), Quaterniond()).normalize().invert()
@@ -61,11 +61,11 @@ class PhysgunController: ShipForcesInducer {
         if (rotDiff.w > 0.0) {
             rotDiffVector.smul(-1.0)
         }
-        rotDiffVector -= Vector3d(physShip.poseVel.omega).smul(dConst)
+        rotDiffVector -= Vector3d(physShip.omega).smul(dConst)
 
-        val torque = physShip.poseVel.rot.transform(
-                physShip.inertia.momentOfInertiaTensor.transform(
-                    physShip.poseVel.rot.transformInverse(rotDiffVector.toJomlVector3d())
+        val torque = physShip.transform.shipToWorldRotation.transform(
+                physShip.momentOfInertia.transform(
+                    physShip.transform.shipToWorldRotation.transformInverse(rotDiffVector.toJomlVector3d())
                 )
             )
 
@@ -77,8 +77,8 @@ class PhysgunController: ShipForcesInducer {
                 val rotatedDir = rotateVecByQuat(dir, rotDiff)
                 val diff = Vector3d(rotatedDir.sub(dir)) * iConst
 
-                val mass = it.inertia.shipMass
-                val force = (diff + posDiff - (Vector3d(it.poseVel.vel) * dConst)) * mass
+                val mass = it.mass
+                val force = (diff + posDiff - (Vector3d(it.velocity) * dConst)) * mass
                 it.applyInvariantForce(force.toJomlVector3d())
             }
 

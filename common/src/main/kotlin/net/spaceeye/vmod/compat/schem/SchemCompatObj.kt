@@ -11,7 +11,7 @@ import org.valkyrienskies.core.api.ships.ServerShip
 
 interface SchemCompatItem {
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit)
-    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (Boolean) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
+    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
 }
 
 object SchemCompatObj {
@@ -28,13 +28,12 @@ object SchemCompatObj {
     }
 
     init {
-        safeAdd("vs_clockwork") { ClockworkSchemCompat() }
-        safeAdd("trackwork") { TrackworkSchemCompat() }
-        safeAdd("vs_takeoff") { TakeoffSchemCompat() }
-
         safeAdd("create") { CreateSuperglueSchemCompat() }
         safeAdd("create") { CreateContraptionEntitiesSchemCompat() }
-        safeAdd("create") { CreateBlocksCompat() }
+        safeAdd("create") { CreateBlocksCompat() } //TODO this shit may conflict with other compat objects
+
+        safeAdd("vs_clockwork") { ClockworkSchemCompat() }
+        safeAdd("trackwork") { TrackworkSchemCompat() }
     }
 
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?): Boolean {
@@ -47,7 +46,7 @@ object SchemCompatObj {
         }
         return cancel
     }
-    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (Boolean) -> Unit): ((BlockEntity?) -> Unit)? {
+    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit): ((BlockEntity?) -> Unit)? {
         val callbacks = mutableListOf<(BlockEntity?) -> Unit>()
         items.forEach {
             try {

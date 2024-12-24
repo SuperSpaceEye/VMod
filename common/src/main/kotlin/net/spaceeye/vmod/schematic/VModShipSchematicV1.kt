@@ -11,7 +11,6 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.SchemSerializeDataV1Impl
 import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.vsStuff.VSMasslessShipsProcessor
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
 import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
@@ -25,6 +24,7 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
+import org.valkyrienskies.core.impl.game.ships.ShipData
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -46,30 +46,21 @@ class VModShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
 fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc, postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
     val newTransforms = mutableListOf<ShipTransform>()
 
-    val ships = (this as IShipSchematic).createShips(level, pos, rotation, newTransforms)
-    ships.forEach { VSMasslessShipsProcessor.shipsToBeCreated.add(it.first.id) }
+    val shipInitializers = (this as IShipSchematic).createShips(level, pos, rotation, newTransforms)
 
-    if (!verifyBlockDataIsValid(ships, level)) {
-        ships.forEach { level.shipObjectWorld.deleteShip(it.first) }
-        return false
-    }
+    if (!verifyBlockDataIsValid(shipInitializers.map { it.second })) { return false }
 
     //TODO change onPasteBeforeBlocksAreLoaded to be on "per ship" basis so that you can make ships as you need instead of all at once
     // also have a onPasteBeforeBlockEntitiesAreLoaded
-    ShipSchematic.onPasteBeforeBlocksAreLoaded(level, ships, extraData)
-    SchematicActionsQueue.queueShipsCreationEvent(level, uuid, ships, this) {
+//    ShipSchematic.onPasteBeforeBlocksAreLoaded(level, ships, extraData)
+    SchematicActionsQueue.queueShipsCreationEvent(level, uuid, shipInitializers, this) { ships ->
         ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData)
 
-        val createdShips = ships.map { it.first }.onEach { VSMasslessShipsProcessor.shipsToBeCreated.remove(it.id) }
+        val createdShips = ships.map { it.first }
         createdShips.zip(newTransforms).forEach {
                 (it, transform) ->
             val toPos = MVector3d(transform.positionInWorld) + MVector3d(pos)
-            level.shipObjectWorld.teleportShip(it, ShipTeleportDataImpl(
-                toPos.toJomlVector3d(),
-                transform.shipToWorldRotation,
-                JVector3d(),
-                newScale = MVector3d(it.transform.shipToWorldScaling).avg(),
-            ))
+            (it as ShipData).transform = it.transform.copy(toPos.toJomlVector3d(), shipToWorldRotation = transform.shipToWorldRotation, shipToWorldScaling = transform.shipToWorldScaling )
         }
 
         postPlaceFn(createdShips)
@@ -79,12 +70,13 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, 
     return true
 }
 
-private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<ShipTransform>): List<Pair<ServerShip, Long>> {
+//TODO rename
+private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<ShipTransform>): List<Pair<() -> ServerShip, Long>> {
     val shipData = info!!.shipsInfo
     // during schem creation ship positions are normalized so that the center is at 0 0 0
     val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
 
-    return shipData.map {
+    return shipData.map { Pair({
         val thisTransform = ShipTransformImpl(
             it.relPositionToCenter,
             it.positionInShip,
@@ -105,17 +97,15 @@ private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotati
             newTransform.shipToWorldRotation,
             newScale = it.shipScale
         ))
-        Pair(newShip, it.id)
-    }
+        newShip
+        }, it.id) }
 }
 
 fun IShipSchematicDataV1.verifyBlockDataIsValid(
-    ships: List<Pair<ServerShip, Long>>,
-    level: ServerLevel
+    ids: List<Long>,
 ): Boolean {
-    ships.forEach { (ship, id) ->
+    ids.forEach { id ->
         blockData[id] ?: run {
-            ships.forEach { (ship, id) -> level.shipObjectWorld.deleteShip(ship) }
             ELOG("SHIP ID EXISTS BUT NO BLOCK DATA WAS SAVED. NOT PLACING A SCHEMATIC.")
             return false
         }

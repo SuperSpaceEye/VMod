@@ -136,7 +136,8 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
         }
         val physicsEntityDataAsBytes: ByteArray = compoundTag.getByteArray(PHYS_DATA_NBT_KEY)
         val oldPhysicsEntityData = getMapper().readValue<PhysicsEntityData>(physicsEntityDataAsBytes)
-        val newShipId = (level.shipObjectWorld as ShipObjectServerWorld).allocateShipId(level.dimensionId)
+        val newShipId = TODO("FIX THIS") // TODO FIX THIS
+//        val newShipId = (level.shipObjectWorld as ShipObjectServerWorld).allocateShipId(level.dimensionId)
         val newPhysicsEntityData = oldPhysicsEntityData.copyPhysicsEntityDataWithNewId(newShipId)
         // Change the shipId to be something new
         setPhysicsEntityData(newPhysicsEntityData)
@@ -196,7 +197,9 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
             if (physicsEntityServerCopy != null) {
                 val newPos = Vector3d(d, e, f)
                 val teleportData = ShipTeleportDataImpl(newPos = newPos)
-                (this.level.shipObjectWorld as ShipObjectServerWorld).teleportPhysicsEntity(this.physicsEntityServer!!, teleportData)
+                level.shipObjectWorld
+                //TODO FIX THIS
+//                (this.level.shipObjectWorld as ShipObjectServerWorld).teleportPhysicsEntity(this.physicsEntityServer!!, teleportData)
             } else {
                 physicsEntityData!!.transform = ShipTransformImpl.create(
                         Vector3d(d, e, f),

@@ -9,7 +9,7 @@ import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.valkyrienskies.core.api.ships.*
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 
-//TODO make changeable default dimension gravity
+//TODO remove this
 @JsonAutoDetect(
     fieldVisibility = JsonAutoDetect.Visibility.ANY,
     getterVisibility = JsonAutoDetect.Visibility.NONE,
@@ -34,8 +34,7 @@ class GravityController(
 
     override fun applyForces(physShip: PhysShip) {
         physShip as PhysShipImpl
-
-        val forceDiff = (gravityVector - VS_DEFAULT_GRAVITY) * physShip.inertia.shipMass
+        val forceDiff = (gravityVector - VS_DEFAULT_GRAVITY) * physShip.mass
         if (forceDiff.sqrDist() < Float.MIN_VALUE) return
 
         physShip.applyInvariantForce(forceDiff.toJomlVector3d())

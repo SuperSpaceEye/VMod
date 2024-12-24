@@ -6,8 +6,8 @@ import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
 import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraint
+import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.mod.common.shipObjectWorld
-import org.valkyrienskies.physics_api.ConstraintId
 import kotlin.reflect.KMutableProperty0
 
 
@@ -29,7 +29,7 @@ inline fun <T: VSConstraint> dc(name: String, set: KMutableProperty0<T>, tag: Co
 /**
  * Make constraint or if failed, delete all and run callback
  */
-inline fun mc(constraint: VSConstraint, cIDs: MutableList<ConstraintId>, level: ServerLevel, ret: () -> Unit) {
+inline fun mc(constraint: VSConstraint, cIDs: MutableList<VSConstraintId>, level: ServerLevel, ret: () -> Unit) {
     val id = level.shipObjectWorld.createNewConstraint(constraint)
     if (id == null) {
         cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }

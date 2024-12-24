@@ -152,9 +152,9 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
     internal val trSynchronizeData = object : DataStream<R2TSynchronizationTickData, T2RSynchronizationTickData>(
         streamName,
         receiverSide.opposite(),
-        currentSide,
-        partByteMaxAmount
+        currentSide
     ) {
+        override val partByteAmount: Int = partByteMaxAmount
         override fun requestPacketConstructor(buf: FriendlyByteBuf): R2TSynchronizationTickData = R2TSynchronizationTickData()
         override fun dataPacketConstructor(): T2RSynchronizationTickData = T2RSynchronizationTickData(itemWriter, itemReader)
 
@@ -324,9 +324,9 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
     internal val trSynchronizeData = object : DataStream<R2TSynchronizationTickData, T2RSynchronizationTickData>(
         streamName,
         transmitterSide,
-        currentSide,
-        partByteMaxAmount
+        currentSide
     ) {
+        override val partByteAmount: Int = partByteMaxAmount
         override fun requestPacketConstructor(buf: FriendlyByteBuf): R2TSynchronizationTickData = R2TSynchronizationTickData()
         override fun dataPacketConstructor(): T2RSynchronizationTickData = T2RSynchronizationTickData(itemWriter, itemReader)
         override fun transmitterRequestProcessor(req: R2TSynchronizationTickData, ctx: NetworkManager.PacketContext): Either<T2RSynchronizationTickData, RequestFailurePkt>? { throw AssertionError() }

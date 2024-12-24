@@ -19,6 +19,7 @@ import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
 import org.joml.primitives.AABBi
 import org.valkyrienskies.core.api.ships.ServerShip
+import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -42,19 +43,21 @@ object SchematicActionsQueue: ServerClosable() {
 
     fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
 
-    fun queueShipsCreationEvent(level: ServerLevel, uuid: UUID, ships: List<Pair<ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: () -> Unit) {
+    fun queueShipsCreationEvent(level: ServerLevel, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: (ships: List<Pair<ServerShip, Long>>) -> Unit) {
         placeData[uuid] = SchemPlacementItem(level, schematicV1, ships, postPlacementFn)
     }
 
     class SchemPlacementItem(
         val level: ServerLevel,
         val schematicV1: IShipSchematicDataV1,
-        val ships: List<Pair<ServerShip, Long>>,
-        val postPlacementFn: () -> Unit
+        val shipsToCreate: List<Pair<() -> ServerShip, Long>>,
+        val postPlacementFn: (ships: List<Pair<ServerShip, Long>>) -> Unit
     ) {
         var currentShip = 0
         var currentChunk = 0
 
+        val oldToNewId = mutableMapOf<Long, ShipId>()
+        var createdShips = mutableListOf<Pair<ServerShip, Long>>()
         var afterPasteCallbacks = mutableListOf<() -> Unit>()
         var delayedBlockEntityLoading = ChunkyBlockData<() -> Unit>()
 
@@ -75,13 +78,14 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.putInt("z", pos.z)
 
                     var delayLoading = true
+                    var callback: ((CompoundTag?) -> CompoundTag?)? = null
                     var bcb: ((BlockEntity?) -> Unit)? = null
-                    val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state) { delayLoading = it }
-                    if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag, { delayLoading = it }) { bcb = it }
+                    val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state) { delay, fn -> delayLoading = delay; callback = fn }
+                    if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag, {delay, fn -> delayLoading = delay; callback = fn }) { bcb = it }
 
                     val fn = {
                         val be = level.getChunkAt(pos).getBlockEntity(pos)
-                        be?.load(tag) ?: run {
+                        be?.load(callback?.invoke(tag) ?: tag) ?: run {
                             ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
                         }
                         cb?.let  { afterPasteCallbacks.add { it(be) } }
@@ -102,12 +106,18 @@ object SchematicActionsQueue: ServerClosable() {
         }
 
         fun place(start: Long, timeout: Long): Boolean {
-            while (currentShip < ships.size) {
-                val ship = ships[currentShip].first
-                val currentBlockData = schematicV1.blockData[ships[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
+            while (currentShip < shipsToCreate.size) {
+                if (createdShips.size - 1 < currentShip) {
+                    createdShips.add(shipsToCreate[currentShip].let { Pair(it.first.invoke(), it.second) })
+                    //TODO add here thing
+                }
+                val ship = createdShips[currentShip].first
+
+                val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
                 val blockPalette = schematicV1.blockPalette
                 val flatExtraData = schematicV1.flatTagData.map { it.copy() }
-                val oldToNewId = ships.associate { Pair(it.second, it.first.id) }
+                oldToNewId.clear()
+                oldToNewId.putAll(createdShips.associate { Pair(it.second, it.first.id) })
                 currentBlockData.updateKeys()
 
                 val offset = MVector3d(
@@ -131,9 +141,9 @@ object SchematicActionsQueue: ServerClosable() {
             afterPasteCallbacks.forEach { it() }
             currentShip = 0
             currentChunk = 0
-            while (currentShip < ships.size) {
-                val ship = ships[currentShip].first
-                val currentBlockData = schematicV1.blockData[ships[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
+            while (currentShip < shipsToCreate.size) {
+                val ship = createdShips[currentShip].first
+                val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
                 currentBlockData.updateKeys()
 
                 val offset = MVector3d(
@@ -323,7 +333,7 @@ object SchematicActionsQueue: ServerClosable() {
                 val item = placeData[placeLastKeys[placeLastPosition]]
                 val result = try {item?.place(start, timeout)} catch (e: Exception) {ELOG("Failed to place item with exception:\n${e.stackTraceToString()}"); null}
                 if (result == null || result) {
-                    item!!.postPlacementFn()
+                    item!!.postPlacementFn(item.createdShips)
                     placeData.remove(placeLastKeys[placeLastPosition])
                 }
 

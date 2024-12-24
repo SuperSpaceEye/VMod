@@ -30,7 +30,6 @@ import net.spaceeye.vmod.utils.closeServerObjects
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.valkyrienskies.core.impl.game.ships.ShipObjectServerWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 fun ILOG(s: String) = VM.logger.info(s)
@@ -108,7 +107,7 @@ object VM {
             serverStopping = false
             ServerLevelHolder.server = server
             ServerLevelHolder.overworldServerLevel = server.overworld()
-            ServerLevelHolder.shipObjectWorld = server.shipObjectWorld as ShipObjectServerWorld
+            ServerLevelHolder.shipObjectWorld = server.shipObjectWorld
             ConstraintManager.initNewInstance()
 
             VSGravityManager

@@ -43,10 +43,16 @@ dependencies {
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
-    modRuntimeOnly(files("vs_jars/valkyrienskies-118-2.1.1-beta.5.jar"))
-    modCompileOnlyApi("org.valkyrienskies:valkyrienskies-118-fabric:${rootProject.vs2_version}") { transitive = false }
-//    modApi("org.valkyrienskies:valkyrienskies-118-fabric:2.1.1-beta.5+72fac3232e") { transitive = false }
-    modCompileOnlyApi("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
+    modApi("org.valkyrienskies:valkyrienskies-118-fabric:${rootProject.vs2_version}")
+    implementation("org.valkyrienskies.core:api:${rootProject.vscore_version}") {
+        exclude group: 'org.joml', module: ''
+    }
+    implementation("org.valkyrienskies.core:util:${rootProject.vscore_version}") {
+        exclude group: 'org.joml', module: ''
+    }
+    implementation("org.valkyrienskies.core:api-game:${rootProject.vscore_version}") {
+        exclude group: 'org.joml', module: ''
+    }
 
     // Kotlin
     modImplementation("net.fabricmc:fabric-language-kotlin:1.10.10+kotlin.1.9.10")
@@ -61,9 +67,6 @@ dependencies {
     modCompileOnlyApi "curse.maven:forge-config-api-port-fabric-547434:3943250"
 
     modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
-
-    //for mixin
-    modCompileOnlyApi(files("vs_jars/takeoff-fabric-1.0.0-beta1+308678c5c5.jar"))
 
 //    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.0-beta.2")))
 }

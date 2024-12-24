@@ -80,8 +80,8 @@ object ClientPlayerSchematics {
         "save_schem_stream",
         NetworkManager.Side.S2C,
         NetworkManager.Side.C2S,
-        0
     ) {
+        override val partByteAmount: Int get() = 0
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Save Schem Transmission Failed") }
@@ -97,18 +97,18 @@ object ClientPlayerSchematics {
         }
     }
 
-    var loadSchemStream = object : DataStream<ServerPlayerSchematics.SendLoadRequest, SchemHolder>(
+    var loadSchemStream = object : DataStream<SendLoadRequest, SchemHolder>(
         "load_schem_stream",
         NetworkManager.Side.C2S,
         NetworkManager.Side.C2S,
-        VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
+        override val partByteAmount: Int get() = VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Load Schem Transmission Failed") }
 
-        override fun transmitterRequestProcessor(req: ServerPlayerSchematics.SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
+        override fun transmitterRequestProcessor(req: SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = ClientToolGunState.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
                 mode.schem?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!, req.requestUUID) }
@@ -174,8 +174,8 @@ object ServerPlayerSchematics: ServerClosable() {
         "save_schem_stream",
         NetworkManager.Side.S2C,
         NetworkManager.Side.S2C,
-        VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
+        override val partByteAmount: Int get() = VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = ClientPlayerSchematics.SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Save Schem Transmission Failed") }
@@ -192,8 +192,8 @@ object ServerPlayerSchematics: ServerClosable() {
         "load_schem_stream",
         NetworkManager.Side.C2S,
         NetworkManager.Side.S2C,
-        0
     ) {
+        override val partByteAmount: Int get() = 0
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Load Schem Transmission Failed") }
@@ -239,7 +239,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
         lastReq == null || getNow_ms() - lastReq > 10000L
     }) {pkt, player ->
         ServerPlayerSchematics.loadRequests[player.uuid] = getNow_ms()
-        ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(ServerPlayerSchematics.SendLoadRequest(player.uuid), FakePacketContext(player))
+        ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(SendLoadRequest(player.uuid), FakePacketContext(player))
     }
 
     val s2cSendShipInfo = regS2C<S2CSendShipInfo>("send_ship_info", networkName) {pkt ->

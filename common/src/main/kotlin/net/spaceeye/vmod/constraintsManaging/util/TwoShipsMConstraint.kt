@@ -15,12 +15,11 @@ import org.valkyrienskies.core.apigame.constraints.VSConstraint
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
 import org.valkyrienskies.mod.common.shipObjectWorld
-import org.valkyrienskies.physics_api.ConstraintId
 
 abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
     abstract val mainConstraint: VSConstraint
 
-    val cIDs = mutableListOf<ConstraintId>() // should be used to store VS ids
+    val cIDs = mutableListOf<VSConstraintId>() // should be used to store VS ids
     var attachmentPoints_ = mutableListOf<BlockPos>()
 
     override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {

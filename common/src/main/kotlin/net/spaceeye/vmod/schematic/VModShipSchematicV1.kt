@@ -36,6 +36,7 @@ class VModShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
     override var blockPalette: IBlockStatePalette = BlockPaletteHashMapV1()
 
     override var blockData = mutableMapOf<ShipId, ChunkyBlockData<BlockItem>>()
+    override var entityData: MutableMap<ShipId, List<EntityItem>> = mutableMapOf()
     override var flatTagData: MutableList<CompoundTag> = mutableListOf()
 
     override var extraData: MutableList<Pair<String, ISerializable>> = mutableListOf()

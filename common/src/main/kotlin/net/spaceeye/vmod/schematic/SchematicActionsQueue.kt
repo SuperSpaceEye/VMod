@@ -3,12 +3,21 @@ package net.spaceeye.vmod.schematic
 import dev.architectury.event.events.common.TickEvent
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.DoubleTag
+import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.Mob
+import net.minecraft.world.entity.MobSpawnType
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.chunk.LevelChunk
+import net.minecraft.world.phys.AABB
 import net.spaceeye.valkyrien_ship_schematics.SchematicRegistry
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.BlockItem
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.ChunkyBlockData
+import net.spaceeye.valkyrien_ship_schematics.containers.v1.EntityItem
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
 import net.spaceeye.valkyrien_ship_schematics.interfaces.ICopyableBlock
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
@@ -16,10 +25,18 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.utils.ServerClosable
+import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
+import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.util.toAABBd
+import org.valkyrienskies.mod.common.isBlockInShipyard
+import org.valkyrienskies.mod.common.shipObjectWorld
+import org.valkyrienskies.mod.common.util.toJOML
+import org.valkyrienskies.mod.common.util.toMinecraft
+import org.valkyrienskies.mod.common.yRange
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -164,6 +181,41 @@ object SchematicActionsQueue: ServerClosable() {
                 if (getNow_ms() - start > timeout) { return false }
             }
 
+            currentShip = 0
+            while (currentShip < shipsToCreate.size) {
+                schematicV1.entityData.forEach { (oldId, entities) ->
+                    val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId] ?: run { ELOG("HOW???"); null } ?: return@forEach)!!
+                    entities.forEach { (pos, tag) ->
+                        val shipCenter = Vector3d(
+                            newShip.chunkClaim.xMiddle*16-7,
+                            level.yRange.center,
+                            newShip.chunkClaim.zMiddle*16-7,
+                        )
+
+                        val newPos = pos.add(shipCenter.toJomlVector3d())
+
+                        val posTag = ListTag()
+                        posTag.add(DoubleTag.valueOf(newPos.x))
+                        posTag.add(DoubleTag.valueOf(newPos.y))
+                        posTag.add(DoubleTag.valueOf(newPos.z))
+
+                        tag.put("Pos", posTag)
+                        tag.remove("UUID")
+
+                        try {
+                            val entity = EntityType.create(tag, level).get()
+                            entity.moveTo(newPos.x, newPos.y, newPos.z)
+                            if (entity is Mob) {
+                                entity.finalizeSpawn(level, level.getCurrentDifficultyAt(BlockPos(newPos.toMinecraft())), MobSpawnType.STRUCTURE, null, tag)
+                            }
+                            level.addFreshEntityWithPassengers(entity)
+                        } catch (_: Exception) {}
+                    }
+                }
+
+                currentShip++
+            }
+
             return true
         }
     }
@@ -300,6 +352,27 @@ object SchematicActionsQueue: ServerClosable() {
                 }
 
                 currentChunk = 0
+                currentShip++
+            }
+            currentShip = 0
+            while (currentShip < ships.size) {
+                val ship = ships[currentShip]
+                val aabb = ship.shipAABB!!.toAABBd(AABBd())
+                val worldEntities = level.getEntitiesOfClass(Entity::class.java, AABB(aabb.minX(), aabb.minY(), aabb.minZ(), aabb.maxX(), aabb.maxY(), aabb.maxZ())) { it !is Player }
+                schematicV1.entityData[ship.id] = worldEntities.map {
+                    val entityPos = it.position()
+                    val shipyardPos = if (level.isBlockInShipyard(entityPos)) {entityPos.toJOML()} else {ship.transform.worldToShip.transformPosition(entityPos.toJOML())}
+
+                    val shipCenter = Vector3d(
+                        ship.chunkClaim.xMiddle*16-7,
+                        level.yRange.center,
+                        ship.chunkClaim.zMiddle*16-7,
+                    )
+
+                    val pos = Vector3d(shipyardPos) - Vector3d(shipCenter)
+                    EntityItem(pos.toJomlVector3d(), CompoundTag().also { tag -> it.save(tag) })
+                }
+
                 currentShip++
             }
 

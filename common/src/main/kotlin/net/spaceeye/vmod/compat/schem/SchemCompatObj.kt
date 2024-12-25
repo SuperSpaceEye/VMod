@@ -28,9 +28,7 @@ object SchemCompatObj {
     }
 
     init {
-        safeAdd("create") { CreateSuperglueSchemCompat() }
-        safeAdd("create") { CreateContraptionEntitiesSchemCompat() }
-        safeAdd("create") { CreateBlocksCompat() } //TODO this shit may conflict with other compat objects
+//        safeAdd("create") { CreateBlocksCompat() } //TODO why tf did i make this
 
         safeAdd("vs_clockwork") { ClockworkSchemCompat() }
         safeAdd("trackwork") { TrackworkSchemCompat() }

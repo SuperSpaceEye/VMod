@@ -8,6 +8,8 @@ import net.minecraft.client.renderer.LevelRenderer.DIRECTIONS
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.block.model.ItemTransforms
 import net.minecraft.client.resources.model.BakedModel
+import net.minecraft.util.RandomSource
+import net.minecraft.world.item.ItemDisplayContext
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.RenderShape
 import net.minecraft.world.level.block.state.BlockState
@@ -40,7 +42,7 @@ internal object RenderingStuff {
     val blockRenderer = Minecraft.getInstance().blockRenderer
     val blockBuffer = Minecraft.getInstance().renderBuffers().bufferSource()
 
-    private val random = Random()
+    private val random = RandomSource.create()
     fun renderSingleBlock(
         state: BlockState,
         poseStack: PoseStack,
@@ -73,7 +75,7 @@ internal object RenderingStuff {
 
             RenderShape.ENTITYBLOCK_ANIMATED ->
                 (blockRenderer as BlockRenderDispatcherAccessor).blockEntityRenderer
-                    .renderByItem(ItemStack(state.block), ItemTransforms.TransformType.NONE, poseStack, bufferSource, packedLight, packedOverlay)
+                    .renderByItem(ItemStack(state.block), ItemDisplayContext.NONE, poseStack, bufferSource, packedLight, packedOverlay)
 
             RenderShape.INVISIBLE -> {}
         }

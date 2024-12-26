@@ -17,7 +17,6 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.*
 import org.lwjgl.opengl.GL11
-import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -63,7 +62,7 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
         return c
     }
 
-    override fun renderData(poseStack: PoseStack, camera: Camera) {
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
         val targetUUID = state.player
 
         val player = Minecraft.getInstance().level!!.getPlayerByUUID(state.player) ?: return

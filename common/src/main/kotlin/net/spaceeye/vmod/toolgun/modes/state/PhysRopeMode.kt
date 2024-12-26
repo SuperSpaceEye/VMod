@@ -3,6 +3,7 @@ package net.spaceeye.vmod.toolgun.modes.state
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.constraintsManaging.addFor
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.PhysRopeMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
@@ -70,7 +71,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
             maxForce, dist, segments, massPerSegment, radius,
             listOf(previousResult.blockPosition, raycastResult.blockPosition),
-        )){it.addFor(player)}
+        ).addExtension(Strippable())){it.addFor(player)}
 
         resetState()
     }

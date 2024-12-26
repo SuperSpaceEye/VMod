@@ -3,6 +3,7 @@ package net.spaceeye.vmod.toolgun.modes.state
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.SyncRotationMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
@@ -31,7 +32,8 @@ class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
         level.makeManagedConstraint(
             SyncRotationMConstraint(shipId1, shipId2,
                 ship1?.transform?.shipToWorldRotation ?: Quaterniond(),
-                ship2?.transform?.shipToWorldRotation ?: Quaterniond(), compliance, maxForce)
+                ship2?.transform?.shipToWorldRotation ?: Quaterniond(), compliance, maxForce
+            ).addExtension(Strippable())
         ) { it.addFor(player) }
 
         resetState()

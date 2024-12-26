@@ -4,6 +4,7 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.RopeMConstraint
 import net.spaceeye.vmod.limits.DoubleLimit
@@ -15,7 +16,6 @@ import net.spaceeye.vmod.toolgun.modes.hud.RopeHUD
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.networking.SerializableItem.get
-import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -55,7 +55,7 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
             ship2?.id ?: -1L,
             spoint1, spoint2,
             dist, width, segments
-        )))){it.addFor(player)}
+        ))).addExtension(Strippable())){it.addFor(player)}
 
         resetState()
     }

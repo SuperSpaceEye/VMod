@@ -199,7 +199,7 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
     val itemWriter: (buf: FriendlyByteBuf, item: Serializable) -> Unit,
     val itemReader: (buf: FriendlyByteBuf) -> Serializable
 ) {
-    private val cachedData = mutableMapOf<Long, MutableMap<Int, T>>()
+    protected val cachedData = mutableMapOf<Long, MutableMap<Int, T>>()
     @Volatile private var dataChanged = false
 
     //if item null then remove it
@@ -209,6 +209,11 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
     private val cachedChecksums = mutableMapOf<Long, MutableMap<Int, ByteArray>>()
 
     val lock = ReentrantLock()
+
+    protected open fun onClear() {}
+    protected open fun onRemove(page: Long) {}
+    protected open fun onRemove(page: Long, idx: Int) {}
+    protected open fun onAdd(page: Long, idx: Int, item: T) {}
 
     inline fun <T>lock(fn: () -> T): T {
         synchronized(lock) {
@@ -222,9 +227,12 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
         newData.clear()
         serverChecksums.clear()
         cachedChecksums.clear()
+
+        onClear()
     }
 
     protected fun remove(page: Long) = lock {
+        onRemove(page)
         cachedData.remove(page)
         newData.remove(page)
         serverChecksums.remove(page)
@@ -232,6 +240,7 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
     }
 
     protected fun remove(page: Long, idx: Int) = lock {
+        onRemove(page, idx)
         cachedData[page]?.remove(idx)
         newData[page]?.remove(idx)
         serverChecksums[page]?.remove(idx)
@@ -242,6 +251,7 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
         val pageData = cachedData[page]
         val key = pageData?.keys?.maxOrNull() ?: 0
         set(page, key, item)
+        onAdd(page, key, item)
         return key
     }
 
@@ -254,13 +264,15 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
 
         lock {
             newData.forEach { (page, updates) ->
-                if (updates == null) {cachedData.remove(page); return@forEach}
+                if (updates == null) {cachedData.remove(page); onRemove(page); return@forEach}
                 val dataPage = cachedData.getOrPut(page) {mutableMapOf()}
-                updates.forEach{ (idx, item) ->
+                updates.forEach { (idx, item) ->
                     if (item == null) {
                         dataPage.remove(idx)
+                        onRemove(page, idx)
                     } else {
                         dataPage[idx] = item
+                        onAdd(page, idx, item)
                     }
                 }
             }

@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.schematic.containers
+package net.spaceeye.vmod.schematic
 
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
@@ -11,7 +11,6 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.SchemSerializeDataV1Impl
 import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.vsStuff.VSMasslessShipsProcessor
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter

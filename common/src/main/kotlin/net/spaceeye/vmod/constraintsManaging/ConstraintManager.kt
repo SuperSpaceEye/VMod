@@ -14,6 +14,8 @@ import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.constraintsManaging.MConstraintTypes.getType
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
+import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.utils.PosMap
@@ -164,6 +166,9 @@ class ConstraintManager: SavedData() {
                     .strTypeToSupplier(strType)
                     .get()
                     .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${strType}"); null } ?: continue
+
+                //TODO REMOVE LATER
+                if (mConstraint is ExtendableMConstraint && mConstraint.getExtensionsOfType<Strippable>().isEmpty()) {mConstraint.addExtension(Strippable())}
 
                 maxId = max(maxId, mConstraint.mID)
 
@@ -530,6 +535,9 @@ class ConstraintManager: SavedData() {
                             .strTypeToSupplier(strType)
                             .get()
                             .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${strType}"); null } ?: continue
+
+                        //TODO REMOVE LATER
+                        if (mConstraint is ExtendableMConstraint && mConstraint.getExtensionsOfType<Strippable>().isEmpty()) {mConstraint.addExtension(Strippable())}
 
                         maxId = max(maxId, mConstraint.mID)
 

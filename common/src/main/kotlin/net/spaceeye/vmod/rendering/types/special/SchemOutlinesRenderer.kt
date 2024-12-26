@@ -24,7 +24,6 @@ import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.joml.primitives.AABBic
 import org.lwjgl.opengl.GL11
-import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
@@ -42,7 +41,7 @@ class SchemOutlinesRenderer(
     val level = Minecraft.getInstance().level!!
     val raycastDistance = VMConfig.CLIENT.TOOLGUN.MAX_RAYCAST_DISTANCE
 
-    override fun renderData(poseStack: PoseStack, camera: Camera) {
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
         val mode = ClientToolGunState.currentMode
         if (mode !is SchemMode) {return}
         if (!ToolgunItem.playerIsUsingToolgun()) {return}

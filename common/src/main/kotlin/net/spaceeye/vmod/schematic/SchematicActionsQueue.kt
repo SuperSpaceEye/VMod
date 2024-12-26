@@ -15,7 +15,6 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
-import net.spaceeye.vmod.schematic.containers.*
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
 import org.joml.primitives.AABBi
@@ -95,6 +94,13 @@ object SchematicActionsQueue: ServerClosable() {
             }
         }
 
+        private fun updateChunk(level: ServerLevel, currentChunkData: ChunkyBlockData<BlockItem>, offset: MVector3d) {
+            currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
+                val pos = BlockPos(x + offset.x, y + offset.y, z + offset.z)
+                level.chunkSource.blockChanged(pos)
+            }
+        }
+
         fun place(start: Long, timeout: Long): Boolean {
             while (currentShip < ships.size) {
                 val ship = ships[currentShip].first
@@ -114,8 +120,7 @@ object SchematicActionsQueue: ServerClosable() {
                     placeChunk(level, oldToNewId, currentBlockData, blockPalette, flatExtraData, offset)
                     currentChunk++
 
-                    //TODO figure out why desync happens
-//                    if (getNow_ms() - start > timeout) { return false }
+                    if (getNow_ms() - start > timeout) { return false }
                 }
 
                 currentChunk = 0
@@ -124,6 +129,30 @@ object SchematicActionsQueue: ServerClosable() {
             }
             delayedBlockEntityLoading.forEach { _, _, _, it -> it() }
             afterPasteCallbacks.forEach { it() }
+            currentShip = 0
+            currentChunk = 0
+            while (currentShip < ships.size) {
+                val ship = ships[currentShip].first
+                val currentBlockData = schematicV1.blockData[ships[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
+                currentBlockData.updateKeys()
+
+                val offset = MVector3d(
+                    ship.chunkClaim.xStart * 16,
+                    0,
+                    ship.chunkClaim.zStart * 16
+                )
+
+                while (currentChunk < currentBlockData.sortedChunkKeys.size) {
+                    updateChunk(level, currentBlockData, offset)
+                    currentChunk++
+
+                    if (getNow_ms() - start > timeout) { return false }
+                }
+
+                currentChunk = 0
+                currentShip++
+                if (getNow_ms() - start > timeout) { return false }
+            }
 
             return true
         }

@@ -60,6 +60,10 @@ class SignalActivator(): MConstraintExtension, TickableMConstraintExtension {
         percentageField.isAccessible = true
     }
 
+    override fun onAfterCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableMConstraint) {
+        new.addExtension(SignalActivator(channelNameReflection, percentageNameReflection))
+    }
+
     override fun onSerialize(): CompoundTag? {
         val tag = CompoundTag()
 

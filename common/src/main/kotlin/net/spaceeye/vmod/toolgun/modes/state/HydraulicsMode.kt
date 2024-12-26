@@ -5,6 +5,7 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.extensions.SignalActivator
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint
 import net.spaceeye.vmod.limits.DoubleLimit
@@ -63,7 +64,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
             color, width
         ))).addExtension(SignalActivator(
             "channel", "targetPercentage"
-        ))){it.addFor(player)}
+        )).addExtension(Strippable())){it.addFor(player)}
 
         resetState()
     }
@@ -103,7 +104,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                                 it.color, it.width
                             ))).addExtension(SignalActivator(
                                 "channel", "targetPercentage"
-                            ))
+                            )).addExtension(Strippable())
                         }
                     )
                 }

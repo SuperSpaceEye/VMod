@@ -9,14 +9,15 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
 interface BaseRenderer: Serializable {
-    fun renderData(poseStack: PoseStack, camera: Camera)
+    fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long)
     fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer?
     fun scaleBy(by: Double)
+    fun highlightUntil(until: Long) {}
 }
 
 interface BlockRenderer: BaseRenderer {
-    override fun renderData(poseStack: PoseStack, camera: Camera) {}
-    fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource)
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {}
+    fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource, timestamp: Long)
 }
 
 interface PositionDependentRenderer: BaseRenderer {

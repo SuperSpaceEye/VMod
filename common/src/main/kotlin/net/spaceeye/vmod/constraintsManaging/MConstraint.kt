@@ -29,8 +29,8 @@ interface MConstraint {
 
     // positions to which constraint is "attached" to the ship/world
     // is needed for strip tool, moving constraints on ship splitting
-    fun getAttachmentPositions(): List<BlockPos>
-    fun getAttachmentPoints(): List<Vector3d>
+    fun getAttachmentPositions(shipId: Long = -1): List<BlockPos>
+    fun getAttachmentPoints(shipId: Long = -1): List<Vector3d>
 
     // is called on ship splitting
     fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId)

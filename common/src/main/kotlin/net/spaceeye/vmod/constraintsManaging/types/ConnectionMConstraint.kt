@@ -110,8 +110,10 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
         new.attachmentPoints_ = copyAttachmentPoints(constraint1, attachmentPoints_, level, mapped)
 
         new.constraint1 = constraint1.copy(level, mapped) ?: return null
-        new.constraint2 = constraint2.copy(level, mapped) ?: return null
-        new.rconstraint = rconstraint .copy(mapped) ?: return null
+        if (connectionMode != ConnectionModes.FREE_ORIENTATION) {
+            new.constraint2 = constraint2.copy(level, mapped) ?: return null
+            new.rconstraint = rconstraint.copy(mapped) ?: return null
+        }
 
         return new
     }

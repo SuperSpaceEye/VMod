@@ -11,7 +11,6 @@ import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.lwjgl.glfw.GLFW
 
-//TODO rename
 class BasicConnectionExtension<T: ExtendableToolgunMode>(
     var name: String,
     var allowResetting: Boolean = false,

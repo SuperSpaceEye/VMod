@@ -16,7 +16,7 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.minecraft.network.chat.Component
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.schematic.containers.placeAt
+import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.shipForceInducers.GravityController
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
@@ -50,11 +50,9 @@ object VMCommands {
     private fun lt(name: String) = LiteralArgumentBuilder.literal<CommandSourceStack>(name)
     private fun <T> arg(name: String, type: ArgumentType<T>) = RequiredArgumentBuilder.argument<CommandSourceStack, T>(name, type)
 
-    private var permissionLevel_: Int = 4
     var permissionLevel: Int
-        get() = permissionLevel_
+        get() = VMConfig.SERVER.PERMISSIONS.VMOD_COMMANDS_PERMISSION_LEVEL
         set(value) {
-            permissionLevel_ = value
             VMConfig.SERVER.PERMISSIONS.VMOD_COMMANDS_PERMISSION_LEVEL = value
         }
 

@@ -6,6 +6,7 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.extensions.SignalActivator
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.types.ThrusterMConstraint
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
@@ -52,7 +53,7 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
             basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id
         ))).addExtension(SignalActivator(
             "channel", "percentage"
-        ))){it.addFor(player)}
+        )).addExtension(Strippable())){it.addFor(player)}
     }
 
     companion object {

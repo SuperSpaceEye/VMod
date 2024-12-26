@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.types.DisabledCollisionMConstraint
 import net.spaceeye.vmod.toolgun.modes.gui.DisableCollisionsGUI
 import net.spaceeye.vmod.toolgun.modes.hud.DisableCollisionHUD
@@ -26,7 +27,7 @@ class DisableCollisionsMode: ExtendableToolgunMode(), DisableCollisionHUD, Disab
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(PositionModes.NORMAL, 3, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, shipId2)){it.addFor(player)}
+        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, shipId2).addExtension(Strippable())){it.addFor(player)}
         resetState()
     }
 

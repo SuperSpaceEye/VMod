@@ -8,6 +8,9 @@ nothing
 
 # Do Eventually
 
+# Phys rope
+* fix incorrect loading
+
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
 * Add clientside validation 
@@ -28,7 +31,6 @@ nothing
 ## Add a "wire" thing maybe as an addon to vmod
 
 ## General Code Structure
-* Extract more common code (connection/hydraulics)
 * Create "AutoGUIBuilder"
 
 ## Ticking Constraints
@@ -36,7 +38,6 @@ nothing
 
 ## HUD Rendering
 * Add info window for like part weight, total weight, connections, etc
-* Add popup messages things
 
 ## Sounds
 * Add sounds and shit
@@ -44,7 +45,6 @@ nothing
 ## Toolgun Architecture 
 * Make "do" action and its "inverse", so that you can not only undo
 * Add "redo" after first one
-* Remove NonStrippable and make ToolgunStrippable instead
 
 ## Toolgun Menu
 * Expand menu with more GUI components (sliders, drop down options, etc)
@@ -63,6 +63,7 @@ nothing
 ## Schematic
 * Copy entities (maybe, idfk)
 * Copy phys entities (not very important rn)
+* Right now schematic logic assumes default mc world height. Make it not do that
 
 ## Rope Constraint
 * Add ability to change rendering modes

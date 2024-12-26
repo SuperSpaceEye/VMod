@@ -6,11 +6,11 @@ import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.MConstraintExtension
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
-open class NonStrippable: MConstraintExtension {
+class Strippable: MConstraintExtension {
     override fun onInit(obj: ExtendableMConstraint) {}
 
     override fun onAfterCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableMConstraint) {
-        new.addExtension(NonStrippable())
+        new.addExtension(Strippable())
     }
 
     override fun onSerialize(): CompoundTag? {

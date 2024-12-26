@@ -28,7 +28,7 @@ class PrecisePlacementAssistRenderer(
 ): BaseRenderer {
     val level = Minecraft.getInstance().level!!
 
-    override fun renderData(poseStack: PoseStack, camera: Camera) {
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
         if (!ToolgunItem.playerIsUsingToolgun()) {return}
 
         val raycastResult = RaycastFunctions.renderRaycast(level,

@@ -4,16 +4,14 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSConstraintId
 
-class DisabledCollisionMConstraint(): MConstraint {
-    override var mID: ManagedConstraintId = -1
-    override var __saveCounter: Int = -1
-
+class DisabledCollisionMConstraint(): ExtendableMConstraint() {
     var shipId1: ShipId = -1
     var shipId2: ShipId = -1
 
@@ -22,7 +20,7 @@ class DisabledCollisionMConstraint(): MConstraint {
         this.shipId2 = shipId2
     }
 
-    override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
+    override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
         val ship1Exists = allShips.contains(shipId1)
         val ship2Exists = allShips.contains(shipId2)
 
@@ -31,7 +29,7 @@ class DisabledCollisionMConstraint(): MConstraint {
                 || (ship2Exists && dimensionIds.contains(shipId2))
     }
 
-    override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
+    override fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
         val toReturn = mutableListOf<ShipId>()
 
         if (!dimensionIds.contains(shipId1)) {toReturn.add(shipId1)}
@@ -40,14 +38,14 @@ class DisabledCollisionMConstraint(): MConstraint {
         return toReturn
     }
 
-    override fun getAttachmentPositions(): List<BlockPos> = listOf()
-    override fun getAttachmentPoints(): List<Vector3d> = listOf()
-    override fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
-    override fun getVSIds(): Set<VSConstraintId> = setOf()
-    override fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? { return DisabledCollisionMConstraint(mapped[shipId1] ?: return null, mapped[shipId2] ?: return null) }
+    override fun iGetAttachmentPositions(shipId: Long): List<BlockPos> = listOf()
+    override fun iGetAttachmentPoints(shipId: Long): List<Vector3d> = listOf()
+    override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
+    override fun iGetVSIds(): Set<VSConstraintId> = setOf()
+    override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? { return DisabledCollisionMConstraint(mapped[shipId1] ?: return null, mapped[shipId2] ?: return null) }
 
     private var beingRemoved = false
-    override fun onMakeMConstraint(level: ServerLevel): Boolean {
+    override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         return level.disableCollisionBetween(shipId1, shipId2) {
             if (!beingRemoved) {
                 beingRemoved = true
@@ -55,17 +53,17 @@ class DisabledCollisionMConstraint(): MConstraint {
             }
         }
     }
-    override fun onDeleteMConstraint(level: ServerLevel) {
+    override fun iOnDeleteMConstraint(level: ServerLevel) {
         beingRemoved = true
         level.enableCollisionBetween(shipId1, shipId2)
     }
 
-    override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
+    override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
         level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, newShipId)) {}
         level.makeManagedConstraint(DisabledCollisionMConstraint(shipId2, newShipId)) {}
     }
 
-    override fun nbtSerialize(): CompoundTag? {
+    override fun iNbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
 
         tag.putLong("shipId1", shipId1)
@@ -76,7 +74,7 @@ class DisabledCollisionMConstraint(): MConstraint {
         return tag
     }
 
-    override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
+    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         shipId1 = tag.getLong("shipId1")
         shipId2 = tag.getLong("shipId2")
 

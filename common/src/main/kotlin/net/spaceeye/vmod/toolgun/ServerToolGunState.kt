@@ -49,7 +49,7 @@ object ServerToolGunState: ServerClosable() {
                 ||  ToolgunPermissionManager.getAllowedPlayers().contains(player.uuid)
     }
 
-    @JvmStatic inline fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
+    @JvmStatic fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
         if (!PlayerAccessManager.hasPermission(player, clazz.getPermission())) {
             s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
             return
@@ -57,7 +57,7 @@ object ServerToolGunState: ServerClosable() {
         fn()
     }
 
-    @JvmStatic inline fun verifyPlayerAccessLevel(player: ServerPlayer, permission: String, fn: () -> Unit) {
+    @JvmStatic fun verifyPlayerAccessLevel(player: ServerPlayer, permission: String, fn: () -> Unit) {
         if (!PlayerAccessManager.hasPermission(player, permission)) {
             s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
             return

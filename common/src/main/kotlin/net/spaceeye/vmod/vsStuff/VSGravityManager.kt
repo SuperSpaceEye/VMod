@@ -2,7 +2,7 @@ package net.spaceeye.vmod.vsStuff
 
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.shipForceInducers.GravityController
+import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.apigame.world.properties.DimensionId

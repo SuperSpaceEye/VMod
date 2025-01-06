@@ -13,11 +13,10 @@ import net.spaceeye.vmod.utils.vs.copy
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
-import org.valkyrienskies.core.apigame.constraints.VSTorqueConstraint
+import org.valkyrienskies.core.apigame.joints.VSJoint
 
 class SyncRotationMConstraint(): TwoShipsMConstraint() {
-    override lateinit var mainConstraint: VSTorqueConstraint
+    override lateinit var mainConstraint: VSJoint
 
     constructor(
         shipId1: ShipId,
@@ -29,16 +28,16 @@ class SyncRotationMConstraint(): TwoShipsMConstraint() {
         compliance: Double,
         maxForce: Double
     ): this() {
-        mainConstraint = VSFixedOrientationConstraint(shipId1, shipId2, compliance,
-            srot1.invert(Quaterniond()),
-            srot2.invert(Quaterniond()),
-            maxForce
-            )
+//        mainConstraint = VSFixedOrientationConstraint(shipId1, shipId2, compliance,
+//            srot1.invert(Quaterniond()),
+//            srot2.invert(Quaterniond()),
+//            maxForce
+//            )
     }
 
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
         val new = SyncRotationMConstraint()
-        new.mainConstraint = mainConstraint.copy(mapped) ?: return null
+//        new.mainConstraint = mainConstraint.copy(mapped) ?: return null
         return new
     }
 

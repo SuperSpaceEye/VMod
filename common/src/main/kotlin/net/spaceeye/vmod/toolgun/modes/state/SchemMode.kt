@@ -325,10 +325,10 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             }
 
 
-            val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
+            val center = ShipTransformImpl.create(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
 
             val data = info.shipsInfo.map {
-                Pair(ShipTransformImpl(
+                Pair(ShipTransformImpl.create(
                     it.relPositionToCenter,
                     it.positionInShip,
                     it.rotation,

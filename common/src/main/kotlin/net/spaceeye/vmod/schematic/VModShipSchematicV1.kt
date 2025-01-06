@@ -13,6 +13,7 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.SchemSerializeDataV1
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
+import net.spaceeye.vmod.utils.vs.toShipTransform
 import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
@@ -20,6 +21,9 @@ import org.joml.Vector3d
 import org.joml.Vector3i
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
+import org.valkyrienskies.core.api.VsBeta
+import org.valkyrienskies.core.api.bodies.properties.BodyTransform
+import org.valkyrienskies.core.api.bodies.properties.rebuild
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
@@ -44,8 +48,9 @@ class VModShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
     override var info: IShipSchematicInfo? = null
 }
 
+@OptIn(VsBeta::class)
 fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc, postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
-    val newTransforms = mutableListOf<ShipTransform>()
+    val newTransforms = mutableListOf<BodyTransform>()
 
     val shipInitializers = (this as IShipSchematic).createShips(level, pos, rotation, newTransforms)
 
@@ -60,8 +65,13 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, 
         val createdShips = ships.map { it.first }
         createdShips.zip(newTransforms).forEach {
                 (it, transform) ->
-            val toPos = MVector3d(transform.positionInWorld) + MVector3d(pos)
-            (it as ShipData).transform = it.transform.copy(toPos.toJomlVector3d(), shipToWorldRotation = transform.shipToWorldRotation, shipToWorldScaling = transform.shipToWorldScaling )
+            val toPos = MVector3d(transform.position) + MVector3d(pos)
+//            //TODO redo
+            (it as ShipData).unsafeSetTransform(it.transform.rebuild {
+                this.position(toPos.toJomlVector3d())
+                this.rotation(Quaterniond(transform.rotation))
+                this.scaling (Vector3d(transform.scaling))
+            }.toShipTransform())
         }
 
         postPlaceFn(createdShips)
@@ -72,13 +82,13 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, 
 }
 
 //TODO rename
-private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<ShipTransform>): List<Pair<() -> ServerShip, Long>> {
+private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<BodyTransform>): List<Pair<() -> ServerShip, Long>> {
     val shipData = info!!.shipsInfo
     // during schem creation ship positions are normalized so that the center is at 0 0 0
-    val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
+    val center = ShipTransformImpl.create(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
 
     return shipData.map { Pair({
-        val thisTransform = ShipTransformImpl(
+        val thisTransform = ShipTransformImpl.create(
             it.relPositionToCenter,
             it.positionInShip,
             it.rotation,
@@ -88,14 +98,14 @@ private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotati
         newTransforms.add(newTransform)
 
         //TODO this is probably wrong?
-        val toPos = MVector3d(newTransform.positionInWorld) + MVector3d(pos)
+        val toPos = MVector3d(newTransform.position) + MVector3d(pos)
 
         val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(), false, it.shipScale, level.dimensionId)
         newShip.isStatic = true
 
         level.shipObjectWorld.teleportShip(newShip, ShipTeleportDataImpl(
             toPos.toJomlVector3d(),
-            newTransform.shipToWorldRotation,
+            newTransform.rotation,
             newScale = it.shipScale
         ))
         newShip
@@ -128,7 +138,7 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, uuid: UUID, originShip: Se
     return true
 }
 
-private fun getWorldAABB(it: ServerShip, newTransform: ShipTransform): AABBd = it.worldAABB.transform(it.worldToShip, AABBd()).transform(newTransform.shipToWorld)
+private fun getWorldAABB(it: ServerShip, newTransform: BodyTransform): AABBd = it.worldAABB.transform(it.worldToShip, AABBd()).transform(newTransform.toWorld)
 
 // it will save ship data with origin ship unrotated
 fun IShipSchematic.saveShipData(ships: List<ServerShip>, originShip: ServerShip): AABBd {
@@ -170,11 +180,11 @@ fun IShipSchematic.saveShipData(ships: List<ServerShip>, originShip: ServerShip)
 
         ShipInfo(
             it.id,
-            (MVector3d(newTransform.positionInWorld) - objectCenterInWorld).toJomlVector3d(),
+            (MVector3d(newTransform.position) - objectCenterInWorld).toJomlVector3d(),
             shipAABB,
-            Vector3d(newTransform.positionInShip).sub(chunkMin.toJomlVector3d(), Vector3d()),
-            MVector3d(newTransform.shipToWorldScaling).avg(),
-            Quaterniond(newTransform.shipToWorldRotation)
+            Vector3d(newTransform.positionInModel).sub(chunkMin.toJomlVector3d(), Vector3d()),
+            MVector3d(newTransform.scaling).avg(),
+            Quaterniond(newTransform.rotation)
         )
     }
 

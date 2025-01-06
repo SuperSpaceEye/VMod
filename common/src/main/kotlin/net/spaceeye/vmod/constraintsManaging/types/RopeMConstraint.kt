@@ -7,19 +7,21 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.mc
-import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil.tryConvertDimensionId
+import net.spaceeye.vmod.utils.vs.VSJointDeserializationUtil.tryConvertDimensionId
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.vs.VSConstraintDeserializationUtil
-import net.spaceeye.vmod.utils.vs.VSConstraintSerializationUtil
+import net.spaceeye.vmod.utils.vs.VSJointDeserializationUtil
+import net.spaceeye.vmod.utils.vs.VSJointSerializationUtil
 import net.spaceeye.vmod.utils.vs.copy
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
+import org.joml.Quaterniond
 import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
+import org.valkyrienskies.core.apigame.joints.VSDistanceJoint
+import org.valkyrienskies.core.apigame.joints.VSJointPose
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class RopeMConstraint(): TwoShipsMConstraint() {
-    override lateinit var mainConstraint: VSRopeConstraint
+    override lateinit var mainConstraint: VSDistanceJoint
 
     constructor(
         shipId0: ShipId,
@@ -31,7 +33,12 @@ class RopeMConstraint(): TwoShipsMConstraint() {
         ropeLength: Double,
         attachmentPoints: List<BlockPos>,
     ): this() {
-        mainConstraint = VSRopeConstraint(shipId0, shipId1, compliance, localPos0, localPos1, maxForce, ropeLength)
+        mainConstraint = VSDistanceJoint(
+            shipId0, VSJointPose(localPos0, Quaterniond()),
+            shipId1, VSJointPose(localPos1, Quaterniond()),
+            minDistance = 0f,
+            maxDistance = ropeLength.toFloat()
+        )
         attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
@@ -45,19 +52,19 @@ class RopeMConstraint(): TwoShipsMConstraint() {
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
-        mainConstraint = mainConstraint.copy(ropeLength = mainConstraint.ropeLength * scaleBy)
+        mainConstraint = mainConstraint.copy(maxDistance = mainConstraint.maxDistance!! * scaleBy.toFloat())
 
         level.shipObjectWorld.removeConstraint(cIDs[0])
         cIDs[0] = level.shipObjectWorld.createNewConstraint(mainConstraint)!!
     }
 
     override fun iNbtSerialize(): CompoundTag? {
-        val tag = VSConstraintSerializationUtil.serializeConstraint(mainConstraint) ?: return null
+        val tag = VSJointSerializationUtil.serializeConstraint(mainConstraint) ?: return null
         return tag
     }
 
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        tryConvertDimensionId(tag, lastDimensionIds); mainConstraint = (VSConstraintDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSRopeConstraint
+        tryConvertDimensionId(tag, lastDimensionIds); mainConstraint = (VSJointDeserializationUtil.deserializeConstraint(tag) ?: return null) as VSDistanceJoint
         return this
     }
 

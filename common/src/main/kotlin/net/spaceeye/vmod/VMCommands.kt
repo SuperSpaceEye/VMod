@@ -17,7 +17,7 @@ import net.minecraft.network.chat.TextComponent
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.schematic.placeAt
-import net.spaceeye.vmod.shipForceInducers.GravityController
+import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
@@ -28,6 +28,7 @@ import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
 import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.joml.Quaterniond
+import org.valkyrienskies.core.api.ships.LoadedServerShip
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -178,7 +179,6 @@ object VMCommands {
     private fun setGravityFor(cc: CommandContext<CommandSourceStack>): Int {
         val ships = ShipArgument.getShips(cc as VSCS, "ships")
 
-        val all = cc.source.shipWorld.allShips
         val loaded = cc.source.shipWorld.loadedShips
 
         val x = DoubleArgumentType.getDouble(cc, "x")
@@ -186,8 +186,8 @@ object VMCommands {
         val z = DoubleArgumentType.getDouble(cc, "z")
 
         ships
-            .mapNotNull { loaded.getById(it.id) ?: all.getById(it.id) }
-            .forEach { GravityController.getOrCreate(it as ServerShip).gravityVector = Vector3d(x, y, z) }
+            .mapNotNull { loaded.getById(it.id) }
+            .forEach { GravityController.getOrCreate(it as LoadedServerShip).gravityVector = Vector3d(x, y, z) }
 
         return 0
     }
@@ -195,7 +195,6 @@ object VMCommands {
     private fun setGravityForConnected(cc: CommandContext<CommandSourceStack>): Int {
         val ships = ShipArgument.getShips(cc as VSCS, "ships")
 
-        val all = cc.source.shipWorld.allShips
         val loaded = cc.source.shipWorld.loadedShips
 
         val traversed = mutableSetOf<ShipId>()
@@ -209,8 +208,8 @@ object VMCommands {
         val z = DoubleArgumentType.getDouble(cc, "z")
 
         traversed
-            .mapNotNull { loaded.getById(it) ?: all.getById(it) }
-            .forEach { GravityController.getOrCreate(it as ServerShip).gravityVector = Vector3d(x, y, z) }
+            .mapNotNull { loaded.getById(it) }
+            .forEach { GravityController.getOrCreate(it as LoadedServerShip).gravityVector = Vector3d(x, y, z) }
 
         return 0
     }
@@ -218,7 +217,6 @@ object VMCommands {
     private fun setGravityForConnectedAndTouching(cc: CommandContext<CommandSourceStack>): Int {
         val ships = ShipArgument.getShips(cc as VSCS, "ships")
 
-        val all = cc.source.shipWorld.allShips
         val loaded = cc.source.shipWorld.loadedShips
 
         val traversed = mutableSetOf<ShipId>()
@@ -232,8 +230,8 @@ object VMCommands {
         val z = DoubleArgumentType.getDouble(cc, "z")
 
         traversed
-            .mapNotNull { loaded.getById(it) ?: all.getById(it) }
-            .forEach { GravityController.getOrCreate(it as ServerShip).gravityVector = Vector3d(x, y, z) }
+            .mapNotNull { loaded.getById(it) }
+            .forEach { GravityController.getOrCreate(it as LoadedServerShip).gravityVector = Vector3d(x, y, z) }
 
         return 0
     }
@@ -241,22 +239,19 @@ object VMCommands {
     private fun resetGravityFor(cc: CommandContext<CommandSourceStack>): Int {
         val ships = ShipArgument.getShips(cc as VSCS, "ships")
 
-        val all = cc.source.shipWorld.allShips
         val loaded = cc.source.shipWorld.loadedShips
 
         ships
-            .mapNotNull { loaded.getById(it.id) ?: all.getById(it.id) }
-            .forEach { GravityController.getOrCreate(it as ServerShip).reset() }
+            .mapNotNull { loaded.getById(it.id) }
+            .forEach { GravityController.getOrCreate(it as LoadedServerShip).reset() }
 
         return 0
     }
 
     private fun resetGravityForEveryShipIn(cc: CommandContext<CommandSourceStack>): Int {
         val loaded = cc.source.shipWorld.loadedShips
-        val all = cc.source.shipWorld.allShips
 
-        all.forEach { GravityController.getOrCreate(it as ServerShip).reset() }
-        loaded.forEach { GravityController.getOrCreate(it as ServerShip).reset() }
+        loaded.forEach { GravityController.getOrCreate(it as LoadedServerShip).reset() }
 
         return 0
     }

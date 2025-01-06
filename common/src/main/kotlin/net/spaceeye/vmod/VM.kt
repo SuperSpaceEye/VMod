@@ -20,6 +20,7 @@ import net.spaceeye.vmod.physgun.ServerPhysgunState
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
+import net.spaceeye.vmod.shipAttachments.VMAttachments
 import net.spaceeye.vmod.toolgun.*
 import net.spaceeye.vmod.toolgun.modes.ToolgunExtensions
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
@@ -67,6 +68,7 @@ object VM {
         VMBlockEntities.register()
         VMItems.register()
         VMEntities.register()
+        VMAttachments.register()
 
         makeEvents()
     }

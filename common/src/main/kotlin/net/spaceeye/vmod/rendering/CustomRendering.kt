@@ -103,7 +103,7 @@ fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft, re
     minecraft.profiler.pop()
 }
 
-private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
+private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
     val level = Minecraft.getInstance().level!!
 
     try {
@@ -122,7 +122,7 @@ private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera, rende
     if (renderBlockRenderers) RenderingStuff.blockBuffer.endBatch()
 }
 
-private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
+private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
     if (renderBlockRenderers) {return}
     val cpos = Vector3d(Minecraft.getInstance().player!!.position())
     val now = getNow_ms()
@@ -142,7 +142,7 @@ private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera, rend
     ClientRenderingData.removeTimedRenderers(toDelete)
 }
 
-private inline fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
+private fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
     if (renderBlockRenderers) {return}
     val page = ClientRenderingData.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
     for ((_, render) in page) {

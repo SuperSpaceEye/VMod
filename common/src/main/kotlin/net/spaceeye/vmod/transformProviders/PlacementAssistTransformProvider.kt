@@ -11,6 +11,8 @@ import net.spaceeye.vmod.utils.vs.posWorldToShipRender
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorldRender
 import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShipRender
 import org.joml.Quaterniond
+import org.valkyrienskies.core.api.VsBeta
+import org.valkyrienskies.core.api.bodies.properties.rebuild
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
@@ -36,6 +38,7 @@ class PlacementAssistTransformProvider(
 
     val ignoreShipIds = mutableSetOf(ship1.id)
 
+    @OptIn(VsBeta::class)
     override fun provideNextRenderTransform(
         prevShipTransform: ShipTransform,
         shipTransform: ShipTransform,
@@ -82,11 +85,11 @@ class PlacementAssistTransformProvider(
         // rotation is incredibly important
 
         val point = rpoint2 - (
-            posShipToWorldRender(ship1, spoint1, (ship1.renderTransform as ShipTransformImpl).copy(shipToWorldRotation = rotation)) -
-            posShipToWorldRender(ship1, Vector3d(ship1.renderTransform.positionInShip), (ship1.renderTransform as ShipTransformImpl).copy(shipToWorldRotation = rotation))
+            posShipToWorldRender(ship1, spoint1, ship1.renderTransform.rebuild{this.rotation(rotation)}) -
+            posShipToWorldRender(ship1, Vector3d(ship1.renderTransform.positionInShip), ship1.renderTransform.rebuild{this.rotation(rotation)})
         )
 
-        return ShipTransformImpl(
+        return ShipTransformImpl.create(
             point.toJomlVector3d(),
             shipTransform.positionInShip,
             rotation,

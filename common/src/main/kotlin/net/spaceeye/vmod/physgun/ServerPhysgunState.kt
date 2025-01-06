@@ -10,7 +10,7 @@ import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.rendering.ReservedRenderingPages
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.PhysgunRayRenderer
-import net.spaceeye.vmod.shipForceInducers.PhysgunController
+import net.spaceeye.vmod.shipAttachments.PhysgunController
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
@@ -133,6 +133,7 @@ object ServerPhysgunState: ServerClosable() {
                 return@regC2S
             }
             if (state.mainShipId == -1L) {
+                println("seeking")
                 activelySeeking.add(player.uuid)
                 return@regC2S
             }
@@ -221,6 +222,7 @@ object ServerPhysgunState: ServerClosable() {
 
             toRemove.clear()
             activelySeeking.forEach { uuid ->
+                println("in activelySeeking")
                 val state = playerStates[uuid]
                 if (state == null) {
                     playerStates.remove(uuid)
@@ -257,6 +259,7 @@ object ServerPhysgunState: ServerClosable() {
 
                 if (result.state.isAir) {return@forEach}
                 if (result.ship == null) {return@forEach}
+                println("here")
 
                 state.distanceFromPlayer = (result.worldHitPos!! - pos).dist()
                 state.fromPos = result.globalHitPos!!
@@ -264,7 +267,7 @@ object ServerPhysgunState: ServerClosable() {
                 state.mainShipId = result.shipId
                 state.playerLastRot = playerRotToQuat(player.xRot.toDouble(), player.yRot.toDouble())
 
-                val ship = server.shipObjectWorld.loadedShips.getById(state.mainShipId)!!
+                val ship = server.shipObjectWorld.loadedShips.getById(state.mainShipId) ?: return@forEach
                 ship.isStatic = false
 
                 val traversedIds = traverseGetConnectedShips(ship.id).traversedShipIds
@@ -280,7 +283,7 @@ object ServerPhysgunState: ServerClosable() {
 
                 controller.sharedState = state
 
-                val renderer = ServerRenderingData.getRenderer(state.rID)!! as PhysgunRayRenderer
+                val renderer = (ServerRenderingData.getRenderer(state.rID) ?: return@forEach) as PhysgunRayRenderer
                 renderer.state.player = uuid
                 renderer.state.shipId = state.mainShipId
                 renderer.state.hitPosInShipyard = result.globalHitPos!!

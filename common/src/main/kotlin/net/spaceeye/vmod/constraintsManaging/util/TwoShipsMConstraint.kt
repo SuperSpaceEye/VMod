@@ -11,20 +11,19 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraint
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
-import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
+import org.valkyrienskies.core.apigame.joints.VSJoint
+import org.valkyrienskies.core.apigame.joints.VSJointId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
-    abstract val mainConstraint: VSConstraint
+    abstract val mainConstraint: VSJoint
 
-    val cIDs = mutableListOf<VSConstraintId>() // should be used to store VS ids
+    val cIDs = mutableListOf<VSJointId>() // should be used to store VS ids
     var attachmentPoints_ = mutableListOf<BlockPos>()
 
     override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
-        val ship1Exists = allShips.contains(mainConstraint.shipId0)
-        val ship2Exists = allShips.contains(mainConstraint.shipId1)
+        val ship1Exists = allShips.contains(mainConstraint.shipId0!!)
+        val ship2Exists = allShips.contains(mainConstraint.shipId1!!)
 
         return     (ship1Exists && ship2Exists)
                 || (ship1Exists && dimensionIds.contains(mainConstraint.shipId1))
@@ -34,13 +33,15 @@ abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
     override fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
         val toReturn = mutableListOf<ShipId>()
 
-        if (!dimensionIds.contains(mainConstraint.shipId0)) {toReturn.add(mainConstraint.shipId0)}
-        if (!dimensionIds.contains(mainConstraint.shipId1)) {toReturn.add(mainConstraint.shipId1)}
+        //TODO if mainConstraint.shipId is null, then it should be connected to world, but it can also be connected to world
+        // through dimensionToGroundBodyIdImmutable
+        if (!dimensionIds.contains(mainConstraint.shipId0)) {toReturn.add(mainConstraint.shipId0!!)}
+        if (!dimensionIds.contains(mainConstraint.shipId1)) {toReturn.add(mainConstraint.shipId1!!)}
 
         return toReturn
     }
 
-    override fun iGetVSIds(): Set<VSConstraintId> = cIDs.toSet()
+    override fun iGetVSIds(): Set<VSJointId> = cIDs.toSet()
     override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> = if (shipId == -1L) attachmentPoints_ else {
         when (shipId) {
             mainConstraint.shipId0 -> listOf(attachmentPoints_[0])
@@ -48,17 +49,17 @@ abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
             else -> listOf()
         }
     }
-    override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> = when (mainConstraint) {
-        is VSForceConstraint -> if (shipId == -1L) listOf(
-            Vector3d((mainConstraint as VSForceConstraint).localPos0),
-            Vector3d((mainConstraint as VSForceConstraint).localPos1))
-        else when(shipId) {
-            mainConstraint.shipId0 -> listOf(Vector3d((mainConstraint as VSForceConstraint).localPos0))
-            mainConstraint.shipId1 -> listOf(Vector3d((mainConstraint as VSForceConstraint).localPos1))
+    override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> =
+        if (shipId == -1L) listOf(
+            Vector3d(mainConstraint.pose0.pos),
+            Vector3d(mainConstraint.pose1.pos)
+        ) else {
+            when(shipId) {
+            mainConstraint.shipId0 -> listOf(Vector3d(mainConstraint.pose0.pos))
+            mainConstraint.shipId1 -> listOf(Vector3d(mainConstraint.pose1.pos))
             else -> listOf()
+            }
         }
-        else -> listOf()
-    }
 
     @NonExtendable
     override fun nbtSerialize(): CompoundTag? {

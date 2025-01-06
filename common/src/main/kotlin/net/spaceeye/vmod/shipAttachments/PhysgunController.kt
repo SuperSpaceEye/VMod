@@ -1,16 +1,15 @@
-package net.spaceeye.vmod.shipForceInducers
+package net.spaceeye.vmod.shipAttachments
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.physgun.PlayerPhysgunState
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.rotateVecByQuat
 import org.joml.Quaterniond
+import org.valkyrienskies.core.api.attachment.getAttachment
 import org.valkyrienskies.core.api.ships.*
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 
 
 @JsonAutoDetect(
@@ -40,10 +39,8 @@ class PhysgunController: ShipForcesInducer {
             return lock.unlock()
         }
 
-        val shipsToInfluence = mutableListOf<PhysShipImpl>()
-        state.caughtShipIds.forEach { shipsToInfluence.add(lookupPhysShip(it) as PhysShipImpl ?: return@forEach) }
-
-        physShip as PhysShipImpl
+        val shipsToInfluence = mutableListOf<PhysShip>()
+        state.caughtShipIds.forEach { shipsToInfluence.add(lookupPhysShip(it) ?: return@forEach) }
 
         val idealPos = state.playerPos + state.playerDir * state.distanceFromPlayer
         val currentPos = Vector3d(physShip.transform.shipToWorld.transformPosition(state.fromPos.x, state.fromPos.y, state.fromPos.z, org.joml.Vector3d()))
@@ -86,10 +83,10 @@ class PhysgunController: ShipForcesInducer {
     }
 
     companion object {
-        fun getOrCreate(ship: ServerShip) =
+        fun getOrCreate(ship: LoadedServerShip) =
             ship.getAttachment<PhysgunController>()
                 ?: PhysgunController().also {
-                    ship.saveAttachment(it)
+                    ship.setAttachment(it)
                 }
     }
 }

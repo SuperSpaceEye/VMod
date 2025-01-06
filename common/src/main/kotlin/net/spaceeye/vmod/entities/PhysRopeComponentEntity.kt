@@ -16,10 +16,14 @@ import net.minecraft.world.level.entity.EntityInLevelCallback
 import net.spaceeye.vmod.VMEntities
 import net.spaceeye.vmod.entities.events.ClientPhysEntitiesHolder
 import net.spaceeye.vmod.entities.events.ServerPhysEntitiesHolder
+import net.spaceeye.vmod.utils.vs.createD
+import net.spaceeye.vmod.utils.vs.transformF
 import org.joml.Matrix3d
 import org.joml.Quaterniond
 import org.joml.Vector3d
 import org.joml.Vector3dc
+import org.valkyrienskies.core.api.VsBeta
+import org.valkyrienskies.core.api.bodies.properties.BodyTransform
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipInertiaData
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
@@ -241,11 +245,12 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
             return VSJacksonUtil.defaultMapper
         }
 
+        @OptIn(VsBeta::class)
         fun createEntity(level: ServerLevel, mass: Double, radius: Double, length: Double, pos: Vector3d, rotation: Quaterniond, spawnStatic: Boolean = false): PhysRopeComponentEntity {
             val entity = VMEntities.PHYS_ROPE_COMPONENT.get().create(level)!!
             val shipId = level.shipObjectWorld.allocateShipId(level.dimensionId)
 
-            val transform = ShipTransformImpl.create(pos, Vector3d(), rotation)
+            val transform = transformF.createD(pos, rotation)
             val physEntityData = createCapsuleData(shipId, transform, radius, length, mass, spawnStatic)
 
             entity.setPhysicsEntityData(physEntityData)
@@ -258,7 +263,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
         }
 
         //https://www.gamedev.net/tutorials/programming/math-and-physics/capsule-inertia-tensor-r3856/
-        fun createCapsuleData(shipId: ShipId, transform: ShipTransform, radius: Double, length: Double, mass: Double, spawnStatic: Boolean=false): PhysicsEntityData {
+        fun createCapsuleData(shipId: ShipId, transform: BodyTransform, radius: Double, length: Double, mass: Double, spawnStatic: Boolean=false): PhysicsEntityData {
             val h = length
             val r = radius
             val rSq = r * r
@@ -286,15 +291,16 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
             inertiaTensor.m22 += temp2 * 2.0
 
             val inertiaData: ShipInertiaData = ShipInertiaDataImpl(Vector3d(), mass, inertiaTensor)
-            return PhysicsEntityData(
-                    shipId,
-                    transform,
-                    inertiaData,
-                    Vector3d(),
-                    Vector3d(),
-                    VSCapsuleCollisionShapeData(radius, length),
-                    isStatic = spawnStatic
-            )
+            return TODO()
+//            return PhysicsEntityData(
+//                    shipId,
+//                    transform,
+//                    inertiaData,
+//                    Vector3d(),
+//                    Vector3d(),
+//                    VSCapsuleCollisionShapeData(radius, length),
+//                    isStatic = spawnStatic
+//            )
         }
     }
 }

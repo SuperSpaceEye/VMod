@@ -10,7 +10,7 @@ import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
+import org.valkyrienskies.core.apigame.joints.VSJointId
 
 interface Tickable {
     fun tick(server: MinecraftServer, unregister: () -> Unit)
@@ -38,7 +38,7 @@ interface MConstraint {
     fun copyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint?
 
     fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d)
-    fun getVSIds(): Set<VSConstraintId>
+    fun getVSIds(): Set<VSJointId>
 
     fun nbtSerialize(): CompoundTag?
     fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint?

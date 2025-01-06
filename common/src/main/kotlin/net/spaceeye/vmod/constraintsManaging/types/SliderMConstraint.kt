@@ -12,14 +12,13 @@ import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.copy
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.*
+import org.valkyrienskies.core.apigame.joints.VSJoint
+import org.valkyrienskies.core.apigame.joints.VSPrismaticJoint
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class SliderMConstraint(): TwoShipsMConstraint() {
-    lateinit var constraint1: VSForceConstraint
-    lateinit var constraint2: VSForceConstraint
-    lateinit var rconstraint: VSRopeConstraint
-    override val mainConstraint: VSConstraint get() = constraint1
+    lateinit var constraint1: VSPrismaticJoint
+    override val mainConstraint: VSJoint get() = constraint1
 
     constructor(
         axisShipId: ShipId,
@@ -42,19 +41,19 @@ class SliderMConstraint(): TwoShipsMConstraint() {
         val sliderCenterPos = sliderSpos1 + (sliderSpos2 - sliderSpos1) / 2
         val axisCenterPos = axisSpos1 + (axisSpos2 - axisSpos1) / 2
 
-        rconstraint = VSRopeConstraint(axisShipId, sliderShipId, compliance,
-            axisCenterPos.toJomlVector3d(), sliderCenterPos.toJomlVector3d(), maxForce, length
-        )
-
-        constraint1 = VSSlideConstraint(axisShipId, sliderShipId, compliance,
-            axisSpos1.toJomlVector3d(), sliderSpos1.toJomlVector3d(),
-            maxForce, dir.snormalize().toJomlVector3d(), 1e20,
-        )
-
-        constraint2 = VSSlideConstraint(axisShipId, sliderShipId, compliance,
-            axisSpos2.toJomlVector3d(), sliderSpos2.toJomlVector3d(),
-            maxForce, dir.snormalize().toJomlVector3d(), 1e20,
-        )
+//        rconstraint = VSRopeConstraint(axisShipId, sliderShipId, compliance,
+//            axisCenterPos.toJomlVector3d(), sliderCenterPos.toJomlVector3d(), maxForce, length
+//        )
+//
+//        constraint1 = VSSlideConstraint(axisShipId, sliderShipId, compliance,
+//            axisSpos1.toJomlVector3d(), sliderSpos1.toJomlVector3d(),
+//            maxForce, dir.snormalize().toJomlVector3d(), 1e20,
+//        )
+//
+//        constraint2 = VSSlideConstraint(axisShipId, sliderShipId, compliance,
+//            axisSpos2.toJomlVector3d(), sliderSpos2.toJomlVector3d(),
+//            maxForce, dir.snormalize().toJomlVector3d(), 1e20,
+//        )
 
         attachmentPoints_.addAll(attachmentPoints)
     }
@@ -65,37 +64,29 @@ class SliderMConstraint(): TwoShipsMConstraint() {
         new.attachmentPoints_ = copyAttachmentPoints(constraint1, attachmentPoints_, level, mapped)
 
         new.constraint1 = constraint1.copy(level, mapped) ?: return null
-        new.constraint2 = constraint2.copy(level, mapped) ?: return null
-        new.rconstraint = rconstraint.copy(level, mapped) ?: return null
 
         return new
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         level.shipObjectWorld.removeConstraint(cIDs[2])
-        rconstraint = rconstraint.copy(ropeLength = rconstraint.ropeLength * scaleBy)
-        cIDs[2] = level.shipObjectWorld.createNewConstraint(rconstraint)!!
+//        rconstraint = rconstraint.copy(ropeLength = rconstraint.ropeLength * scaleBy)
+//        cIDs[2] = level.shipObjectWorld.createNewConstraint(rconstraint)!!
     }
 
     override fun iNbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
         sc("c1", constraint1, tag) {return null}
-        sc("c2", constraint2, tag) {return null}
-        sc("c3", rconstraint, tag) {return null}
         return tag
     }
 
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         dc("c1", ::constraint1, tag, lastDimensionIds) {return null}
-        dc("c2", ::constraint2, tag, lastDimensionIds) {return null}
-        dc("c3", ::rconstraint, tag, lastDimensionIds) {return null}
         return this
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         mc(constraint1, cIDs, level) {return false}
-        mc(constraint2, cIDs, level) {return false}
-        mc(rconstraint, cIDs, level) {return false}
         return true
     }
 }

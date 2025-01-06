@@ -1,6 +1,13 @@
 # VERY IMPORTANT
 
-nothing
+* Change all ShipTransform to BodyTransform (use transform.rebuild and ValkyrienSkies.vsCore.transformFactory)
+* Change all shipId mentions to handle nullable logic (if shipId is null or has world id, it's connected to world)
+* Redo all VMod constraint logic
+* Make new constraint serialization (maybe just use json serialization)
+
+* Remove automatic "Strippable" extension cuz all previous constraints are fucked anyways
+* Rename MConstraint to smth else. Maybe "VEntity" or "VmEntity" or smth like that cuz they are not really just a collection of constraints anymore
+* Rething saving/loading/creation of constraints. do i really need to save VS constraints? maybe just save only necessary build info and not whole constraints. plus if i do it that way, making MConstraints modifiable will be much easier
 
 # Maybe
 

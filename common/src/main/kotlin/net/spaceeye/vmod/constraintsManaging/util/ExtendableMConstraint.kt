@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
+import org.valkyrienskies.core.apigame.joints.VSJointId
 
 abstract class ExtendableMConstraint(): MConstraint {
     abstract fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
@@ -31,7 +31,7 @@ abstract class ExtendableMConstraint(): MConstraint {
     abstract fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint?
 
     abstract fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d)
-    abstract fun iGetVSIds(): Set<VSConstraintId>
+    abstract fun iGetVSIds(): Set<VSJointId>
 
     abstract fun iNbtSerialize(): CompoundTag?
     abstract fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint?
@@ -96,7 +96,7 @@ abstract class ExtendableMConstraint(): MConstraint {
         return iOnScaleBy(level, scaleBy, scalingCenter)
     }
 
-    final override fun getVSIds(): Set<VSConstraintId> {
+    final override fun getVSIds(): Set<VSJointId> {
         return iGetVSIds()
     }
 

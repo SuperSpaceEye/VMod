@@ -2,17 +2,17 @@ package net.spaceeye.vmod.utils.vs
 
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
-import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker
+import net.spaceeye.vmod.constraintsManaging.VSJointsTracker
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
+import org.valkyrienskies.core.apigame.joints.VSJointId
 import org.valkyrienskies.mod.common.getShipsIntersecting
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 data class TraversedData(
     val traversedShipIds: MutableSet<ShipId>,
     val traversedMConstraintIds: MutableSet<Int>,
-    val traversedVSConstraintIds: MutableSet<Int>
+    val traversedVSJointIds: MutableSet<Int>
 )
 
 fun traverseGetAllTouchingShips(level: ServerLevel, shipId: ShipId, blacklist: Set<ShipId> = setOf()): Set<ShipId> {
@@ -56,14 +56,14 @@ fun traverseGetConnectedShips(shipId: ShipId, blacklist: Set<ShipId> = setOf()):
     traversedShips.addAll(blacklist)
 
     val traversedMConstraints = mutableSetOf<Int>()
-    val traversedVSConstraints = mutableSetOf<Int>()
+    val traversedVSJoints = mutableSetOf<Int>()
 
     while (stack.isNotEmpty()) {
         val shipId = stack.removeLast()
         if (traversedShips.contains(shipId)) {continue}
         traversedShips.add(shipId)
 
-        val vsIdsOfMConstraints = mutableSetOf<VSConstraintId>()
+        val vsIdsOfMConstraints = mutableSetOf<VSJointId>()
         instance.getAllConstraintsIdOfId(shipId).forEach {
             if (traversedMConstraints.contains(it)) { return@forEach }
             traversedMConstraints.add(it)
@@ -72,16 +72,16 @@ fun traverseGetConnectedShips(shipId: ShipId, blacklist: Set<ShipId> = setOf()):
             vsIdsOfMConstraints.addAll(constraint.getVSIds())
         }
 
-        val constraintIds = VSConstraintsTracker.getIdsOfShip(shipId).filter { !traversedVSConstraints.contains(it) && !vsIdsOfMConstraints.contains(it) }
-        VSConstraintsTracker.getVSConstraints(constraintIds).forEach {
+        val constraintIds = VSJointsTracker.getIdsOfShip(shipId).filter { !traversedVSJoints.contains(it) && !vsIdsOfMConstraints.contains(it) }
+        VSJointsTracker.getVSJoints(constraintIds).forEach {
             val constraint = it.second ?: return@forEach
-            if (!traversedShips.contains(constraint.shipId0)) stack.add(constraint.shipId0)
-            if (!traversedShips.contains(constraint.shipId1)) stack.add(constraint.shipId1)
+            if (!traversedShips.contains(constraint.shipId0)) stack.add(constraint.shipId0!!) //TODO assumes shipid is always not null which is wrong
+            if (!traversedShips.contains(constraint.shipId1)) stack.add(constraint.shipId1!!) //TODO assumes shipid is always not null which is wrong
         }
-        traversedVSConstraints.addAll(constraintIds)
+        traversedVSJoints.addAll(constraintIds)
     }
     traversedShips.removeAll(dimensionIds.toSet())
     traversedShips.removeAll(blacklist)
 
-    return TraversedData(traversedShips, traversedMConstraints, traversedVSConstraints)
+    return TraversedData(traversedShips, traversedMConstraints, traversedVSJoints)
 }

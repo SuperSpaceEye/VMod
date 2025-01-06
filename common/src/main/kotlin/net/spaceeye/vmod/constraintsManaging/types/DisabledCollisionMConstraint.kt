@@ -9,7 +9,7 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
+import org.valkyrienskies.core.apigame.joints.VSJointId
 
 class DisabledCollisionMConstraint(): ExtendableMConstraint() {
     var shipId1: ShipId = -1
@@ -41,7 +41,7 @@ class DisabledCollisionMConstraint(): ExtendableMConstraint() {
     override fun iGetAttachmentPositions(shipId: Long): List<BlockPos> = listOf()
     override fun iGetAttachmentPoints(shipId: Long): List<Vector3d> = listOf()
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
-    override fun iGetVSIds(): Set<VSConstraintId> = setOf()
+    override fun iGetVSIds(): Set<VSJointId> = setOf()
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? { return DisabledCollisionMConstraint(mapped[shipId1] ?: return null, mapped[shipId2] ?: return null) }
 
     private var beingRemoved = false
@@ -66,8 +66,8 @@ class DisabledCollisionMConstraint(): ExtendableMConstraint() {
     override fun iNbtSerialize(): CompoundTag? {
         val tag = CompoundTag()
 
-        tag.putLong("shipId1", shipId1)
-        tag.putLong("shipId2", shipId2)
+        tag.putLong("shipId1", shipId1) //TODO assumes shipid is always not null which is wrong
+        tag.putLong("shipId2", shipId2) //TODO assumes shipid is always not null which is wrong
 
         tag.putInt("managedId", mID)
 
@@ -75,8 +75,8 @@ class DisabledCollisionMConstraint(): ExtendableMConstraint() {
     }
 
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        shipId1 = tag.getLong("shipId1")
-        shipId2 = tag.getLong("shipId2")
+        shipId1 = tag.getLong("shipId1") //TODO assumes shipid is always not null which is wrong
+        shipId2 = tag.getLong("shipId2") //TODO assumes shipid is always not null which is wrong
 
         mID = tag.getInt("managedId")
 

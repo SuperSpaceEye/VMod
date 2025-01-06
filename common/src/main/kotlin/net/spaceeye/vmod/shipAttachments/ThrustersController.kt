@@ -1,12 +1,12 @@
-package net.spaceeye.vmod.shipForceInducers
+package net.spaceeye.vmod.shipAttachments
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
+import org.valkyrienskies.core.api.attachment.getAttachment
 import org.valkyrienskies.core.api.ships.*
-import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 import java.util.concurrent.locks.ReentrantLock
 
 data class ThrusterData(
@@ -67,7 +67,6 @@ class ThrustersController: ShipForcesInducer {
     private var id = 0
 
     override fun applyForces(physShip: PhysShip) {
-        physShip as PhysShipImpl
         synchronized(lock) {
             thrustersData.values.forEach {
                 if (it.percentage <= 0.0) {return@forEach}
@@ -122,10 +121,10 @@ class ThrustersController: ShipForcesInducer {
         set(value) {thrustersData = value.associate { Pair(it.id, ThrusterData(it)) }.toMutableMap()}
 
     companion object {
-        fun getOrCreate(ship: ServerShip) =
+        fun getOrCreate(ship: LoadedServerShip) =
             ship.getAttachment<ThrustersController>()
                 ?: ThrustersController().also {
-                    ship.saveAttachment(it)
+                    ship.setAttachment(it)
                 }
     }
 }

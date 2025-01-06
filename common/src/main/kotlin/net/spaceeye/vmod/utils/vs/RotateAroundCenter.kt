@@ -3,25 +3,31 @@ package net.spaceeye.vmod.utils.vs
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
+import org.valkyrienskies.core.api.VsBeta
+import org.valkyrienskies.core.api.bodies.properties.BodyTransform
+import org.valkyrienskies.core.api.bodies.properties.rebuild
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
-import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 
 // does quaternion magic to rotate object around a center by given rotation
-fun rotateAroundCenter(center: ShipTransform, obj: ShipTransform, rotation: Quaterniondc): ShipTransform {
-    center as ShipTransformImpl
-    obj as ShipTransformImpl
+@OptIn(VsBeta::class)
+fun rotateAroundCenter(center: BodyTransform, obj: ShipTransform, rotation: Quaterniondc): BodyTransform {
 
     val objPos = Vector3d(obj.positionInWorld)
     val objRot = obj.shipToWorldRotation
 
     val shipPosInCenterShipyard = posWorldToShip(null, objPos, center)
 
-    val rotatedCenter = center.copy(shipToWorldRotation = center.shipToWorldRotation.mul(rotation, Quaterniond()))
+    val rotatedCenter = center.rebuild {
+        this.rotation(center.rotation.mul(rotation, Quaterniond()))
+    }
 
-    val diff = rotatedCenter.shipToWorldRotation.mul(center.shipToWorldRotation.invert(Quaterniond()), Quaterniond())
+    val diff = rotatedCenter.rotation.mul(center.rotation.invert(Quaterniond()), Quaterniond())
 
     val newRotation = diff.mul(objRot)
     val newPos = posShipToWorld(null, shipPosInCenterShipyard, rotatedCenter)
 
-    return obj.copy(positionInWorld = newPos.toJomlVector3d(), shipToWorldRotation = newRotation)
+    return obj.rebuild {
+        this.position(newPos.toJomlVector3d())
+        this.rotation(newRotation)
+    }
 }

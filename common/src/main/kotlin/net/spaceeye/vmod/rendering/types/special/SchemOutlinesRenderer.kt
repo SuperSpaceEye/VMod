@@ -33,7 +33,7 @@ import java.awt.Color
 class SchemOutlinesRenderer(
     val maxObjectEdge: Vector3d,
     val rotationAngle: Ref<Double>,
-    val center: ShipTransformImpl,
+    val center: ShipTransform,
     val ships: List<Pair<ShipTransform, AABBic>>
 ): BaseRenderer {
     val aabbPoints = mutableListOf(Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d())
@@ -102,7 +102,7 @@ class SchemOutlinesRenderer(
 
             RenderingUtils.Line.renderLineBox(vBuffer, matrix, Color.RED, aabbPoints, width)
 
-            var transformCenter = Vector3d(newTransform.positionInShip)
+            var transformCenter = Vector3d(newTransform.positionInModel)
 
             var xAxis = Vector3d(transformCenter)
             var yAxis = Vector3d(transformCenter)

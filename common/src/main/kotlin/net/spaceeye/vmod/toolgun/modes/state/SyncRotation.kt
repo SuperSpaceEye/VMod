@@ -20,7 +20,7 @@ import org.joml.Quaterniond
 
 class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
     var compliance: Double by get(0, 1e-20, {ServerLimits.instance.compliance.get(it)})
-    var maxForce: Double by get(1, 1e20, {ServerLimits.instance.maxForce.get(it)})
+    var maxForce: Float by get(1, 1e20f, {ServerLimits.instance.maxForce.get(it)})
     var primaryFirstRaycast: Boolean by get(2, false)
 
 
@@ -32,7 +32,7 @@ class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
         level.makeManagedConstraint(
             SyncRotationMConstraint(shipId1, shipId2,
                 ship1?.transform?.shipToWorldRotation ?: Quaterniond(),
-                ship2?.transform?.shipToWorldRotation ?: Quaterniond(), compliance, maxForce
+                ship2?.transform?.shipToWorldRotation ?: Quaterniond(), compliance, TODO()
             ).addExtension(Strippable())
         ) { it.addFor(player) }
 

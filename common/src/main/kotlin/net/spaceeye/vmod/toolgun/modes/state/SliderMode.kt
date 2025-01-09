@@ -24,7 +24,7 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 
 class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
     var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it) })
-    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it) })
+    var maxForce: Float by get(1, 1e10f, { ServerLimits.instance.maxForce.get(it) })
 
 
     var posMode: PositionModes = PositionModes.NORMAL
@@ -68,7 +68,7 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
         level.makeManagedConstraint(SliderMConstraint(
             axisRes1.shipId, shipRes1.shipId,
             axisPair.first, axisPair.second, shipPair.first, shipPair.second,
-            compliance, maxForce, setOf(
+            compliance, TODO(), setOf(
                 axisRes1.blockPosition, shipRes1.blockPosition,
                 axisRes2.blockPosition, shipRes2.blockPosition).toList()
         ).addExtension(Strippable())){it.addFor(player)}

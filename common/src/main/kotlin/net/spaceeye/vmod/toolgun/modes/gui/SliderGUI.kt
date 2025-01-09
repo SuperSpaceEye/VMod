@@ -21,6 +21,6 @@ interface SliderGUI: GUIBuilder, EGUIBuilder {
         val limits = ServerLimits.instance
 
         makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, limits.compliance)
-        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
+//        makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
     }
 }

@@ -23,8 +23,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
 class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
-    var compliance: Double by get(0, 1e-20, {ServerLimits.instance.compliance.get(it)})
-    var maxForce: Double by get(1, 1e10, {ServerLimits.instance.maxForce.get(it)})
+    var maxForce: Float by get(1, 1e10f, {ServerLimits.instance.maxForce.get(it)})
     var width: Double by get(2, .2, {DoubleLimit(0.01).get(it)}) //TODO
 
     var color: Color by get(3, Color(62, 62, 62, 255))
@@ -44,7 +43,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
         level.makeManagedConstraint(ConnectionMConstraint(
             spoint1, spoint2, rpoint1, rpoint2,
             ship1, ship2, shipId1, shipId2,
-            compliance, maxForce,
+            maxForce,
             fixedDistance, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition),
         ).addExtension(RenderableExtension(A2BRenderer(
@@ -81,7 +80,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->
                             ConnectionMConstraint(
                                 spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
-                                it.compliance, it.maxForce, it.fixedDistance, it.connectionMode,
+                                it.maxForce, it.fixedDistance, it.connectionMode,
                                 listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                                 rresults.second.worldNormalDirection!!
                             ).addExtension(Strippable())

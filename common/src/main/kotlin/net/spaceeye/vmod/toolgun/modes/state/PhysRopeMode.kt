@@ -27,7 +27,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 
 class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
     var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it) })
-    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it) })
+    var maxForce: Float by get(1, 1e10f, { ServerLimits.instance.maxForce.get(it) })
     var fixedDistance: Double by get(2, -1.0, {ServerLimits.instance.fixedDistance.get(it)})
 
     var primaryFirstRaycast: Boolean by get(3, false)
@@ -69,7 +69,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
             shipId1, shipId2,
             compliance,
             spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-            maxForce, dist, segments, massPerSegment, radius,
+            TODO(), dist, segments, massPerSegment, radius,
             listOf(previousResult.blockPosition, raycastResult.blockPosition),
         ).addExtension(Strippable())){it.addFor(player)}
 

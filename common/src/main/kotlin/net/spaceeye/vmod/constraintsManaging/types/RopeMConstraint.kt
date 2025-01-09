@@ -29,10 +29,11 @@ class RopeMConstraint(): TwoShipsMConstraint() {
         compliance: Double,
         localPos0: Vector3dc,
         localPos1: Vector3dc,
-        maxForce: Double,
+        maxForce: Float,
         ropeLength: Double,
         attachmentPoints: List<BlockPos>,
     ): this() {
+        TODO()
         mainConstraint = VSDistanceJoint(
             shipId0, VSJointPose(localPos0, Quaterniond()),
             shipId1, VSJointPose(localPos1, Quaterniond()),

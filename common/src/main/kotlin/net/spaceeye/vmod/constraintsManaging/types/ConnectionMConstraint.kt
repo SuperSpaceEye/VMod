@@ -25,13 +25,15 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
         FREE_ORIENTATION
     }
 
-    lateinit var constraint1: VSJoint
+    lateinit var distanceConstraint: VSJoint
+    lateinit var rotationConstraint: VSD6Joint
 
-    override val mainConstraint: VSJoint get() = constraint1
+    override val mainConstraint: VSJoint get() = distanceConstraint
 
     var fixedLength: Double = 0.0
     var connectionMode: ConnectionModes = ConnectionModes.FIXED_ORIENTATION
 
+    //TODO add more parameters?
     constructor(
         // shipyard pos
         spoint1: Vector3d,
@@ -43,8 +45,7 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
         ship2: Ship?,
         shipId0: ShipId,
         shipId1: ShipId,
-        compliance: Double,
-        maxForce: Double,
+        maxForce: Float,
 
         fixedLength: Double,
         connectionMode: ConnectionModes,
@@ -54,108 +55,86 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
         _dir: Vector3d? = null
     ): this() {
         this.fixedLength = if (fixedLength < 0) (rpoint1 - rpoint2).dist() else fixedLength
+        this.connectionMode = connectionMode
         attachmentPoints_ = attachmentPoints.toMutableList()
 
         val dist1 = rpoint1 - rpoint2
         val dir = (_dir ?: run { dist1.normalize() })
 
-        constraint1 = when(connectionMode) {
+        distanceConstraint = if (connectionMode == ConnectionModes.FREE_ORIENTATION) {
+            VSDistanceJoint(
+                shipId0, VSJointPose(spoint1.toJomlVector3d(), Quaterniond()),
+                shipId1, VSJointPose(spoint2.toJomlVector3d(), Quaterniond()),
+                VSJointMaxForceTorque(maxForce, maxForce),
+                this.fixedLength.toFloat(),
+                this.fixedLength.toFloat(),
+            )
+        } else {
+            val rot1 = getHingeRotation(ship1?.transform, -dir.normalize())
+            val rot2 = getHingeRotation(ship2?.transform, -dir.normalize())
+            VSD6Joint(
+                shipId0, VSJointPose(spoint1.toJomlVector3d(), rot1),
+                shipId1, VSJointPose(spoint2.toJomlVector3d(), rot2),
+                motions = EnumMap(mapOf(
+                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.LIMITED),
+
+                    Pair(VSD6Joint.D6Axis.TWIST, VSD6Joint.D6Motion.FREE),
+                    Pair(VSD6Joint.D6Axis.SWING1, VSD6Joint.D6Motion.FREE),
+                    Pair(VSD6Joint.D6Axis.SWING2, VSD6Joint.D6Motion.FREE),
+                )),
+                linearLimits = EnumMap(mapOf(
+                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(this.fixedLength.toFloat(), this.fixedLength.toFloat())))
+                ),
+                maxForceTorque = VSJointMaxForceTorque(maxForce, maxForce)
+            )
+        }
+
+        rotationConstraint = when(connectionMode) {
             ConnectionModes.FIXED_ORIENTATION -> {
-                val hrot1 = getHingeRotation(ship1?.transform, -dir.normalize())
-                val hrot2 = getHingeRotation(ship2?.transform, -dir.normalize())
-
-//                val hrot1 = (ship1?.transform?.shipToWorldRotation ?: Quaterniond()).invert(Quaterniond())
-//                val hrot2 = (ship2?.transform?.shipToWorldRotation ?: Quaterniond()).invert(Quaterniond())
-
-//                val hrot1 = Quaterniond()
-//                val hrot2 = Quaterniond()
-
+                val rot1 = (ship1?.transform?.shipToWorldRotation ?: Quaterniond()).invert(Quaterniond())
+                val rot2 = (ship2?.transform?.shipToWorldRotation ?: Quaterniond()).invert(Quaterniond())
                 VSD6Joint(
-                    shipId0, VSJointPose(spoint1.toJomlVector3d(), hrot1),
-                    shipId1, VSJointPose(spoint2.toJomlVector3d(), hrot2),
+                    shipId0, VSJointPose(spoint1.toJomlVector3d(), rot1),
+                    shipId1, VSJointPose(spoint2.toJomlVector3d(), rot2),
                     motions = EnumMap(mapOf(
-                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.LIMITED),
-//                        Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
-//                        Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
-
-//                        Pair(VSD6Joint.D6Axis.TWIST, VSD6Joint.D6Motion.FREE)
+                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
                     )),
-                    linearLimits = EnumMap(mapOf(
-                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(this.fixedLength.toFloat(), this.fixedLength.toFloat()))
-                    )),
-                    maxForceTorque = VSJointMaxForceTorque(1e30f, 1e30f)
-                    )
+                    maxForceTorque = VSJointMaxForceTorque(maxForce, maxForce)
+                )
             }
             ConnectionModes.HINGE_ORIENTATION -> {
-                val hrot1 = getHingeRotation(ship1?.transform, dir.normalize())
-                val hrot2 = getHingeRotation(ship2?.transform, dir.normalize())
-
+                val rot1 = getHingeRotation(ship1?.transform, dir.normalize())
+                val rot2 = getHingeRotation(ship2?.transform, dir.normalize())
                 VSD6Joint(
-                    shipId0, VSJointPose(spoint1.toJomlVector3d(), hrot1),
-                    shipId1, VSJointPose(spoint2.toJomlVector3d(), hrot2),
+                    shipId0, VSJointPose(spoint1.toJomlVector3d(), rot1),
+                    shipId1, VSJointPose(spoint2.toJomlVector3d(), rot2),
                     motions = EnumMap(mapOf(
-                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.LIMITED),
-                        Pair(VSD6Joint.D6Axis.SWING1, VSD6Joint.D6Motion.FREE),
-                        Pair(VSD6Joint.D6Axis.SWING2, VSD6Joint.D6Motion.FREE),
-                        Pair(VSD6Joint.D6Axis.TWIST, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.TWIST, VSD6Joint.D6Motion.FREE)
                     )),
-                    linearLimits = EnumMap(mapOf(
-                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(-this.fixedLength.toFloat(), -this.fixedLength.toFloat()))
-                    )),
-                    maxForceTorque = VSJointMaxForceTorque(1e30f, 1e30f)
+                    maxForceTorque = VSJointMaxForceTorque(maxForce, maxForce)
                 )
             }
             ConnectionModes.FREE_ORIENTATION -> {
-                VSDistanceJoint(
+                VSD6Joint(
                     shipId0, VSJointPose(spoint1.toJomlVector3d(), Quaterniond()),
                     shipId1, VSJointPose(spoint2.toJomlVector3d(), Quaterniond()),
-                    minDistance = this.fixedLength.toFloat(), maxDistance = this.fixedLength.toFloat())
+                    motions = EnumMap(mapOf(
+                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.TWIST, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.SWING1, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.SWING2, VSD6Joint.D6Motion.FREE),
+                    )),
+                    maxForceTorque = VSJointMaxForceTorque(maxForce, maxForce)
+                )
             }
         }
-
-//        constraint1 = VSAttachmentConstraint(
-//            shipId0, shipId1,
-//            compliance,
-//            spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-//            maxForce, this.fixedLength)
-//
-//        this.connectionMode = connectionMode
-//
-//        if (connectionMode == ConnectionModes.FREE_ORIENTATION) { return }
-//
-//        val dist1 = rpoint1 - rpoint2
-//        val len = (_dir ?: dist1).dist()
-//        val dir = (_dir ?: run { dist1.normalize() }) * ( if (len < 10 || len > 30) 20 else 40)
-//
-//        val rpoint1 = rpoint1 + dir
-//        val rpoint2 = rpoint2 - dir
-//
-//        val dist2 = rpoint1 - rpoint2
-//        val addDist = dist2.dist() - dist1.dist()
-//
-//        val spoint1 = if (ship1 != null) posWorldToShip(ship1, rpoint1) else Vector3d(rpoint1)
-//        val spoint2 = if (ship2 != null) posWorldToShip(ship2, rpoint2) else Vector3d(rpoint2)
-//
-//        constraint2 = VSAttachmentConstraint(
-//            shipId0, shipId1,
-//            compliance,
-//            spoint1.toJomlVector3d(), spoint2.toJomlVector3d(),
-//            maxForce, this.fixedLength + addDist
-//        )
-//
-//        rconstraint = when (connectionMode) {
-//            ConnectionModes.FIXED_ORIENTATION -> {
-//                val frot1 = ship1?.transform?.shipToWorldRotation ?: Quaterniond()
-//                val frot2 = ship2?.transform?.shipToWorldRotation ?: Quaterniond()
-//                VSFixedOrientationConstraint(shipId0, shipId1, compliance, frot1.invert(Quaterniond()), frot2.invert(Quaterniond()), maxForce)
-//            }
-//            ConnectionModes.HINGE_ORIENTATION -> {
-//                val hrot1 = getHingeRotation(ship1?.transform, dir.normalize())
-//                val hrot2 = getHingeRotation(ship2?.transform, dir.normalize())
-//                VSHingeOrientationConstraint(shipId0, shipId1, compliance, hrot1, hrot2, maxForce)
-//            }
-//            ConnectionModes.FREE_ORIENTATION -> throw AssertionError("can't happen")
-//        }
     }
 
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
@@ -163,27 +142,31 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
 
         new.fixedLength = fixedLength
         new.connectionMode = connectionMode
-        new.attachmentPoints_ = copyAttachmentPoints(constraint1, attachmentPoints_, level, mapped)
+        new.attachmentPoints_ = copyAttachmentPoints(distanceConstraint, attachmentPoints_, level, mapped)
 
-        new.constraint1 = constraint1.copy(level, mapped) ?: return null
-        if (connectionMode != ConnectionModes.FREE_ORIENTATION) {
-//            new.constraint2 = constraint2.copy(level, mapped) ?: return null
-//            new.rconstraint = rconstraint.copy(mapped) ?: return null
-        }
+        new.distanceConstraint = distanceConstraint.copy(level, mapped) ?: return null
+        new.rotationConstraint = rotationConstraint.copy(level, mapped) ?: return null
 
         return new
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
-//        constraint1 = constraint1.copy(fixedDistance = constraint1.fixedDistance * scaleBy)
-//        level.shipObjectWorld.removeConstraint(cIDs[0])
-//        cIDs[0] = level.shipObjectWorld.createNewConstraint(constraint1)!!
-//
-//        if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return}
-//
-//        constraint2 = constraint2.copy(fixedDistance = constraint2.fixedDistance * scaleBy)
-//        level.shipObjectWorld.removeConstraint(cIDs[1])
-//        cIDs[1] = level.shipObjectWorld.createNewConstraint(constraint2)!!
+        distanceConstraint = when (distanceConstraint) {
+            is VSDistanceJoint -> {
+                val c = distanceConstraint as VSDistanceJoint
+                c.copy(minDistance = c.minDistance!! * scaleBy.toFloat(), maxDistance = c.maxDistance!! * scaleBy.toFloat())
+            }
+            is VSD6Joint -> {
+                val c = distanceConstraint as VSD6Joint
+                val m = c.linearLimits!!.clone()
+                val l = m[VSD6Joint.D6Axis.X]!!
+                m[VSD6Joint.D6Axis.X] = l.copy(lowerLimit = l.lowerLimit * scaleBy.toFloat(), upperLimit = l.upperLimit * scaleBy.toFloat())
+                c.copy(linearLimits = m)
+            }
+            else -> throw AssertionError("Should be impossible.")
+        }
+
+        level.shipObjectWorld.updateConstraint(cIDs[0], distanceConstraint)
     }
 
     override fun iNbtSerialize(): CompoundTag? {
@@ -191,11 +174,8 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
 
         tag.putInt("mode", connectionMode.ordinal)
 
-        sc("c1", constraint1, tag) {return null}
-        if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return tag}
-
-//        sc("c2", constraint2, tag) {return null}
-//        sc("c3", rconstraint, tag) {return null}
+        sc("c1", distanceConstraint, tag) {return null}
+        sc("c2", rotationConstraint, tag) {return null}
 
         return tag
     }
@@ -203,20 +183,16 @@ class ConnectionMConstraint(): TwoShipsMConstraint() {
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         connectionMode = ConnectionModes.values()[tag.getInt("mode")]
 
-        dc("c1", ::constraint1, tag, lastDimensionIds) {return null}
-        if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return this}
-
-//        dc("c2", ::constraint2, tag, lastDimensionIds) {return null}
-//        dc("c3", ::rconstraint, tag, lastDimensionIds) {return null}
+        dc("c1", ::distanceConstraint, tag, lastDimensionIds) {return null}
+        dc("c2", ::rotationConstraint, tag, lastDimensionIds) {return null}
 
         return this
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        mc(constraint1, cIDs, level) {return false}
+        mc(distanceConstraint, cIDs, level) {return false}
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) { return true }
-//        mc(constraint2, cIDs, level) {return false}
-//        mc(rconstraint, cIDs, level) {return false}
+        mc(rotationConstraint, cIDs, level) {return false}
 
         return true
     }

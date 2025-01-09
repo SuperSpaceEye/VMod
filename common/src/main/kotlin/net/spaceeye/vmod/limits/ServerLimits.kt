@@ -12,6 +12,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 data class DoubleLimit(var minValue: Double = -Double.MAX_VALUE, var maxValue: Double = Double.MAX_VALUE) { fun get(num: Double) = max(minValue, min(maxValue, num)) }
+data class FloatLimit (var minValue: Float  = -Float.MAX_VALUE,  var maxValue: Float  = Float.MAX_VALUE ) { fun get(num: Float)  = max(minValue, min(maxValue, num)) }
 data class IntLimit   (var minValue: Int    =  Int.MIN_VALUE,    var maxValue: Int    = Int.MAX_VALUE   ) { fun get(num: Int)    = max(minValue, min(maxValue, num)) }
 
 data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
@@ -23,7 +24,7 @@ data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
 
 class ServerLimitsInstance: AutoSerializable {
     val compliance: DoubleLimit by get(0, DoubleLimit(1e-300, 1.0))
-    val maxForce: DoubleLimit by get(1, DoubleLimit(1.0))
+    val maxForce: FloatLimit by get(1, FloatLimit(1.0f))
     val fixedDistance: DoubleLimit by get(2, DoubleLimit())
     val extensionDistance: DoubleLimit by get(3, DoubleLimit(0.001))
     val extensionSpeed: DoubleLimit by get(4, DoubleLimit(0.001))
@@ -44,6 +45,7 @@ class ServerLimitsInstance: AutoSerializable {
 object ServerLimits {
     init {
         SerializableItem.registerSerializationItem(DoubleLimit::class, {it, buf -> buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) {buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
+        SerializableItem.registerSerializationItem(FloatLimit::class, {it, buf -> buf.writeFloat(it.minValue); buf.writeFloat(it.maxValue) }) {buf -> FloatLimit(buf.readFloat(), buf.readFloat())}
         SerializableItem.registerSerializationItem(IntLimit::class, {it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) {buf -> IntLimit(buf.readInt(), buf.readInt())}
         SerializableItem.registerSerializationItem(StrLimit::class, {it, buf -> buf.writeInt(it.sizeLimit)}) {buf -> StrLimit(buf.readInt())}
     }
@@ -60,6 +62,7 @@ object ServerLimits {
         }
 
     private fun save(value: ServerLimitsInstance) {
+        //TODO this is stupid and needs rework
         val arr = value.serialize().accessByteBufWithCorrectSize()
         ExternalDataUtil.writeObject("ServerLimits", arr)
     }

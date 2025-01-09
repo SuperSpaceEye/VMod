@@ -29,7 +29,7 @@ object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 
 class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
-    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
+//    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
     var width: Double by get(2, .2, { DoubleLimit(0.01).get(it)})
 
     var color: Color by get(3, Color(62, 62, 200, 255))
@@ -53,7 +53,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
         level.makeManagedConstraint(HydraulicsMConstraint(
             spoint1, spoint2, rpoint1, rpoint2,
             ship1, ship2, shipId1, shipId2,
-            compliance, maxForce,
+            compliance, TODO(),
             minLength, minLength + extensionDistance,
             extensionSpeed, channel, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition)
@@ -92,7 +92,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->
                             HydraulicsMConstraint(
                                 spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
-                                it.compliance, it.maxForce,
+                                it.compliance, TODO(),
                                 paDistanceFromBlock, paDistanceFromBlock + it.extensionDistance,
                                 it.extensionSpeed, it.channel, it.connectionMode,
                                 listOf(rresults.first.blockPosition, rresults.second.blockPosition),

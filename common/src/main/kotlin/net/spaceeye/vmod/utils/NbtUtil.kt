@@ -54,3 +54,18 @@ fun CompoundTag.getVector3d(prefix: String): Vector3d? {
         )
     }
 }
+
+fun CompoundTag.putMyVector3d(prefix: String, vector3d: net.spaceeye.vmod.utils.Vector3d) =
+    with(vector3d) {
+        putDouble(prefix + "x", x)
+        putDouble(prefix + "y", y)
+        putDouble(prefix + "z", z)
+    }
+
+fun CompoundTag.getMyVector3d(prefix: String): net.spaceeye.vmod.utils.Vector3d {
+    return net.spaceeye.vmod.utils.Vector3d(
+        getDouble(prefix + "x"),
+        getDouble(prefix + "y"),
+        getDouble(prefix + "z")
+    )
+}

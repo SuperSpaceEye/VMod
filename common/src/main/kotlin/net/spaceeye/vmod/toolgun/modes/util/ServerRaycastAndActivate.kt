@@ -57,25 +57,10 @@ fun <T : BaseMode> BaseMode.serverRaycastAndActivate(
     fn: (T, ServerLevel, ServerPlayer, RaycastFunctions.RaycastResult) -> Unit
 ) = serverTryActivate<T>(player, buf, clazz, supplier) { item: T, level: ServerLevel, player: ServerPlayer ->
     try {
-        val ship = level.getShipsIntersecting(
-            AABBd(
-                player.position().x - 0.5, player.position().y - 0.5, player.position().z - 0.5,
-                player.position().x + 0.5, player.position().y + 0.5, player.position().z + 0.5
-            )).lastOrNull()
-
-//        val lookAngle = ship?.let {
-//            val rotation = it.transform.rotation
-//            Vector3d(player.lookAngle)
-////            Vector3d(rotateVecByQuat(Vector3d(player.lookAngle).toJomlVector3d(), rotation))
-////            transformDirectionShipToWorld(ship, Vector3d(player.lookAngle))
-////            Vector3d(player.lookAngle)
-//        } ?: Vector3d(player.lookAngle)
-
         val lookAngle = player.lookAngle
 
-        ELOG("Look Angle ${Vector3d(player.lookAngle)}")
-//        ELOG("           ${lookAngle}")
-        ELOG("Euler ${player.xRot} ${player.yRot}")
+//        ELOG("Look Angle ${Vector3d(player.lookAngle)}")
+//        ELOG("Euler ${player.xRot} ${player.yRot}")
 
         val result = RaycastFunctions.raycast(
             level,

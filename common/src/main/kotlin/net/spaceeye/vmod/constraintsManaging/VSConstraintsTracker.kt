@@ -11,25 +11,8 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 
 //TODO maybe i don't need this anymore
 
-object VSJointsTracker: ServerClosable() {
-    val idToShips = mutableMapOf<Int, Pair<ShipId?, ShipId?>>()
+object VSJointsTracker {
     val shipToIds: Map<Long, Set<Int>> get() = (ServerLevelHolder.shipObjectWorld!! as ShipObjectWorldAccessor).shipIdToConstraints
-
-    fun addNewConstraint(constraint: VSJoint, constraintId: VSJointId) {
-        idToShips[constraintId] = Pair(constraint.shipId0, constraint.shipId1)
-    }
-
-    fun removeConstraint(constraint: VSJoint, constraintId: VSJointId) {
-        idToShips.remove(constraintId)
-    }
-
-    fun updateConstraint(constraint: VSJoint, constraintId: VSJointId) {
-        val shipIds = idToShips[constraintId] ?: run { ELOG("THIS SHOULD NEVER HAPPEN. IN VSJointsKeeper.updateConstraint idToShip with ${constraintId} IS null.") ; null } ?: return
-        if (shipIds.first == constraint.shipId0 && shipIds.second == constraint.shipId1) { return }
-
-        removeConstraint(constraint, constraintId)
-        addNewConstraint(constraint, constraintId)
-    }
 
     fun getVSJoints(ids: List<VSJointId>): List<Pair<VSJointId, VSJoint?>> {
         val acc = ServerLevelHolder.server!!.shipObjectWorld as ShipObjectWorldAccessor
@@ -38,9 +21,5 @@ object VSJointsTracker: ServerClosable() {
 
     fun getIdsOfShip(shipId: ShipId): Set<Int> {
         return shipToIds.getOrDefault(shipId, setOf())
-    }
-
-    override fun close() {
-        idToShips.clear()
     }
 }

@@ -133,7 +133,6 @@ object ServerPhysgunState: ServerClosable() {
                 return@regC2S
             }
             if (state.mainShipId == -1L) {
-                println("seeking")
                 activelySeeking.add(player.uuid)
                 return@regC2S
             }
@@ -222,7 +221,6 @@ object ServerPhysgunState: ServerClosable() {
 
             toRemove.clear()
             activelySeeking.forEach { uuid ->
-                println("in activelySeeking")
                 val state = playerStates[uuid]
                 if (state == null) {
                     playerStates.remove(uuid)
@@ -259,7 +257,6 @@ object ServerPhysgunState: ServerClosable() {
 
                 if (result.state.isAir) {return@forEach}
                 if (result.ship == null) {return@forEach}
-                println("here")
 
                 state.distanceFromPlayer = (result.worldHitPos!! - pos).dist()
                 state.fromPos = result.globalHitPos!!

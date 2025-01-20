@@ -5,8 +5,9 @@ import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.joml.Vector3d
 import org.joml.Vector3dc
+import java.awt.Color
 
-fun CompoundTag.putQuaterniond(prefix: String, quaterniond: Quaterniondc) =
+fun CompoundTag.putQuatd(prefix: String, quaterniond: Quaterniondc) =
     with(quaterniond) {
         putDouble(prefix + "w", w())
         putDouble(prefix + "x", x())
@@ -14,7 +15,7 @@ fun CompoundTag.putQuaterniond(prefix: String, quaterniond: Quaterniondc) =
         putDouble(prefix + "z", z())
     }
 
-fun CompoundTag.getQuaterniond(prefix: String): Quaterniond? {
+fun CompoundTag.getQuatd(prefix: String): Quaterniond? {
     return if (
         !contains(prefix + "w") ||
         !contains(prefix + "x") ||
@@ -69,3 +70,6 @@ fun CompoundTag.getMyVector3d(prefix: String): net.spaceeye.vmod.utils.Vector3d 
         getDouble(prefix + "z")
     )
 }
+
+fun CompoundTag.putColor(key: String, color: Color) = putInt(key, color.rgb)
+fun CompoundTag.getColor(key: String) = Color(getInt(key), true)

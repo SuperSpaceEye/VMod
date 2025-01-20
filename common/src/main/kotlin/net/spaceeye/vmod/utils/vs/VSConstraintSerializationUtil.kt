@@ -1,12 +1,8 @@
 package net.spaceeye.vmod.utils.vs
 
 import net.minecraft.nbt.CompoundTag
-import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.utils.getMapper
-import net.spaceeye.vmod.utils.putQuaterniond
-import net.spaceeye.vmod.utils.putVector3d
 import org.valkyrienskies.core.apigame.joints.VSJoint
-import org.valkyrienskies.core.impl.util.serialization.VSJacksonUtil
 
 
 //TODO redo everything

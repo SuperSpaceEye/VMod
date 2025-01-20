@@ -6,6 +6,8 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.NewTwoShipsMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.mc
+import net.spaceeye.vmod.networking.TagAutoSerializable
+import net.spaceeye.vmod.networking.TagSerializableItem.get
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.*
 import org.joml.Quaterniond
@@ -14,7 +16,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.*
 import java.util.EnumMap
 
-class ConnectionMConstraint(): NewTwoShipsMConstraint() {
+class ConnectionMConstraint(): NewTwoShipsMConstraint(), TagAutoSerializable {
     enum class ConnectionModes {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,
@@ -25,16 +27,16 @@ class ConnectionMConstraint(): NewTwoShipsMConstraint() {
     override var shipId1: Long = -1
     override var shipId2: Long = -1
 
-    var connectionMode: ConnectionModes = ConnectionModes.FIXED_ORIENTATION
-    var distance: Double = 0.0
-    var maxForce: Float = -1f
-    lateinit var wDir: Vector3d
+    var connectionMode: ConnectionModes by get(0, ConnectionModes.FIXED_ORIENTATION)
+    var distance: Double by get(1, 0.0)
+    var maxForce: Float by get(2, -1f)
+    var wDir: Vector3d by get(3, Vector3d())
 
-    lateinit var sRot1: Quaterniond
-    lateinit var sRot2: Quaterniond
+    var sRot1: Quaterniond by get(4, Quaterniond())
+    var sRot2: Quaterniond by get(5, Quaterniond())
 
-    lateinit var sDir1: Vector3d
-    lateinit var sDir2: Vector3d
+    var sDir1: Vector3d by get(6, Vector3d())
+    var sDir2: Vector3d by get(7, Vector3d())
 
     //TODO add more parameters?
     constructor(
@@ -100,38 +102,8 @@ class ConnectionMConstraint(): NewTwoShipsMConstraint() {
         onMakeMConstraint(level)
     }
 
-    override fun iNbtSerialize(): CompoundTag? {
-        val tag = CompoundTag()
-
-        //TODO AutoSerializable for tags
-        tag.putInt("mode", connectionMode.ordinal)
-        tag.putDouble("distance", distance)
-        tag.putFloat("maxForce", maxForce)
-        tag.putMyVector3d("dir", wDir)
-
-        tag.putQuaterniond("sRot1", sRot1)
-        tag.putQuaterniond("sRot2", sRot2)
-
-        tag.putMyVector3d("sDir1", sDir1)
-        tag.putMyVector3d("sDir2", sDir2)
-        return tag
-    }
-
-    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        connectionMode = ConnectionModes.entries[tag.getInt("mode")]
-
-        distance = tag.getDouble("distance")
-        maxForce = tag.getFloat("maxForce")
-        wDir = tag.getMyVector3d("dir")
-
-        sRot1 = tag.getQuaterniond("sRot1")!!
-        sRot2 = tag.getQuaterniond("sRot2")!!
-
-        sDir1 = tag.getMyVector3d("sDir1")
-        sDir2 = tag.getMyVector3d("sDir2")
-
-        return this
-    }
+    override fun iNbtSerialize(): CompoundTag? = tSerialize()
+    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>) = tDeserialize(tag).let { this }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         val distanceConstraint = if (connectionMode == ConnectionModes.FREE_ORIENTATION) {

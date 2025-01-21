@@ -269,6 +269,7 @@ interface PlacementAssistServerPart {
     var paFirstResult: RaycastFunctions.RaycastResult?
     var paSecondResult: RaycastFunctions.RaycastResult?
 
+    //TODO change stuff to floats
     val paMConstraintBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> MConstraint
     val paNetworkingObject: PlacementAssistNetworking
 

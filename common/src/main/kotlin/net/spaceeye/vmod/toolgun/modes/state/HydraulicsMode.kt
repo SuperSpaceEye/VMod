@@ -20,26 +20,26 @@ import net.spaceeye.vmod.toolgun.modes.hud.HydraulicsHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShip
+import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
-
 object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 
 class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
-    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it as Double) })
-//    var maxForce: Double by get(1, 1e10, { ServerLimits.instance.maxForce.get(it as Double) })
+    var maxForce: Float by get(1, 1e30f, { ServerLimits.instance.maxForce.get(it) })
     var width: Double by get(2, .2, { DoubleLimit(0.01).get(it)})
 
     var color: Color by get(3, Color(62, 62, 200, 255))
 
-    var fixedMinLength: Double by get(4, -1.0, {ServerLimits.instance.fixedDistance.get(it)})
+    var fixedMinLength: Float by get(4, -1f, {ServerLimits.instance.fixedDistance.get(it)})
     var connectionMode: HydraulicsMConstraint.ConnectionMode by get(5, HydraulicsMConstraint.ConnectionMode.FIXED_ORIENTATION)
     var primaryFirstRaycast: Boolean by get(6, false)
 
-    var extensionDistance: Double by get(13, 5.0, {ServerLimits.instance.extensionDistance.get(it)})
-    var extensionSpeed: Double by get(14, 1.0, {ServerLimits.instance.extensionSpeed.get(it)})
+    var extensionDistance: Float by get(13, 5f, {ServerLimits.instance.extensionDistance.get(it)})
+    var extensionSpeed: Float by get(14, 1f, {ServerLimits.instance.extensionSpeed.get(it)})
     var channel: String by get(15, "hydraulics", {ServerLimits.instance.channelLength.get(it)})
 
     var posMode = PositionModes.NORMAL
@@ -49,12 +49,17 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        val minLength = if (fixedMinLength <= 0.0) (rpoint1 - rpoint2).dist() else fixedMinLength
+        val minLength = if (fixedMinLength <= 0.0) (rpoint1 - rpoint2).dist().toFloat() else fixedMinLength
+        val wDir = (rpoint1 - rpoint2).normalize()
+
         level.makeManagedConstraint(HydraulicsMConstraint(
-            spoint1, spoint2, rpoint1, rpoint2,
-            ship1, ship2, shipId1, shipId2,
-            compliance, TODO(),
-            minLength, minLength + extensionDistance,
+            spoint1, spoint2,
+            (ship1?.let { transformDirectionWorldToShip(it, wDir) } ?: wDir).normalize(),
+            (ship2?.let { transformDirectionWorldToShip(it, wDir) } ?: wDir).normalize(),
+            ship1?.transform?.shipToWorldRotation ?: Quaterniond(),
+            ship2?.transform?.shipToWorldRotation ?: Quaterniond(),
+            shipId1, shipId2,
+            maxForce, minLength, minLength + extensionDistance,
             extensionSpeed, channel, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition)
         ).addExtension(RenderableExtension(A2BRenderer(
@@ -90,13 +95,17 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                 }.addExtension<HydraulicsMode> {
                     PlacementAssistExtension(true, { mode -> it.posMode = mode}, { num -> it.precisePlacementAssistSideNum = num}, HydraulicsNetworking,
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->
+                            val wDir = rresults.second.worldNormalDirection!!
                             HydraulicsMConstraint(
-                                spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
-                                it.compliance, TODO(),
-                                paDistanceFromBlock, paDistanceFromBlock + it.extensionDistance,
+                                spoint1, spoint2,
+                                (ship1?.let { transformDirectionWorldToShip(it, wDir) } ?: wDir).normalize(),
+                                (ship2?.let { transformDirectionWorldToShip(it, wDir) } ?: wDir).normalize(),
+                                ship1?.transform?.shipToWorldRotation ?: Quaterniond(),
+                                ship2?.transform?.shipToWorldRotation ?: Quaterniond(),
+                                shipId1, shipId2,
+                                it.maxForce, paDistanceFromBlock.toFloat(), paDistanceFromBlock.toFloat() + it.extensionDistance,
                                 it.extensionSpeed, it.channel, it.connectionMode,
                                 listOf(rresults.first.blockPosition, rresults.second.blockPosition),
-                                rresults.second.worldNormalDirection!!
                             ).addExtension(RenderableExtension(A2BRenderer(
                                 ship1?.id ?: -1L,
                                 ship2?.id ?: -1L,

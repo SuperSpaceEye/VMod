@@ -18,6 +18,8 @@ import net.spaceeye.vmod.toolgun.modes.extensions.*
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShipNoScaling
+import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
@@ -28,7 +30,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
 
     var color: Color by get(3, Color(62, 62, 62, 255))
 
-    var fixedDistance: Double by get(4, -1.0, {ServerLimits.instance.fixedDistance.get(it)})
+    var fixedDistance: Float by get(4, -1.0f, {ServerLimits.instance.fixedDistance.get(it)})
     var connectionMode: ConnectionMConstraint.ConnectionModes by get(5, ConnectionMConstraint.ConnectionModes.FIXED_ORIENTATION)
     var primaryFirstRaycast: Boolean by get(6, false)
 
@@ -39,12 +41,16 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
+        val wDir = (rpoint1 - rpoint2).normalize()
+        val distance = if (fixedDistance < 0) {(rpoint1 - rpoint2).dist().toFloat()} else {fixedDistance}
 
         level.makeManagedConstraint(ConnectionMConstraint(
-            spoint1, spoint2, rpoint1, rpoint2,
-            ship1, ship2, shipId1, shipId2,
-            maxForce,
-            fixedDistance, connectionMode,
+            spoint1, spoint2,
+            ship1?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
+            ship2?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
+            Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
+            Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
+            shipId1, shipId2, maxForce, distance, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition),
         ).addExtension(RenderableExtension(A2BRenderer(
             ship1?.id ?: -1L,
@@ -78,11 +84,15 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                 }.addExtension<ConnectionMode> {
                     PlacementAssistExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num}, paNetworkingObj,
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->
+                            val wDir = rresults.second.worldNormalDirection!!
                             ConnectionMConstraint(
-                                spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2,
-                                it.maxForce, it.fixedDistance, it.connectionMode,
+                                spoint1, spoint2,
+                                ship1?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
+                                ship2?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
+                                Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
+                                Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
+                                shipId1, shipId2, it.maxForce, it.fixedDistance, it.connectionMode,
                                 listOf(rresults.first.blockPosition, rresults.second.blockPosition),
-                                rresults.second.worldNormalDirection!!
                             ).addExtension(Strippable())
                         }
                     )

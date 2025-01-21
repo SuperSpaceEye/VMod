@@ -77,6 +77,11 @@ abstract class NewTwoShipsMConstraint(): ExtendableMConstraint() {
         sPos2 = tag.getMyVector3d("sPos2")
         shipId1 = tag.getLong("shipId1")
         shipId2 = tag.getLong("shipId2")
+
+        val map = ServerLevelHolder.shipObjectWorld!!.dimensionToGroundBodyIdImmutable
+        shipId1 = map[lastDimensionIds[shipId1]] ?: shipId1
+        shipId2 = map[lastDimensionIds[shipId2]] ?: shipId2
+
         return super.nbtDeserialize(tag, lastDimensionIds)
     }
 

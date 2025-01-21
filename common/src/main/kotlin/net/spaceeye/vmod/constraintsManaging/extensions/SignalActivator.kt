@@ -25,9 +25,9 @@ class SignalActivator(): MConstraintExtension, TickableMConstraintExtension {
         this.percentageNameReflection = percentageNameReflection
     }
 
-    var targetPercentage = 0.0
+    var targetPercentage = 0.0f
 
-    var totalPercentage = 0.0
+    var totalPercentage = 0.0f
     var numMessages = 0
 
     private var wasDeleted = false
@@ -37,7 +37,7 @@ class SignalActivator(): MConstraintExtension, TickableMConstraintExtension {
     private fun signalTick(msg: Message) {
         if (msg !is Signal) { return }
 
-        totalPercentage = min(max(msg.percentage, 0.0), 1.0)
+        totalPercentage = min(max(msg.percentage.toFloat(), 0.0f), 1.0f)
         numMessages++
     }
 
@@ -45,7 +45,7 @@ class SignalActivator(): MConstraintExtension, TickableMConstraintExtension {
         if (numMessages != 0) {
             targetPercentage = totalPercentage / numMessages
             numMessages = 0
-            totalPercentage = 0.0
+            totalPercentage = 0.0f
         }
 
         percentageField.set(obj, targetPercentage)

@@ -5,7 +5,7 @@ import net.spaceeye.vmod.utils.getMapper
 import org.valkyrienskies.core.apigame.joints.VSJoint
 
 
-//TODO redo everything
+//TODO remove?
 object VSJointSerializationUtil {
 //    private fun saveBaseConstraint(constraint: VSJoint): CompoundTag {
 //        val cTag = CompoundTag()

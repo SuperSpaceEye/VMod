@@ -1,67 +1,60 @@
 package net.spaceeye.vmod.constraintsManaging.types
 
-import net.minecraft.core.BlockPos
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
-import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
-import net.spaceeye.vmod.constraintsManaging.util.dc
-import net.spaceeye.vmod.constraintsManaging.util.mc
-import net.spaceeye.vmod.constraintsManaging.util.sc
+import net.spaceeye.vmod.constraintsManaging.util.*
+import net.spaceeye.vmod.networking.TagSerializableItem.get
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.vs.copy
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.VSJoint
+import org.valkyrienskies.core.apigame.joints.VSD6Joint
+import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
+import org.valkyrienskies.core.apigame.joints.VSJointPose
+import java.util.*
 
-class SyncRotationMConstraint(): TwoShipsMConstraint() {
-    override lateinit var mainConstraint: VSJoint
+class SyncRotationMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
+    override lateinit var sPos1: Vector3d
+    override lateinit var sPos2: Vector3d
+    override var shipId1: Long = -1
+    override var shipId2: Long = -1
+
+    var sRot1: Quaterniond by get(0, Quaterniond())
+    var sRot2: Quaterniond by get(1, Quaterniond())
+
+    var maxForce: Float by get(2, 0f)
 
     constructor(
+        sRot1: Quaterniondc,
+        sRot2: Quaterniondc,
         shipId1: ShipId,
         shipId2: ShipId,
-
-        srot1: Quaterniondc,
-        srot2: Quaterniondc,
-
-        compliance: Double,
-        maxForce: Double
+        maxForce: Float
     ): this() {
-//        mainConstraint = VSFixedOrientationConstraint(shipId1, shipId2, compliance,
-//            srot1.invert(Quaterniond()),
-//            srot2.invert(Quaterniond()),
-//            maxForce
-//            )
+        this.shipId1 = shipId1
+        this.shipId2 = shipId2
+        this.sRot1 = Quaterniond(sRot1)
+        this.sRot2 = Quaterniond(sRot2)
+        this.maxForce = maxForce
     }
 
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-        val new = SyncRotationMConstraint()
-//        new.mainConstraint = mainConstraint.copy(mapped) ?: return null
-        return new
+        return SyncRotationMConstraint(Quaterniond(sRot1), Quaterniond(sRot2), shipId1, shipId2, maxForce)
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
 
-    override fun iNbtSerialize(): CompoundTag? {
-        val tag = CompoundTag()
-
-        tag.putInt("mID", mID)
-
-        sc("c1", mainConstraint, tag) {return null}
-
-        return tag
-    }
-
-    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        mID = tag.getInt("mID")
-
-        dc("c1", ::mainConstraint, tag, lastDimensionIds) {return null}
-
-        return this
-    }
-
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
+        val mainConstraint = VSD6Joint(
+            shipId1, VSJointPose(org.joml.Vector3d(), sRot1),
+            shipId2, VSJointPose(org.joml.Vector3d(), sRot2),
+            VSJointMaxForceTorque(maxForce, maxForce),
+            EnumMap(mapOf(
+                Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
+                Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
+                Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
+            ))
+        )
         mc(mainConstraint, cIDs, level) {return false}
         return true
     }

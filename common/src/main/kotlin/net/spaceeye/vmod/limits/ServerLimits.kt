@@ -25,9 +25,9 @@ data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
 class ServerLimitsInstance: AutoSerializable {
     val compliance: DoubleLimit by get(0, DoubleLimit(1e-300, 1.0))
     val maxForce: FloatLimit by get(1, FloatLimit(1.0f))
-    val fixedDistance: DoubleLimit by get(2, DoubleLimit())
-    val extensionDistance: DoubleLimit by get(3, DoubleLimit(0.001))
-    val extensionSpeed: DoubleLimit by get(4, DoubleLimit(0.001))
+    val fixedDistance: FloatLimit by get(2, FloatLimit())
+    val extensionDistance: FloatLimit by get(3, FloatLimit(0.001f))
+    val extensionSpeed: FloatLimit by get(4, FloatLimit(0.001f))
     val distanceFromBlock: DoubleLimit by get(5, DoubleLimit(0.0001))
     val stripRadius: DoubleLimit by get(6, DoubleLimit(0.0, 10.0))
     val scale: DoubleLimit by get(7, DoubleLimit(0.001))

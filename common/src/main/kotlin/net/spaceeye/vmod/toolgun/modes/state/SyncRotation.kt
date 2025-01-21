@@ -19,10 +19,8 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import org.joml.Quaterniond
 
 class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
-    var compliance: Double by get(0, 1e-20, {ServerLimits.instance.compliance.get(it)})
     var maxForce: Float by get(1, 1e20f, {ServerLimits.instance.maxForce.get(it)})
     var primaryFirstRaycast: Boolean by get(2, false)
-
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
@@ -30,9 +28,10 @@ class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         level.makeManagedConstraint(
-            SyncRotationMConstraint(shipId1, shipId2,
-                ship1?.transform?.shipToWorldRotation ?: Quaterniond(),
-                ship2?.transform?.shipToWorldRotation ?: Quaterniond(), compliance, TODO()
+            SyncRotationMConstraint(
+                (Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond())).invert(),
+                (Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond())).invert(),
+                shipId1, shipId2, maxForce
             ).addExtension(Strippable())
         ) { it.addFor(player) }
 

@@ -53,16 +53,15 @@ interface TagSerializable {
  *
  * ### If added to a normal class:
  *
- * To mark parameter for automatic ser/deser will need to use delegate provided by [get][SerializableItem.get] like
+ * To mark parameter for automatic ser/deser will need to use delegate provided by [get][TagSerializableItem.get] like
  *
  * ```kotlin
- * class Test(): AutoSerializable {
+ * class Test(): TagAutoSerializable {
  *  val item1: Int by get(1, 10)
  *  val item2: Double by get(2, 20.0, {min(it, 10.0)})
  *  val item3: String by get(3, "Hello", {it + " World"})
  *  val complexItem: SomeComplexType by get(4,
  *      SomeComplexType.default(),
- *      {it.verify()},
  *      {it, buf -> it.serialize(buf)},
  *      {buf -> SomeComplexType.default().deserialize(buf)})
  * }
@@ -70,16 +69,15 @@ interface TagSerializable {
  *
  * ### If added to a data class:
  *
- * With data class you can just use registered types directly, without using [get][SerializableItem.get], though you can still use it for complex types
+ * With data class you can just use registered types directly, without using [get][TagSerializableItem.get], though you can still use it for complex types
  * ```kotlin
  * data class Test(
  *  val item1: Int = 10,
  *  val item2: Double = 20.0,
  *  val item3: String = "Hello World"
- * ): AutoSerializable {
+ * ): TagAutoSerializable {
  * val complexItem: SomeComplexType by get(4,
  *     SomeComplexType.default(),
- *     {it.verify()},
  *     {it, buf -> it.serialize(buf)},
  *     {buf -> SomeComplexType.default().deserialize(buf)})
  * }
@@ -149,28 +147,6 @@ interface TagAutoSerializable: TagSerializable {
         getDeserializableItems().forEach { it.setValue(null, null, it.deserialize(tag, it.cachedName)) }
     }
 }
-//fun <T: TagSerializable> KClass<T>.constructor(tag: CompoundTag? = null): T {
-//    if (!this.isData) {
-//        return this.primaryConstructor!!.call()
-//    }
-//
-//    val order = this.primaryConstructor?.parameters ?: listOf()
-//    if (order.isEmpty()) throw AssertionError("Impossible Situation. Dataclass has no members.")
-//    if (tag == null) {
-//        return this.primaryConstructor!!.call()
-//    }
-//
-//    val members = order.map {item -> this.memberProperties.find { it.name == item.name }!! }
-//
-//    val delegates = members.map {
-//        val clazz = it.returnType.jvmErasure
-//        typeToFns[clazz]!!.second
-//    }
-//
-//    val items = delegates.map { it.invoke(tag) }
-//
-//    return this.primaryConstructor!!.call(*items.toTypedArray())
-//}
 
 typealias TagSerializeFn = (it: Any, tag: CompoundTag, key: String) -> Unit
 typealias TagDeserializeFn<T> = (tag: CompoundTag, key: String) -> T
@@ -213,7 +189,7 @@ object TagSerializableItem {
     }
 
     /**
-     * Should be used in the body of the AutoSerializable class
+     * Should be used in the body of the [TagAutoSerializable] class
      */
     @JvmStatic fun <T: Any> get(pos: Int, default: T,
                                 customSerialize: ((it: T, buf: CompoundTag, key: String) -> Unit)? = null,

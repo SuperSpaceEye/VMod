@@ -13,7 +13,6 @@ import net.spaceeye.vmod.toolgun.modes.gui.SliderGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SliderHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.networking.SerializableItem.get
-import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -21,10 +20,11 @@ import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.RaycastFunctions
+import org.joml.Quaterniond
 
 class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
-    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it) })
     var maxForce: Float by get(1, 1e10f, { ServerLimits.instance.maxForce.get(it) })
+    var connectionMode: SliderMConstraint.ConnectionMode by get(2, SliderMConstraint.ConnectionMode.FIXED_ORIENTATION)
 
 
     var posMode: PositionModes = PositionModes.NORMAL
@@ -66,12 +66,17 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
         val shipPair = getModePositions(posMode, shipRes1, shipRes2, precisePlacementAssistSideNum)
 
         level.makeManagedConstraint(SliderMConstraint(
+            (axisPair.first + axisPair.second) / 2,
+            (shipPair.first + shipPair.second) / 2,
+            (axisPair.first - axisPair.second).normalize(),
+            (shipPair.first - shipPair.second).normalize(),
+            Quaterniond(axisRes1.ship?.transform?.shipToWorldRotation ?: Quaterniond()),
+            Quaterniond(shipRes1.ship?.transform?.shipToWorldRotation ?: Quaterniond()),
             axisRes1.shipId, shipRes1.shipId,
-            axisPair.first, axisPair.second, shipPair.first, shipPair.second,
-            compliance, TODO(), setOf(
-                axisRes1.blockPosition, shipRes1.blockPosition,
-                axisRes2.blockPosition, shipRes2.blockPosition).toList()
-        ).addExtension(Strippable())){it.addFor(player)}
+            maxForce, connectionMode,
+            setOf(axisRes1.blockPosition, shipRes1.blockPosition,
+                  axisRes2.blockPosition, shipRes2.blockPosition).toList()
+        ).addExtension(Strippable())) {it.addFor(player)}
 
         sresetState(player)
     }

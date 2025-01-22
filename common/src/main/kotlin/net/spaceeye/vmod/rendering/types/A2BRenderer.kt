@@ -1,8 +1,8 @@
 package net.spaceeye.vmod.rendering.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
-import com.mojang.math.Matrix4f
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
@@ -37,15 +37,17 @@ open class A2BRenderer(): BaseRenderer {
     }
 
     class State: AutoSerializable {
-        var shipId1: Long by get(0, -1L)
-        var shipId2: Long by get(1, -1L)
+        @JsonIgnore private var i = 0
 
-        var point1: Vector3d by get(2, Vector3d())
-        var point2: Vector3d by get(3, Vector3d())
+        var shipId1: Long by get(i++, -1L)
+        var shipId2: Long by get(i++, -1L)
 
-        var color: Color by get(4, Color(0))
+        var point1: Vector3d by get(i++, Vector3d())
+        var point2: Vector3d by get(i++, Vector3d())
 
-        var width: Double by get(5, .2)
+        var color: Color by get(i++, Color(0))
+
+        var width: Double by get(i++, .2)
     }
     inline var shipId1 get() = state.shipId1; set(value) {state.shipId1 = value}
     inline var shipId2 get() = state.shipId2; set(value) {state.shipId2 = value}

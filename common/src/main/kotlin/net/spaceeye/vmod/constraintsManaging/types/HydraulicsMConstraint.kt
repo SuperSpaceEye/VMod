@@ -1,11 +1,11 @@
 package net.spaceeye.vmod.constraintsManaging.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.*
-import net.spaceeye.vmod.networking.TagAutoSerializable
 import net.spaceeye.vmod.networking.TagSerializableItem
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
@@ -22,7 +22,7 @@ import org.valkyrienskies.core.apigame.joints.*
 import org.valkyrienskies.core.apigame.world.ServerShipWorldCore
 import java.util.*
 
-class HydraulicsMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable, Tickable {
+class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickable {
     enum class ConnectionMode {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,
@@ -34,24 +34,26 @@ class HydraulicsMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable, Tic
     override var shipId1: Long = -1
     override var shipId2: Long = -1
 
-    var minLength: Float by get(0, -1f)
-    var maxLength: Float by get(1, -1f)
+    @JsonIgnore private var i = 0
 
-    var extensionSpeed: Float by get(2, 1f)
-    var extendedDist: Float by get(3, 0f)
+    var minLength: Float by get(i++, -1f)
+    var maxLength: Float by get(i++, -1f)
 
-    var channel: String by get(4, "")
+    var extensionSpeed: Float by get(i++, 1f)
+    var extendedDist: Float by get(i++, 0f)
 
-    var connectionMode: ConnectionMode by get(5, ConnectionMode.FIXED_ORIENTATION)
+    var channel: String by get(i++, "")
 
-    var sRot1: Quaterniond by get(6, Quaterniond())
-    var sRot2: Quaterniond by get(7, Quaterniond())
+    var connectionMode: ConnectionMode by get(i++, ConnectionMode.FIXED_ORIENTATION)
+
+    var sRot1: Quaterniond by get(i++, Quaterniond())
+    var sRot2: Quaterniond by get(i++, Quaterniond())
 
     //shipyard direction and scale information
-    var sDir1: Vector3d by get(8, Vector3d())
-    var sDir2: Vector3d by get(9, Vector3d())
+    var sDir1: Vector3d by get(i++, Vector3d())
+    var sDir2: Vector3d by get(i++, Vector3d())
 
-    var maxForce: Float by get(10, 1f)
+    var maxForce: Float by get(i++, 1f)
 
 
     private lateinit var distanceConstraint: VSJoint

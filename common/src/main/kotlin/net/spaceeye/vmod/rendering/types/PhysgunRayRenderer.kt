@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.rendering.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
@@ -31,11 +32,13 @@ fun closestPointOnALineToAnotherPoint(originPoint: Vector3d, linePoint1: Vector3
 
 class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer {
     class State: AutoSerializable {
-        var player: UUID by get(0, UUID(0L, 0L))
-        var shipId: Long by get(1, -1L)
-        var hitPosInShipyard: Vector3d by get(2, Vector3d())
-        var timestampOfBeginning: Long by get(4, -1)
-        var activeFor_ms: Long by get(5, Long.MAX_VALUE)
+        @JsonIgnore private var i = 0
+
+        var player: UUID by get(i++, UUID(0L, 0L))
+        var shipId: Long by get(i++, -1L)
+        var hitPosInShipyard: Vector3d by get(i++, Vector3d())
+        var timestampOfBeginning: Long by get(i++, -1)
+        var activeFor_ms: Long by get(i++, Long.MAX_VALUE)
     }
     val state = State()
 
@@ -152,11 +155,6 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
         poseStack.popPose()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
-        TODO("Not yet implemented")
-    }
-
-    override fun scaleBy(by: Double) {
-        TODO("Not yet implemented")
-    }
+    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? = throw AssertionError("shouldn't be copied")
+    override fun scaleBy(by: Double) = throw AssertionError("shouldn't be scaled")
 }

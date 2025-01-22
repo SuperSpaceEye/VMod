@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
@@ -24,13 +25,15 @@ import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 
 class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
-    var maxForce: Float by get(0, 1e10f, { ServerLimits.instance.maxForce.get(it) })
-    var fixedDistance: Float by get(1, -1.0f, {ServerLimits.instance.fixedDistance.get(it)})
+    @JsonIgnore private var i = 0
 
-    var primaryFirstRaycast: Boolean by get(2, false)
+    var maxForce: Float by get(i++, 1e10f, { ServerLimits.instance.maxForce.get(it) })
+    var fixedDistance: Float by get(i++, -1.0f, {ServerLimits.instance.fixedDistance.get(it)})
 
-    var segments: Int by get(3, 16, { IntLimit(1, 100).get(it)})
-    var width: Double by get(4, .2, { DoubleLimit(0.01).get(it)})
+    var primaryFirstRaycast: Boolean by get(i++, false)
+
+    var segments: Int by get(i++, 16, { IntLimit(1, 100).get(it)})
+    var width: Double by get(i++, .2, { DoubleLimit(0.01).get(it)})
 
 
     var posMode: PositionModes = PositionModes.NORMAL

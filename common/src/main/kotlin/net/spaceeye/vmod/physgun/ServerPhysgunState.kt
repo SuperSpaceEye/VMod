@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.physgun
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.VMItems
@@ -88,16 +89,18 @@ object ServerPhysgunState: ServerClosable() {
     }
 
     class C2SPhysgunStateChanged(): AutoSerializable {
-        var primaryActivated: Boolean by get(0, false)
-        var rotate: Boolean by get(1, false)
-        var freezeSelected: Boolean by get(2, false)
-        var freezeAll: Boolean by get(3, false)
-        var unfreezeAllOrOne: Boolean by get(4, false)
-        var preciseRotation: Boolean by get(5, false)
+        @JsonIgnore private var i = 0
+
+        var primaryActivated: Boolean by get(i++, false)
+        var rotate: Boolean by get(i++, false)
+        var freezeSelected: Boolean by get(i++, false)
+        var freezeAll: Boolean by get(i++, false)
+        var unfreezeAllOrOne: Boolean by get(i++, false)
+        var preciseRotation: Boolean by get(i++, false)
 
 
-        var quatDiff: Quaterniond by get(6, Quaterniond())
-        var increaseDistanceBy: Double by get(7, 0.0)
+        var quatDiff: Quaterniond by get(i++, Quaterniond())
+        var increaseDistanceBy: Double by get(i++, 0.0)
     }
 
     val c2sPrimaryStateChanged = regC2S<C2SPhysgunStateChanged>("state_changed", "server_physgun") { pkt, player ->

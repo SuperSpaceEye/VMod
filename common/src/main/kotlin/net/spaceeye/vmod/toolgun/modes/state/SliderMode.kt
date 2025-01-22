@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -23,8 +24,10 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import org.joml.Quaterniond
 
 class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
-    var maxForce: Float by get(1, 1e10f, { ServerLimits.instance.maxForce.get(it) })
-    var connectionMode: SliderMConstraint.ConnectionMode by get(2, SliderMConstraint.ConnectionMode.FIXED_ORIENTATION)
+    @JsonIgnore private var i = 0
+
+    var maxForce: Float by get(i++, 1e10f, { ServerLimits.instance.maxForce.get(it) })
+    var connectionMode: SliderMConstraint.ConnectionMode by get(i++, SliderMConstraint.ConnectionMode.FIXED_ORIENTATION)
 
 
     var posMode: PositionModes = PositionModes.NORMAL

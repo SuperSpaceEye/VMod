@@ -1,19 +1,15 @@
 # VERY IMPORTANT
 
-* Change all ShipTransform to BodyTransform (use transform.rebuild and ValkyrienSkies.vsCore.transformFactory)
-* Change all shipId mentions to handle nullable logic (if shipId is null or has world id, it's connected to world)
-* Redo all VMod constraint logic
-* Make new constraint serialization (maybe just use json serialization)
-
-* Remove automatic "Strippable" extension cuz all previous constraints are fucked anyways
 * Rename MConstraint to smth else. Maybe "VEntity" or "VmEntity" or smth like that cuz they are not really just a collection of constraints anymore
-* Rething saving/loading/creation of constraints. do i really need to save VS constraints? maybe just save only necessary build info and not whole constraints. plus if i do it that way, making MConstraints modifiable will be much easier
+* Unify "get" of AutoSerializable and AutoTagSerializable bc i want to eventually add AutoGUIBuilder
+* Make "constraint fixer" to update old mconstraints
 
 # Maybe
 
-* Add an "attachment cleaner" to remove attachments before closing server
-
 # Do Eventually
+
+# Connection Mode
+* when smth like "onMassChange" exists, create another mode for stiffness, damping, and bounce threshold that makes values depend on mass of the first ship or smth, so that instead of absolute values (like 3000 N of force) it's Nx ship mass (0.5 * 100kg)
 
 # Phys rope
 * fix incorrect loading

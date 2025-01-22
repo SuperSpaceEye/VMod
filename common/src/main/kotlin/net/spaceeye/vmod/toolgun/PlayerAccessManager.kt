@@ -29,7 +29,6 @@ class RolePermissionsData(): Serializable {
 
             buf.writeCollection(PlayerAccessManager.rolesPermissions.toList()) { buf, it ->
                 buf.writeUtf(it.first)
-                //TODO not optimal but do i care about it?
                 buf.writeCollection(it.second) { buf, it -> buf.writeVarInt(schema[it]!!) }
             }
         }
@@ -80,6 +79,7 @@ class PlayerAccessMangerState {
 }
 
 object PlayerAccessManager {
+    @JsonIgnore
     var state = PlayerAccessMangerState()
 
     var allPermissionsList get() = state.allPermissionsList; set(value) {state.allPermissionsList = value}

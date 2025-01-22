@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.rendering.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
@@ -19,16 +20,18 @@ import java.awt.Color
 
 class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer {
     class State: AutoSerializable {
-        var point1: Vector3d by get(0, Vector3d())
-        var point2: Vector3d by get(1, Vector3d())
+        @JsonIgnore private var i = 0
 
-        var color: Color by get(2, Color(0))
+        var point1: Vector3d by get(i++, Vector3d())
+        var point2: Vector3d by get(i++, Vector3d())
 
-        var width: Double by get(3, .2)
+        var color: Color by get(i++, Color(0))
 
-        var timestampOfBeginning: Long by get(4, -1)
-        var activeFor_ms: Long by get(5, -1)
-        var renderingPosition: Vector3d by get(6, Vector3d())
+        var width: Double by get(i++, .2)
+
+        var timestampOfBeginning: Long by get(i++, -1)
+        var activeFor_ms: Long by get(i++, -1)
+        var renderingPosition: Vector3d by get(i++, Vector3d())
     }
 
     val state = State()

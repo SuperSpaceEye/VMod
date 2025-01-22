@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
@@ -19,8 +20,10 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import org.joml.Quaterniond
 
 class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
-    var maxForce: Float by get(1, 1e20f, {ServerLimits.instance.maxForce.get(it)})
-    var primaryFirstRaycast: Boolean by get(2, false)
+    @JsonIgnore private var i = 0
+
+    var maxForce: Float by get(i++, 1e20f, {ServerLimits.instance.maxForce.get(it)})
+    var primaryFirstRaycast: Boolean by get(i++, false)
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 

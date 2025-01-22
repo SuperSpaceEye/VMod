@@ -13,8 +13,6 @@ import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.toolgun.modes.util.serverTryActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 
-//TODO this is somewhat outdated now with ExtendableToolgunMode
-
 interface GUIBuilder {
     val itemName: TranslatableComponent
     fun makeGUISettings(parentWindow: UIContainer)

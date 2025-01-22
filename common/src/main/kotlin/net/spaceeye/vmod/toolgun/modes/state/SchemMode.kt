@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import dev.architectury.event.EventResult
 import dev.architectury.event.events.common.PlayerEvent
 import dev.architectury.networking.NetworkManager
@@ -117,7 +118,6 @@ object ClientPlayerSchematics {
         }
     }
 
-    //TODO convert to AutoSerializable
     class SchemHolder(): Serializable {
         lateinit var data: ByteBuf
         lateinit var uuid: UUID
@@ -248,7 +248,6 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
         mode.shipInfo = pkt.shipInfo
     }
 
-    //TODO ?
     class S2CSendShipInfo(): Serializable {
         lateinit var shipInfo: IShipSchematicInfo
 
@@ -291,7 +290,9 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
 }
 
 class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
-    var rotationAngle: Ref<Double> by get(0, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> val rotationAngle = Ref(0.0) ; rotationAngle.it = buf.readDouble(); rotationAngle})
+    @JsonIgnore private var i = 0
+
+    var rotationAngle: Ref<Double> by get(i++, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> val rotationAngle = Ref(0.0) ; rotationAngle.it = buf.readDouble(); rotationAngle})
 
     override var itemsScroll: ScrollComponent? = null
     override lateinit var parentWindow: UIContainer

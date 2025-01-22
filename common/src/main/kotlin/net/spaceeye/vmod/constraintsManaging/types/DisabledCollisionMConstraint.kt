@@ -1,19 +1,23 @@
 package net.spaceeye.vmod.constraintsManaging.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.MCAutoSerializable
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.VSJointId
+import net.spaceeye.vmod.networking.TagSerializableItem.get
 
-class DisabledCollisionMConstraint(): ExtendableMConstraint() {
-    var shipId1: ShipId = -1
-    var shipId2: ShipId = -1
+class DisabledCollisionMConstraint(): ExtendableMConstraint(), MCAutoSerializable {
+    @JsonIgnore private var i = 0
+
+    var shipId1: Long by get(i++, -1L)
+    var shipId2: Long by get(i++, -1L)
 
     constructor(shipId1: ShipId, shipId2: ShipId): this() {
         this.shipId1 = shipId1
@@ -61,25 +65,5 @@ class DisabledCollisionMConstraint(): ExtendableMConstraint() {
     override fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
         level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, newShipId)) {}
         level.makeManagedConstraint(DisabledCollisionMConstraint(shipId2, newShipId)) {}
-    }
-
-    override fun iNbtSerialize(): CompoundTag? {
-        val tag = CompoundTag()
-
-        tag.putLong("shipId1", shipId1) //TODO assumes shipid is always not null which is wrong
-        tag.putLong("shipId2", shipId2) //TODO assumes shipid is always not null which is wrong
-
-        tag.putInt("managedId", mID)
-
-        return tag
-    }
-
-    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        shipId1 = tag.getLong("shipId1") //TODO assumes shipid is always not null which is wrong
-        shipId2 = tag.getLong("shipId2") //TODO assumes shipid is always not null which is wrong
-
-        mID = tag.getInt("managedId")
-
-        return this
     }
 }

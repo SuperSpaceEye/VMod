@@ -1,10 +1,11 @@
 package net.spaceeye.vmod.constraintsManaging.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.MCAutoSerializable
-import net.spaceeye.vmod.constraintsManaging.util.NewTwoShipsMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.mc
 import net.spaceeye.vmod.networking.TagSerializableItem
 import net.spaceeye.vmod.networking.TagSerializableItem.get
@@ -15,7 +16,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.*
 import java.util.EnumMap
 
-class ConnectionMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
+class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     enum class ConnectionModes {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,
@@ -25,18 +26,21 @@ class ConnectionMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
     override lateinit var sPos2: Vector3d
     override var shipId1: Long = -1
     override var shipId2: Long = -1
+    @JsonIgnore private var i = 0
 
-    var connectionMode: ConnectionModes by get(0, ConnectionModes.FIXED_ORIENTATION)
-    var distance: Float by get(1, 0f)
-    var maxForce: Float by get(2, -1f)
+    var connectionMode: ConnectionModes by get(i++, ConnectionModes.FIXED_ORIENTATION)
+    var distance: Float by get(i++, 0f)
+    var maxForce: Float by get(i++, -1f)
+    var restitution: Float by get(i++, 0f)
+    var stiffness: Float by get(i++, 0f)
+    var damping: Float by get(i++, 0f)
 
-    var sRot1: Quaterniond by get(4, Quaterniond())
-    var sRot2: Quaterniond by get(5, Quaterniond())
+    var sRot1: Quaterniond by get(i++, Quaterniond())
+    var sRot2: Quaterniond by get(i++, Quaterniond())
 
-    var sDir1: Vector3d by get(6, Vector3d())
-    var sDir2: Vector3d by get(7, Vector3d())
+    var sDir1: Vector3d by get(i++, Vector3d())
+    var sDir2: Vector3d by get(i++, Vector3d())
 
-    //TODO add more parameters?
     constructor(
         sPos1: Vector3d,
         sPos2: Vector3d,
@@ -51,6 +55,9 @@ class ConnectionMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
         shipId2: ShipId,
 
         maxForce: Float,
+        restitution: Float,
+        stiffness: Float,
+        damping: Float,
 
         distance: Float,
         connectionMode: ConnectionModes,
@@ -73,6 +80,9 @@ class ConnectionMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
         this.shipId2 = shipId2
 
         this.maxForce = maxForce
+        this.restitution = restitution
+        this.stiffness = stiffness
+        this.damping = damping
      }
 
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
@@ -82,7 +92,7 @@ class ConnectionMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
             sDir1, sDir2, sRot1, sRot2,
             mapped[shipId1] ?: return null,
             mapped[shipId2] ?: return null,
-            maxForce, distance, connectionMode,
+            maxForce, restitution, stiffness, damping, distance, connectionMode,
             copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
         )
         new.sDir1 = sDir1.copy()
@@ -124,7 +134,12 @@ class ConnectionMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
                     Pair(VSD6Joint.D6Axis.SWING2, VSD6Joint.D6Motion.FREE),
                 )),
                 linearLimits = EnumMap(mapOf(
-                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(this.distance, this.distance)))
+                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(
+                        this.distance, this.distance,
+                        restitution,
+                        stiffness = stiffness,
+                        damping = damping
+                        )))
                 ),
                 maxForceTorque = maxForceTorque
             )
@@ -132,6 +147,7 @@ class ConnectionMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
         mc(distanceConstraint, cIDs, level) {return false}
         if (connectionMode == ConnectionModes.FREE_ORIENTATION) { return true }
 
+        //TODO do i want limits to rotation constraint?
         val rotationConstraint = when(connectionMode) {
             ConnectionModes.FIXED_ORIENTATION -> {
                 val rot1 = sRot1.invert(Quaterniond())

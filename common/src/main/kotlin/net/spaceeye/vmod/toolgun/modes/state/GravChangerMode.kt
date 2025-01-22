@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.shipAttachments.GravityController
@@ -22,9 +23,10 @@ class GravChangerMode: ExtendableToolgunMode(), GravChangerHUD, GravChangerGUI {
         AllConnected,
         AllConnectedAndTouching
     }
+    @JsonIgnore private var i = 0
 
-    var gravityVector: Vector3d by get(0, Vector3d(0, -10, 0)) //TODO ?
-    var mode: Mode by get(1, Mode.Individual)
+    var gravityVector: Vector3d by get(i++, Vector3d(0, -10, 0)) //TODO ?
+    var mode: Mode by get(i++, Mode.Individual)
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         val origin = level.shipObjectWorld.loadedShips.getById((level.getShipManagingPos(raycastResult.globalHitPos?.toBlockPos() ?: return) ?: return).id) ?: return

@@ -6,6 +6,8 @@ import net.spaceeye.vmod.utils.getMapper
 import org.valkyrienskies.core.apigame.joints.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 
+//TODO all of this is pointless now
+
 //private open class BaseConstraintData(
 //    var shipId0: ShipId,
 //    var shipId1: ShipId,
@@ -151,7 +153,6 @@ object VSJointDeserializationUtil {
         return joint
     }
 
-    //TODO this should probably be changed somehow
     fun tryConvertDimensionId(tag: CompoundTag, lastDimensionIds: Map<Long, String>) {
         if (!tag.contains("shipId1") || !tag.contains("shipId0")) {return}
 

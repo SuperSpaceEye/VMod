@@ -126,7 +126,7 @@ object SchematicActionsQueue: ServerClosable() {
             while (currentShip < shipsToCreate.size) {
                 if (createdShips.size - 1 < currentShip) {
                     createdShips.add(shipsToCreate[currentShip].let { Pair(it.first.invoke(), it.second) })
-                    //TODO add here thing
+                    //TODO add here event
                 }
                 val ship = createdShips[currentShip].first
 

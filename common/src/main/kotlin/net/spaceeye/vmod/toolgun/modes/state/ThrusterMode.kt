@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -26,9 +27,11 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 
 //TODO finish this mf
 class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
-    var force: Double by get(0, 10000.0, {DoubleLimit(1.0, 1e100).get(it)})
-    var channel: String by get(1, "thruster", {ServerLimits.instance.channelLength.get(it)})
-    var scale: Double by get(2, 1.0, {ServerLimits.instance.thrusterScale.get(it)})
+    @JsonIgnore private var i = 0
+
+    var force: Double by get(i++, 10000.0, {DoubleLimit(1.0, 1e100).get(it)})
+    var channel: String by get(i++, "thruster", {ServerLimits.instance.channelLength.get(it)})
+    var scale: Double by get(i++, 1.0, {ServerLimits.instance.thrusterScale.get(it)})
 
 
     var posMode: PositionModes = PositionModes.NORMAL

@@ -2,7 +2,7 @@ package net.spaceeye.vmod.utils.vs
 
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.ConstraintManager
-import net.spaceeye.vmod.constraintsManaging.VSJointsTracker
+import net.spaceeye.vmod.constraintsManaging.util.VSJointsAccessor
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.VSJointId
@@ -72,11 +72,11 @@ fun traverseGetConnectedShips(shipId: ShipId, blacklist: Set<ShipId> = setOf()):
             vsIdsOfMConstraints.addAll(constraint.getVSIds())
         }
 
-        val constraintIds = VSJointsTracker.getIdsOfShip(shipId).filter { !traversedVSJoints.contains(it) && !vsIdsOfMConstraints.contains(it) }
-        VSJointsTracker.getVSJoints(constraintIds).forEach {
+        val constraintIds = VSJointsAccessor.getIdsOfShip(shipId).filter { !traversedVSJoints.contains(it) && !vsIdsOfMConstraints.contains(it) }
+        VSJointsAccessor.getVSJoints(constraintIds).forEach {
             val constraint = it.second ?: return@forEach
-            if (!traversedShips.contains(constraint.shipId0)) stack.add(constraint.shipId0!!) //TODO assumes shipid is always not null which is wrong
-            if (!traversedShips.contains(constraint.shipId1)) stack.add(constraint.shipId1!!) //TODO assumes shipid is always not null which is wrong
+            if (!traversedShips.contains(constraint.shipId0)) constraint.shipId0?.let{stack.add(it)}
+            if (!traversedShips.contains(constraint.shipId1)) constraint.shipId1?.let{stack.add(it)}
         }
         traversedVSJoints.addAll(constraintIds)
     }

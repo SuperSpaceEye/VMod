@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.rendering.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
@@ -33,10 +34,12 @@ object A {
 
 class ConeBlockRenderer(): BlockRenderer {
     class State: AutoSerializable {
-        var shipId: Long by get(0, -1L)
-        var pos: Vector3d by get(1, Vector3d())
-        var rot: Quaterniond by get(2, Quaterniond())
-        var scale: Float by get(3, 1.0f)
+        @JsonIgnore private var i = 0
+
+        var shipId: Long by get(i++, -1L)
+        var pos: Vector3d by get(i++, Vector3d())
+        var rot: Quaterniond by get(i++, Quaterniond())
+        var scale: Float by get(i++, 1.0f)
     }
     val state = State()
 

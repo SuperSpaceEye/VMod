@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
@@ -29,18 +30,20 @@ import java.awt.Color
 object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 
 class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
-    var maxForce: Float by get(1, 1e30f, { ServerLimits.instance.maxForce.get(it) })
-    var width: Double by get(2, .2, { DoubleLimit(0.01).get(it)})
+    @JsonIgnore private var i = 0
 
-    var color: Color by get(3, Color(62, 62, 200, 255))
+    var maxForce: Float by get(i++, 1e30f, { ServerLimits.instance.maxForce.get(it) })
+    var width: Double by get(i++, .2, { DoubleLimit(0.01).get(it)})
 
-    var fixedMinLength: Float by get(4, -1f, {ServerLimits.instance.fixedDistance.get(it)})
-    var connectionMode: HydraulicsMConstraint.ConnectionMode by get(5, HydraulicsMConstraint.ConnectionMode.FIXED_ORIENTATION)
-    var primaryFirstRaycast: Boolean by get(6, false)
+    var color: Color by get(i++, Color(62, 62, 200, 255))
 
-    var extensionDistance: Float by get(13, 5f, {ServerLimits.instance.extensionDistance.get(it)})
-    var extensionSpeed: Float by get(14, 1f, {ServerLimits.instance.extensionSpeed.get(it)})
-    var channel: String by get(15, "hydraulics", {ServerLimits.instance.channelLength.get(it)})
+    var fixedMinLength: Float by get(i++, -1f, {ServerLimits.instance.fixedDistance.get(it)})
+    var connectionMode: HydraulicsMConstraint.ConnectionMode by get(i++, HydraulicsMConstraint.ConnectionMode.FIXED_ORIENTATION)
+    var primaryFirstRaycast: Boolean by get(i++, false)
+
+    var extensionDistance: Float by get(i++, 5f, {ServerLimits.instance.extensionDistance.get(it)})
+    var extensionSpeed: Float by get(i++, 1f, {ServerLimits.instance.extensionSpeed.get(it)})
+    var channel: String by get(i++, "hydraulics", {ServerLimits.instance.channelLength.get(it)})
 
     var posMode = PositionModes.NORMAL
     var precisePlacementAssistSideNum = 3

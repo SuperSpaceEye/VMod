@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.networking
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import net.minecraft.nbt.CompoundTag
@@ -47,7 +48,6 @@ interface TagSerializable {
     fun getBuffer() = CompoundTag()
 }
 
-//TODO redo comments
 /**
  * An interface that will add functionality for semi-automatic serialization/deserialization
  *
@@ -57,10 +57,12 @@ interface TagSerializable {
  *
  * ```kotlin
  * class Test(): TagAutoSerializable {
- *  val item1: Int by get(1, 10)
- *  val item2: Double by get(2, 20.0, {min(it, 10.0)})
- *  val item3: String by get(3, "Hello", {it + " World"})
- *  val complexItem: SomeComplexType by get(4,
+ *  @JsonIgnore private var i = 0
+ *
+ *  val item1: Int by get(i++, 10)
+ *  val item2: Double by get(i++, 20.0, {min(it, 10.0)})
+ *  val item3: String by get(i++, "Hello", {it + " World"})
+ *  val complexItem: SomeComplexType by get(i++,
  *      SomeComplexType.default(),
  *      {it, buf -> it.serialize(buf)},
  *      {buf -> SomeComplexType.default().deserialize(buf)})
@@ -76,7 +78,7 @@ interface TagSerializable {
  *  val item2: Double = 20.0,
  *  val item3: String = "Hello World"
  * ): TagAutoSerializable {
- * val complexItem: SomeComplexType by get(4,
+ * val complexItem: SomeComplexType by get(0,
  *     SomeComplexType.default(),
  *     {it, buf -> it.serialize(buf)},
  *     {buf -> SomeComplexType.default().deserialize(buf)})
@@ -84,6 +86,7 @@ interface TagSerializable {
  * ```
  */
 interface TagAutoSerializable: TagSerializable {
+    @JsonIgnore
     @NonExtendable
     fun getSerializableItems(): List<TagSerializableItemDelegate<*>> {
         val toReturn = mutableListOf<TagSerializableItemDelegate<*>>()
@@ -119,6 +122,7 @@ interface TagAutoSerializable: TagSerializable {
         return toReturn
     }
 
+    @JsonIgnore
     @NonExtendable
     fun getDeserializableItems(): List<TagSerializableItemDelegate<*>> {
         val order = ( if (this::class.isData) this::class.primaryConstructor?.parameters?.map { it.name }?.toSet() else null) ?: setOf()
@@ -135,6 +139,7 @@ interface TagAutoSerializable: TagSerializable {
         }.sortedBy { it.serializationPos }
     }
 
+    @JsonIgnore
     @NonExtendable
     override fun tSerialize(): CompoundTag {
         val buf = getBuffer()
@@ -142,9 +147,15 @@ interface TagAutoSerializable: TagSerializable {
         return buf
     }
 
+    @JsonIgnore
     @NonExtendable
     override fun tDeserialize(tag: CompoundTag) {
         getDeserializableItems().forEach { it.setValue(null, null, it.deserialize(tag, it.cachedName)) }
+    }
+
+    @JsonIgnore
+    override fun getBuffer(): CompoundTag {
+        return super.getBuffer()
     }
 }
 

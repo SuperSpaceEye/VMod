@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.constraintsManaging.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.util.*
@@ -13,16 +14,18 @@ import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
 import org.valkyrienskies.core.apigame.joints.VSJointPose
 import java.util.*
 
-class SyncRotationMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
+class SyncRotationMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     override lateinit var sPos1: Vector3d
     override lateinit var sPos2: Vector3d
     override var shipId1: Long = -1
     override var shipId2: Long = -1
 
-    var sRot1: Quaterniond by get(0, Quaterniond())
-    var sRot2: Quaterniond by get(1, Quaterniond())
+    @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(2, 0f)
+    var sRot1: Quaterniond by get(i++, Quaterniond())
+    var sRot2: Quaterniond by get(i++, Quaterniond())
+
+    var maxForce: Float by get(i++, 0f)
 
     constructor(
         sRot1: Quaterniondc,

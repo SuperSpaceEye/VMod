@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.constraintsManaging.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
@@ -14,7 +15,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.*
 import java.util.*
 
-class SliderMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
+class SliderMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     enum class ConnectionMode {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,
@@ -26,14 +27,16 @@ class SliderMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
     override var shipId1: Long = -1
     override var shipId2: Long = -1
 
-    var connectionMode: ConnectionMode by get(0, ConnectionMode.FIXED_ORIENTATION)
-    var maxForce: Float by get(1, -1f)
+    @JsonIgnore private var i = 0
 
-    var sRot1: Quaterniond by get(4, Quaterniond())
-    var sRot2: Quaterniond by get(5, Quaterniond())
+    var connectionMode: ConnectionMode by get(i++, ConnectionMode.FIXED_ORIENTATION)
+    var maxForce: Float by get(i++, -1f)
 
-    var sDir1: Vector3d by get(6, Vector3d())
-    var sDir2: Vector3d by get(7, Vector3d())
+    var sRot1: Quaterniond by get(i++, Quaterniond())
+    var sRot2: Quaterniond by get(i++, Quaterniond())
+
+    var sDir1: Vector3d by get(i++, Vector3d())
+    var sDir2: Vector3d by get(i++, Vector3d())
 
     constructor(
         sPos1: Vector3d,

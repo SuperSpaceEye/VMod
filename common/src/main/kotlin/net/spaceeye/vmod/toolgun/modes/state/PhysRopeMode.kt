@@ -1,11 +1,11 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.PhysRopeMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.gui.PhysRopeGUI
 import net.spaceeye.vmod.toolgun.modes.hud.PhysRopeHUD
@@ -26,15 +26,16 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
-    var compliance: Double by get(0, 1e-20, { ServerLimits.instance.compliance.get(it) })
-    var maxForce: Float by get(1, 1e10f, { ServerLimits.instance.maxForce.get(it) })
-//    var fixedDistance: Double by get(2, -1.0, {ServerLimits.instance.fixedDistance.get(it)})
+    @JsonIgnore private var i = 0
+    //    var compliance: Double by get(i++, 1e-20, { ServerLimits.instance.compliance.get(it) })
+    var maxForce: Float by get(i++, 1e10f, { ServerLimits.instance.maxForce.get(it) })
+//    var fixedDistance: Double by get(i++, -1.0, {ServerLimits.instance.fixedDistance.get(it)})
 
-    var primaryFirstRaycast: Boolean by get(3, false)
+    var primaryFirstRaycast: Boolean by get(i++, false)
 
-    var segments: Int by get(4, 16, {ServerLimits.instance.physRopeSegments.get(it)})
-    var massPerSegment: Double by get(5, 1000.0, {ServerLimits.instance.physRopeMassPerSegment.get(it)})
-    var radius: Double by get(6, 0.5, {ServerLimits.instance.physRopeRadius.get(it)})
+    var segments: Int by get(i++, 16, {ServerLimits.instance.physRopeSegments.get(it)})
+    var massPerSegment: Double by get(i++, 1000.0, {ServerLimits.instance.physRopeMassPerSegment.get(it)})
+    var radius: Double by get(i++, 0.5, {ServerLimits.instance.physRopeRadius.get(it)})
 
 
     var posMode: PositionModes = PositionModes.NORMAL

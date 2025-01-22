@@ -1,10 +1,11 @@
 package net.spaceeye.vmod.constraintsManaging.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.MCAutoSerializable
-import net.spaceeye.vmod.constraintsManaging.util.NewTwoShipsMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.mc
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
@@ -15,14 +16,16 @@ import net.spaceeye.vmod.networking.TagSerializableItem.get
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.tryMovePosition
 
-class RopeMConstraint(): NewTwoShipsMConstraint(), MCAutoSerializable {
+class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     override lateinit var sPos1: Vector3d
     override lateinit var sPos2: Vector3d
     override var shipId1: Long = -1
     override var shipId2: Long = -1
 
-    var maxForce: Float by get(0, 0f)
-    var ropeLength: Float by get(1, 0f)
+    @JsonIgnore private var i = 0
+
+    var maxForce: Float by get(i++, 0f)
+    var ropeLength: Float by get(i++, 0f)
 
     constructor(
         sPos1: Vector3d,

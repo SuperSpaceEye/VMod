@@ -12,7 +12,7 @@ import net.spaceeye.vmod.toolgun.modes.ToolgunModeExtension
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.translate.*
 
-//TODO revise?
+//TODO add lang
 open class PlacementModesExtension(
     val showCenteredInBlock: Boolean,
     val setPosMode: (PositionModes) -> Unit,

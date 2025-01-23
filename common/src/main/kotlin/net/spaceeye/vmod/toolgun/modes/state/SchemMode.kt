@@ -164,7 +164,10 @@ object ClientPlayerSchematics {
     fun saveSchematic(name: String, schematic: IShipSchematic): Boolean {
         try {
             Files.write(Paths.get("VMod-Schematics/${name}"), ShipSchematic.writeSchematicToBuffer(schematic)!!.array())
-        } catch (e: IOException) {return false}
+        } catch (e: IOException) {
+            ELOG("Failed to save schematic to file because ${e.stackTraceToString()}")
+            return false
+        }
         return true
     }
 }

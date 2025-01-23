@@ -141,7 +141,7 @@ object SimpleMessagerNetworking {
 
     }
 
-    val c2sRequestState = regC2S<C2SRequestStatePacket>("requset_state", "simple_messager") {pkt, player ->
+    val c2sRequestState = regC2S<C2SRequestStatePacket>("request_state", "simple_messager") {pkt, player ->
         val level = player.level
 
         var succeeded = (Vector3d(player.position()) - Vector3d(pkt.pos) + 0.5).sqrDist() <= 64

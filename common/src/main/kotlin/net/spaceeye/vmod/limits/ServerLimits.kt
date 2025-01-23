@@ -22,7 +22,6 @@ data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
     }
 }
 
-//TODO should serialize to json and not to binary cuz serializing to binary is fucking stupid
 class ServerLimitsInstance: AutoSerializable {
     @JsonIgnore private var i = 0
 

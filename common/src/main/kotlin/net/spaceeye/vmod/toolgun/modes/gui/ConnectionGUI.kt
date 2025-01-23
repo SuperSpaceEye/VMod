@@ -29,6 +29,9 @@ interface ConnectionGUI: GUIBuilder, EGUIBuilder {
         makeTextEntry(WIDTH.get(), ::width, offset, offset, parentWindow, DoubleLimit(0.0, 1.0)) //TODO this
 
         makeTextEntry(MAX_FORCE.get(), ::maxForce, offset, offset, parentWindow, limits.maxForce)
+        makeTextEntry(RESTITUTION.get(), ::restitution, offset, offset, parentWindow, limits.restitution)
+        makeTextEntry(STIFFNESS.get(), ::stiffness, offset, offset, parentWindow, limits.stiffness)
+        makeTextEntry(DAMPING.get(), ::damping, offset, offset, parentWindow, limits.damping)
 
         makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow)
 

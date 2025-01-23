@@ -29,7 +29,6 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     @JsonIgnore private var i = 0
 
     var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
-    var restitution: Float by get(i++, 0f, {ServerLimits.instance.restitution.get(it)})
     var stiffness: Float by get(i++, 0f, {ServerLimits.instance.stiffness.get(it)})
     var damping: Float by get(i++, 0f, {ServerLimits.instance.damping.get(it)})
 
@@ -57,7 +56,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
             ship2?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
             Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
             Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
-            shipId1, shipId2, maxForce, restitution, stiffness, damping, distance, connectionMode,
+            shipId1, shipId2, maxForce, stiffness, damping, distance, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition),
         ).addExtension(RenderableExtension(A2BRenderer(
             ship1?.id ?: -1L,
@@ -98,7 +97,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                                 ship2?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
                                 Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
                                 Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
-                                shipId1, shipId2, it.maxForce, it.restitution, it.stiffness, it.damping, it.fixedDistance, it.connectionMode,
+                                shipId1, shipId2, it.maxForce, it.stiffness, it.damping, it.fixedDistance, it.connectionMode,
                                 listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                             ).addExtension(Strippable())
                         }

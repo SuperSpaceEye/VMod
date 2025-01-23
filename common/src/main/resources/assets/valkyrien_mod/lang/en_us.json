@@ -35,7 +35,6 @@
   "vmod.gui.setting.distance_from_block": "Distance From Block",
   "vmod.gui.setting.radius": "Radius",
   "vmod.gui.setting.mass_per_segment": "Mass Per Segment",
-  "vmod.gui.setting.restitution": "Restitution",
   "vmod.gui.setting.stiffness": "Stiffness",
   "vmod.gui.setting.damping": "Damping",
   "vmod.gui.setting.scale": "Scale",

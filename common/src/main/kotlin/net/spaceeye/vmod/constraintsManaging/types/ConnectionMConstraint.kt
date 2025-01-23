@@ -31,7 +31,6 @@ class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     var connectionMode: ConnectionModes by get(i++, ConnectionModes.FIXED_ORIENTATION)
     var distance: Float by get(i++, 0f)
     var maxForce: Float by get(i++, -1f)
-    var restitution: Float by get(i++, 0f)
     var stiffness: Float by get(i++, 0f)
     var damping: Float by get(i++, 0f)
 
@@ -55,7 +54,6 @@ class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
         shipId2: ShipId,
 
         maxForce: Float,
-        restitution: Float,
         stiffness: Float,
         damping: Float,
 
@@ -80,7 +78,6 @@ class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
         this.shipId2 = shipId2
 
         this.maxForce = maxForce
-        this.restitution = restitution
         this.stiffness = stiffness
         this.damping = damping
      }
@@ -92,7 +89,7 @@ class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
             sDir1, sDir2, sRot1, sRot2,
             mapped[shipId1] ?: return null,
             mapped[shipId2] ?: return null,
-            maxForce, restitution, stiffness, damping, distance, connectionMode,
+            maxForce, stiffness, damping, distance, connectionMode,
             copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
         )
         new.sDir1 = sDir1.copy()
@@ -116,9 +113,7 @@ class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
             VSDistanceJoint(
                 shipId1, VSJointPose(sPos1.toJomlVector3d(), Quaterniond()),
                 shipId2, VSJointPose(sPos2.toJomlVector3d(), Quaterniond()),
-                maxForceTorque,
-                this.distance,
-                this.distance,
+                maxForceTorque, this.distance, this.distance, stiffness = stiffness, damping = damping
             )
         } else {
             val rot1 = getHingeRotation(-sDir1.normalize())
@@ -134,12 +129,7 @@ class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
                     Pair(VSD6Joint.D6Axis.SWING2, VSD6Joint.D6Motion.FREE),
                 )),
                 linearLimits = EnumMap(mapOf(
-                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(
-                        this.distance, this.distance,
-                        restitution,
-                        stiffness = stiffness,
-                        damping = damping
-                        )))
+                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(this.distance, this.distance, stiffness = stiffness, damping = damping)))
                 ),
                 maxForceTorque = maxForceTorque
             )

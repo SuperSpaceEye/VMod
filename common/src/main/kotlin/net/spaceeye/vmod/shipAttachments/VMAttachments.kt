@@ -15,6 +15,9 @@ object VMAttachments {
             vsApi.registerAttachment(ThrustersController::class.java) {
                 useTransientSerializer()
             }
+            vsApi.registerAttachment(NOOP::class.java) {
+                useTransientSerializer()
+            }
         } catch (e: Exception) {
             RandomEvents.serverOnTick.on { _, unsub ->
                 register()

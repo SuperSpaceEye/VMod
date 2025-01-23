@@ -53,7 +53,9 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickab
     var sDir1: Vector3d by get(i++, Vector3d())
     var sDir2: Vector3d by get(i++, Vector3d())
 
-    var maxForce: Float by get(i++, 1f)
+    var maxForce: Float by get(i++, -1f)
+    var stiffness: Float by get(i++, 0f)
+    var damping: Float by get(i++, 0f)
 
 
     private lateinit var distanceConstraint: VSJoint
@@ -67,13 +69,16 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickab
 
         sDir1: Vector3d,
         sDir2: Vector3d,
+
         sRot1: Quaterniondc,
-
         sRot2: Quaterniondc,
-        shipId1: ShipId,
 
+        shipId1: ShipId,
         shipId2: ShipId,
+
         maxForce: Float,
+        stiffness: Float,
+        damping: Float,
 
         minLength: Float,
         maxLength: Float,
@@ -104,7 +109,10 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickab
 
         this.channel = channel
         this.connectionMode = connectionMode
+
         this.maxForce = maxForce
+        this.stiffness = stiffness
+        this.damping = damping
 
         attachmentPoints_ = attachmentPoints.toMutableList()
     }
@@ -115,7 +123,8 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickab
             tryMovePosition(sPos2, shipId2, level, mapped) ?: return null,
             sDir1, sDir2, sRot1, sRot2,
             mapped[shipId1] ?: return null,
-            mapped[shipId2] ?: return null, maxForce,
+            mapped[shipId2] ?: return null,
+            maxForce, stiffness, damping,
             minLength, maxLength, extensionSpeed * 20f, channel, connectionMode,
             copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
         )
@@ -132,7 +141,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickab
             is VSD6Joint -> {
                 (distanceConstraint as VSD6Joint).copy(
                     linearLimits = EnumMap(mapOf(
-                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(this.minLength + extendedDist, this.minLength + extendedDist)))
+                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(this.minLength + extendedDist, this.minLength + extendedDist, stiffness = stiffness, damping = damping)))
                     ),
                 )
             }
@@ -189,9 +198,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickab
             VSDistanceJoint(
                 shipId1, VSJointPose(sPos1.toJomlVector3d(), Quaterniond()),
                 shipId2, VSJointPose(sPos2.toJomlVector3d(), Quaterniond()),
-                maxForceTorque,
-                this.minLength,
-                this.minLength,
+                maxForceTorque, this.minLength, this.minLength, stiffness = stiffness, damping = damping
             )
         } else {
             val rot1 = getHingeRotation(-sDir1.normalize())
@@ -207,7 +214,7 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickab
                     Pair(VSD6Joint.D6Axis.SWING2, VSD6Joint.D6Motion.FREE),
                 )),
                 linearLimits = EnumMap(mapOf(
-                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(this.minLength, this.minLength)))
+                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(this.minLength, this.minLength, stiffness = stiffness, damping = damping)))
                 ),
                 maxForceTorque = maxForceTorque
             )

@@ -32,7 +32,10 @@ object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, 1e30f, { ServerLimits.instance.maxForce.get(it) })
+    var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
+    var stiffness: Float by get(i++, 0f, {ServerLimits.instance.stiffness.get(it)})
+    var damping: Float by get(i++, 0f, {ServerLimits.instance.damping.get(it)})
+
     var width: Double by get(i++, .2, { DoubleLimit(0.01).get(it)})
 
     var color: Color by get(i++, Color(62, 62, 200, 255))
@@ -62,7 +65,8 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
             ship1?.transform?.shipToWorldRotation ?: Quaterniond(),
             ship2?.transform?.shipToWorldRotation ?: Quaterniond(),
             shipId1, shipId2,
-            maxForce, minLength, minLength + extensionDistance,
+            maxForce, stiffness, damping,
+            minLength, minLength + extensionDistance,
             extensionSpeed, channel, connectionMode,
             listOf(prresult.blockPosition, rresult.blockPosition)
         ).addExtension(RenderableExtension(A2BRenderer(
@@ -106,7 +110,8 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                                 ship1?.transform?.shipToWorldRotation ?: Quaterniond(),
                                 ship2?.transform?.shipToWorldRotation ?: Quaterniond(),
                                 shipId1, shipId2,
-                                it.maxForce, paDistanceFromBlock.toFloat(), paDistanceFromBlock.toFloat() + it.extensionDistance,
+                                it.maxForce, it.stiffness, it.damping,
+                                paDistanceFromBlock.toFloat(), paDistanceFromBlock.toFloat() + it.extensionDistance,
                                 it.extensionSpeed, it.channel, it.connectionMode,
                                 listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                             ).addExtension(RenderableExtension(A2BRenderer(

@@ -28,6 +28,9 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     @JsonIgnore private var i = 0
 
     var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
+    var stiffness: Float by get(i++, 0f, {ServerLimits.instance.stiffness.get(it)})
+    var damping: Float by get(i++, 0f, {ServerLimits.instance.damping.get(it)})
+
     var fixedDistance: Float by get(i++, -1.0f, {ServerLimits.instance.fixedDistance.get(it)})
 
     var primaryFirstRaycast: Boolean by get(i++, false)
@@ -49,7 +52,7 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
         level.makeManagedConstraint(RopeMConstraint(
             spoint1, spoint2,
             shipId1, shipId2,
-            maxForce, dist,
+            maxForce, stiffness, damping, dist,
             listOf(prresult.blockPosition, rresult.blockPosition),
         ).addExtension(RenderableExtension(RopeRenderer(
             ship1?.id ?: -1L,

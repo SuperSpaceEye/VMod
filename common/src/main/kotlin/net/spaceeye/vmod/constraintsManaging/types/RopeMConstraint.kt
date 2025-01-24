@@ -25,8 +25,9 @@ class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
 
     @JsonIgnore private var i = 0
 
-    //TODO add stiffness and damping
-    var maxForce: Float by get(i++, 0f)
+    var maxForce: Float by get(i++, -1f)
+    var stiffness: Float by get(i++, 0f)
+    var damping: Float by get(i++, 0f)
     var ropeLength: Float by get(i++, 0f)
 
     constructor(
@@ -37,14 +38,22 @@ class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
         shipId2: ShipId,
 
         maxForce: Float,
+        stiffness: Float,
+        damping: Float,
+
         ropeLength: Float,
         attachmentPoints: List<BlockPos>,
     ): this() {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
+
         this.sPos1 = sPos1.copy()
         this.sPos2 = sPos2.copy()
+
         this.maxForce = maxForce
+        this.stiffness = stiffness
+        this.damping = damping
+
         this.ropeLength = ropeLength
         attachmentPoints_ = attachmentPoints.toMutableList()
     }
@@ -55,7 +64,7 @@ class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
              tryMovePosition(sPos2, shipId2, level, mapped) ?: return null,
              mapped[shipId1] ?: return null,
              mapped[shipId2] ?: return null,
-             maxForce, ropeLength,
+             maxForce, stiffness, damping, ropeLength,
              copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
         )
     }
@@ -73,6 +82,8 @@ class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
             shipId2, VSJointPose(sPos2.toJomlVector3d(), Quaterniond()),
             maxForceTorque,
             0f, ropeLength,
+            stiffness = stiffness,
+            damping = damping
         )
         mc(mainConstraint, cIDs, level) {return false}
         return true

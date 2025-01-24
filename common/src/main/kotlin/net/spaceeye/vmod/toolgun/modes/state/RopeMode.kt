@@ -27,7 +27,7 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, 1e10f, { ServerLimits.instance.maxForce.get(it) })
+    var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
     var fixedDistance: Float by get(i++, -1.0f, {ServerLimits.instance.fixedDistance.get(it)})
 
     var primaryFirstRaycast: Boolean by get(i++, false)

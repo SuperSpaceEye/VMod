@@ -15,6 +15,7 @@ import org.valkyrienskies.core.apigame.joints.VSJointPose
 import net.spaceeye.vmod.networking.TagSerializableItem.get
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.tryMovePosition
+import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
 
 class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     override lateinit var sPos1: Vector3d
@@ -24,6 +25,7 @@ class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
 
     @JsonIgnore private var i = 0
 
+    //TODO add stiffness and damping
     var maxForce: Float by get(i++, 0f)
     var ropeLength: Float by get(i++, 0f)
 
@@ -65,11 +67,12 @@ class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
+        val maxForceTorque = if (maxForce <= 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
         val mainConstraint = VSDistanceJoint(
             shipId1, VSJointPose(sPos1.toJomlVector3d(), Quaterniond()),
             shipId2, VSJointPose(sPos2.toJomlVector3d(), Quaterniond()),
-            minDistance = 0f,
-            maxDistance = ropeLength
+            maxForceTorque,
+            0f, ropeLength,
         )
         mc(mainConstraint, cIDs, level) {return false}
         return true

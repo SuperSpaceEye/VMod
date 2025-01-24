@@ -42,12 +42,6 @@ interface ExtendableMConstraintIMethods {
 
 abstract class ExtendableMConstraint(): MConstraint, ExtendableMConstraintIMethods {
     final override var mID: ManagedConstraintId = -1
-    /**
-     * DO NOT TOUCH IT
-     */
-    @set:Internal
-    @get:Internal
-    final override var __saveCounter: Int = -1
 
     private val _extensions = mutableSetOf<MConstraintExtension>()
     open val extensions: Collection<MConstraintExtension> get() = _extensions

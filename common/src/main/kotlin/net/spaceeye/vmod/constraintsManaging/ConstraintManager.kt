@@ -14,8 +14,6 @@ import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.constraintsManaging.MConstraintTypes.getType
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.utils.PosMap
@@ -36,7 +34,8 @@ import kotlin.math.max
 
 //ShipId seem to be unique and are retained by ships after saving/loading
 
-private const val SAVE_TAG_NAME_STRING = "vmod_ships_constraints"
+//TODO name
+private const val SAVE_TAG_NAME_STRING = "vmod_VEntities"
 
 @Internal
 class ConstraintManager: SavedData() {
@@ -48,65 +47,75 @@ class ConstraintManager: SavedData() {
 
     private val tickingConstraints = Collections.synchronizedList(mutableListOf<Tickable>())
 
-    private val toLoadConstraints = mutableMapOf<ShipId, MutableList<MConstraint>>()
+    private val toLoadConstraints = mutableListOf<MConstraint>()
     private val groupedToLoadConstraints = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
     private val shipDataStatus = mutableMapOf<ShipId, ShipData>()
 
     private val posToMId = PosMap<ManagedConstraintId>()
 
-    private var saveCounter = 0
-
-    private fun saveActiveConstraints(tag: CompoundTag): CompoundTag {
-        val shipsTag = CompoundTag()
+    fun saveActiveConstraints(tag: CompoundTag): CompoundTag {
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values
-        for ((shipId, mConstraints) in shipsConstraints) {
-            if (!allShips!!.contains(shipId)) {continue}
 
-            val constraintsTag = ListTag()
-            for (constraint in mConstraints) {
-                if (constraint.__saveCounter == saveCounter) { continue }
-                if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
-
-                val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.getType()} with ID ${constraint.mID}"); null } ?: continue
-                ctag.putString("MConstraintType", constraint.getType())
-                constraintsTag.add(ctag)
-                constraint.__saveCounter = saveCounter
-            }
-            shipsTag.put(shipId.toString(), constraintsTag)
-        }
-        tag.put(SAVE_TAG_NAME_STRING, shipsTag)
+        val constraintsTag = ListTag()
+        idToConstraint.forEach { (_, it) -> saveConstraintToList(it, dimensionIds, constraintsTag) }
+        tag.put(SAVE_TAG_NAME_STRING, constraintsTag)
 
         return tag
     }
 
+    fun loadConstraintFromTag(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
+        var strType = "Unknown"
+
+        try {
+        strType = tag.getString("VEntityType")
+        val data = tag.getCompound("data")
+        return MConstraintTypes
+            .strTypeToSupplier(strType)
+            .get()
+            .nbtDeserialize(data, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type $strType"); null }
+        } catch (e: Exception) { ELOG("Failed to load constraint of type $strType\n${e.stackTraceToString()}")
+        } catch (e: Error    ) { ELOG("Failed to load constraint of type $strType\n${e.stackTraceToString()}")}
+
+        return null
+    }
+
+    private fun saveConstraintToList(
+        constraint: MConstraint,
+        dimensionIds: Collection<ShipId>,
+        constraintsTag: ListTag
+    ) {
+        try {
+            if (!constraint.stillExists(allShips!!, dimensionIds)) { return }
+
+            val data = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.getType()} with ID ${constraint.mID}"); null } ?: return
+            val ctag = CompoundTag()
+            ctag.put("data", data)
+            ctag.putString("VEntityType", constraint.getType())
+            constraintsTag.add(ctag)
+        } catch (e: Exception) { ELOG("Failed to save constraint of type ${constraint.getType()}\n${e.stackTraceToString()}")
+        } catch (e: Error    ) { ELOG("Failed to save constraint of type ${constraint.getType()}\n${e.stackTraceToString()}")}
+    }
+
     private fun saveNotLoadedConstraints(tag: CompoundTag): CompoundTag {
-        val shipsTag = tag[SAVE_TAG_NAME_STRING]!! as CompoundTag
+        val constraintsTag = tag[SAVE_TAG_NAME_STRING] as ListTag
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values
 
-        for ((shipId, groups) in groupedToLoadConstraints) {
-            if (!allShips!!.contains(shipId)) {continue}
-
-            val constraintsTag = (shipsTag[shipId.toString()] ?:
-                run {
-                    val tag = ListTag()
-                    shipsTag.put(shipId.toString(), tag)
-                    tag
-                }) as ListTag
+        val visited = mutableSetOf<LoadingGroup>()
+        val visitedConstraints = mutableSetOf<Int>()
+        for ((_, groups) in groupedToLoadConstraints) {
             for (group in groups) {
                 if (group.wasSaved) {continue}
-
+                if (visited.contains(group)) {continue}
+                visited.add(group)
                 for (constraint in group.constraintsToLoad) {
-                    if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
+                    if (visitedConstraints.contains(constraint.mID)) {continue}
+                    visitedConstraints.add(constraint.mID)
+                    saveConstraintToList(constraint, dimensionIds, constraintsTag)
 
-                    val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.getType()} with ID ${constraint.mID}"); null } ?: continue
-                    ctag.putString("MConstraintType", constraint.getType())
-                    constraintsTag.add(ctag)
+                    if (!constraint.stillExists(allShips!!, dimensionIds)) {continue}
                 }
-                group.wasSaved = true
             }
         }
-
-        tag.put(SAVE_TAG_NAME_STRING, shipsTag)
 
         return tag
     }
@@ -123,8 +132,6 @@ class ConstraintManager: SavedData() {
     }
 
     override fun save(tag: CompoundTag): CompoundTag {
-        saveCounter++
-
         var tag = saveDimensionIds(tag)
         tag = saveActiveConstraints(tag)
         tag = saveNotLoadedConstraints(tag)
@@ -149,32 +156,14 @@ class ConstraintManager: SavedData() {
 
     private fun loadDataFromTag(tag: CompoundTag) {
         val lastDimensionIds = loadDimensionIds(tag)
-
-        val shipsTag = tag[SAVE_TAG_NAME_STRING]!! as CompoundTag
+        val constraintsTag = tag[SAVE_TAG_NAME_STRING] as ListTag
 
         var count = 0
         var maxId = -1
-        for (shipId in shipsTag.allKeys) {
-            val shipConstraintsTag = shipsTag[shipId]!! as ListTag
-            val constraints = mutableListOf<MConstraint>()
-            var strType = "None"
-            for (ctag in shipConstraintsTag) {
-                try {
-                ctag as CompoundTag
-                strType = ctag.getString("MConstraintType")
-                val mConstraint = MConstraintTypes
-                    .strTypeToSupplier(strType)
-                    .get()
-                    .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${strType}"); null } ?: continue
-
-                maxId = max(maxId, mConstraint.mID)
-
-                constraints.add(mConstraint)
-                count++
-                } catch (e: Exception) { ELOG("Failed to load constraint of type $strType\n${e.stackTraceToString()}")
-                } catch (e: Error    ) { ELOG("Failed to load constraint of type $strType\n${e.stackTraceToString()}")}
-            }
-            toLoadConstraints[shipId.toLong()] = constraints
+        for (ctag in constraintsTag) {
+            toLoadConstraints.add(loadConstraintFromTag(ctag as CompoundTag, lastDimensionIds) ?: continue)
+            count++
+            maxId = max(maxId, toLoadConstraints.last().mID)
         }
         constraintIdCounter.setCounter(maxId + 1)
         WLOG("Deserialized $count constraints")
@@ -182,14 +171,18 @@ class ConstraintManager: SavedData() {
 
     private fun groupLoadedData() {
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values
-        for ((_, mConstraints) in toLoadConstraints) {
-            val neededShipIds = mutableSetOf<ShipId>()
-            for (constraint in mConstraints) {
-                if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
-                neededShipIds.addAll(constraint.attachedToShips(dimensionIds))
-            }
-            val group = LoadingGroup(level!!, mConstraints, neededShipIds, shipDataStatus)
-            for (id in neededShipIds) {
+
+        val groups = mutableMapOf<MutableSet<Long>, MutableList<MConstraint>>()
+
+        for (constraint in toLoadConstraints) {
+            if (!constraint.stillExists(allShips!!, dimensionIds)) { continue }
+            val neededIds = constraint.attachedToShips(dimensionIds).toMutableSet()
+            groups.getOrPut(neededIds) { mutableListOf() }.add(constraint)
+        }
+
+        for ((neededIds, toLoad) in groups) {
+            val group = LoadingGroup(level!!, toLoad, neededIds, shipDataStatus)
+            for (id in neededIds) {
                 groupedToLoadConstraints.computeIfAbsent(id) { mutableListOf() }.add(group)
             }
         }
@@ -437,7 +430,7 @@ class ConstraintManager: SavedData() {
         fun load(tag: CompoundTag): ConstraintManager {
             val data = create()
 
-            if (tag.contains(SAVE_TAG_NAME_STRING) && tag[SAVE_TAG_NAME_STRING] is CompoundTag) {
+            if (tag.contains(SAVE_TAG_NAME_STRING)) {
                 data.load(tag)
             }
 
@@ -481,67 +474,21 @@ class ConstraintManager: SavedData() {
                 val toSave = shipsToBeSaved.filter { instance.shipsConstraints.containsKey(it.id) }
                 if (toSave.isEmpty()) {return@registerCopyPasteEvents null}
 
+                val constraintsToSave = toSave.mapNotNull { instance.shipsConstraints[it.id] }.flatten().toSet()
                 val tag = CompoundTag()
-                val shipsTag = CompoundTag()
-                instance.saveCounter++
-
-                toSave.forEach { ship ->
-                    val constraintsTag = ListTag()
-                    val constraints = instance.shipsConstraints[ship.id]!!
-                    for (constraint in constraints) {
-                        if (constraint.__saveCounter == instance.saveCounter) { continue }
-                        val ctag = constraint.nbtSerialize() ?: run { WLOG("Unable to serialize constraint ${constraint.getType()} with ID ${constraint.mID}"); null } ?: continue
-                        ctag.putString("MConstraintType", constraint.getType())
-                        constraintsTag.add(ctag)
-                        constraint.__saveCounter = instance.saveCounter
-                    }
-                    shipsTag.put("${ship.id}", constraintsTag)
-                }
-
-                tag.put(SAVE_TAG_NAME_STRING, shipsTag)
-
+                tag.put(SAVE_TAG_NAME_STRING, ListTag().also { tag ->
+                    constraintsToSave.forEach { instance.saveConstraintToList(it, dimensionToGroundBodyIdImmutable!!.values, tag) } })
                 instance.saveDimensionIds(tag)
 
                 CompoundTagSerializable(tag)
             }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: ISerializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
+
                 if (loadFile == null) {return@registerCopyPasteEvents}
                 val instance = getInstance()
 
-                val file = CompoundTagSerializable(CompoundTag())
-                file.deserialize(loadFile.serialize())
-
-                val tag = file.tag!!
-                val toInitConstraints = mutableListOf<MConstraint>()
-
+                val tag = CompoundTagSerializable(CompoundTag()).also { it.deserialize(loadFile.serialize()) }.tag!!
                 val lastDimensionIds = instance.loadDimensionIds(tag)
-
-                val shipsTag = tag[SAVE_TAG_NAME_STRING]!! as CompoundTag
-
-                var count = 0
-                var maxId = -1
-                for (shipId in shipsTag.allKeys) {
-                    val shipConstraintsTag = shipsTag[shipId]!! as ListTag
-                    val constraints = mutableListOf<MConstraint>()
-                    for (ctag in shipConstraintsTag) {
-                        var strType = "UNKNOWN"
-
-                        try {
-                        ctag as CompoundTag
-                        strType = ctag.getString("MConstraintType")
-                        val mConstraint = MConstraintTypes
-                            .strTypeToSupplier(strType)
-                            .get()
-                            .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${strType}"); null } ?: continue
-
-                        maxId = max(maxId, mConstraint.mID)
-
-                        constraints.add(mConstraint)
-                        count++
-                        } catch (e: Exception) { ELOG("Failed to load constraint of type ${strType}\n${e.stackTraceToString()}")
-                        } catch (e: Error    ) { ELOG("Failed to load constraint of type $strType\n${e.stackTraceToString()}")}
-                    }
-                    toInitConstraints.addAll(constraints)
-                }
+                val toInitConstraints = (tag[SAVE_TAG_NAME_STRING] as ListTag).mapNotNull { instance.loadConstraintFromTag(it as CompoundTag, lastDimensionIds) }
 
                 val mapped = loadedShips.associate {
                     if (lastDimensionIds.containsKey(it.second)) {

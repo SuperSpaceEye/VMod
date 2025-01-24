@@ -6,7 +6,6 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.utils.Vector3d
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -18,10 +17,6 @@ interface Tickable {
 
 interface MConstraint {
     var mID: ManagedConstraintId
-    //DO NOT TOUCH IT
-    @set:Internal
-    @get:Internal
-    var __saveCounter: Int
 
     fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
     // SHOULDN'T RETURN GROUND SHIPID
@@ -45,26 +40,4 @@ interface MConstraint {
 
     @Internal fun onMakeMConstraint(level: ServerLevel): Boolean
     @Internal fun onDeleteMConstraint(level: ServerLevel)
-}
-
-fun updatePositions(
-    newShipId: ShipId,
-    previous: BlockPos,
-    new: BlockPos,
-
-    attachmentPoints: MutableList<BlockPos>,
-
-    shipIds: MutableList<ShipId>,
-    localPoints: MutableList<List<Vector3dc>>
-) {
-    for (i in attachmentPoints.indices) {
-        val apoint = attachmentPoints[i]
-        if (previous != apoint) {continue}
-        shipIds[i] = newShipId
-        localPoints[i] = localPoints[i].mapIndexed {
-            i, it ->
-            (Vector3d(it) - Vector3d(apoint) + Vector3d(new)).toJomlVector3d()
-        }
-        attachmentPoints[i] = new
-    }
 }

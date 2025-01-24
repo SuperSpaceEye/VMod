@@ -14,7 +14,7 @@ data class MyTranslatableComponent(val enTranslation: String, val key: String) {
 }
 
 private inline fun makeComponent(default: String, key: String) = MyTranslatableComponent(default, key).asMC()
-inline fun Component.get(): String = I18n.get(this.key)
+inline fun Component.get(): String = I18n.get(this.string)
 inline fun makeFake(s: String) = Component.literal(s)
 
 private const val path = "vmod.gui."

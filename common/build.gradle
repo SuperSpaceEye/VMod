@@ -17,7 +17,7 @@ dependencies {
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury:${rootProject.architectury_version}"
 
-    modApi("org.valkyrienskies:valkyrienskies-120-common:${rootProject.vs2_version}")
+    modApi(files("vs_jars/valkyrienskies-120-2.5.0-beta.2+acb035c4ef.jar"))
     implementation("org.valkyrienskies.core:api:${rootProject.vscore_version}") {
         exclude group: 'org.joml', module: ''
     }

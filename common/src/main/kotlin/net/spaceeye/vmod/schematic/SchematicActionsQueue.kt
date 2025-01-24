@@ -207,7 +207,7 @@ object SchematicActionsQueue: ServerClosable() {
                             val entity = EntityType.create(tag, level).get()
                             entity.moveTo(newPos.x, newPos.y, newPos.z)
                             if (entity is Mob) {
-                                entity.finalizeSpawn(level, level.getCurrentDifficultyAt(BlockPos(newPos.toMinecraft())), MobSpawnType.STRUCTURE, null, tag)
+                                entity.finalizeSpawn(level, level.getCurrentDifficultyAt(Vector3d(newPos).toBlockPos()), MobSpawnType.STRUCTURE, null, tag)
                             }
                             level.addFreshEntityWithPassengers(entity)
                         } catch (_: Exception) {}

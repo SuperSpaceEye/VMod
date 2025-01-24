@@ -8,7 +8,7 @@ import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.TickableMConstraintExtension
-import net.spaceeye.vmod.shipForceInducers.ThrustersController
+import net.spaceeye.vmod.shipAttachments.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getVector3d
 import net.spaceeye.vmod.utils.putVector3d
@@ -16,7 +16,7 @@ import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
+import org.valkyrienskies.core.apigame.joints.VSJointId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
@@ -44,7 +44,7 @@ class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
     override fun iAttachedToShips(dimensionIds: Collection<ShipId>) = mutableListOf(shipId)
     override fun iGetAttachmentPositions(qshipId: ShipId): List<BlockPos> = if (qshipId == shipId) listOf(bpos) else {listOf()}
     override fun iGetAttachmentPoints(qshipId: ShipId): List<Vector3d> = if (shipId == qshipId) listOf(Vector3d(pos)) else listOf()
-    override fun iGetVSIds(): Set<VSConstraintId> = setOf()
+    override fun iGetVSIds(): Set<VSJointId> = setOf()
 
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
@@ -83,7 +83,7 @@ class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
 
     override fun iOnDeleteMConstraint(level: ServerLevel) {
         wasRemoved = true
-        val ship = level.shipObjectWorld.allShips.getById(shipId) ?: return
+        val ship = level.shipObjectWorld.loadedShips.getById(shipId) ?: return
 
         val controller = ThrustersController.getOrCreate(ship)
 

@@ -14,12 +14,15 @@ import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.MessageTypes
+import net.spaceeye.vmod.networking.SerializableItem
+import net.spaceeye.vmod.networking.TagSerializableItem
 import net.spaceeye.vmod.physgun.ClientPhysgunState
 import net.spaceeye.vmod.physgun.PhysgunItem
 import net.spaceeye.vmod.physgun.ServerPhysgunState
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
+import net.spaceeye.vmod.shipAttachments.VMAttachments
 import net.spaceeye.vmod.toolgun.*
 import net.spaceeye.vmod.toolgun.modes.ToolgunExtensions
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
@@ -30,7 +33,6 @@ import net.spaceeye.vmod.utils.closeServerObjects
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.valkyrienskies.core.impl.game.ships.ShipObjectServerWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 fun ILOG(s: String) = VM.logger.info(s)
@@ -68,6 +70,7 @@ object VM {
         VMBlockEntities.register()
         VMItems.register()
         VMEntities.register()
+        VMAttachments.register()
 
         makeEvents()
     }
@@ -83,6 +86,8 @@ object VM {
         ToolgunExtensions
         ToolgunModes
         ServerSettingsTypes
+        SerializableItem
+        TagSerializableItem
     }
 
     @JvmStatic
@@ -108,7 +113,7 @@ object VM {
             serverStopping = false
             ServerLevelHolder.server = server
             ServerLevelHolder.overworldServerLevel = server.overworld()
-            ServerLevelHolder.shipObjectWorld = server.shipObjectWorld as ShipObjectServerWorld
+            ServerLevelHolder.shipObjectWorld = server.shipObjectWorld
             ConstraintManager.initNewInstance()
 
             VSGravityManager

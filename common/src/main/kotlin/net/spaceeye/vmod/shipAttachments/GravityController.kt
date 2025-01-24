@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.shipForceInducers
+package net.spaceeye.vmod.shipAttachments
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -6,10 +6,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.vsStuff.VSGravityManager
+import org.valkyrienskies.core.api.attachment.getAttachment
 import org.valkyrienskies.core.api.ships.*
-import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 
-//TODO make changeable default dimension gravity
 @JsonAutoDetect(
     fieldVisibility = JsonAutoDetect.Visibility.ANY,
     getterVisibility = JsonAutoDetect.Visibility.NONE,
@@ -33,9 +32,7 @@ class GravityController(
         }
 
     override fun applyForces(physShip: PhysShip) {
-        physShip as PhysShipImpl
-
-        val forceDiff = (gravityVector - VS_DEFAULT_GRAVITY) * physShip.inertia.shipMass
+        val forceDiff = (gravityVector - VS_DEFAULT_GRAVITY) * physShip.mass
         if (forceDiff.sqrDist() < Float.MIN_VALUE) return
 
         physShip.applyInvariantForce(forceDiff.toJomlVector3d())
@@ -48,10 +45,10 @@ class GravityController(
     companion object {
         val VS_DEFAULT_GRAVITY = Vector3d(0, -10, 0)
 
-        fun getOrCreate(ship: ServerShip) =
+        fun getOrCreate(ship: LoadedServerShip) =
             ship.getAttachment<GravityController>()
                 ?: GravityController(ship.chunkClaimDimension).also {
-                    ship.saveAttachment(it)
+                    ship.setAttachment(it)
                 }
     }
 }

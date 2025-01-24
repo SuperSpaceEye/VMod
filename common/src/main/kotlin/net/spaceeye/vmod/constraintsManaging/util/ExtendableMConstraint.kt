@@ -12,34 +12,35 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
+import org.valkyrienskies.core.apigame.joints.VSJointId
 
-abstract class ExtendableMConstraint(): MConstraint {
-    abstract fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
+interface ExtendableMConstraintIMethods {
+    fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
     // SHOULDN'T RETURN GROUND SHIPID
-    abstract fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId>
+    fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId>
 
     // positions to which constraint is "attached" to the ship/world
     // is needed for strip tool, moving constraints on ship splitting
-    abstract fun iGetAttachmentPositions(shipId: Long): List<BlockPos>
+    fun iGetAttachmentPositions(shipId: Long): List<BlockPos>
 
-    abstract fun iGetAttachmentPoints(shipId: Long): List<Vector3d>
+    fun iGetAttachmentPoints(shipId: Long): List<Vector3d>
 
     // is called on ship splitting
-    open fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
+    fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
 
-    abstract fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint?
+    fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint?
 
-    abstract fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d)
-    abstract fun iGetVSIds(): Set<VSConstraintId>
+    fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d)
+    fun iGetVSIds(): Set<VSJointId>
 
-    abstract fun iNbtSerialize(): CompoundTag?
-    abstract fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint?
+    fun iNbtSerialize(): CompoundTag?
+    fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint?
 
-    @Internal abstract fun iOnMakeMConstraint(level: ServerLevel): Boolean
-    @Internal abstract fun iOnDeleteMConstraint(level: ServerLevel)
+    @Internal fun iOnMakeMConstraint(level: ServerLevel): Boolean
+    @Internal fun iOnDeleteMConstraint(level: ServerLevel)
+}
 
-
+abstract class ExtendableMConstraint(): MConstraint, ExtendableMConstraintIMethods {
     final override var mID: ManagedConstraintId = -1
     /**
      * DO NOT TOUCH IT
@@ -96,7 +97,7 @@ abstract class ExtendableMConstraint(): MConstraint {
         return iOnScaleBy(level, scaleBy, scalingCenter)
     }
 
-    final override fun getVSIds(): Set<VSConstraintId> {
+    final override fun getVSIds(): Set<VSJointId> {
         return iGetVSIds()
     }
 

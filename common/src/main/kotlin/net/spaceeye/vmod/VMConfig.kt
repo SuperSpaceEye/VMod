@@ -2,7 +2,6 @@ package net.spaceeye.vmod
 
 import net.spaceeye.vmod.config.*
 
-//TODO revise
 object VMConfig {
     lateinit var server_config_holder: AbstractConfigBuilder
     lateinit var client_config_holder: AbstractConfigBuilder

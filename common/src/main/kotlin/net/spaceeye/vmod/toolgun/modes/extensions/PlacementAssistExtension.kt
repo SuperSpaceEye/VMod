@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.extensions
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import dev.architectury.event.EventResult
 import gg.essential.elementa.components.UIContainer
 import net.minecraft.client.Minecraft
@@ -38,9 +39,12 @@ import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
 import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
+import org.valkyrienskies.core.api.VsBeta
+import org.valkyrienskies.core.api.bodies.properties.rebuild
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
@@ -129,10 +133,12 @@ class PlacementAssistExtension(
         super<AutoSerializable>.deserialize(buf)
     }
 
-    override var paDistanceFromBlock: Double by get(0, 0.01, {ServerLimits.instance.distanceFromBlock.get(it)})
-    override var paStage: ThreeClicksActivationSteps by get(1, ThreeClicksActivationSteps.FIRST_RAYCAST)
-    override var paAngle: Ref<Double> by get(2, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> paAngle.it = buf.readDouble(); paAngle})
-    override var paScrollAngle: Double by get(3, Math.toRadians(10.0))
+    @JsonIgnore private var i = 0
+
+    override var paDistanceFromBlock: Double by get(i++, 0.01, {ServerLimits.instance.distanceFromBlock.get(it)})
+    override var paStage: ThreeClicksActivationSteps by get(i++, ThreeClicksActivationSteps.FIRST_RAYCAST)
+    override var paAngle: Ref<Double> by get(i++, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> paAngle.it = buf.readDouble(); paAngle})
+    override var paScrollAngle: Double by get(i++, Math.toRadians(10.0))
 
 
     override var paCaughtShip: ClientShip? = null
@@ -266,6 +272,7 @@ interface PlacementAssistServerPart {
     var paFirstResult: RaycastFunctions.RaycastResult?
     var paSecondResult: RaycastFunctions.RaycastResult?
 
+    //TODO change stuff to floats
     val paMConstraintBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> MConstraint
     val paNetworkingObject: PlacementAssistNetworking
 
@@ -300,6 +307,7 @@ interface PlacementAssistServerPart {
         paSecondResult = raycastResult
     }
 
+    @OptIn(VsBeta::class)
     private fun paFunctionThird(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (paFirstResult == null || paSecondResult == null) {return handleFailure(player)}
 
@@ -333,7 +341,9 @@ interface PlacementAssistServerPart {
         var rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
         // rotation IS IMPORTANT, so make a new transform with new rotation to translate points
-        val newTransform = (ship1.transform as ShipTransformImpl).copy(shipToWorldRotation = rotation)
+        val newTransform = ship1.transform.rebuild {
+            this.rotation(rotation)
+        }
 
         // we cannot modify position in ship, we can, however, modify position in world
         // this translates ship so that after teleportation its spoint1 will be at rpoint2

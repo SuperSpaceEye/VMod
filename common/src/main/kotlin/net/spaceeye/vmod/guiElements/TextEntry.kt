@@ -7,6 +7,7 @@ import gg.essential.elementa.components.input.UITextInput
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.limits.DoubleLimit
+import net.spaceeye.vmod.limits.FloatLimit
 import net.spaceeye.vmod.limits.IntLimit
 import net.spaceeye.vmod.limits.StrLimit
 import java.awt.Color
@@ -59,6 +60,7 @@ class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String
     }
 }
 
+//TODO turn this into generic or smth
 fun makeTextEntry(name: String,
                   value: KMutableProperty0<Double>,
                   xPadding: Float,
@@ -69,6 +71,33 @@ fun makeTextEntry(name: String,
         str, entry ->
 
         val parsedValue = str.toDoubleOrNull()
+
+        if (parsedValue == null || (parsedValue < limits.minValue || parsedValue > limits.maxValue)) {
+            entry.textHolder.setColor(Color(230, 0, 0))
+            return@TextEntry
+        }
+        entry.textHolder.setColor(Color(170, 170, 170))
+
+        value.set(parsedValue)
+    }.constrain {
+        x = xPadding.pixels()
+        y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
+        width = 100.percent() - (xPadding * 2).pixels()
+    } childOf makeChildOf
+    entry.textArea.setText(value.get().toString())
+    return entry
+}
+
+fun makeTextEntry(name: String,
+                  value: KMutableProperty0<Float>,
+                  xPadding: Float,
+                  yPadding: Float,
+                  makeChildOf: UIComponent,
+                  limits: FloatLimit = FloatLimit()): TextEntry {
+    val entry = TextEntry(name) {
+            str, entry ->
+
+        val parsedValue = str.toFloatOrNull()
 
         if (parsedValue == null || (parsedValue < limits.minValue || parsedValue > limits.maxValue)) {
             entry.textHolder.setColor(Color(230, 0, 0))

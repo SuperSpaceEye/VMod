@@ -7,10 +7,7 @@ import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.guiElements.makeTextEntry
-import net.spaceeye.vmod.limits.DoubleLimit
-import net.spaceeye.vmod.limits.IntLimit
-import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.limits.StrLimit
+import net.spaceeye.vmod.limits.*
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsGUIBuilder
 import net.spaceeye.vmod.translate.APPLY_NEW_SERVER_LIMITS
 import net.spaceeye.vmod.translate.SERVER_LIMITS
@@ -39,6 +36,10 @@ class ServerLimitsSettings: ServerSettingsGUIBuilder {
 
             when(val limit = item.it) {
                 is DoubleLimit -> {
+                    makeTextEntry("Min \"$name\"", FakeKProperty({limit.minValue}) {limit.minValue = it}, 2f, 2f, parentWindow)
+                    makeTextEntry("Max \"$name\"", FakeKProperty({limit.maxValue}) {limit.maxValue = it}, 2f, 2f, parentWindow)
+                }
+                is FloatLimit -> {
                     makeTextEntry("Min \"$name\"", FakeKProperty({limit.minValue}) {limit.minValue = it}, 2f, 2f, parentWindow)
                     makeTextEntry("Max \"$name\"", FakeKProperty({limit.maxValue}) {limit.maxValue = it}, 2f, 2f, parentWindow)
                 }

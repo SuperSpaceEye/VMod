@@ -6,7 +6,6 @@ import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.SyncRotation
-import net.spaceeye.vmod.translate.COMPLIANCE
 import net.spaceeye.vmod.translate.MAX_FORCE
 import net.spaceeye.vmod.translate.SYNC_ROTATION
 import net.spaceeye.vmod.translate.get
@@ -19,7 +18,6 @@ interface SyncRotationGUI: GUIBuilder, EGUIBuilder {
         val offset = 2.0f
         val limits = ServerLimits.instance
 
-        makeTextEntry(COMPLIANCE.get(), ::compliance, offset, offset, parentWindow, limits.compliance)
         makeTextEntry(MAX_FORCE.get(),  ::maxForce,   offset, offset, parentWindow, limits.maxForce)
     }
 }

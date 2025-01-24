@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -20,7 +21,9 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.mod.common.getShipManagingPos
 
 class DisableCollisionsMode: ExtendableToolgunMode(), DisableCollisionHUD, DisableCollisionsGUI {
-    var primaryFirstRaycast: Boolean by get(0, false)
+    @JsonIgnore private var i = 0
+
+    var primaryFirstRaycast: Boolean by get(i++, false)
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 

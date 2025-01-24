@@ -1,17 +1,18 @@
 package net.spaceeye.vmod.limits
 
-import io.netty.buffer.Unpooled
-import net.minecraft.network.FriendlyByteBuf
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.utils.EmptyPacket
+import net.spaceeye.vmod.utils.getMapper
 import kotlin.math.max
 import kotlin.math.min
 
 data class DoubleLimit(var minValue: Double = -Double.MAX_VALUE, var maxValue: Double = Double.MAX_VALUE) { fun get(num: Double) = max(minValue, min(maxValue, num)) }
+data class FloatLimit (var minValue: Float  = -Float.MAX_VALUE,  var maxValue: Float  = Float.MAX_VALUE ) { fun get(num: Float)  = max(minValue, min(maxValue, num)) }
 data class IntLimit   (var minValue: Int    =  Int.MIN_VALUE,    var maxValue: Int    = Int.MAX_VALUE   ) { fun get(num: Int)    = max(minValue, min(maxValue, num)) }
 
 data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
@@ -22,28 +23,33 @@ data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
 }
 
 class ServerLimitsInstance: AutoSerializable {
-    val compliance: DoubleLimit by get(0, DoubleLimit(1e-300, 1.0))
-    val maxForce: DoubleLimit by get(1, DoubleLimit(1.0))
-    val fixedDistance: DoubleLimit by get(2, DoubleLimit())
-    val extensionDistance: DoubleLimit by get(3, DoubleLimit(0.001))
-    val extensionSpeed: DoubleLimit by get(4, DoubleLimit(0.001))
-    val distanceFromBlock: DoubleLimit by get(5, DoubleLimit(0.0001))
-    val stripRadius: DoubleLimit by get(6, DoubleLimit(0.0, 10.0))
-    val scale: DoubleLimit by get(7, DoubleLimit(0.001))
-    val precisePlacementAssistSides: IntLimit by get(8, IntLimit(2, 11))
+    @JsonIgnore private var i = 0
 
-    val physRopeSegments: IntLimit by get(9, IntLimit(1, 100))
-    val physRopeMassPerSegment: DoubleLimit by get(10, DoubleLimit(0.01, 10000.0))
-    val physRopeRadius: DoubleLimit by get(11, DoubleLimit(0.01, 10.0))
+    val maxForce: FloatLimit by get(i++, FloatLimit())
+    val stiffness: FloatLimit by get(i++, FloatLimit(0f))
+    val damping: FloatLimit by get(i++, FloatLimit())
 
-    val channelLength: StrLimit by get(12, StrLimit(50))
+    val fixedDistance: FloatLimit by get(i++, FloatLimit())
+    val extensionDistance: FloatLimit by get(i++, FloatLimit(0.001f))
+    val extensionSpeed: FloatLimit by get(i++, FloatLimit(0.001f))
+    val distanceFromBlock: DoubleLimit by get(i++, DoubleLimit(0.0001))
+    val stripRadius: DoubleLimit by get(i++, DoubleLimit(0.0, 10.0))
+    val scale: DoubleLimit by get(i++, DoubleLimit(0.001))
+    val precisePlacementAssistSides: IntLimit by get(i++, IntLimit(2, 11))
 
-    val thrusterScale: DoubleLimit by get(13, DoubleLimit(0.1, 10.0))
+    val physRopeSegments: IntLimit by get(i++, IntLimit(1, 100))
+    val physRopeMassPerSegment: DoubleLimit by get(i++, DoubleLimit(0.01, 10000.0))
+    val physRopeRadius: DoubleLimit by get(i++, DoubleLimit(0.01, 10.0))
+
+    val channelLength: StrLimit by get(i++, StrLimit(50))
+
+    val thrusterScale: DoubleLimit by get(i++, DoubleLimit(0.1, 10.0))
 }
 
 object ServerLimits {
     init {
         SerializableItem.registerSerializationItem(DoubleLimit::class, {it, buf -> buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) {buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
+        SerializableItem.registerSerializationItem(FloatLimit::class, {it, buf -> buf.writeFloat(it.minValue); buf.writeFloat(it.maxValue) }) {buf -> FloatLimit(buf.readFloat(), buf.readFloat())}
         SerializableItem.registerSerializationItem(IntLimit::class, {it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) {buf -> IntLimit(buf.readInt(), buf.readInt())}
         SerializableItem.registerSerializationItem(StrLimit::class, {it, buf -> buf.writeInt(it.sizeLimit)}) {buf -> StrLimit(buf.readInt())}
     }
@@ -60,20 +66,18 @@ object ServerLimits {
         }
 
     private fun save(value: ServerLimitsInstance) {
-        val arr = value.serialize().accessByteBufWithCorrectSize()
-        ExternalDataUtil.writeObject("ServerLimits", arr)
+        val mapper = getMapper()
+        ExternalDataUtil.writeObject("ServerLimits.json", mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(value))
     }
 
     private fun load() {
-        val bytes = ExternalDataUtil.readObject("ServerLimits") ?: run {
+        val bytes = ExternalDataUtil.readObject("ServerLimits.json") ?: run {
             save(_instance)
             return
         }
-        val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
         try {
-            val temp = ServerLimitsInstance()
-            temp.deserialize(buf)
-            _instance = temp
+            val mapper = getMapper()
+            _instance = mapper.readValue(bytes, ServerLimitsInstance::class.java)
         } catch (e: Exception) {
             ELOG("Failed to deserialize Server Limits")
             save(_instance)

@@ -10,7 +10,6 @@ import net.minecraft.world.level.block.state.BlockBehaviour
 import net.spaceeye.vmod.blocks.SimpleMessager
 import net.spaceeye.vmod.VMItems.TAB
 
-//TODO does it actually 100% work?
 private object NoTabBlocks {
     val BLOCKS = DeferredRegister.create(VM.MOD_ID, Registries.BLOCK)
 

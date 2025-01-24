@@ -16,9 +16,9 @@ interface ScaleGUI: GUIBuilder, EGUIBuilder {
     override fun eMakeGUISettings(parentWindow: UIContainer) {
         this as ScaleMode
         makeTextEntry(SCALE.get(), ::scale, 2.0f, 2.0f, parentWindow, ServerLimits.instance.scale)
-        makeDropDown("Scaling Mode", parentWindow, 2.0f, 2.0f, listOf(
-            DItem("Scale All Connected", scaleAllConnected) {scaleAllConnected = true},
-            DItem("Scale Single Ship", !scaleAllConnected) {scaleAllConnected = false}
+        makeDropDown(SCALING_MODE.get(), parentWindow, 2.0f, 2.0f, listOf(
+            DItem(SCALE_ALL_CONNECTED.get(), scaleAllConnected) {scaleAllConnected = true},
+            DItem(SCALE_SINGLE_SHIP.get(), !scaleAllConnected) {scaleAllConnected = false}
         ))
     }
 }

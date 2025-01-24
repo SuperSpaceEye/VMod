@@ -14,9 +14,9 @@ plugins {
     id "com.github.johnrengelman.shadow" version "8.1.1"
 
     // Adds the Kotlin Gradle plugin
-    id 'org.jetbrains.kotlin.jvm' version '1.8.21'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.0'
     // OPTIONAL Kotlin Serialization plugin
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.21'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.0'
 }
 architectury {
     platformSetupLoomIde()
@@ -80,7 +80,7 @@ dependencies {
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
 
     modApi("org.valkyrienskies:valkyrienskies-120-forge:${rootProject.vs2_version}") { transitive = false }
-    modImplementation("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
+    implementation("org.valkyrienskies.core:api:${rootProject.vs_core_version}")
 
     implementation 'thedarkcolour:kotlinforforge:3.12.0'
 
@@ -91,9 +91,6 @@ dependencies {
     modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }
     modCompileOnly("com.tterrag.registrate:Registrate:${registrate_forge_version}")
     modCompileOnly("com.jozufozu.flywheel:flywheel-forge-${flywheel_forge_minecraft_version}:${flywheel_forge_version}")
-
-    //for mixin
-    modCompileOnlyApi(files("vs_jars/takeoff-forge-1.0.0-beta1+308678c5c5.jar"))
 }
 
 processResources {

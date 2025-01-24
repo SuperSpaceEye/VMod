@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.rendering.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
@@ -22,16 +23,18 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 
 class RopeRenderer(): BaseRenderer {
     class State: AutoSerializable {
-        var shipId1: Long by get(0, -1L)
-        var shipId2: Long by get(1, -1L)
+        @JsonIgnore private var i = 0
 
-        var point1: Vector3d by get(2, Vector3d())
-        var point2: Vector3d by get(3, Vector3d())
+        var shipId1: Long by get(i++, -1L)
+        var shipId2: Long by get(i++, -1L)
 
-        var length: Double by get(4, 0.0)
+        var point1: Vector3d by get(i++, Vector3d())
+        var point2: Vector3d by get(i++, Vector3d())
 
-        var width: Double by get(5, .2)
-        var segments: Int by get(6, 16)
+        var length: Double by get(i++, 0.0)
+
+        var width: Double by get(i++, .2)
+        var segments: Int by get(i++, 16)
     }
     val state = State()
 

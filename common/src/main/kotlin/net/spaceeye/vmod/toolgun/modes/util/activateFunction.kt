@@ -17,7 +17,7 @@ enum class PositionModes {
     PRECISE_PLACEMENT,
 }
 
-inline fun getModePosition(mode: PositionModes, pos: RaycastFunctions.RaycastResult, precisePlacementSideNum: Int = 3): Vector3d {
+fun getModePosition(mode: PositionModes, pos: RaycastFunctions.RaycastResult, precisePlacementSideNum: Int = 3): Vector3d {
     return when(mode) {
         PositionModes.NORMAL -> pos.globalHitPos!!
         PositionModes.CENTERED_ON_SIDE -> pos.globalCenteredHitPos!!
@@ -26,7 +26,7 @@ inline fun getModePosition(mode: PositionModes, pos: RaycastFunctions.RaycastRes
     }
 }
 
-inline fun getModePositions(mode: PositionModes, prevPos: RaycastFunctions.RaycastResult, pos: RaycastFunctions.RaycastResult, precisePlacementSideNum: Int = 3): Pair<Vector3d, Vector3d> {
+fun getModePositions(mode: PositionModes, prevPos: RaycastFunctions.RaycastResult, pos: RaycastFunctions.RaycastResult, precisePlacementSideNum: Int = 3): Pair<Vector3d, Vector3d> {
     return when(mode) {
         PositionModes.NORMAL -> Pair(prevPos.globalHitPos!!, pos.globalHitPos!!)
         PositionModes.CENTERED_ON_SIDE -> Pair(prevPos.globalCenteredHitPos!!, pos.globalCenteredHitPos!!)
@@ -59,7 +59,7 @@ fun calculatePrecise(raycastResult: RaycastFunctions.RaycastResult, precisePlace
     return points.minBy { (it - point).sqrDist() }
 }
 
-inline fun BaseMode.serverRaycastAndActivateFn(
+fun BaseMode.serverRaycastAndActivateFn(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,
     level: Level,
@@ -84,7 +84,7 @@ inline fun BaseMode.serverRaycastAndActivateFn(
     fnToActivate(level, shipId, ship, spoint, rpoint, raycastResult)
 }
 
-inline fun BaseMode.serverRaycast2PointsFnActivation(
+fun BaseMode.serverRaycast2PointsFnActivation(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,
     level: Level,

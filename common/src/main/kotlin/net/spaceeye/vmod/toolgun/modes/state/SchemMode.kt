@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import dev.architectury.event.EventResult
 import dev.architectury.event.events.common.PlayerEvent
 import dev.architectury.networking.NetworkManager
@@ -80,8 +81,8 @@ object ClientPlayerSchematics {
         "save_schem_stream",
         NetworkManager.Side.S2C,
         NetworkManager.Side.C2S,
-        0
     ) {
+        override val partByteAmount: Int get() = 0
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Save Schem Transmission Failed") }
@@ -97,18 +98,18 @@ object ClientPlayerSchematics {
         }
     }
 
-    var loadSchemStream = object : DataStream<ServerPlayerSchematics.SendLoadRequest, SchemHolder>(
+    var loadSchemStream = object : DataStream<SendLoadRequest, SchemHolder>(
         "load_schem_stream",
         NetworkManager.Side.C2S,
         NetworkManager.Side.C2S,
-        VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
+        override val partByteAmount: Int get() = VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Load Schem Transmission Failed") }
 
-        override fun transmitterRequestProcessor(req: ServerPlayerSchematics.SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
+        override fun transmitterRequestProcessor(req: SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = ClientToolGunState.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
                 mode.schem?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!, req.requestUUID) }
@@ -117,7 +118,6 @@ object ClientPlayerSchematics {
         }
     }
 
-    //TODO convert to AutoSerializable
     class SchemHolder(): Serializable {
         lateinit var data: ByteBuf
         lateinit var uuid: UUID
@@ -164,7 +164,10 @@ object ClientPlayerSchematics {
     fun saveSchematic(name: String, schematic: IShipSchematic): Boolean {
         try {
             Files.write(Paths.get("VMod-Schematics/${name}"), ShipSchematic.writeSchematicToBuffer(schematic)!!.array())
-        } catch (e: IOException) {return false}
+        } catch (e: IOException) {
+            ELOG("Failed to save schematic to file because ${e.stackTraceToString()}")
+            return false
+        }
         return true
     }
 }
@@ -174,8 +177,8 @@ object ServerPlayerSchematics: ServerClosable() {
         "save_schem_stream",
         NetworkManager.Side.S2C,
         NetworkManager.Side.S2C,
-        VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
     ) {
+        override val partByteAmount: Int get() = VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = ClientPlayerSchematics.SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Save Schem Transmission Failed") }
@@ -192,8 +195,8 @@ object ServerPlayerSchematics: ServerClosable() {
         "load_schem_stream",
         NetworkManager.Side.C2S,
         NetworkManager.Side.S2C,
-        0
     ) {
+        override val partByteAmount: Int get() = 0
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Load Schem Transmission Failed") }
@@ -239,7 +242,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
         lastReq == null || getNow_ms() - lastReq > 10000L
     }) {pkt, player ->
         ServerPlayerSchematics.loadRequests[player.uuid] = getNow_ms()
-        ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(ServerPlayerSchematics.SendLoadRequest(player.uuid), FakePacketContext(player))
+        ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(SendLoadRequest(player.uuid), FakePacketContext(player))
     }
 
     val s2cSendShipInfo = regS2C<S2CSendShipInfo>("send_ship_info", networkName) {pkt ->
@@ -248,7 +251,6 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
         mode.shipInfo = pkt.shipInfo
     }
 
-    //TODO ?
     class S2CSendShipInfo(): Serializable {
         lateinit var shipInfo: IShipSchematicInfo
 
@@ -291,7 +293,9 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
 }
 
 class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
-    var rotationAngle: Ref<Double> by get(0, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> val rotationAngle = Ref(0.0) ; rotationAngle.it = buf.readDouble(); rotationAngle})
+    @JsonIgnore private var i = 0
+
+    var rotationAngle: Ref<Double> by get(i++, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> val rotationAngle = Ref(0.0) ; rotationAngle.it = buf.readDouble(); rotationAngle})
 
     override var itemsScroll: ScrollComponent? = null
     override lateinit var parentWindow: UIContainer
@@ -325,10 +329,10 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             }
 
 
-            val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
+            val center = ShipTransformImpl.create(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
 
             val data = info.shipsInfo.map {
-                Pair(ShipTransformImpl(
+                Pair(ShipTransformImpl.create(
                     it.relPositionToCenter,
                     it.positionInShip,
                     it.rotation,

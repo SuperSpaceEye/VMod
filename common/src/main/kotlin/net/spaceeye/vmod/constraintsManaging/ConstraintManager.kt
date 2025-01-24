@@ -167,9 +167,6 @@ class ConstraintManager: SavedData() {
                     .get()
                     .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${strType}"); null } ?: continue
 
-                //TODO REMOVE LATER
-                if (mConstraint is ExtendableMConstraint && mConstraint.getExtensionsOfType<Strippable>().isEmpty()) {mConstraint.addExtension(Strippable())}
-
                 maxId = max(maxId, mConstraint.mID)
 
                 constraints.add(mConstraint)
@@ -535,9 +532,6 @@ class ConstraintManager: SavedData() {
                             .strTypeToSupplier(strType)
                             .get()
                             .nbtDeserialize(ctag, lastDimensionIds) ?: run { ELOG("Failed to deserialize constraint of type ${strType}"); null } ?: continue
-
-                        //TODO REMOVE LATER
-                        if (mConstraint is ExtendableMConstraint && mConstraint.getExtensionsOfType<Strippable>().isEmpty()) {mConstraint.addExtension(Strippable())}
 
                         maxId = max(maxId, mConstraint.mID)
 

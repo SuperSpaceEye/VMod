@@ -36,7 +36,6 @@ class ForgeConfigBuilder: AbstractConfigBuilder() {
         } else {
             val part = BUILDER.comment(description)
 
-            //TODO refactor whatever this is
             when (defaultValue) {
                 is Int -> {
                     val newVal = part.defineInRange(name, defaultValue as Int, range.first as Int, range.second as Int)

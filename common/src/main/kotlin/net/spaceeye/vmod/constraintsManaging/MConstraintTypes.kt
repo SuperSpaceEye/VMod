@@ -7,7 +7,7 @@ object MConstraintTypes: Registry<MConstraint>(false) {
     init {
         register(RopeMConstraint::class)
         register(HydraulicsMConstraint::class)
-        register(PhysRopeMConstraint::class)
+//        register(PhysRopeMConstraint::class)
         register(DisabledCollisionMConstraint::class)
         register(ConnectionMConstraint::class)
         register(ThrusterMConstraint::class)

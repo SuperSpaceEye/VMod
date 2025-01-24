@@ -13,8 +13,6 @@ import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.toolgun.modes.util.serverTryActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
 
-//TODO this is somewhat outdated now with ExtendableToolgunMode
-
 interface GUIBuilder {
     val itemName: Component
     fun makeGUISettings(parentWindow : UIContainer)
@@ -47,7 +45,7 @@ interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientEventsHandler 
     fun refreshHUD() { ClientToolGunState.refreshHUD() }
 }
 
-inline fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, crossinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) =
+fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) =
     name idWithConnc {
         object : C2SConnection<T>(it, "toolgun_command") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
@@ -55,7 +53,7 @@ inline fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, cros
         }
     }
 
-inline fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, crossinline toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) =
+fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) =
     name idWithConnc {
         object : C2SConnection<T>(name, "toolgun_command") {
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =

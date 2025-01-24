@@ -10,6 +10,7 @@ import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsGUIBuilder
 import net.spaceeye.vmod.translate.APPLY_NEW_GRAVITY_SETTINGS
 import net.spaceeye.vmod.translate.DIMENSIONAL_GRAVITY
+import net.spaceeye.vmod.translate.DIMENSIONAL_GRAVITY_UPDATE_WAS_REJECTED
 import net.spaceeye.vmod.translate.LEVELS
 import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.*
@@ -95,7 +96,7 @@ class DimensionalGravitySettings: ServerSettingsGUIBuilder {
 
         val s2cDimensionalGravityUpdateWasRejected = regS2C<EmptyPacket>("dimensional_gravity_update_was_rejected", "gravity_settings") {
             ClientToolGunState.closeGUI()
-            ClientToolGunState.addHUDError("Dimensional Gravity update was rejected")
+            ClientToolGunState.addHUDError(DIMENSIONAL_GRAVITY_UPDATE_WAS_REJECTED.get())
         }
     }
 }

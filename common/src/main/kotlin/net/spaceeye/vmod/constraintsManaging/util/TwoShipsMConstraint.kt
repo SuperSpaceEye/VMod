@@ -4,73 +4,84 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
-import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.deserializeBlockPositions
-import net.spaceeye.vmod.utils.serializeBlockPositions
+import net.spaceeye.vmod.utils.*
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSConstraint
-import org.valkyrienskies.core.apigame.constraints.VSConstraintId
-import org.valkyrienskies.core.apigame.constraints.VSForceConstraint
+import org.valkyrienskies.core.apigame.joints.VSJointId
 import org.valkyrienskies.mod.common.shipObjectWorld
-import org.valkyrienskies.physics_api.ConstraintId
 
 abstract class TwoShipsMConstraint(): ExtendableMConstraint() {
-    abstract val mainConstraint: VSConstraint
-
-    val cIDs = mutableListOf<ConstraintId>() // should be used to store VS ids
+    val cIDs = mutableListOf<VSJointId>() // should be used to store VS ids
     var attachmentPoints_ = mutableListOf<BlockPos>()
 
+    abstract var shipId1: Long
+    abstract var shipId2: Long
+    abstract var sPos1: Vector3d
+    abstract var sPos2: Vector3d
+
     override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
-        val ship1Exists = allShips.contains(mainConstraint.shipId0)
-        val ship2Exists = allShips.contains(mainConstraint.shipId1)
+        val ship1Exists = allShips.contains(shipId1)
+        val ship2Exists = allShips.contains(shipId2)
 
         return     (ship1Exists && ship2Exists)
-                || (ship1Exists && dimensionIds.contains(mainConstraint.shipId1))
-                || (ship2Exists && dimensionIds.contains(mainConstraint.shipId0))
+                || (ship1Exists && dimensionIds.contains(shipId1))
+                || (ship2Exists && dimensionIds.contains(shipId2))
     }
 
     override fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
         val toReturn = mutableListOf<ShipId>()
 
-        if (!dimensionIds.contains(mainConstraint.shipId0)) {toReturn.add(mainConstraint.shipId0)}
-        if (!dimensionIds.contains(mainConstraint.shipId1)) {toReturn.add(mainConstraint.shipId1)}
+        if (!dimensionIds.contains(shipId1)) {toReturn.add(shipId1)}
+        if (!dimensionIds.contains(shipId2)) {toReturn.add(shipId2)}
 
         return toReturn
     }
 
-    override fun iGetVSIds(): Set<VSConstraintId> = cIDs.toSet()
+    override fun iGetVSIds(): Set<VSJointId> = cIDs.toSet()
     override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> = if (shipId == -1L) attachmentPoints_ else {
         when (shipId) {
-            mainConstraint.shipId0 -> listOf(attachmentPoints_[0])
-            mainConstraint.shipId1 -> listOf(attachmentPoints_[1])
+            shipId1 -> listOf(attachmentPoints_[0])
+            shipId2 -> listOf(attachmentPoints_[1])
             else -> listOf()
         }
     }
-    override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> = when (mainConstraint) {
-        is VSForceConstraint -> if (shipId == -1L) listOf(
-            Vector3d((mainConstraint as VSForceConstraint).localPos0),
-            Vector3d((mainConstraint as VSForceConstraint).localPos1))
-        else when(shipId) {
-            mainConstraint.shipId0 -> listOf(Vector3d((mainConstraint as VSForceConstraint).localPos0))
-            mainConstraint.shipId1 -> listOf(Vector3d((mainConstraint as VSForceConstraint).localPos1))
+    override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> =
+        if (shipId == -1L) listOf(
+            sPos1.copy(),
+            sPos2.copy()
+        ) else {
+            when(shipId) {
+                shipId1 -> listOf(sPos1.copy())
+                shipId2 -> listOf(sPos2.copy())
             else -> listOf()
+            }
         }
-        else -> listOf()
-    }
 
     @NonExtendable
     override fun nbtSerialize(): CompoundTag? {
-        val saveTag = super.nbtSerialize() ?: return null
-        saveTag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
-        return saveTag
+        val tag = super.nbtSerialize() ?: return null
+        tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
+        tag.putMyVector3d("sPos1", sPos1)
+        tag.putMyVector3d("sPos2", sPos2)
+        tag.putLong("shipId1", shipId1)
+        tag.putLong("shipId2", shipId2)
+        return tag
     }
 
     @NonExtendable
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
         attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
+        sPos1 = tag.getMyVector3d("sPos1")
+        sPos2 = tag.getMyVector3d("sPos2")
+        shipId1 = tag.getLong("shipId1")
+        shipId2 = tag.getLong("shipId2")
+
+        val map = ServerLevelHolder.shipObjectWorld!!.dimensionToGroundBodyIdImmutable
+        shipId1 = map[lastDimensionIds[shipId1]] ?: shipId1
+        shipId2 = map[lastDimensionIds[shipId2]] ?: shipId2
+
         return super.nbtDeserialize(tag, lastDimensionIds)
     }
 

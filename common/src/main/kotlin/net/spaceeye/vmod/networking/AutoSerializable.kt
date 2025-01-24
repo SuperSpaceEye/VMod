@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.networking
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
@@ -50,10 +51,12 @@ open class SerializableItemDelegate <T : Any>(
  *
  * ```kotlin
  * class Test(): AutoSerializable {
- *  val item1: Int by get(1, 10)
- *  val item2: Double by get(2, 20.0, {min(it, 10.0)})
- *  val item3: String by get(3, "Hello", {it + " World"})
- *  val complexItem: SomeComplexType by get(4,
+ *  @JsonIgnore private var i = 0
+ *
+ *  val item1: Int by get(i++, 10)
+ *  val item2: Double by get(i++, 20.0, {min(it, 10.0)})
+ *  val item3: String by get(i++, "Hello", {it + " World"})
+ *  val complexItem: SomeComplexType by get(i++,
  *      SomeComplexType.default(),
  *      {it.verify()},
  *      {it, buf -> it.serialize(buf)},
@@ -79,6 +82,7 @@ open class SerializableItemDelegate <T : Any>(
  * ```
  */
 interface AutoSerializable: Serializable {
+    @JsonIgnore
     @NonExtendable
     fun getSerializableItems(): List<SerializableItemDelegate<*>> {
         val toReturn = mutableListOf<SerializableItemDelegate<*>>()
@@ -114,6 +118,7 @@ interface AutoSerializable: Serializable {
         return toReturn
     }
 
+    @JsonIgnore
     @NonExtendable
     fun getDeserializableItems(): List<SerializableItemDelegate<*>> {
         val order = ( if (this::class.isData) this::class.primaryConstructor?.parameters?.map { it.name }?.toSet() else null) ?: setOf()
@@ -130,6 +135,7 @@ interface AutoSerializable: Serializable {
         }.sortedBy { it.serializationPos }
     }
 
+    @JsonIgnore
     @NonExtendable
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
@@ -137,9 +143,15 @@ interface AutoSerializable: Serializable {
         return buf
     }
 
+    @JsonIgnore
     @NonExtendable
     override fun deserialize(buf: FriendlyByteBuf) {
         getDeserializableItems().forEach { it.setValue(null, null, it.deserialize(buf)) }
+    }
+
+    @JsonIgnore
+    override fun getBuffer(): FriendlyByteBuf {
+        return super.getBuffer()
     }
 }
 fun <T: Serializable> KClass<T>.constructor(buf: FriendlyByteBuf? = null): T {

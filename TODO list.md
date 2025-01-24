@@ -1,12 +1,15 @@
 # VERY IMPORTANT
 
-nothing
+* Rename MConstraint to smth else. Maybe "VEntity" or "VmEntity" or smth like that cuz they are not really just a collection of constraints anymore
+* Unify "get" of AutoSerializable and AutoTagSerializable bc i want to eventually add AutoGUIBuilder
+* Make "constraint fixer" to update old mconstraints
 
 # Maybe
 
-* Add an "attachment cleaner" to remove attachments before closing server
-
 # Do Eventually
+
+# Connection Mode
+* when smth like "onMassChange" exists, create another mode for stiffness, damping, and bounce threshold that makes values depend on mass of the first ship or smth, so that instead of absolute values (like 3000 N of force) it's Nx ship mass (0.5 * 100kg)
 
 # Phys rope
 * fix incorrect loading

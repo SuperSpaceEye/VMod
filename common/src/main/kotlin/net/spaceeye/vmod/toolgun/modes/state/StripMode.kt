@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.client.Minecraft
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
@@ -61,9 +62,11 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         StripAll,
         StripInRadius
     }
+    @JsonIgnore private var i = 0
 
-    var radius: Double by get(0, 1.0, {ServerLimits.instance.stripRadius.get(it)})
-    var mode: StripModes by get(1, StripModes.StripAll)
+
+    var radius: Double by get(i++, 1.0, {ServerLimits.instance.stripRadius.get(it)})
+    var mode: StripModes by get(i++, StripModes.StripAll)
 
     private var render = false
     override fun eOnOpenMode() {
@@ -143,7 +146,9 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         }
 
         data class S2CSendStrippableRendererIds(var shipid: Long, var ids: IntArray): AutoSerializable {
-            var positions: List<Vector3d> by get(0, listOf(), {it}, {it, buf -> buf.writeCollection(it){buf, it -> buf.writeVector3d(it)}}) {buf -> buf.readCollection({mutableListOf()}){buf.readVector3d()}}
+            @JsonIgnore private var i = 0
+
+            var positions: List<Vector3d> by get(i++, listOf(), {it}, {it, buf -> buf.writeCollection(it){buf, it -> buf.writeVector3d(it)}}) {buf -> buf.readCollection({mutableListOf()}){buf.readVector3d()}}
         }
         private val s2cSendStrippableRendererIds = regS2C<S2CSendStrippableRendererIds>("send_strippable_renderer_ids", "strip_mode") {
             pkt ->

@@ -7,10 +7,14 @@ import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorldRender
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
+import org.valkyrienskies.core.api.VsBeta
+import org.valkyrienskies.core.api.bodies.properties.BodyTransform
+import org.valkyrienskies.core.api.bodies.properties.rebuild
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
+import org.valkyrienskies.mod.common.ValkyrienSkiesMod
 import org.valkyrienskies.mod.common.getShipObjectManagingPos
 
 class RotationAssistTransformProvider(
@@ -34,6 +38,7 @@ class RotationAssistTransformProvider(
                 angle
             )
 
+    @OptIn(VsBeta::class)
     override fun provideNextRenderTransform(
         prevShipTransform: ShipTransform,
         shipTransform: ShipTransform,
@@ -41,7 +46,6 @@ class RotationAssistTransformProvider(
     ): ShipTransform? {
         //TODO think of a better way
         if (!ToolgunItem.playerIsUsingToolgun()) {return null}
-        shipTransform as ShipTransformImpl
 
         val dir2 = if (ship2 != null) { transformDirectionShipToWorldRender(ship2!!, gdir2) } else {gdir2}
 
@@ -53,14 +57,16 @@ class RotationAssistTransformProvider(
             .mul(getQuatFromDir(gdir1))
             .normalize()
 
-        val transform = shipTransform.copy(shipToWorldRotation = newRot)
+        val transform = shipTransform.rebuild {
+            this.rotation(newRot)
+        }
 
         val position = (if (ship2 != null) posShipToWorldRender(ship2, spoint2) else spoint2) - (
             posShipToWorldRender(ship1, spoint1, transform) -
             posShipToWorldRender(ship1, Vector3d(shipTransform.positionInShip), transform)
         )
 
-        return ShipTransformImpl(
+        return ShipTransformImpl.create(
             position.toJomlVector3d(),
             shipTransform.positionInShip,
             newRot,

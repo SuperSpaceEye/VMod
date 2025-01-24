@@ -6,14 +6,8 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 //https://stackoverflow.com/questions/1171849/finding-quaternion-representing-the-rotation-from-one-vector-to-another
-fun getHingeRotation(transform: ShipTransform?, worldDirection: Vector3d): Quaterniond {
+fun getHingeRotation(localDir: Vector3d): Quaterniond {
     val right = Vector3d(1, 0, 0)
-
-    val localDir = if (transform != null) {
-        Vector3d(transform.transformDirectionNoScalingFromWorldToShip(worldDirection.toJomlVector3d(), JVector3d()))
-    } else {
-        worldDirection
-    }
 
     if ((localDir - right).dist() < 1e-5) { return Quaterniond() }
 
@@ -31,4 +25,14 @@ fun getHingeRotation(transform: ShipTransform?, worldDirection: Vector3d): Quate
     }
 
     return Quaterniond(a.x, a.y, a.z, k + kCosTheta).normalize()
+}
+
+fun getHingeRotation(transform: ShipTransform?, worldDirection: Vector3d): Quaterniond {
+    val localDir = if (transform != null) {
+        Vector3d(transform.transformDirectionNoScalingFromWorldToShip(worldDirection.toJomlVector3d(), JVector3d()))
+    } else {
+        worldDirection
+    }
+
+    return getHingeRotation(localDir)
 }

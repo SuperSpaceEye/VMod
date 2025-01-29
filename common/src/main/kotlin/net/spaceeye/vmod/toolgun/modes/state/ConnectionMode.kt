@@ -97,7 +97,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                                 ship2?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
                                 Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
                                 Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
-                                shipId1, shipId2, it.maxForce, it.stiffness, it.damping, it.fixedDistance, it.connectionMode,
+                                shipId1, shipId2, it.maxForce, it.stiffness, it.damping, paDistanceFromBlock.toFloat(), it.connectionMode,
                                 listOf(rresults.first.blockPosition, rresults.second.blockPosition),
                             ).addExtension(Strippable())
                         }

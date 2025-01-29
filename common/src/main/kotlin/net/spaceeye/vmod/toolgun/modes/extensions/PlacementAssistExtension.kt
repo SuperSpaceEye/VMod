@@ -21,6 +21,8 @@ import net.spaceeye.vmod.networking.AutoSerializable
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.networking.regS2C
+import net.spaceeye.vmod.rendering.ServerRenderingData
+import net.spaceeye.vmod.rendering.types.debug.DebugPointRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
@@ -35,7 +37,6 @@ import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
-import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
 import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
@@ -44,8 +45,6 @@ import org.valkyrienskies.core.api.bodies.properties.rebuild
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.api.ships.properties.ShipTransform
-import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -135,7 +134,7 @@ class PlacementAssistExtension(
 
     @JsonIgnore private var i = 0
 
-    override var paDistanceFromBlock: Double by get(i++, 0.01, {ServerLimits.instance.distanceFromBlock.get(it)})
+    override var paDistanceFromBlock: Double by get(i++, 0.0, {ServerLimits.instance.distanceFromBlock.get(it)})
     override var paStage: ThreeClicksActivationSteps by get(i++, ThreeClicksActivationSteps.FIRST_RAYCAST)
     override var paAngle: Ref<Double> by get(i++, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> paAngle.it = buf.readDouble(); paAngle})
     override var paScrollAngle: Double by get(i++, Math.toRadians(10.0))

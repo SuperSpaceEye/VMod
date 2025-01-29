@@ -11,6 +11,8 @@ import org.valkyrienskies.mod.common.isBlockInShipyard
 import org.valkyrienskies.mod.common.isChunkInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
 
+//TODO remove useless?
+
 fun VSJoint.copy(shipId0_: ShipId? = null, shipId1_: ShipId? = null, localPos0_: Vector3dc? = null, localPos1_: Vector3dc? = null): VSJoint {
     return when (this) {
         is VSD6Joint            -> this.copy(shipId0_ ?: shipId0, localPos0_?.let { VSJointPose(it, pose0.rot) } ?: pose0, shipId1_ ?: shipId1, localPos1_?.let { VSJointPose(it, pose1.rot) } ?: pose1)

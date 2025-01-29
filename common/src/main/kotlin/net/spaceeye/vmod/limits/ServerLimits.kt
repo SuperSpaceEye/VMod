@@ -32,7 +32,7 @@ class ServerLimitsInstance: AutoSerializable {
     val fixedDistance: FloatLimit by get(i++, FloatLimit())
     val extensionDistance: FloatLimit by get(i++, FloatLimit(0.001f))
     val extensionSpeed: FloatLimit by get(i++, FloatLimit(0.001f))
-    val distanceFromBlock: DoubleLimit by get(i++, DoubleLimit(0.0001))
+    val distanceFromBlock: DoubleLimit by get(i++, DoubleLimit(0.0))
     val stripRadius: DoubleLimit by get(i++, DoubleLimit(0.0, 10.0))
     val scale: DoubleLimit by get(i++, DoubleLimit(0.001))
     val precisePlacementAssistSides: IntLimit by get(i++, IntLimit(2, 11))

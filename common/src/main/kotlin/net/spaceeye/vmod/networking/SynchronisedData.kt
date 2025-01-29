@@ -32,9 +32,14 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
 
     private val uuidToPlayer = mutableMapOf<UUID, Player?>()
 
-    val lock = ReentrantLock()
+    protected val lock = ReentrantLock()
+    protected var counter = 0
 
-    var counter = 0
+    val allIds: Set<Int>
+        get() {
+            return mutableSetOf<Int>().also { set -> data.forEach { set.addAll(it.value.keys) } }
+        }
+
 
     protected fun close() {
         subscribersSavedChecksums.clear()
@@ -46,7 +51,7 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
 
 //    abstract fun sendUpdateToSubscriber(ctx: NetworkManager.PacketContext, data: T2RSynchronizationTickData)
 
-    inline fun <T>lock(fn: () -> T): T {
+    protected inline fun <T>lock(fn: () -> T): T {
         synchronized(lock) {
             return fn()
         }

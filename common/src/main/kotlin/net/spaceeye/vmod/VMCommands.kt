@@ -16,6 +16,8 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.minecraft.network.chat.TextComponent
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.rendering.ServerRenderingData
+import net.spaceeye.vmod.rendering.types.debug.DebugRenderer
 import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.toolgun.ServerToolGunState
@@ -314,6 +316,16 @@ object VMCommands {
         }
     }
 
+    private object DEBUG {
+        fun clearDebugRenderers(cc: CommandContext<CommandSourceStack>): Int {
+            ServerRenderingData.allIds.forEach {
+                if (ServerRenderingData.getRenderer(it) !is DebugRenderer) {return@forEach}
+                ServerRenderingData.removeRenderer(it)
+            }
+            return 0
+        }
+    }
+
     fun registerServerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             lt("vmod")
@@ -459,6 +471,14 @@ object VMCommands {
                             )
                         )
                     )
+                )
+            ).then(
+                lt("debug")
+                .requires { it.hasPermission(4) }
+                .then(
+                    lt("remove-debug-renderers").executes {
+                        DEBUG.clearDebugRenderers(it)
+                    }
                 )
             )
         )

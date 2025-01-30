@@ -21,9 +21,6 @@ import net.spaceeye.vmod.networking.AutoSerializable
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.networking.regS2C
-import net.spaceeye.vmod.rendering.ServerRenderingData
-import net.spaceeye.vmod.rendering.types.debug.DebugPointRenderer
-import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.util.*
@@ -58,14 +55,15 @@ enum class ThreeClicksActivationSteps {
 
 class PlacementAssistExtension(
     showCenteredInBlock: Boolean,
-    setPosMode: (PositionModes) -> Unit,
-    setPrecisePlacementAssistSideNum: (Int) -> Unit,
     override val paNetworkingObject: PlacementAssistNetworking,
+    val blockPredicate: (mode: ExtendableToolgunMode) -> Boolean,
+    val canUseJoinMode: (inst: ExtendableToolgunMode) -> Boolean,
     override val paMConstraintBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> MConstraint
-): PlacementModesExtension(showCenteredInBlock, setPosMode, setPrecisePlacementAssistSideNum),
+): PlacementModesExtension(showCenteredInBlock),
     PlacementAssistClient, PlacementAssistServerPart, AutoSerializable {
-    private lateinit var inst: ExtendableToolgunMode
+    override lateinit var inst: ExtendableToolgunMode
 
+    //TODO clean this up?
     override fun preInit(inst: ExtendableToolgunMode, type: BaseNetworking.EnvType) {
         this.inst = inst
         val exts = inst.getExtensionsOfType<BasicConnectionExtension<*>>()
@@ -74,7 +72,7 @@ class PlacementAssistExtension(
 
         val ext = inst.getExtensionOfType<BasicConnectionExtension<*>>()
 
-        if (ext.primaryFunction != null && ext.secondaryFunction != null) { throw AssertionError("Both primary and secondary actions of BasicConnectionExtension are used already") }
+        if (ext.leftFunction != null && ext.rightFunction != null) { throw AssertionError("Both primary and secondary actions of BasicConnectionExtension are used already") }
 
         val activationFn = {mode: ExtendableToolgunMode, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult ->
             mode.getExtensionOfType<PlacementAssistExtension>().activateFunctionPA(level, player, rr)
@@ -84,13 +82,51 @@ class PlacementAssistExtension(
             mode.refreshHUD()
         }
 
-        if (ext.secondaryFunction == null) {
-            ext.secondaryFunction = activationFn
-            ext.secondaryClientCallback = clientCallback
+        if (ext.rightFunction == null) {
+            ext.blockRight = blockPredicate
+            ext.rightFunction = activationFn
+            ext.rightClientCallback = clientCallback
+            ext.blockLeft = {mode: ExtendableToolgunMode -> mode.getExtensionOfType<PlacementAssistExtension>().paStage != ThreeClicksActivationSteps.FIRST_RAYCAST}
         } else {
-            ext.primaryFunction = activationFn
-            ext.primaryClientCallback = clientCallback
+            ext.blockLeft = blockPredicate
+            ext.leftFunction = activationFn
+            ext.leftClientCallback = clientCallback
+            ext.blockRight = {mode: ExtendableToolgunMode -> mode.getExtensionOfType<PlacementAssistExtension>().paStage != ThreeClicksActivationSteps.FIRST_RAYCAST}
         }
+
+        val oldBlockLeft = ext.blockLeft as? (ExtendableToolgunMode) -> Boolean
+        val oldBlockRight = ext.blockRight as? (ExtendableToolgunMode) -> Boolean
+
+        ext.blockLeft  = {mode: ExtendableToolgunMode -> oldBlockLeft?.invoke(mode)  ?: false || mode.getExtensionOfType<PlacementAssistExtension>().middleFirstRaycast}
+        ext.blockRight = {mode: ExtendableToolgunMode -> oldBlockRight?.invoke(mode) ?: false || mode.getExtensionOfType<PlacementAssistExtension>().middleFirstRaycast}
+
+
+        val oldMiddle = ext.middleFunction as? (ExtendableToolgunMode, ServerLevel, ServerPlayer, RaycastFunctions.RaycastResult) -> Unit
+        val oldMiddleCallback = ext.middleClientCallback as? (ExtendableToolgunMode) -> Unit
+        ext.middleFunction = {mode: ExtendableToolgunMode, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult ->
+            if (canUseJoinMode(mode)) {
+                mode.getExtensionOfType<PlacementAssistExtension>().activateMiddle(level, player, rr)
+            } else {
+                oldMiddle?.invoke(mode, level, player, rr)
+            }
+        }
+        ext.middleClientCallback = { mode: ExtendableToolgunMode ->
+            if (canUseJoinMode(mode)) {
+                middleFirstRaycast = !middleFirstRaycast
+                mode.refreshHUD()
+            } else {
+                oldMiddleCallback?.invoke(mode)
+            }
+        }
+        ext.blockMiddle = { mode: ExtendableToolgunMode ->
+            !canUseJoinMode(mode) || oldBlockLeft?.invoke(mode) ?: false || oldBlockRight?.invoke(mode) ?: false
+        }
+
+        try {
+            val bm = inst.getExtensionOfType<BlockMenuOpeningExtension<*>>()
+            val oldPredicate = bm.predicate as (ExtendableToolgunMode) -> Boolean
+            bm.predicate = {mode: ExtendableToolgunMode -> paStage != ThreeClicksActivationSteps.FIRST_RAYCAST || oldPredicate(mode)}
+        } catch (_: AssertionError) {}
 
         paNetworkingObject.init(inst, type)
     }
@@ -101,12 +137,6 @@ class PlacementAssistExtension(
         paAngle.it += paScrollAngle * amount.sign
 
         return EventResult.interruptFalse()
-    }
-
-    override fun eOnKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
-        if (paStage == ThreeClicksActivationSteps.FIRST_RAYCAST) { return false }
-        if (!ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(key, scancode)) { return false }
-        return true
     }
 
     override fun eResetState() {
@@ -138,12 +168,14 @@ class PlacementAssistExtension(
     override var paStage: ThreeClicksActivationSteps by get(i++, ThreeClicksActivationSteps.FIRST_RAYCAST)
     override var paAngle: Ref<Double> by get(i++, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> paAngle.it = buf.readDouble(); paAngle})
     override var paScrollAngle: Double by get(i++, Math.toRadians(10.0))
+    override var middleFirstRaycast: Boolean by get(i++, false)
 
 
     override var paCaughtShip: ClientShip? = null
     override var paCaughtShips: LongArray? = null
     override var paFirstResult: RaycastFunctions.RaycastResult? = null
     override var paSecondResult: RaycastFunctions.RaycastResult? = null
+    override var previousResult: RaycastFunctions.RaycastResult? = null
 }
 
 interface PlacementAssistClient {
@@ -277,6 +309,48 @@ interface PlacementAssistServerPart {
 
     val paDistanceFromBlock: Double
 
+
+    var middleFirstRaycast: Boolean
+    var previousResult: RaycastFunctions.RaycastResult?
+    val inst: ExtendableToolgunMode
+
+
+    fun activateMiddle(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = _serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || middleFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, {inst.resetState()}) {
+            level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
+
+        if (previousResult!!.ship == null) {
+            paFirstResult = rresult
+            paSecondResult = previousResult
+        } else {
+            paFirstResult = previousResult
+            paSecondResult = rresult
+        }
+
+        val paFirstResult = paFirstResult!!
+        val paSecondResult = paSecondResult!!
+
+        val ship1 = level.getShipManagingPos(paFirstResult.blockPosition)
+        val ship2 = level.getShipManagingPos(paSecondResult.blockPosition)
+
+        if (ship1 == null)  {return@_serverRaycast2PointsFnActivation handleFailure(player)}
+        if (ship1 == ship2) {return@_serverRaycast2PointsFnActivation handleFailure(player)}
+
+        val dir2 = paSecondResult.worldNormalDirection!!
+
+        val (spoint1, spoint2) = getModePositions(if (posMode == PositionModes.CENTERED_IN_BLOCK) {PositionModes.CENTERED_ON_SIDE} else {posMode}, paFirstResult, paSecondResult, precisePlacementAssistSideNum)
+        var rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
+
+        rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
+        val rpoint1 = Vector3d(rpoint2) + dir2.normalize() * paDistanceFromBlock
+
+        val shipId1: ShipId = ship1.id
+        val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
+
+        val constraint = paMConstraintBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult), paDistanceFromBlock)
+        level.makeManagedConstraint(constraint){it.addFor(player)}
+        paServerResetState()
+    }
+
     fun activateFunctionPA(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (level !is ServerLevel) {throw RuntimeException("Function intended for server use only was activated on client. How.")}
         when (paStage) {
@@ -366,5 +440,7 @@ interface PlacementAssistServerPart {
         paStage = ThreeClicksActivationSteps.FIRST_RAYCAST
         paFirstResult = null
         paSecondResult = null
+        previousResult = null
+        middleFirstRaycast = false
     }
 }

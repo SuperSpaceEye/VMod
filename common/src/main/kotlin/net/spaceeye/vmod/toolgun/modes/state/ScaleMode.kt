@@ -42,7 +42,7 @@ class ScaleMode: ExtendableToolgunMode(), ScaleGUI, ScaleHUD {
             ToolgunModes.registerWrapper(ScaleMode::class) {
                 it.addExtension<ScaleMode> {
                     BasicConnectionExtension<ScaleMode>("scale_mode"
-                        ,primaryFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
+                        ,leftFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )
                 }
             }

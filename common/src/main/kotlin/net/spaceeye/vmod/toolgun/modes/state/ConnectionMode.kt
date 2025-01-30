@@ -1,8 +1,8 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import net.minecraft.world.entity.player.Player
-import net.minecraft.world.level.Level
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
@@ -40,12 +40,14 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     var connectionMode: ConnectionMConstraint.ConnectionModes by get(i++, ConnectionMConstraint.ConnectionModes.FIXED_ORIENTATION)
     var primaryFirstRaycast: Boolean by get(i++, false)
 
-    var posMode = PositionModes.NORMAL
-    var precisePlacementAssistSideNum = 3
+
+    val posMode: PositionModes get() = getExtensionOfType<PlacementAssistExtension>().posMode
+    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementAssistExtension>().precisePlacementAssistSideNum
+    val paMiddleFirstRaycast: Boolean get() = getExtensionOfType<PlacementAssistExtension>().middleFirstRaycast
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
+    fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
         val wDir = (rpoint1 - rpoint2).normalize()
         val distance = if (fixedDistance < 0) {(rpoint1 - rpoint2).dist().toFloat()} else {fixedDistance}
@@ -76,25 +78,25 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     companion object {
         val paNetworkingObj = PlacementAssistNetworking("connection_networking")
         init {
+            //TODO "it" IS THE SAME ON CLIENT BUT ON SERVER IT CREATES NEW INSTANCE OF THE MODE
             ToolgunModes.registerWrapper(ConnectionMode::class) {
                 it.addExtension<ConnectionMode> {
                     BasicConnectionExtension<ConnectionMode>("connection_mode"
                         ,allowResetting = true
-                        ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
-                        ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
-                        ,blockPrimary   = {inst -> inst.getExtensionOfType<PlacementAssistExtension>().paStage != ThreeClicksActivationSteps.FIRST_RAYCAST}
-                        ,blockSecondary = {inst -> inst.primaryFirstRaycast}
+                        ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                        ,leftClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
                 }.addExtension<ConnectionMode> {
-                    BlockMenuOpeningExtension<ConnectionMode> { inst -> inst.primaryFirstRaycast }
+                    BlockMenuOpeningExtension<ConnectionMode> { inst -> inst.primaryFirstRaycast || inst.paMiddleFirstRaycast }
                 }.addExtension<ConnectionMode> {
-                    PlacementAssistExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num}, paNetworkingObj,
+                    PlacementAssistExtension(true, paNetworkingObj,
+                        { (it as ConnectionMode).primaryFirstRaycast },
+                        { (it as ConnectionMode).connectionMode == ConnectionMConstraint.ConnectionModes.HINGE_ORIENTATION },
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->
-                            val wDir = rresults.second.worldNormalDirection!!
                             ConnectionMConstraint(
                                 spoint1, spoint2,
-                                ship1?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
-                                ship2?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
+                                -rresults.first.globalNormalDirection!!,
+                                rresults.second.globalNormalDirection!!,
                                 Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
                                 Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
                                 shipId1, shipId2, it.maxForce, it.stiffness, it.damping, paDistanceFromBlock.toFloat(), it.connectionMode,

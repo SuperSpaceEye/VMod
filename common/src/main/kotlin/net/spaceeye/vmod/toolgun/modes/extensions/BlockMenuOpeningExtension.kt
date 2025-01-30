@@ -8,7 +8,7 @@ import net.spaceeye.vmod.translate.PRESS_R_TO_RESET_STATE
 import net.spaceeye.vmod.translate.get
 import org.lwjgl.glfw.GLFW
 
-class BlockMenuOpeningExtension<T: ExtendableToolgunMode>(val failMsg: String? = PRESS_R_TO_RESET_STATE.get(), val predicate: (inst: T) -> Boolean): ToolgunModeExtension {
+class BlockMenuOpeningExtension<T: ExtendableToolgunMode>(val failMsg: String? = PRESS_R_TO_RESET_STATE.get(), var predicate: (inst: T) -> Boolean): ToolgunModeExtension {
     lateinit var inst: ExtendableToolgunMode
 
     override fun onInit(inst: ExtendableToolgunMode, type: BaseNetworking.EnvType) {

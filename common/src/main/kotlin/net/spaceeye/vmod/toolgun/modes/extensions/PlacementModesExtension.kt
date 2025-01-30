@@ -14,13 +14,11 @@ import net.spaceeye.vmod.translate.*
 
 open class PlacementModesExtension(
     val showCenteredInBlock: Boolean,
-    val setPosMode: (PositionModes) -> Unit,
-    val setPrecisePlacementAssistSideNum: (Int) -> Unit
 ): ToolgunModeExtension {
     var posMode: PositionModes = PositionModes.NORMAL
     var precisePlacementAssistSideNum: Int = 3
 
-    var precisePlacementAssistRendererId: Int = -1
+    private var precisePlacementAssistRendererId: Int = -1
 
     private var internalPrecisePlacementAssistSideNum: Int
         get() = precisePlacementAssistSideNum
@@ -43,14 +41,10 @@ open class PlacementModesExtension(
     override fun deserialize(buf: FriendlyByteBuf) {
         posMode = buf.readEnum(posMode.javaClass)
         precisePlacementAssistSideNum = buf.readInt()
-
-        setPosMode(posMode)
-        setPrecisePlacementAssistSideNum(precisePlacementAssistSideNum)
     }
 
     override fun serverSideVerifyLimits() {
         precisePlacementAssistSideNum = ServerLimits.instance.precisePlacementAssistSides.get(precisePlacementAssistSideNum)
-        setPrecisePlacementAssistSideNum(precisePlacementAssistSideNum)
     }
 
     override fun eOnOpenMode() {

@@ -1,8 +1,8 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import net.minecraft.world.entity.player.Player
-import net.minecraft.world.level.Level
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
@@ -21,6 +21,7 @@ import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 
@@ -39,12 +40,12 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     var width: Double by get(i++, .2, { DoubleLimit(0.01).get(it)})
 
 
-    var posMode: PositionModes = PositionModes.NORMAL
-    var precisePlacementAssistSideNum: Int = 3
+    val posMode: PositionModes get() = getExtensionOfType<PlacementAssistExtension>().posMode
+    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementAssistExtension>().precisePlacementAssistSideNum
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
+    fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist().toFloat()}
@@ -75,11 +76,11 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
                 it.addExtension<RopeMode> {
                     BasicConnectionExtension<RopeMode>("rope_mode"
                         ,allowResetting = true
-                        ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
-                        ,primaryClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
+                        ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                        ,leftClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
                 }.addExtension<RopeMode> {
-                    PlacementModesExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
+                    PlacementModesExtension(true)
                 }.addExtension<RopeMode> {
                     BlockMenuOpeningExtension<RopeMode> { inst -> inst.primaryFirstRaycast }
                 }

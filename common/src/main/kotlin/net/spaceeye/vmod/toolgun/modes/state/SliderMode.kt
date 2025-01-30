@@ -18,6 +18,7 @@ import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -30,8 +31,8 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
     var connectionMode: SliderMConstraint.ConnectionMode by get(i++, SliderMConstraint.ConnectionMode.FIXED_ORIENTATION)
 
 
-    var posMode: PositionModes = PositionModes.NORMAL
-    var precisePlacementAssistSideNum: Int = 3
+    val posMode: PositionModes get() = getExtensionOfType<PlacementAssistExtension>().posMode
+    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementAssistExtension>().precisePlacementAssistSideNum
 
     var shipRes1: RaycastFunctions.RaycastResult? = null
     var shipRes2: RaycastFunctions.RaycastResult? = null
@@ -102,13 +103,13 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
                 it.addExtension<SliderMode> {
                     BasicConnectionExtension<SliderMode>("slider_mode"
                         ,allowResetting = true
-                        ,primaryFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
-                        ,primaryClientCallback = { inst -> inst.primaryTimes++; inst.refreshHUD() }
+                        ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                        ,leftClientCallback = { inst -> inst.primaryTimes++; inst.refreshHUD() }
                     )
                 }.addExtension<SliderMode> {
                     BlockMenuOpeningExtension<SliderMode> { inst -> inst.primaryTimes != 0 }
                 }.addExtension<SliderMode> {
-                    PlacementModesExtension(true, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
+                    PlacementModesExtension(true)
                 }
             }
         }

@@ -160,7 +160,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
             ToolgunModes.registerWrapper(StripMode::class) {
                 it.addExtension<StripMode> {
                     BasicConnectionExtension<StripMode>("strip_mode"
-                        ,primaryFunction = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
+                        ,leftFunction = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                     )
                 }
             }

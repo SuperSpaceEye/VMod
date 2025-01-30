@@ -416,9 +416,9 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
                 it.addExtension<SchemMode> {
                     BasicConnectionExtension<SchemMode>("schem_mode"
                         ,allowResetting = true
-                        ,primaryFunction       = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
-                        ,secondaryFunction     = { item, level, player, rr -> item.activateSecondaryFunction(level, player, rr) }
-                        ,primaryClientCallback = { item -> item.shipInfo = null; item.refreshHUD() }
+                        ,leftFunction       = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
+                        ,rightFunction      = { item, level, player, rr -> item.activateSecondaryFunction(level, player, rr) }
+                        ,leftClientCallback = { item -> item.shipInfo = null; item.refreshHUD() }
                     )
                 }
             }

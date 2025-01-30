@@ -81,8 +81,8 @@ class GravChangerMode: ExtendableToolgunMode(), GravChangerHUD, GravChangerGUI {
                 it.addExtension<GravChangerMode> {
                     BasicConnectionExtension<GravChangerMode>("grav_changer_mode"
                         ,allowResetting = true
-                        ,primaryFunction       = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
-                        ,secondaryFunction     = { item, level, player, rr -> item.activateSecondaryFunction(level, player, rr)}
+                        ,leftFunction  = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
+                        ,rightFunction = { item, level, player, rr -> item.activateSecondaryFunction(level, player, rr)}
                     )
                 }
             }

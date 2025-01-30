@@ -20,6 +20,7 @@ import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.getQuatFromDir
@@ -34,8 +35,8 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
     var scale: Double by get(i++, 1.0, {ServerLimits.instance.thrusterScale.get(it)})
 
 
-    var posMode: PositionModes = PositionModes.NORMAL
-    var precisePlacementAssistSideNum: Int = 3
+    val posMode: PositionModes get() = getExtensionOfType<PlacementAssistExtension>().posMode
+    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementAssistExtension>().precisePlacementAssistSideNum
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (raycastResult.state.isAir) {return}
@@ -64,10 +65,10 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
             ToolgunModes.registerWrapper(ThrusterMode::class) {
                 it.addExtension<ThrusterMode> {
                     BasicConnectionExtension<ThrusterMode>("thruster_mode"
-                        ,primaryFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
+                        ,leftFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )
                 }.addExtension<ThrusterMode> {
-                    PlacementModesExtension(false, {mode -> it.posMode = mode}, {num -> it.precisePlacementAssistSideNum = num})
+                    PlacementModesExtension(false)
                 }
             }
         }

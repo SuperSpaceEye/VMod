@@ -117,7 +117,7 @@ val ALL_CONNECTED_AND_TOUCHING = s("All Connected And Touching")
 val PRESS_R_TO_RESET_STATE = p("Press R to reset state")
 val DIMENSIONAL_GRAVITY_UPDATE_WAS_REJECTED = p("Dimensional Gravity update was rejected")
 
-val COMMON_HUD_1 = x("LMB - main mode, RMB - secondary mode", "common_hud_1")
+val COMMON_HUD_1 = x("LMB - main mode, RMB - secondary mode, MMB - join mode", "common_hud_1")
 val COMMON_HUD_2 = x("LMB on the other ship or the ground", "common_hud_2")
 val COMMON_HUD_3 = x("look at the target and press LMB again", "common_hud_3")
 val COMMON_HUD_4 = x("configure rotation with mouse wheel, press LMB to confirm", "common_hud_4")

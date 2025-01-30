@@ -11,8 +11,8 @@ interface ConnectionHUD: SimpleHUD {
         this as ConnectionMode
         val paStage = getExtensionOfType<PlacementAssistExtension>().paStage
         when {
-            paStage == FIRST_RAYCAST && !primaryFirstRaycast -> makeText(COMMON_HUD_1.get())
-            primaryFirstRaycast -> makeText(COMMON_HUD_2.get())
+            paStage == FIRST_RAYCAST && !primaryFirstRaycast && !paMiddleFirstRaycast -> makeText(COMMON_HUD_1.get())
+            primaryFirstRaycast || paMiddleFirstRaycast -> makeText(COMMON_HUD_2.get())
             paStage == SECOND_RAYCAST -> makeText(COMMON_HUD_3.get())
             paStage == FINALIZATION -> makeText(COMMON_HUD_4.get())
         }

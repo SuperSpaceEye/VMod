@@ -71,7 +71,7 @@
   "vmod.gui.popup.press_r_to_reset_state": "Press R to reset state",
   "vmod.gui.popup.dimensional_gravity_update_was_rejected": "Dimensional Gravity update was rejected",
 
-  "vmod.gui.text.common_hud_1": "LMB - main mode, RMB - secondary mode",
+  "vmod.gui.text.common_hud_1": "LMB - main mode, RMB - secondary mode, MMB - join mode",
   "vmod.gui.text.common_hud_2": "LMB on the other ship or the ground",
   "vmod.gui.text.common_hud_3": "look at the target and press LMB again",
   "vmod.gui.text.common_hud_4": "configure rotation with mouse wheel, press LMB to confirm",

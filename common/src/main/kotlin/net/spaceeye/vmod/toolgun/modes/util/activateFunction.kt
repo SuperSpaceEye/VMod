@@ -84,10 +84,10 @@ fun BaseMode.serverRaycastAndActivateFn(
     fnToActivate(level, shipId, ship, spoint, rpoint, raycastResult)
 }
 
-fun BaseMode.serverRaycast2PointsFnActivation(
+fun _serverRaycast2PointsFnActivation(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,
-    level: Level,
+    level: ServerLevel,
     raycastResult: RaycastFunctions.RaycastResult,
     processNewResult: (RaycastFunctions.RaycastResult) -> Pair<Boolean, RaycastFunctions.RaycastResult?>,
     resetFn: () -> Unit,
@@ -104,7 +104,6 @@ fun BaseMode.serverRaycast2PointsFnActivation(
         prresult: RaycastFunctions.RaycastResult,
         rresult: RaycastFunctions.RaycastResult) -> Unit
 ) {
-    if (level !is ServerLevel) {throw RuntimeException("Function intended for server use only was activated on client. How.")}
     if (raycastResult.state.isAir) {return}
     val (res, previousResult) = processNewResult(raycastResult)
     if (!res) {return}
@@ -125,3 +124,25 @@ fun BaseMode.serverRaycast2PointsFnActivation(
 
     fnToActivate(level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, previousResult, raycastResult)
 }
+
+//TODO
+fun BaseMode.serverRaycast2PointsFnActivation(
+    mode: PositionModes,
+    precisePlacementAssistSideNum: Int,
+    level: ServerLevel,
+    raycastResult: RaycastFunctions.RaycastResult,
+    processNewResult: (RaycastFunctions.RaycastResult) -> Pair<Boolean, RaycastFunctions.RaycastResult?>,
+    resetFn: () -> Unit,
+    fnToActivate: (
+        level: ServerLevel,
+        shipId1: ShipId,
+        shipId2: ShipId,
+        ship1: ServerShip?,
+        ship2: ServerShip?,
+        spoint1: Vector3d,
+        spoint2: Vector3d,
+        rpoint1: Vector3d,
+        rpoint2: Vector3d,
+        prresult: RaycastFunctions.RaycastResult,
+        rresult: RaycastFunctions.RaycastResult) -> Unit
+): Unit = _serverRaycast2PointsFnActivation(mode, precisePlacementAssistSideNum, level, raycastResult, processNewResult, resetFn, fnToActivate)

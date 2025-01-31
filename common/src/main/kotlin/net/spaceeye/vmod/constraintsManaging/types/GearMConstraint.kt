@@ -10,14 +10,15 @@ import net.spaceeye.vmod.constraintsManaging.util.mc
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.VSDistanceJoint
 import org.valkyrienskies.core.apigame.joints.VSJointPose
 import net.spaceeye.vmod.networking.TagSerializableItem.get
+import net.spaceeye.vmod.utils.getHingeRotation
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.tryMovePosition
+import org.valkyrienskies.core.apigame.joints.VSGearJoint
 import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
 
-class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
+class GearMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     override lateinit var sPos1: Vector3d
     override lateinit var sPos2: Vector3d
     override var shipId1: Long = -1
@@ -26,22 +27,32 @@ class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     @JsonIgnore private var i = 0
 
     var maxForce: Float by get(i++, -1f)
-    var stiffness: Float by get(i++, 0f)
-    var damping: Float by get(i++, 0f)
-    var ropeLength: Float by get(i++, 0f)
+
+    var sRot1: Quaterniond by get(i++, Quaterniond())
+    var sRot2: Quaterniond by get(i++, Quaterniond())
+
+    var sDir1: Vector3d by get(i++, Vector3d())
+    var sDir2: Vector3d by get(i++, Vector3d())
+
+    var gearRatio: Float = 1f
 
      constructor(
         sPos1: Vector3d,
         sPos2: Vector3d,
 
+        sDir1: Vector3d,
+        sDir2: Vector3d,
+
+        sRot1: Quaterniond,
+        sRot2: Quaterniond,
+
+
         shipId1: ShipId,
         shipId2: ShipId,
 
         maxForce: Float,
-        stiffness: Float,
-        damping: Float,
+        gearRatio: Float,
 
-        ropeLength: Float,
         attachmentPoints: List<BlockPos>,
     ): this() {
         this.shipId1 = shipId1
@@ -50,45 +61,46 @@ class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
         this.sPos1 = sPos1.copy()
         this.sPos2 = sPos2.copy()
 
-        this.maxForce = maxForce
-        this.stiffness = stiffness
-        this.damping = damping
+        this.sDir1 = sDir1.copy()
+        this.sDir2 = sDir2.copy()
 
-        this.ropeLength = ropeLength
+        this.sRot1 = Quaterniond(sRot1)
+        this.sRot2 = Quaterniond(sRot2)
+
+        this.maxForce = maxForce
+        this.gearRatio = gearRatio
+
         attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? {
-         return RopeMConstraint(
+         return GearMConstraint(
              tryMovePosition(sPos1, shipId1, level, mapped) ?: return null,
              tryMovePosition(sPos2, shipId2, level, mapped) ?: return null,
+             sDir1, sDir2, sRot1, sRot2,
              mapped[shipId1] ?: return null,
              mapped[shipId2] ?: return null,
-             maxForce, stiffness, damping, ropeLength,
+             maxForce, gearRatio,
              copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
         )
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
-        ropeLength *= scaleBy.toFloat()
-        onDeleteMConstraint(level)
-        onMakeMConstraint(level)
+//        onDeleteMConstraint(level)
+//        onMakeMConstraint(level)
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
-        val stiffness = if (stiffness < 0) {null} else {stiffness}
-        val damping = if (damping < 0) {null} else {damping}
-
-        val mainConstraint = VSDistanceJoint(
-            shipId1, VSJointPose(sPos1.toJomlVector3d(), Quaterniond()),
-            shipId2, VSJointPose(sPos2.toJomlVector3d(), Quaterniond()),
+        val rotationConstraint = VSGearJoint(
+            shipId1, VSJointPose(sPos1.toJomlVector3d(), getHingeRotation(sDir1)),
+            shipId2, VSJointPose(sPos2.toJomlVector3d(), getHingeRotation(sDir2)),
             maxForceTorque,
-            0f, ropeLength,
-            stiffness = stiffness,
-            damping = damping
-        )
-        mc(mainConstraint, cIDs, level) {return false}
+            gearRatio = gearRatio,
+            )
+
+        mc(rotationConstraint, cIDs, level) {return false}
+
         return true
     }
 }

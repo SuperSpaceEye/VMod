@@ -46,6 +46,7 @@ val SCHEMATIC = t("Schematic")
 val SCALE = t("Scale")
 val STRIP = t("Strip")
 val SYNC_ROTATION = t("Sync Rotation")
+val GEAR = t("Gear")
 val THRUSTER = t("Thruster")
 val SHIP_REMOVER = t("Ship Remover")
 
@@ -75,6 +76,7 @@ val STIFFNESS = s("Stiffness")
 val DAMPING = s("Damping")
 val SSCALE = s("Scale")
 val FORCE = s("Force")
+val GEAR_RATIO = s("Gear Ratio")
 
 val PLACEMENT_ASSIST_SCROLL_STEP = s("Placement Assist Scroll Step")
 
@@ -139,7 +141,9 @@ val SLIDER_HUD_4 = x("LMB to make second axis point (should be the same ship or 
 val GRAV_CHANGER_HUD_1 = x("LMB - set gravity. RMB - reset gravity", "grav_changer_hud_1")
 
 val SYNC_ROTATION_HUD_1 = x("LMB to select first", "sync_rotation_hud_1")
-val SYNC_ROTATION_HUD_2 = x("LMB to select second ship", "sync_rotation_hud_1")
+val SYNC_ROTATION_HUD_2 = x("LMB to select second ship", "sync_rotation_hud_2")
+
+val GEAR_HUD_1 = x("LMB on the other ship")
 
 val YOU_DONT_HAVE_ACCESS_TO_THIS = x("You don't have access to this")
 val APPLY_NEW_GRAVITY_SETTINGS = x("Apply new Gravity Settings")

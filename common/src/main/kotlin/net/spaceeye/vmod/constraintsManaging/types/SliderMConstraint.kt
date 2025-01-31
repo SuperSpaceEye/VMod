@@ -91,7 +91,9 @@ class SliderMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        val maxForceTorque = if (maxForce <= 0) {null} else { VSJointMaxForceTorque(maxForce, maxForce) }
+        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+//        val stiffness = if (stiffness < 0) {null} else {stiffness}
+//        val damping = if (damping < 0) {null} else {damping}
 
         val distanceConstraint = run {
             val rot1 = getHingeRotation(-sDir1.normalize())

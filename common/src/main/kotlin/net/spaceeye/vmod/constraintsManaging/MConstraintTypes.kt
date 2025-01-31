@@ -13,6 +13,7 @@ object MConstraintTypes: Registry<MConstraint>(false) {
         register(ThrusterMConstraint::class)
         register(SliderMConstraint::class)
         register(SyncRotationMConstraint::class)
+        register(GearMConstraint::class)
     }
     @JvmStatic inline fun MConstraint.getType() = typeToString(this::class.java)
 }

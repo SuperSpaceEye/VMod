@@ -49,6 +49,8 @@ class SyncRotationMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+//        val stiffness = if (stiffness < 0) {null} else {stiffness}
+//        val damping = if (damping < 0) {null} else {damping}
         val mainConstraint = VSD6Joint(
             shipId1, VSJointPose(org.joml.Vector3d(), sRot1),
             shipId2, VSJointPose(org.joml.Vector3d(), sRot2),

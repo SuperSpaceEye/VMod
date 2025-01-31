@@ -29,8 +29,8 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     @JsonIgnore private var i = 0
 
     var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
-    var stiffness: Float by get(i++, 0f, {ServerLimits.instance.stiffness.get(it)})
-    var damping: Float by get(i++, 0f, {ServerLimits.instance.damping.get(it)})
+    var stiffness: Float by get(i++, -1f, {ServerLimits.instance.stiffness.get(it)})
+    var damping: Float by get(i++, -1f, {ServerLimits.instance.damping.get(it)})
 
     var width: Double by get(i++, .2, {DoubleLimit(0.01).get(it)}) //TODO
 

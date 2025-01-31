@@ -10,7 +10,7 @@ object ToolgunModes: Registry<BaseMode>() {
         register(ConnectionMode::class)
         register(RopeMode::class)
         register(HydraulicsMode::class)
-        register(PhysRopeMode::class)
+//        register(PhysRopeMode::class)
         register(SliderMode::class)
         register(SyncRotation::class)
 

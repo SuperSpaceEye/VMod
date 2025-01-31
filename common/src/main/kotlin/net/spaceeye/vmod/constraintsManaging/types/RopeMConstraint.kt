@@ -30,7 +30,7 @@ class RopeMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     var damping: Float by get(i++, 0f)
     var ropeLength: Float by get(i++, 0f)
 
-    constructor(
+     constructor(
         sPos1: Vector3d,
         sPos2: Vector3d,
 

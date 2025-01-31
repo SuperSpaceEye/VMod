@@ -27,12 +27,12 @@ import org.joml.Quaterniond
 class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, 1e10f, { ServerLimits.instance.maxForce.get(it) })
+    var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
     var connectionMode: SliderMConstraint.ConnectionMode by get(i++, SliderMConstraint.ConnectionMode.FIXED_ORIENTATION)
 
 
-    val posMode: PositionModes get() = getExtensionOfType<PlacementAssistExtension>().posMode
-    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementAssistExtension>().precisePlacementAssistSideNum
+    val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
+    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementModesExtension>().precisePlacementAssistSideNum
 
     var shipRes1: RaycastFunctions.RaycastResult? = null
     var shipRes2: RaycastFunctions.RaycastResult? = null
@@ -65,6 +65,7 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
         val axisRes2 = rresult
 
         if (axisRes1.shipId != axisRes2.shipId) { return@serverRaycastAndActivateFn sresetState(player) }
+        if (axisRes1.shipId == shipRes1.shipId) { return@serverRaycastAndActivateFn sresetState(player) }
 
         val axisPair = getModePositions(posMode, axisRes1, axisRes2, precisePlacementAssistSideNum)
         val shipPair = getModePositions(posMode, shipRes1, shipRes2, precisePlacementAssistSideNum)

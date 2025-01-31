@@ -35,8 +35,8 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
     var scale: Double by get(i++, 1.0, {ServerLimits.instance.thrusterScale.get(it)})
 
 
-    val posMode: PositionModes get() = getExtensionOfType<PlacementAssistExtension>().posMode
-    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementAssistExtension>().precisePlacementAssistSideNum
+    val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
+    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementModesExtension>().precisePlacementAssistSideNum
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (raycastResult.state.isAir) {return}

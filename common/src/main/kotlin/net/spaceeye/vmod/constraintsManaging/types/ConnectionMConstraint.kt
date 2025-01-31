@@ -31,8 +31,8 @@ class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     var connectionMode: ConnectionModes by get(i++, ConnectionModes.FIXED_ORIENTATION)
     var distance: Float by get(i++, 0f)
     var maxForce: Float by get(i++, -1f)
-    var stiffness: Float by get(i++, 0f)
-    var damping: Float by get(i++, 0f)
+    var stiffness: Float by get(i++, -1f)
+    var damping: Float by get(i++, -1f)
 
     var sRot1: Quaterniond by get(i++, Quaterniond())
     var sRot2: Quaterniond by get(i++, Quaterniond())
@@ -107,7 +107,9 @@ class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        val maxForceTorque = if (maxForce <= 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+        val stiffness = if (stiffness < 0) {null} else {stiffness}
+        val damping = if (damping < 0) {null} else {damping}
 
         val distanceConstraint = if (connectionMode == ConnectionModes.FREE_ORIENTATION) {
             VSDistanceJoint(
@@ -116,8 +118,8 @@ class ConnectionMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
                 maxForceTorque, this.distance, this.distance, stiffness = stiffness, damping = damping
             )
         } else {
-            val rot1 = getHingeRotation(-sDir1.normalize())
-            val rot2 = getHingeRotation(-sDir2.normalize())
+            val rot1 = getHingeRotation(sDir1.normalize())
+            val rot2 = getHingeRotation(sDir2.normalize())
             VSD6Joint(
                 shipId1, VSJointPose(sPos1.toJomlVector3d(), rot1),
                 shipId2, VSJointPose(sPos2.toJomlVector3d(), rot2),

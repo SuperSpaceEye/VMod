@@ -192,7 +192,9 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickab
     }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
-        val maxForceTorque = if (maxForce <= 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+        val stiffness = if (stiffness < 0) {null} else {stiffness}
+        val damping = if (damping < 0) {null} else {damping}
 
         distanceConstraint = if (connectionMode == ConnectionMode.FREE_ORIENTATION) {
             VSDistanceJoint(
@@ -201,8 +203,8 @@ class HydraulicsMConstraint(): TwoShipsMConstraint(), MCAutoSerializable, Tickab
                 maxForceTorque, this.minLength, this.minLength, stiffness = stiffness, damping = damping
             )
         } else {
-            val rot1 = getHingeRotation(-sDir1.normalize())
-            val rot2 = getHingeRotation(-sDir2.normalize())
+            val rot1 = getHingeRotation(sDir1.normalize())
+            val rot2 = getHingeRotation(sDir2.normalize())
             VSD6Joint(
                 shipId1, VSJointPose(sPos1.toJomlVector3d(), rot1),
                 shipId2, VSJointPose(sPos2.toJomlVector3d(), rot2),

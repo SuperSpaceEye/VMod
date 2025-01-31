@@ -33,8 +33,8 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     @JsonIgnore private var i = 0
 
     var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
-    var stiffness: Float by get(i++, 0f, {ServerLimits.instance.stiffness.get(it)})
-    var damping: Float by get(i++, 0f, {ServerLimits.instance.damping.get(it)})
+    var stiffness: Float by get(i++, -1f, {ServerLimits.instance.stiffness.get(it)})
+    var damping: Float by get(i++, -1f, {ServerLimits.instance.damping.get(it)})
 
     var width: Double by get(i++, .2, { DoubleLimit(0.01).get(it)})
 
@@ -56,8 +56,8 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        val minLength = if (fixedMinLength <= 0.0) (rpoint1 - rpoint2).dist().toFloat() else fixedMinLength
-        val wDir = (rpoint1 - rpoint2).normalize()
+        val minLength = if (fixedMinLength <= 0.0) (rpoint2 - rpoint1).dist().toFloat() else fixedMinLength
+        val wDir = (rpoint2 - rpoint1).normalize()
 
         level.makeManagedConstraint(HydraulicsMConstraint(
             spoint1, spoint2,

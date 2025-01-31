@@ -22,7 +22,7 @@ import org.joml.Quaterniond
 class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, 1e20f, {ServerLimits.instance.maxForce.get(it)})
+    var maxForce: Float by get(i++, -1f, {ServerLimits.instance.maxForce.get(it)})
     var primaryFirstRaycast: Boolean by get(i++, false)
 
     var previousResult: RaycastFunctions.RaycastResult? = null

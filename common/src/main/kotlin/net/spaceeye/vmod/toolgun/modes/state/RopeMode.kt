@@ -40,8 +40,8 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     var width: Double by get(i++, .2, { DoubleLimit(0.01).get(it)})
 
 
-    val posMode: PositionModes get() = getExtensionOfType<PlacementAssistExtension>().posMode
-    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementAssistExtension>().precisePlacementAssistSideNum
+    val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
+    val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementModesExtension>().precisePlacementAssistSideNum
 
     var previousResult: RaycastFunctions.RaycastResult? = null
 

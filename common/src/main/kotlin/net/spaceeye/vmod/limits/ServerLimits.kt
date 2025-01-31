@@ -26,7 +26,7 @@ class ServerLimitsInstance: AutoSerializable {
     @JsonIgnore private var i = 0
 
     val maxForce: FloatLimit by get(i++, FloatLimit())
-    val stiffness: FloatLimit by get(i++, FloatLimit(0f))
+    val stiffness: FloatLimit by get(i++, FloatLimit())
     val damping: FloatLimit by get(i++, FloatLimit())
 
     val fixedDistance: FloatLimit by get(i++, FloatLimit())

@@ -48,10 +48,11 @@ class SyncRotationMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
+        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
         val mainConstraint = VSD6Joint(
             shipId1, VSJointPose(org.joml.Vector3d(), sRot1),
             shipId2, VSJointPose(org.joml.Vector3d(), sRot2),
-            VSJointMaxForceTorque(maxForce, maxForce),
+            maxForceTorque,
             EnumMap(mapOf(
                 Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
                 Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),

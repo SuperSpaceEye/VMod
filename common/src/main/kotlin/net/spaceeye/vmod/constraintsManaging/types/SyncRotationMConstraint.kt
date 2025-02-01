@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.constraintsManaging.types
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.util.*
@@ -46,6 +47,8 @@ class SyncRotationMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
+    override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> { return emptyList() }
+    override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> { return emptyList() }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}

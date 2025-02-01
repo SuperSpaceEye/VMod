@@ -24,6 +24,10 @@ interface MConstraint {
 
     // positions to which constraint is "attached" to the ship/world
     // is needed for strip tool, moving constraints on ship splitting
+    /**
+     * By default (-1) should return all attachment positions
+     * If given shipId, should only return positions belonging to that shipId
+     */
     fun getAttachmentPositions(shipId: Long = -1): List<BlockPos>
     fun getAttachmentPoints(shipId: Long = -1): List<Vector3d>
 

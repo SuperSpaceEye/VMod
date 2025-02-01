@@ -40,7 +40,10 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
             val camera = minecraft.gameRenderer.mainCamera
 
             val result = RaycastFunctions.renderRaycast(minecraft.level!!, RaycastFunctions.Source(Vector3d(camera.lookVector), Vector3d(camera.position)))
-            if (result.shipId == -1L) {return@on}
+            if (result.shipId == -1L) {
+                currentQuery = -1
+                return@on
+            }
             if (currentQuery != result.shipId) {
                 queryIds = null
                 currentQuery = result.shipId

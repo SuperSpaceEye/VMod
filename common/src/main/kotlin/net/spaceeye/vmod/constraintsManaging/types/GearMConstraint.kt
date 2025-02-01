@@ -85,10 +85,9 @@ class GearMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
         )
     }
 
-    override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
-//        onDeleteMConstraint(level)
-//        onMakeMConstraint(level)
-    }
+    override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
+    override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> { return emptyList() }
+    override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> { return emptyList() }
 
     override fun iOnMakeMConstraint(level: ServerLevel): Boolean {
         val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
@@ -97,7 +96,7 @@ class GearMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
             shipId2, VSJointPose(sPos2.toJomlVector3d(), getHingeRotation(sDir2)),
             maxForceTorque,
             gearRatio = gearRatio,
-            )
+        )
 
         mc(rotationConstraint, cIDs, level) {return false}
 

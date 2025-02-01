@@ -8,6 +8,8 @@ import org.valkyrienskies.core.api.ships.LoadedServerShip
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ShipForcesInducer
 
+val testMap = mutableMapOf<Any, Any>()
+
 //TODO remove in the future
 @JsonAutoDetect(
     fieldVisibility = JsonAutoDetect.Visibility.ANY,

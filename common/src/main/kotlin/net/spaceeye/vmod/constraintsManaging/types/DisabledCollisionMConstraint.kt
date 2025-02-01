@@ -42,10 +42,10 @@ class DisabledCollisionMConstraint(): ExtendableMConstraint(), MCAutoSerializabl
         return toReturn
     }
 
-    override fun iGetAttachmentPositions(shipId: Long): List<BlockPos> = listOf()
-    override fun iGetAttachmentPoints(shipId: Long): List<Vector3d> = listOf()
+    override fun iGetAttachmentPositions(shipId: Long): List<BlockPos> = emptyList()
+    override fun iGetAttachmentPoints(shipId: Long): List<Vector3d> = emptyList()
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
-    override fun iGetVSIds(): Set<VSJointId> = setOf()
+    override fun iGetVSIds(): Set<VSJointId> = emptySet()
     override fun iCopyMConstraint(level: ServerLevel, mapped: Map<ShipId, ShipId>): MConstraint? { return DisabledCollisionMConstraint(mapped[shipId1] ?: return null, mapped[shipId2] ?: return null) }
 
     private var beingRemoved = false

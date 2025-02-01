@@ -42,8 +42,8 @@ class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
 
     override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>) = allShips.contains(shipId)
     override fun iAttachedToShips(dimensionIds: Collection<ShipId>) = mutableListOf(shipId)
-    override fun iGetAttachmentPositions(qshipId: ShipId): List<BlockPos> = if (qshipId == shipId) listOf(bpos) else {listOf()}
-    override fun iGetAttachmentPoints(qshipId: ShipId): List<Vector3d> = if (shipId == qshipId) listOf(Vector3d(pos)) else listOf()
+    override fun iGetAttachmentPositions(qshipId: ShipId): List<BlockPos> = if (shipId == qshipId || qshipId == -1L) listOf(bpos) else emptyList()
+    override fun iGetAttachmentPoints(qshipId: ShipId): List<Vector3d> = if (shipId == qshipId || qshipId == -1L) listOf(Vector3d(pos)) else emptyList()
     override fun iGetVSIds(): Set<VSJointId> = setOf()
 
 

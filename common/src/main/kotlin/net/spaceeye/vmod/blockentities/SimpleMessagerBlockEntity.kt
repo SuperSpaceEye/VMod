@@ -12,8 +12,8 @@ import net.spaceeye.vmod.network.MessagingNetwork
 import net.spaceeye.vmod.network.Signal
 
 class SimpleMessagerBlockEntity(pos: BlockPos, state: BlockState): BlockEntity(VMBlockEntities.SIMPLE_MESSAGER.get(), pos, state) {
-    private var _transmit: Boolean = false
-    private var _channel: String = "sensor"
+    private var _transmit: Boolean = true
+    private var _channel: String = "hydraulics"
     private var num = 0
 
     var channel

@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.types.DisabledCollisionMConstraint
+import net.spaceeye.vmod.constraintsManaging.types.constraints.DisabledCollisionMConstraint
 import net.spaceeye.vmod.toolgun.modes.gui.DisableCollisionsGUI
 import net.spaceeye.vmod.toolgun.modes.hud.DisableCollisionHUD
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes

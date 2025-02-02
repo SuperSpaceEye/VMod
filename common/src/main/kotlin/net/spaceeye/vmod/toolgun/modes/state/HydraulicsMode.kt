@@ -8,7 +8,7 @@ import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.extensions.SignalActivator
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.HydraulicsMConstraint
+import net.spaceeye.vmod.constraintsManaging.types.constraints.HydraulicsMConstraint
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.SerializableItem.get

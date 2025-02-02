@@ -42,7 +42,7 @@ object RaycastFunctions {
         @JvmField var origin: Vector3d,
         @JvmField var lookVec: Vector3d,
         @JvmField var blockPosition: BlockPos,
-        @JvmField var worldHitPos: Vector3d?, // if in shipyard, will transform to world pos
+        @JvmField var worldHitPos: Vector3d, // if in shipyard, will transform to world pos
         @JvmField var globalHitPos: Vector3d?, // if in shipyard, will not transform to world pos
         @JvmField var worldCenteredHitPos: Vector3d?,
         @JvmField var globalCenteredHitPos: Vector3d?,
@@ -121,7 +121,7 @@ object RaycastFunctions {
         )
 
         val state = level.getBlockState(clipResult.blockPos)
-        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null, null, -1) }
+        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, source.origin + unitLookVec * maxDistance, null, null, null, null, null, null, null, -1) }
 
         val ship = level.getShipManagingPos(clipResult.blockPos)
 

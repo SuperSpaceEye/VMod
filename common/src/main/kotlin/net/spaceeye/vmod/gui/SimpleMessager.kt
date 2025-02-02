@@ -58,15 +58,17 @@ object SimpleMessagerNetworking {
     class S2CRequestStateResponse(): Serializable {
         constructor(buf: FriendlyByteBuf): this() { deserialize(buf) }
         constructor(succeeded: Boolean): this() {this.succeeded = succeeded}
-        constructor(succeeded: Boolean, msg: Message, channel: String): this() {
+        constructor(succeeded: Boolean, msg: Message, channel: String, transmit: Boolean): this() {
             this.succeeded = succeeded
             this.msg = msg
             this.channel = channel
+            this.transmit = transmit
         }
 
         var succeeded: Boolean = false
         lateinit var msg: Message
         var channel: String = ""
+        var transmit: Boolean = true
 
         override fun serialize(): FriendlyByteBuf {
             val buf = getBuffer()
@@ -76,6 +78,7 @@ object SimpleMessagerNetworking {
 
             buf.writeNbt(MessageTypes.serialize(msg))
             buf.writeUtf(channel)
+            buf.writeBoolean(transmit)
 
             return buf
         }
@@ -86,20 +89,23 @@ object SimpleMessagerNetworking {
 
             msg = MessageTypes.deserialize(buf.readNbt()!!)
             channel = buf.readUtf()
+            transmit = buf.readBoolean()
         }
     }
 
     class C2SSendStateUpdate(): Serializable {
         constructor(buf: FriendlyByteBuf): this() { deserialize(buf) }
-        constructor(msg: Message, channel: String, pos: BlockPos): this() {
+        constructor(msg: Message, channel: String, pos: BlockPos, transmit: Boolean): this() {
             this.msg = msg
             this.channel = channel
             this.pos = pos
+            this.transmit = transmit
         }
 
         lateinit var msg: Message
         var channel: String = ""
         lateinit var pos: BlockPos
+        var transmit: Boolean = true
 
         override fun serialize(): FriendlyByteBuf {
             val buf = getBuffer()
@@ -107,6 +113,7 @@ object SimpleMessagerNetworking {
             buf.writeNbt(MessageTypes.serialize(msg))
             buf.writeBlockPos(pos)
             buf.writeUtf(channel)
+            buf.writeBoolean(transmit)
 
             return buf
         }
@@ -115,6 +122,7 @@ object SimpleMessagerNetworking {
             msg = MessageTypes.deserialize(buf.readNbt()!!)
             pos = buf.readBlockPos()
             channel = buf.readUtf()
+            transmit = buf.readBoolean()
         }
 
     }
@@ -163,7 +171,7 @@ object SimpleMessagerNetworking {
                 s2cRequestStateResponse.sendToClient(player, S2CRequestStateResponse(false))
                 return@add
             }
-            s2cRequestStateResponse.sendToClient(player, S2CRequestStateResponse(true, be.msg, be.channel))
+            s2cRequestStateResponse.sendToClient(player, S2CRequestStateResponse(true, be.msg, be.channel, be.transmit))
         }
     }
 
@@ -173,7 +181,7 @@ object SimpleMessagerNetworking {
             return@regS2C
         }
 
-        SimpleMessagerGUI.update(pkt.msg, pkt.channel)
+        SimpleMessagerGUI.update(pkt.msg, pkt.channel, pkt.transmit)
         SimpleMessagerGUI.open()
     }
 
@@ -202,6 +210,7 @@ object SimpleMessagerNetworking {
 
             be.msg = pkt.msg
             be.channel = ServerLimits.instance.channelLength.get(pkt.channel)
+            be.transmit = pkt.transmit
 
             s2cStateUpdatedResponse.sendToClient(player, S2CStateUpdatedResponse(true))
         }
@@ -250,7 +259,7 @@ object SimpleMessagerGUI: ClientClosable() {
         open = true
     }
 
-    fun update(msg: Message, channel: String) = gui!!.updateState(msg, channel)
+    fun update(msg: Message, channel: String, transmit: Boolean) = gui!!.updateState(msg, channel, transmit)
     fun updateSuccess() {gui!!.updateSuccess()}
     fun updateNoSuccess() {gui!!.updateNoSuccess()}
 
@@ -283,6 +292,7 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
     var channel = ""
 
     var msg: Message? = Signal()
+    var transmit: Boolean = false
 
     val mainWindow = UIBlock(Color(240, 240, 240)).constrain {
         x = CenterConstraint()
@@ -304,7 +314,7 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
         if (msg == null) {return@Button}
         SimpleMessagerNetworking.c2sSendStateUpdate.sendToServer(
             SimpleMessagerNetworking.C2SSendStateUpdate(
-            msg!!, channel, pos
+            msg!!, channel, pos, transmit
         ))
     }.constrain {
         width = 98.percent()
@@ -315,21 +325,26 @@ class SimpleMessagerGUIInstance(val level: ClientLevel, val pos: BlockPos): Wind
     } childOf itemsHolder
 
     var entry: TextEntry
+    var checkbox: CheckBox
 
     init {
         entry = makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, itemsHolder, ServerLimits.instance.channelLength)
+        checkbox = makeCheckBox(TRANSMIT.get(), ::transmit, 2f, 2f, itemsHolder)
         msg = Signal()
     }
 
-    fun updateState(msg: Message, channel: String) {
+    fun updateState(msg: Message, channel: String, transmit: Boolean) {
         this.msg = msg
         this.channel = channel
+        this.transmit = transmit
     }
 
     fun updateGui() {
         itemsHolder.removeChild(entry)
+        itemsHolder.removeChild(checkbox)
 
         entry = makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, itemsHolder, ServerLimits.instance.channelLength)
+        checkbox = makeCheckBox(TRANSMIT.get(), ::transmit, 2f, 2f, itemsHolder)
     }
 
     fun updateSuccess() {

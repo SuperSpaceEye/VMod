@@ -6,14 +6,10 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
-import net.spaceeye.vmod.constraintsManaging.extensions.SignalActivator
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.types.entities.ThrusterMConstraint
-import net.spaceeye.vmod.limits.DoubleLimit
+import net.spaceeye.vmod.constraintsManaging.types.entities.SensorMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
-import net.spaceeye.vmod.toolgun.modes.gui.ThrusterGUI
-import net.spaceeye.vmod.toolgun.modes.hud.ThrusterHUD
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePosition
 import net.spaceeye.vmod.networking.SerializableItem.get
@@ -21,17 +17,20 @@ import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
+import net.spaceeye.vmod.toolgun.modes.gui.SensorGUI
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.getQuatFromDir
 import org.valkyrienskies.mod.common.getShipManagingPos
+import java.awt.Color
 
-//TODO rework everything
-class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
+//TODO finish this mf
+class SensorMode: ExtendableToolgunMode(), SensorGUI {
     @JsonIgnore private var i = 0
 
-    var force: Double by get(i++, 10000.0, {DoubleLimit(1.0, 1e100).get(it)})
-    var channel: String by get(i++, "thruster", {ServerLimits.instance.channelLength.get(it)})
+    var maxDistance: Double by get(i++, 10.0, {ServerLimits.instance.maxDistance.get(it)})
+    var channel: String by get(i++, "sensor", {ServerLimits.instance.channelLength.get(it)})
     var scale: Double by get(i++, 1.0, {ServerLimits.instance.thrusterScale.get(it)})
+    var ignoreSelf: Boolean by get(i++, false)
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
@@ -46,27 +45,25 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
         val pos = getModePosition(posMode, raycastResult, precisePlacementAssistSideNum)
         val basePos = pos + raycastResult.globalNormalDirection!! * 0.5
 
-        level.makeManagedConstraint(ThrusterMConstraint(
+        level.makeManagedConstraint(SensorMConstraint(
             ship.id,
             basePos,
             raycastResult.blockPosition,
-            -raycastResult.globalNormalDirection!!,
-            force, channel
+            raycastResult.globalNormalDirection!!,
+            maxDistance, ignoreSelf, scale, channel
         ).addExtension(RenderableExtension(ConeBlockRenderer(
-            basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id
-        ))).addExtension(SignalActivator(
-            "channel", "percentage"
-        )).addExtension(Strippable())){it.addFor(player)}
+            basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id, Color(0, 255, 0)
+        ))).addExtension(Strippable())){it.addFor(player)}
     }
 
     companion object {
         init {
-            ToolgunModes.registerWrapper(ThrusterMode::class) {
-                it.addExtension<ThrusterMode> {
-                    BasicConnectionExtension<ThrusterMode>("thruster_mode"
+            ToolgunModes.registerWrapper(SensorMode::class) {
+                it.addExtension<SensorMode> {
+                    BasicConnectionExtension<SensorMode>("sensor_mode"
                         ,leftFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )
-                }.addExtension<ThrusterMode> {
+                }.addExtension<SensorMode> {
                     PlacementModesExtension(false)
                 }
             }

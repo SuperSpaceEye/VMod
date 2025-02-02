@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIContainer
-import net.spaceeye.vmod.constraintsManaging.types.SliderMConstraint.ConnectionMode
+import net.spaceeye.vmod.constraintsManaging.types.constraints.SliderMConstraint.ConnectionMode
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry

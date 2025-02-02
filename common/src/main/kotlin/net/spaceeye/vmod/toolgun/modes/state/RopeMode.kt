@@ -7,7 +7,7 @@ import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.RopeMConstraint
+import net.spaceeye.vmod.constraintsManaging.types.constraints.RopeMConstraint
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.IntLimit
 import net.spaceeye.vmod.limits.ServerLimits
@@ -21,7 +21,6 @@ import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 

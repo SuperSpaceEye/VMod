@@ -40,6 +40,7 @@ class ConeBlockRenderer(): BlockRenderer {
         var pos: Vector3d by get(i++, Vector3d())
         var rot: Quaterniond by get(i++, Quaterniond())
         var scale: Float by get(i++, 1.0f)
+        var color: Color by get(i++, Color(255, 255, 255))
     }
     val state = State()
 
@@ -50,12 +51,14 @@ class ConeBlockRenderer(): BlockRenderer {
     inline var pos get() = state.pos; set(value) {state.pos = value}
     inline var rot get() = state.rot; set(value) {state.rot = value}
     inline var scale get() = state.scale; set(value) {state.scale = value}
+    inline var color get() = state.color; set(value) {state.color = value}
 
-    constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId): this() {
+    constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId, color: Color = Color(255, 255, 255)): this() {
         this.pos = pos
         this.rot = rot
         this.scale = scale
         this.shipId = shipId
+        this.color = color
     }
 
     private var highlightTimestamp = 0L
@@ -94,7 +97,7 @@ class ConeBlockRenderer(): BlockRenderer {
         val combinedLightIn = LightTexture.pack(0, level.getBrightness(LightLayer.SKY, rpoint.toBlockPos()))
         val combinedOverlayIn = OverlayTexture.NO_OVERLAY
 
-        RenderingStuff.renderSingleBlock(A.testState, poseStack, buffer, combinedLightIn, combinedOverlayIn, if (timestamp < highlightTimestamp) Color(255, 0, 0) else Color(255, 255, 255))
+        RenderingStuff.renderSingleBlock(A.testState, poseStack, buffer, combinedLightIn, combinedOverlayIn, if (timestamp < highlightTimestamp) Color(255, 0, 0) else color)
 
         poseStack.popPose()
     }

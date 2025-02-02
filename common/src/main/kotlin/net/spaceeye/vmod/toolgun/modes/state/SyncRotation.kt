@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.SyncRotationMConstraint
+import net.spaceeye.vmod.constraintsManaging.types.constraints.SyncRotationMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.gui.SyncRotationGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SyncRotationHUD

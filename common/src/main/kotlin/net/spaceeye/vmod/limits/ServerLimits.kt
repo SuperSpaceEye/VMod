@@ -37,6 +37,7 @@ class ServerLimitsInstance: AutoSerializable {
     val scale: DoubleLimit by get(i++, DoubleLimit(0.001))
     val precisePlacementAssistSides: IntLimit by get(i++, IntLimit(2, 11))
     val gearRatio: FloatLimit by get(i++, FloatLimit(0.001f))
+    val maxDistance: DoubleLimit by get(i++, DoubleLimit(0.0, 100.0))
 
     val physRopeSegments: IntLimit by get(i++, IntLimit(1, 100))
     val physRopeMassPerSegment: DoubleLimit by get(i++, DoubleLimit(0.01, 10000.0))
@@ -45,6 +46,7 @@ class ServerLimitsInstance: AutoSerializable {
     val channelLength: StrLimit by get(i++, StrLimit(50))
 
     val thrusterScale: DoubleLimit by get(i++, DoubleLimit(0.1, 10.0))
+    val sensorScale: DoubleLimit by get(i++, DoubleLimit(0.1, 10.0))
 }
 
 object ServerLimits {

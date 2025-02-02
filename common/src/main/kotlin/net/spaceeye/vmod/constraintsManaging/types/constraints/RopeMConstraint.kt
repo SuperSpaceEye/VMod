@@ -1,4 +1,4 @@
-package net.spaceeye.vmod.constraintsManaging.types
+package net.spaceeye.vmod.constraintsManaging.types.constraints
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos

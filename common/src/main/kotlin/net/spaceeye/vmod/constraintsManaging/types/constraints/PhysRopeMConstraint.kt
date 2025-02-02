@@ -1,29 +1,4 @@
-package net.spaceeye.vmod.constraintsManaging.types
-
-import gg.essential.elementa.state.map
-import net.minecraft.core.BlockPos
-import net.minecraft.nbt.*
-import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.*
-import net.spaceeye.vmod.utils.vs.VSJointDeserializationUtil.tryConvertDimensionId
-import net.spaceeye.vmod.entities.events.ServerPhysEntitiesHolder
-import net.spaceeye.vmod.entities.PhysRopeComponentEntity
-import net.spaceeye.vmod.events.RandomEvents
-import net.spaceeye.vmod.rendering.ServerRenderingData
-import net.spaceeye.vmod.rendering.types.PhysRopeRenderer
-import net.spaceeye.vmod.utils.*
-import net.spaceeye.vmod.utils.vs.*
-import org.joml.AxisAngle4d
-import org.joml.Quaterniond
-import org.joml.Vector3dc
-import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.VSDistanceJoint
-import org.valkyrienskies.core.apigame.joints.VSJoint
-import org.valkyrienskies.core.apigame.joints.VSJointPose
-import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
-import org.valkyrienskies.mod.common.shipObjectWorld
-import java.awt.Color
-import java.util.*
+package net.spaceeye.vmod.constraintsManaging.types.constraints
 
 //class PhysRopeMConstraint(): TwoShipsMConstraint() {
 //    lateinit var constraint: VSDistanceJoint

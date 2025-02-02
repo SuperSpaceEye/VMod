@@ -6,7 +6,7 @@ import gg.essential.elementa.dsl.childOf
 import gg.essential.elementa.dsl.constrain
 import gg.essential.elementa.dsl.pixels
 import gg.essential.elementa.dsl.plus
-import net.spaceeye.vmod.constraintsManaging.types.ConnectionMConstraint.ConnectionModes
+import net.spaceeye.vmod.constraintsManaging.types.constraints.ConnectionMConstraint.ConnectionModes
 import net.spaceeye.vmod.guiElements.ColorPicker
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown

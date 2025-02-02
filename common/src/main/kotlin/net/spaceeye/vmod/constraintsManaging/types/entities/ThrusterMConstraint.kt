@@ -1,11 +1,12 @@
-package net.spaceeye.vmod.constraintsManaging.types
+package net.spaceeye.vmod.constraintsManaging.types.entities
 
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.constraintsManaging.*
+import net.spaceeye.vmod.constraintsManaging.MConstraint
+import net.spaceeye.vmod.constraintsManaging.Tickable
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.TickableMConstraintExtension
 import net.spaceeye.vmod.shipAttachments.ThrustersController

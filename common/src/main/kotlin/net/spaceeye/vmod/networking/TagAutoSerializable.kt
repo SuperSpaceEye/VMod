@@ -3,6 +3,7 @@ package net.spaceeye.vmod.networking
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
+import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.DoubleTag
 import net.minecraft.nbt.FloatTag
@@ -183,6 +184,7 @@ object TagSerializableItem {
     init {
         registerSerializationItem(Quaterniond::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
         registerSerializationItem(Vector3d::class, {it, buf, key -> buf.putMyVector3d(key, it)}) {buf, key -> buf.getMyVector3d(key)}
+        registerSerializationItem(BlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) { buf, key -> BlockPos.of(buf.getLong(key))}
         registerSerializationItem(ByteBuf::class, {it, buf, key -> buf.putByteArray(key, it.array())}) {buf, key -> Unpooled.wrappedBuffer(buf.getByteArray(key))}
         registerSerializationItem(Boolean::class, {it, buf, key -> buf.putBoolean(key, it)}) {buf, key -> buf.getBoolean(key)}
         registerSerializationItem(Double::class, {it, buf, key -> buf.putDouble(key, it)}) {buf, key -> buf.getDouble(key)}

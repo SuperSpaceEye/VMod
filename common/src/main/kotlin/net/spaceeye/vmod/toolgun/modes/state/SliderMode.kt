@@ -7,7 +7,7 @@ import net.minecraft.world.level.Level
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.SliderMConstraint
+import net.spaceeye.vmod.constraintsManaging.types.constraints.SliderMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.gui.SliderGUI
@@ -18,7 +18,6 @@ import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.RaycastFunctions

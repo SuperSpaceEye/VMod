@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.constraintsManaging.addFor
 import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.GearMConstraint
+import net.spaceeye.vmod.constraintsManaging.types.constraints.GearMConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.networking.SerializableItem.get
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode

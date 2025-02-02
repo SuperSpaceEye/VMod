@@ -12,6 +12,7 @@
   "vmod.gui.sync_rotation": "Sync Rotation",
   "vmod.gui.gear": "Gear",
   "vmod.gui.thruster": "Thruster",
+  "vmod.gui.sensor": "Sensor",
   "vmod.gui.ship_remover": "Ship Remover",
 
   "vmod.gui.server_setting.dimensional_gravity": "Dimensional Gravity",
@@ -41,6 +42,9 @@
   "vmod.gui.setting.scale": "Scale",
   "vmod.gui.setting.force": "Force",
   "vmod.gui.setting.gear_ratio": "Gear Ratio",
+  "vmod.gui.setting.max_distance": "Max Distance",
+  "vmod.gui.setting.ignore_self_ship": "Ignore Self Ship",
+  "vmod.gui.setting.transmit": "Transmit",
   "vmod.gui.setting.placement_assist_scroll_step": "Placement Assist Scroll Step",
   "vmod.gui.setting.hitpos_modes": "Hitpos Modes",
   "vmod.gui.setting.normal": "Normal",

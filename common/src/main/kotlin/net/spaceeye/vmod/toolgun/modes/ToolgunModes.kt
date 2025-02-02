@@ -16,6 +16,7 @@ object ToolgunModes: Registry<BaseMode>() {
         register(GearMode::class)
 
         register(ThrusterMode::class)
+        register(SensorMode::class)
         register(GravChangerMode::class)
         register(DisableCollisionsMode::class)
         register(SchemMode::class)

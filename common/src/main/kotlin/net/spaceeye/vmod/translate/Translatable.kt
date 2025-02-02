@@ -48,6 +48,7 @@ val STRIP = t("Strip")
 val SYNC_ROTATION = t("Sync Rotation")
 val GEAR = t("Gear")
 val THRUSTER = t("Thruster")
+val SENSOR = t("Sensor")
 val SHIP_REMOVER = t("Ship Remover")
 
 val DIMENSIONAL_GRAVITY = v("Dimensional Gravity")
@@ -77,6 +78,9 @@ val DAMPING = s("Damping")
 val SSCALE = s("Scale")
 val FORCE = s("Force")
 val GEAR_RATIO = s("Gear Ratio")
+val MAX_DISTANCE = s("Max Distance")
+val IGNORE_SELF_SHIP = s("Ignore Self Ship")
+val TRANSMIT = s("Transmit")
 
 val PLACEMENT_ASSIST_SCROLL_STEP = s("Placement Assist Scroll Step")
 

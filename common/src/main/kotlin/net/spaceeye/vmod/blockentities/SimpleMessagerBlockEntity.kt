@@ -44,7 +44,6 @@ class SimpleMessagerBlockEntity(pos: BlockPos, state: BlockState): BlockEntity(V
 
     private fun initNetworkMaybe() {
         var control = num
-        println("$channel $control")
         MessagingNetwork.register(channel) { msg, unregister ->
             if (num != control) { unregister(); return@register }
             if (msg !is Signal) {return@register}

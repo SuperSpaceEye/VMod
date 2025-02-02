@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.constraintsManaging.types.entities
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
@@ -8,29 +9,29 @@ import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.Tickable
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
+import net.spaceeye.vmod.constraintsManaging.util.MCAutoSerializable
 import net.spaceeye.vmod.constraintsManaging.util.TickableMConstraintExtension
 import net.spaceeye.vmod.shipAttachments.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.getVector3d
-import net.spaceeye.vmod.utils.putVector3d
 import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.VSJointId
 import org.valkyrienskies.mod.common.shipObjectWorld
+import net.spaceeye.vmod.networking.TagSerializableItem.get
 
-class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
-    var shipId: ShipId = -1
-    var pos = Vector3d()
-    var bpos = BlockPos(0, 0, 0)
-    var forceDir = Vector3d()
-    var force: Double = 1.0
+class ThrusterMConstraint(): ExtendableMConstraint(), Tickable, MCAutoSerializable {
+    @JsonIgnore private var i = 0
+
+    var shipId: ShipId by get(i++, -1)
+    var pos: Vector3d by get(i++, Vector3d())
+    var bpos: BlockPos by get(i++, BlockPos(0, 0, 0))
+    var forceDir: Vector3d by get(i++, Vector3d())
+    var force: Double by get(i++, 1.0)
+    var channel: String by get(i++, "")
+    var thrusterId: Int by get(i++, -1)
     var percentage: Double = 0.0
-
-    var channel = ""
-
-    var thrusterId: Int = -1
 
     constructor(shipId: ShipId, pos: Vector3d, bpos: BlockPos, forceDir: Vector3d, force: Double, channel: String): this() {
         this.shipId = shipId
@@ -92,34 +93,14 @@ class ThrusterMConstraint(): ExtendableMConstraint(), Tickable {
     }
 
     override fun iNbtSerialize(): CompoundTag? {
-        val tag = CompoundTag()
-        tag.putInt("managedId", mID)
-
-        tag.putLong("shipId", shipId)
-        tag.putInt("thrusterId", thrusterId)
-        tag.putDouble("force", force)
-        tag.putVector3d("pos", pos.toJomlVector3d())
-        tag.putVector3d("forceDir", forceDir.toJomlVector3d())
-        tag.putLong("bpos", bpos.asLong())
-        tag.putDouble("percentage", percentage)
-        tag.putString("channel", channel)
-
+        val tag = super<MCAutoSerializable>.iNbtSerialize()
+        tag?.putDouble("percentage", percentage)
         return tag
     }
 
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): MConstraint? {
-        mID = tag.getInt("managedId")
-
-        shipId = tag.getLong("shipId")
-        thrusterId = tag.getInt("thrusterId")
-        force = tag.getDouble("force")
-        pos = Vector3d(tag.getVector3d("pos") ?: return null)
-        forceDir = Vector3d(tag.getVector3d("forceDir") ?: return null)
-        bpos = BlockPos.of(tag.getLong("bpos"))
         percentage = tag.getDouble("percentage")
-        channel = tag.getString("channel")
-
-        return this
+        return super<MCAutoSerializable>.iNbtDeserialize(tag, lastDimensionIds)
     }
 
     private var wasRemoved = false

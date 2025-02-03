@@ -28,7 +28,7 @@ import java.awt.Color
 class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
+    var maxForce: Float by get(i++, -1f, {ServerLimits.instance.maxForce.get(it)})
     var stiffness: Float by get(i++, -1f, {ServerLimits.instance.stiffness.get(it)})
     var damping: Float by get(i++, -1f, {ServerLimits.instance.damping.get(it)})
 

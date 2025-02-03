@@ -20,7 +20,7 @@ val testMap = mutableMapOf<Any, Any>()
 @JsonIgnoreProperties(ignoreUnknown = true)
 class NOOP: ShipForcesInducer {
     override fun applyForces(physShip: PhysShip) {
-        physShip.applyInvariantForce(Vector3d(0.0, 1e-5, 0.0))
+//        physShip.applyInvariantForce(Vector3d(0.0, 1e-5, 0.0))
     }
 
     companion object {

@@ -109,7 +109,7 @@ class SensorMConstraint(): ExtendableMConstraint(), Tickable, MCAutoSerializable
             if (ignoreSelf) {ship.id} else {null}
         )
 
-        val distance = (result.origin - result.worldHitPos).dist()
+        val distance = (result.origin - (result.worldHitPos ?: (result.origin + result.lookVec * maxDistance))).dist()
 
         MessagingNetwork.notify(channel, Signal(min(distance / maxDistance, 1.0)))
     }

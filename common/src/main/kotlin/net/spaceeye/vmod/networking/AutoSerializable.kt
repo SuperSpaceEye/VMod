@@ -94,6 +94,7 @@ interface AutoSerializable: Serializable {
             val members = orderNames.map { item -> this::class.memberProperties.find { it.name == item }!! }
             val delegates = members.mapNotNull { it ->
                 val clazz = it.returnType.jvmErasure
+                //if it's dataclass then it can't have verification
                 typeToDelegate[clazz]?.invoke(-1, it.call(this)!!) { it }
             }
 

@@ -2,6 +2,7 @@ package net.spaceeye.vmod.vsStuff
 
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.VMConfig
+import net.spaceeye.vmod.mixin.ShipObjectWorldAccessor
 import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.shipAttachments.NOOP
 import net.spaceeye.vmod.shipAttachments.PhysgunController
@@ -62,7 +63,7 @@ object VSGravityManager {
 
     fun getDimensionGravityMutableReference(id: DimensionId): Vector3d {
         return __gravities.getOrElse(id) {
-            val default = Vector3d(0, -10, 0)
+            val default = (ServerLevelHolder.shipObjectWorld!! as ShipObjectWorldAccessor).dimensionState[id]?.c?.let { Vector3d(it) } ?: Vector3d(0, -10, 0)
             __gravities[id] = default
             saveState()
             default

@@ -42,7 +42,7 @@ object RaycastFunctions {
         @JvmField var origin: Vector3d,
         @JvmField var lookVec: Vector3d,
         @JvmField var blockPosition: BlockPos,
-        @JvmField var worldHitPos: Vector3d, // if in shipyard, will transform to world pos
+        @JvmField var worldHitPos: Vector3d?, // if in shipyard, will transform to world pos
         @JvmField var globalHitPos: Vector3d?, // if in shipyard, will not transform to world pos
         @JvmField var worldCenteredHitPos: Vector3d?,
         @JvmField var globalCenteredHitPos: Vector3d?,

@@ -72,10 +72,6 @@
 * Add ability to change rendering modes
 * Add more setting options
 
-## Hydraulics
-* Make it more stable
-* Fix the bug that crashes VS
-
 ## Elastic
 A rope that can stretch or push (if option is chosen)
 

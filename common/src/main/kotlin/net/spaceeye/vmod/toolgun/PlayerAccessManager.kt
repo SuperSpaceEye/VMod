@@ -170,7 +170,7 @@ object PlayerAccessManager {
 
     @Synchronized fun save() {
         val mapper = getMapper()
-        val data = mapper.writeValueAsBytes(this)
+        val data = mapper.writeValueAsBytes(this.state)
         ExternalDataUtil.writeObject("role_data.json", data)
     }
 

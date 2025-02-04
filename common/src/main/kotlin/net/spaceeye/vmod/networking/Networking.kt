@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.reflectable.constructor
 import java.security.MessageDigest
 
 interface Connection {

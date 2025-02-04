@@ -14,8 +14,8 @@ import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.MessageTypes
-import net.spaceeye.vmod.networking.SerializableItem
-import net.spaceeye.vmod.networking.TagSerializableItem
+import net.spaceeye.vmod.reflectable.ByteSerializableItem
+import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.physgun.ClientPhysgunState
 import net.spaceeye.vmod.physgun.PhysgunItem
 import net.spaceeye.vmod.physgun.ServerPhysgunState
@@ -86,7 +86,7 @@ object VM {
         ToolgunExtensions
         ToolgunModes
         ServerSettingsTypes
-        SerializableItem
+        ByteSerializableItem
         TagSerializableItem
     }
 

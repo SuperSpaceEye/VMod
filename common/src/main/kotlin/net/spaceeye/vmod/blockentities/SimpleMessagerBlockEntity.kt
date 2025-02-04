@@ -53,16 +53,16 @@ class SimpleMessagerBlockEntity(pos: BlockPos, state: BlockState): BlockEntity(V
 
     override fun load(tag: CompoundTag) {
         super.load(tag)
-        channel = tag.getString("channel")
         msg = MessageTypes.deserialize(tag.getCompound("msg"))
-        transmit = tag.getBoolean("transmit")
         lastSignal = tag.getInt("lastSignal")
+        transmit = tag.getBoolean("transmit")
+        channel = tag.getString("channel")
     }
     override fun saveAdditional(tag: CompoundTag) {
         super.saveAdditional(tag)
-        tag.putString("channel", channel)
         tag.put("msg", MessageTypes.serialize(msg))
-        tag.putBoolean("transmit", transmit)
         tag.putInt("lastSignal", lastSignal)
+        tag.putBoolean("transmit", transmit)
+        tag.putString("channel", channel)
     }
 }

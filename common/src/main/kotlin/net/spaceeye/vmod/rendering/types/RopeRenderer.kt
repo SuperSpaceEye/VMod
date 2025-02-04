@@ -10,8 +10,8 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -21,33 +21,19 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class RopeRenderer(): BaseRenderer {
-    class State: AutoSerializable {
-        @JsonIgnore private var i = 0
+class RopeRenderer(): BaseRenderer, AutoSerializable {
+    @JsonIgnore private var i = 0
 
-        var shipId1: Long by get(i++, -1L)
-        var shipId2: Long by get(i++, -1L)
+    var shipId1: Long by get(i++, -1L)
+    var shipId2: Long by get(i++, -1L)
 
-        var point1: Vector3d by get(i++, Vector3d())
-        var point2: Vector3d by get(i++, Vector3d())
+    var point1: Vector3d by get(i++, Vector3d())
+    var point2: Vector3d by get(i++, Vector3d())
 
-        var length: Double by get(i++, 0.0)
+    var length: Double by get(i++, 0.0)
 
-        var width: Double by get(i++, .2)
-        var segments: Int by get(i++, 16)
-    }
-    val state = State()
-
-    inline var shipId1 get() = state.shipId1; set(value) {state.shipId1 = value}
-    inline var shipId2 get() = state.shipId2; set(value) {state.shipId2 = value}
-    inline var point1 get() = state.point1; set(value) {state.point1 = value}
-    inline var point2 get() = state.point2; set(value) {state.point2 = value}
-    inline var length get() = state.length; set(value) {state.length = value}
-    inline var width get() = state.width; set(value) {state.width = value}
-    inline var segments get() = state.segments; set(value) {state.segments = value}
-
-    override fun serialize() = state.serialize()
-    override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
+    var width: Double by get(i++, .2)
+    var segments: Int by get(i++, 16)
 
     constructor(shipId1: Long,
                 shipId2: Long,

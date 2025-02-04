@@ -11,7 +11,7 @@ import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.StrLimit
-import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C

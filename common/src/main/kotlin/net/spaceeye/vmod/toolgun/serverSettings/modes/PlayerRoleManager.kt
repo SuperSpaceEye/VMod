@@ -6,7 +6,7 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
-import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.toolgun.PlayerAccessManager

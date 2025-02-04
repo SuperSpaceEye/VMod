@@ -8,9 +8,8 @@ import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import org.lwjgl.opengl.GL11
@@ -18,34 +17,20 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
-class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer {
-    class State: AutoSerializable {
-        @JsonIgnore private var i = 0
+class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer, AutoSerializable {
+    @JsonIgnore private var i = 0
 
-        var point1: Vector3d by get(i++, Vector3d())
-        var point2: Vector3d by get(i++, Vector3d())
+    var point1: Vector3d by get(i++, Vector3d())
+    var point2: Vector3d by get(i++, Vector3d())
 
-        var color: Color by get(i++, Color(0))
+    var color: Color by get(i++, Color(0))
 
-        var width: Double by get(i++, .2)
+    var width: Double by get(i++, .2)
 
-        var timestampOfBeginning: Long by get(i++, -1)
-        var activeFor_ms: Long by get(i++, -1)
-        var renderingPosition: Vector3d by get(i++, Vector3d())
-    }
+    override var timestampOfBeginning: Long by get(i++, -1)
+    override var activeFor_ms: Long by get(i++, -1)
+    override var renderingPosition: Vector3d by get(i++, Vector3d())
 
-    val state = State()
-
-    inline var point1 get() = state.point1; set(value) {state.point1 = value}
-    inline var point2 get() = state.point2; set(value) {state.point2 = value}
-    inline var color get() = state.color; set(value) {state.color = value}
-    inline var width get() = state.width; set(value) {state.width = value}
-    override var timestampOfBeginning get() = state.timestampOfBeginning; set(value) {state.timestampOfBeginning = value}
-    override var activeFor_ms get() = state.activeFor_ms; set(value) {state.activeFor_ms = value}
-    override var renderingPosition get() = state.renderingPosition; set(value) {state.renderingPosition = value}
-
-    override fun serialize() = state.serialize()
-    override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
 
     override var wasActivated: Boolean = false
 

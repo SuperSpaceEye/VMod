@@ -15,8 +15,8 @@ import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.entities.events.ClientPhysEntitiesHolder
 import net.spaceeye.vmod.entities.PhysRopeComponentEntity
 import net.spaceeye.vmod.events.RandomEvents
-import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.makePolygon
 import net.spaceeye.vmod.utils.*
@@ -28,6 +28,7 @@ import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
+//TODO redo
 class PhysRopeRenderer(): BaseRenderer {
     class State: AutoSerializable {
         @JsonIgnore private var i = 0

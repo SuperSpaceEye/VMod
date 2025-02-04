@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.*
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ByteSerializableItem
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.getMapper
@@ -51,10 +53,10 @@ class ServerLimitsInstance: AutoSerializable {
 
 object ServerLimits {
     init {
-        SerializableItem.registerSerializationItem(DoubleLimit::class, {it, buf -> buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) {buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
-        SerializableItem.registerSerializationItem(FloatLimit::class, {it, buf -> buf.writeFloat(it.minValue); buf.writeFloat(it.maxValue) }) {buf -> FloatLimit(buf.readFloat(), buf.readFloat())}
-        SerializableItem.registerSerializationItem(IntLimit::class, {it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) {buf -> IntLimit(buf.readInt(), buf.readInt())}
-        SerializableItem.registerSerializationItem(StrLimit::class, {it, buf -> buf.writeInt(it.sizeLimit)}) {buf -> StrLimit(buf.readInt())}
+        ByteSerializableItem.registerSerializationItem(DoubleLimit::class, { it, buf -> buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) { buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
+        ByteSerializableItem.registerSerializationItem(FloatLimit::class, { it, buf -> buf.writeFloat(it.minValue); buf.writeFloat(it.maxValue) }) { buf -> FloatLimit(buf.readFloat(), buf.readFloat())}
+        ByteSerializableItem.registerSerializationItem(IntLimit::class, { it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) { buf -> IntLimit(buf.readInt(), buf.readInt())}
+        ByteSerializableItem.registerSerializationItem(StrLimit::class, { it, buf -> buf.writeInt(it.sizeLimit)}) { buf -> StrLimit(buf.readInt())}
     }
     private var _instance = ServerLimitsInstance()
     var wasLoaded = false

@@ -29,7 +29,7 @@ class ServerLimitsSettings: ServerSettingsGUIBuilder {
             width = 98.percent
         } childOf parentWindow
 
-        for (item in ServerLimits.instance.getSerializableItems()) {
+        for (item in ServerLimits.instance.getAllReflectableItems()) {
             val separated = item.cachedName.split(Regex("(?=[A-Z])")).toMutableList()
             separated[0] = separated[0].replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
             val name = separated.reduce { acc, s -> acc + " " + s.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}

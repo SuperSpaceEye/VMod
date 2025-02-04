@@ -7,8 +7,8 @@ import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.MCAutoSerializable
 import net.spaceeye.vmod.constraintsManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.mc
-import net.spaceeye.vmod.networking.TagSerializableItem
-import net.spaceeye.vmod.networking.TagSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.*
 import org.joml.Quaterniond

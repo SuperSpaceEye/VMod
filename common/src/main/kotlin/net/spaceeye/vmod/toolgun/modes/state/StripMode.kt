@@ -12,10 +12,10 @@ import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
 import net.spaceeye.vmod.toolgun.modes.hud.StripHUD
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.rendering.ClientRenderingData
@@ -151,7 +151,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         data class S2CSendStrippableRendererIds(var shipid: Long, var ids: IntArray): AutoSerializable {
             @JsonIgnore private var i = 0
 
-            var positions: List<Vector3d> by get(i++, listOf(), {it}, {it, buf -> buf.writeCollection(it){buf, it -> buf.writeVector3d(it)}}) {buf -> buf.readCollection({mutableListOf()}){buf.readVector3d()}}
+            var positions: List<Vector3d> by get(i++, listOf(), {it}, { it, buf -> buf.writeCollection(it){ buf, it -> buf.writeVector3d(it)}}) { buf -> buf.readCollection({mutableListOf()}){buf.readVector3d()}}
         }
         private val s2cSendStrippableRendererIds = regS2C<S2CSendStrippableRendererIds>("send_strippable_renderer_ids", "strip_mode") {
             pkt ->

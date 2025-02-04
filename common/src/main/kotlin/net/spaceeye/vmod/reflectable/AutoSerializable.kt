@@ -1,11 +1,11 @@
-package net.spaceeye.vmod.networking
+package net.spaceeye.vmod.reflectable
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.networking.SerializableItem.typeToDelegate
-import net.spaceeye.vmod.networking.SerializableItem.typeToFns
+import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.typeToSerDeser
 import net.spaceeye.vmod.utils.*
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.joml.Quaterniond
@@ -14,40 +14,16 @@ import org.valkyrienskies.core.util.writeQuatd
 import java.awt.Color
 import java.util.UUID
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.jvmErasure
-
-open class SerializableItemDelegate <T : Any>(
-    var serializationPos: Int,
-    var it: T?,
-    var verification: (it: Any) -> T,
-    var serialize: (it: Any, buf: FriendlyByteBuf) -> Unit,
-    var deserialize: (buf: FriendlyByteBuf) -> T) {
-
-    lateinit var cachedName: String
-    open operator fun getValue(thisRef: Any?, property: KProperty<*>):T {
-        return it!!
-    }
-
-    open operator fun setValue(thisRef: Any?, property: KProperty<*>?, value: Any) {
-        it = value as T
-    }
-
-    open operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): SerializableItemDelegate<T> {
-        cachedName = property.name
-        return this
-    }
-}
 
 /**
  * An interface that will add functionality for semi-automatic serialization/deserialization
  *
  * ### If added to a normal class:
  *
- * To mark parameter for automatic ser/deser will need to use delegate provided by [get][SerializableItem.get] like
+ * To mark parameter for automatic ser/deser will need to use delegate provided by [get][ByteSerializableItem.get] like
  *
  * ```kotlin
  * class Test(): AutoSerializable {
@@ -66,7 +42,7 @@ open class SerializableItemDelegate <T : Any>(
  *
  * ### If added to a data class:
  *
- * With data class you can just use registered types directly, without using [get][SerializableItem.get], though you can still use it for complex types
+ * With data class you can just use registered types directly, without using [get][ByteSerializableItem.get], though you can still use it for complex types
  * ```kotlin
  * data class Test(
  *  val item1: Int = 10,
@@ -81,73 +57,27 @@ open class SerializableItemDelegate <T : Any>(
  * }
  * ```
  */
-interface AutoSerializable: Serializable {
+interface AutoSerializable: Serializable, ReflectableItems {
     @JsonIgnore
     @NonExtendable
-    fun getSerializableItems(): List<SerializableItemDelegate<*>> {
-        val toReturn = mutableListOf<SerializableItemDelegate<*>>()
-
-        val constrNames: MutableSet<String> = mutableSetOf()
-        if (this::class.isData) {
-            val order = this::class.primaryConstructor?.parameters ?: listOf()
-            val orderNames = order.map { it.name!! }
-            val members = orderNames.map { item -> this::class.memberProperties.find { it.name == item }!! }
-            val delegates = members.mapNotNull { it ->
-                val clazz = it.returnType.jvmErasure
-                //if it's dataclass then it can't have verification
-                typeToDelegate[clazz]?.invoke(-1, it.call(this)!!) { it }
+    override fun serialize() = getBuffer().also { buf ->
+            getAllReflectableItems().forEach {
+                (it.metadata["byteSerialize"] as? ByteSerializeFn)?.invoke(it.it!!, buf)
+                ?: typeToSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf) }
+                ?: throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
             }
-
-            toReturn.addAll(delegates)
-            constrNames.addAll(orderNames)
         }
-
-        val memberProperties = this::class.memberProperties.filter {
-            !constrNames.contains(it.name)
-        }.mapNotNull { item ->
-            val javaField = item.javaField
-            if (javaField == null || !SerializableItemDelegate::class.java.isAssignableFrom(javaField.type)) return@mapNotNull null
-
-            javaField.isAccessible = true
-            val delegate = javaField.get(this) as SerializableItemDelegate<*>
-
-            delegate
-        }.sortedBy { it.serializationPos }
-
-        toReturn.addAll(memberProperties)
-
-        return toReturn
-    }
-
-    @JsonIgnore
-    @NonExtendable
-    fun getDeserializableItems(): List<SerializableItemDelegate<*>> {
-        val order = ( if (this::class.isData) this::class.primaryConstructor?.parameters?.map { it.name }?.toSet() else null) ?: setOf()
-        return this::class.memberProperties.filter {
-            !order.contains(it.name)
-        }.mapNotNull { item ->
-            val javaField = item.javaField
-            if (javaField == null || !SerializableItemDelegate::class.java.isAssignableFrom(javaField.type)) return@mapNotNull null
-
-            javaField.isAccessible = true
-            val delegate = javaField.get(this) as SerializableItemDelegate<*>
-
-            delegate
-        }.sortedBy { it.serializationPos }
-    }
-
-    @JsonIgnore
-    @NonExtendable
-    override fun serialize(): FriendlyByteBuf {
-        val buf = getBuffer()
-        getSerializableItems().forEach { it.serialize(it.it!!, buf) }
-        return buf
-    }
 
     @JsonIgnore
     @NonExtendable
     override fun deserialize(buf: FriendlyByteBuf) {
-        getDeserializableItems().forEach { it.setValue(null, null, it.deserialize(buf)) }
+        getReflectableItemsWithoutDataclassConstructorItems().forEach {
+            it.setValue(null, null,
+                (it.metadata["byteDeserialize"] as? ByteDeserializeFn<Any>)?.invoke(buf)
+                ?: typeToSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(buf) }
+                ?: throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
+            )
+        }
     }
 
     @JsonIgnore
@@ -155,6 +85,11 @@ interface AutoSerializable: Serializable {
         return super.getBuffer()
     }
 }
+
+/**
+ * Used in networking for if the class is [AutoSerializable] dataclass.
+ * Dataclasses need all items already deserialized and ready to be used in constructor
+ */
 fun <T: Serializable> KClass<T>.constructor(buf: FriendlyByteBuf? = null): T {
     if (!this.isData) {
         return this.primaryConstructor!!.call()
@@ -168,31 +103,27 @@ fun <T: Serializable> KClass<T>.constructor(buf: FriendlyByteBuf? = null): T {
 
     val members = order.map {item -> this.memberProperties.find { it.name == item.name }!! }
 
-    val delegates = members.map {
+    val deserializers = members.map {
         val clazz = it.returnType.jvmErasure
-        typeToFns[clazz]!!.second
+        typeToSerDeser[clazz]!!.second
     }
 
-    val items = delegates.map { it.invoke(buf) }
+    val items = deserializers.map { it.invoke(buf) }
 
     return this.primaryConstructor!!.call(*items.toTypedArray())
 }
 
-typealias SerializeFn = ((it: Any, buf: FriendlyByteBuf) -> Unit)
-typealias DeserializeFn<T> = ((buf: FriendlyByteBuf) -> T)
+typealias ByteSerializeFn = ((it: Any, buf: FriendlyByteBuf) -> Unit)
+typealias ByteDeserializeFn<T> = ((buf: FriendlyByteBuf) -> T)
 
-object SerializableItem {
-    val typeToDelegate = mutableMapOf<KClass<*>, (pos: Int, default: Any, verification: ((it: Any) -> Any)) -> SerializableItemDelegate<*>>()
-    val typeToFns = mutableMapOf<KClass<*>, Pair<SerializeFn, DeserializeFn<*>>>()
+object ByteSerializableItem {
+    val typeToSerDeser = mutableMapOf<KClass<*>, Pair<ByteSerializeFn, ByteDeserializeFn<*>>>()
 
     @JvmStatic fun <T: Any> registerSerializationItem(
         type: KClass<T>,
         serialize: ((it: T, buf: FriendlyByteBuf) -> Unit),
         deserialize: ((buf: FriendlyByteBuf) -> T)) {
-        serialize as (Any, FriendlyByteBuf) -> Unit
-        typeToDelegate[type] = { pos: Int, default: Any, verification: (it: Any) -> Any ->
-            SerializableItemDelegate(pos, default, verification, serialize, deserialize) }
-        typeToFns[type] = Pair(serialize, deserialize)
+        typeToSerDeser[type] = Pair(serialize as ByteSerializeFn, deserialize)
     }
 
     @JvmStatic fun <T: Enum<*>> registerSerializationEnum(type: KClass<T>) {
@@ -219,27 +150,30 @@ object SerializableItem {
         registerSerializationItem(DoubleArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeDouble(it)}}) {buf -> buf.readCollection({mutableListOf<Double>()}) {buf.readInt()}.toDoubleArray()}
     }
 
+    private inline fun makeByteSerDeser(noinline verification: ((it: Nothing) -> Any), noinline ser: ByteSerializeFn, noinline deser: ByteDeserializeFn<Any>): MutableMap<String, Any> = mutableMapOf(
+        Pair("verification", verification),
+        Pair("byteSerialize", ser),
+        Pair("byteDeserialize", deser)
+    )
+
+    @JvmStatic fun <T: Any> get(pos: Int, default: T, verification: (T) -> T = {it}) = get(pos, default, verification, null, null)
+
     /**
      * Should be used in the body of the AutoSerializable class
      */
     @JvmStatic fun <T: Any> get(pos: Int, default: T,
-                                verification: ((it: T) -> T) = {it},
+                                verification: ((it: T) -> T),
                                 customSerialize: ((it: T, buf: FriendlyByteBuf) -> Unit)? = null,
-                                customDeserialize: ((buf: FriendlyByteBuf) -> T)? = null): SerializableItemDelegate<T> {
-        verification as (Any) -> T
-        customSerialize as ((Any, FriendlyByteBuf) -> Unit)?
-
-        val res = typeToDelegate[default::class]
-        if (res != null) return res.invoke(pos, default, verification) as SerializableItemDelegate<T>
-
+                                customDeserialize: ((buf: FriendlyByteBuf) -> T)? = null): ReflectableItemDelegate<T> {
+        typeToSerDeser[default::class]?.let { return ReflectableItemDelegate(pos, default, mutableMapOf(Pair("verification", verification))) }
 
         when (default) {
             is Enum<*> -> {
                 val enumClass = default.javaClass as Class<out Enum<*>>
-                return SerializableItemDelegate(pos, default, verification, {it, buf -> buf.writeEnum(it as Enum<*>)}) {buf -> buf.readEnum(enumClass) as T }
+                return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, { it, buf -> buf.writeEnum(it as Enum<*>)}) { buf -> buf.readEnum(enumClass) as T })
             }
         }
 
-        return SerializableItemDelegate(pos, default, verification, customSerialize!!, customDeserialize!!)
+        return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, customSerialize as (Any, FriendlyByteBuf) -> Unit, customDeserialize!!))
     }
 }

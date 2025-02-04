@@ -5,8 +5,8 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.events.RandomEvents
-import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.rendering.ReservedRenderingPages
 import net.spaceeye.vmod.rendering.ServerRenderingData
@@ -254,7 +254,7 @@ object ServerPhysgunState: ServerClosable() {
                 val pageId = ReservedRenderingPages.TimedRenderingObjects
                 if (state.rID == -1) {
                     val renderer = PhysgunRayRenderer()
-                    renderer.state.player = uuid
+                    renderer.player = uuid
                     state.rID = ServerRenderingData.addRenderer(pageId, pageId, renderer)
                 }
 
@@ -284,9 +284,9 @@ object ServerPhysgunState: ServerClosable() {
                 controller.sharedState = state
 
                 val renderer = (ServerRenderingData.getRenderer(state.rID) ?: return@forEach) as PhysgunRayRenderer
-                renderer.state.player = uuid
-                renderer.state.shipId = state.mainShipId
-                renderer.state.hitPosInShipyard = result.globalHitPos!!
+                renderer.player = uuid
+                renderer.shipId = state.mainShipId
+                renderer.hitPosInShipyard = result.globalHitPos!!
                 ServerRenderingData.setRenderer(pageId, pageId, state.rID, renderer)
 
                 toRemove.add(uuid)

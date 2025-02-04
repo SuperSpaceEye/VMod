@@ -6,9 +6,8 @@ import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -19,8 +18,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-open class A2BRenderer(): BaseRenderer {
-    val state = State()
+open class A2BRenderer(): BaseRenderer, AutoSerializable {
     constructor(shipId1: Long,
                 shipId2: Long,
                 point1: Vector3d,
@@ -35,29 +33,17 @@ open class A2BRenderer(): BaseRenderer {
         this.color = color
         this.width = width
     }
+    @JsonIgnore private var i = 0
 
-    class State: AutoSerializable {
-        @JsonIgnore private var i = 0
+    var shipId1: Long by get(i++, -1L)
+    var shipId2: Long by get(i++, -1L)
 
-        var shipId1: Long by get(i++, -1L)
-        var shipId2: Long by get(i++, -1L)
+    var point1: Vector3d by get(i++, Vector3d())
+    var point2: Vector3d by get(i++, Vector3d())
 
-        var point1: Vector3d by get(i++, Vector3d())
-        var point2: Vector3d by get(i++, Vector3d())
+    var color: Color by get(i++, Color(0))
 
-        var color: Color by get(i++, Color(0))
-
-        var width: Double by get(i++, .2)
-    }
-    inline var shipId1 get() = state.shipId1; set(value) {state.shipId1 = value}
-    inline var shipId2 get() = state.shipId2; set(value) {state.shipId2 = value}
-    inline var point1 get() = state.point1; set(value) {state.point1 = value}
-    inline var point2 get() = state.point2; set(value) {state.point2 = value}
-    inline var color get() = state.color; set(value) {state.color = value}
-    inline var width get() = state.width; set(value) {state.width = value}
-
-    override fun serialize() = state.serialize()
-    override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
+    var width: Double by get(i++, .2)
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {

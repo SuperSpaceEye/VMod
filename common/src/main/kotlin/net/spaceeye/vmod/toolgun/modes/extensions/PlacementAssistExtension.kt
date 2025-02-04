@@ -17,9 +17,9 @@ import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.networking.AutoSerializable
+import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
@@ -166,7 +166,7 @@ class PlacementAssistExtension(
 
     override var paDistanceFromBlock: Double by get(i++, 0.0, {ServerLimits.instance.distanceFromBlock.get(it)})
     override var paStage: ThreeClicksActivationSteps by get(i++, ThreeClicksActivationSteps.FIRST_RAYCAST)
-    override var paAngle: Ref<Double> by get(i++, Ref(0.0), customSerialize = {it, buf -> buf.writeDouble((it).it)}, customDeserialize = {buf -> paAngle.it = buf.readDouble(); paAngle})
+    override var paAngle: Ref<Double> by get(i++, Ref(0.0), {it}, customSerialize = { it, buf -> buf.writeDouble((it).it)}, customDeserialize = { buf -> paAngle.it = buf.readDouble(); paAngle})
     override var paScrollAngle: Double by get(i++, Math.toRadians(10.0))
     override var middleFirstRaycast: Boolean by get(i++, false)
 

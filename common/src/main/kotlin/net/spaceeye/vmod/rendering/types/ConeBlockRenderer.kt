@@ -12,8 +12,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.VMBlocks
-import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.rendering.RenderingStuff
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -32,26 +32,14 @@ object A {
     val testState = VMBlocks.CONE_THRUSTER.get().defaultBlockState()
 }
 
-class ConeBlockRenderer(): BlockRenderer {
-    class State: AutoSerializable {
-        @JsonIgnore private var i = 0
+class ConeBlockRenderer(): BlockRenderer, AutoSerializable {
+    @JsonIgnore private var i = 0
 
-        var shipId: Long by get(i++, -1L)
-        var pos: Vector3d by get(i++, Vector3d())
-        var rot: Quaterniond by get(i++, Quaterniond())
-        var scale: Float by get(i++, 1.0f)
-        var color: Color by get(i++, Color(255, 255, 255))
-    }
-    val state = State()
-
-    override fun serialize() = state.serialize()
-    override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
-
-    inline var shipId get() = state.shipId; set(value) {state.shipId = value}
-    inline var pos get() = state.pos; set(value) {state.pos = value}
-    inline var rot get() = state.rot; set(value) {state.rot = value}
-    inline var scale get() = state.scale; set(value) {state.scale = value}
-    inline var color get() = state.color; set(value) {state.color = value}
+    var shipId: Long by get(i++, -1L)
+    var pos: Vector3d by get(i++, Vector3d())
+    var rot: Quaterniond by get(i++, Quaterniond())
+    var scale: Float by get(i++, 1.0f)
+    var color: Color by get(i++, Color(255, 255, 255))
 
     constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId, color: Color = Color(255, 255, 255)): this() {
         this.pos = pos

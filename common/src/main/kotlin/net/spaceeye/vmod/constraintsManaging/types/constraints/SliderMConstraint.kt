@@ -5,7 +5,8 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.MConstraint
 import net.spaceeye.vmod.constraintsManaging.util.*
-import net.spaceeye.vmod.networking.TagSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getHingeRotation
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
@@ -152,5 +153,10 @@ class SliderMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
         mc(rotationConstraint, cIDs, level) {return false}
 
         return true
+    }
+    companion object {
+        init {
+            TagSerializableItem.registerSerializationEnum(ConnectionMode::class)
+        }
     }
 }

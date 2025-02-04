@@ -6,7 +6,7 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.constraintsManaging.*
 import net.spaceeye.vmod.constraintsManaging.util.*
-import net.spaceeye.vmod.networking.TagSerializableItem
+import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -14,7 +14,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.sign
-import net.spaceeye.vmod.networking.TagSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.utils.vs.tryMovePosition
 import org.joml.Quaterniond
 import org.joml.Quaterniondc

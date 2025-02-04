@@ -8,6 +8,7 @@ import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.networking.*
+import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.toolgun.modes.util.serverTryActivate
@@ -33,7 +34,7 @@ interface ClientEventsHandler {
 
 interface MSerializable: AutoSerializable {
     fun serverSideVerifyLimits() {
-        getSerializableItems().forEach { it.setValue(null, null, it.verification(it.it!!)) }
+        getAllReflectableItems().forEach { it.setValue(null, null, (it.metadata["verification"] as? (Any) -> Any)?.invoke(it.it!!) ?: it.it!!) }
     }
 }
 

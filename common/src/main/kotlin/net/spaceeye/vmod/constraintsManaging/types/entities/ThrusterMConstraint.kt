@@ -11,6 +11,7 @@ import net.spaceeye.vmod.constraintsManaging.Tickable
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.MCAutoSerializable
 import net.spaceeye.vmod.constraintsManaging.util.TickableMConstraintExtension
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.shipAttachments.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.getCenterPos
@@ -19,7 +20,6 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.VSJointId
 import org.valkyrienskies.mod.common.shipObjectWorld
-import net.spaceeye.vmod.networking.TagSerializableItem.get
 
 class ThrusterMConstraint(): ExtendableMConstraint(), Tickable, MCAutoSerializable {
     @JsonIgnore private var i = 0

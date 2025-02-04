@@ -11,7 +11,7 @@ import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.VSJointId
-import net.spaceeye.vmod.networking.TagSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 
 class DisabledCollisionMConstraint(): ExtendableMConstraint(), MCAutoSerializable {
     @JsonIgnore private var i = 0

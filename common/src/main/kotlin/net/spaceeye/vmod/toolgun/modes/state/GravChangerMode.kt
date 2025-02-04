@@ -6,7 +6,7 @@ import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.toolgun.modes.gui.GravChangerGUI
 import net.spaceeye.vmod.toolgun.modes.hud.GravChangerHUD
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension

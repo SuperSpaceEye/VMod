@@ -2,7 +2,7 @@ package net.spaceeye.vmod.constraintsManaging.util
 
 import net.minecraft.nbt.CompoundTag
 import net.spaceeye.vmod.constraintsManaging.MConstraint
-import net.spaceeye.vmod.networking.TagAutoSerializable
+import net.spaceeye.vmod.reflectable.TagAutoSerializable
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
 /**

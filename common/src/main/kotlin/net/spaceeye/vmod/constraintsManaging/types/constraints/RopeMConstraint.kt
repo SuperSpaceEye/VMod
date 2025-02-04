@@ -12,7 +12,7 @@ import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.VSDistanceJoint
 import org.valkyrienskies.core.apigame.joints.VSJointPose
-import net.spaceeye.vmod.networking.TagSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.tryMovePosition
 import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque

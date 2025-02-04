@@ -81,7 +81,8 @@ class GearMConstraint(): TwoShipsMConstraint(), MCAutoSerializable {
              mapped[shipId1] ?: return null,
              mapped[shipId2] ?: return null,
              maxForce, gearRatio,
-             copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
+             listOf()
+//             copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
         )
     }
 

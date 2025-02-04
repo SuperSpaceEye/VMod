@@ -12,6 +12,7 @@ import net.spaceeye.vmod.reflectable.TagSerializableItem.typeToTagSerDeser
 import net.spaceeye.vmod.utils.*
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.joml.Quaterniond
+import org.joml.Quaterniondc
 import java.awt.Color
 import java.util.UUID
 import kotlin.reflect.KClass
@@ -86,6 +87,22 @@ interface TagAutoSerializable: TagSerializable, ReflectableItems {
     }
 }
 
+fun ReflectableItems.tSerialize() = CompoundTag().also { buf ->
+    getAllReflectableItems().forEach {
+        typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf, it.cachedName) }
+            ?: throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
+    }
+}
+
+fun ReflectableItems.tDeserialize(tag: CompoundTag) {
+    getReflectableItemsWithoutDataclassConstructorItems().forEach {
+        it.setValue(null, null,
+            typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(tag, it.cachedName) }
+                ?: throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
+        )
+    }
+}
+
 typealias TagSerializeFn = (it: Any, tag: CompoundTag, key: String) -> Unit
 typealias TagDeserializeFn<T> = (tag: CompoundTag, key: String) -> T
 
@@ -105,6 +122,7 @@ object TagSerializableItem {
 
     init {
         registerSerializationItem(BlockPos.MutableBlockPos::class, { it, buf, key -> buf.putLong(key, it.asLong())}) { buf, key -> BlockPos.of(buf.getLong(key)).let { BlockPos.MutableBlockPos(it.x, it.y, it.z) }}
+        registerSerializationItem(Quaterniondc::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
         registerSerializationItem(Quaterniond::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
         registerSerializationItem(Vector3d::class, {it, buf, key -> buf.putMyVector3d(key, it)}) {buf, key -> buf.getMyVector3d(key)}
         registerSerializationItem(BlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) { buf, key -> BlockPos.of(buf.getLong(key))}

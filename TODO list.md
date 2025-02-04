@@ -1,7 +1,6 @@
 # VERY IMPORTANT
 
 * Rename MConstraint to smth else. Maybe "VEntity" or "VmEntity" or smth like that cuz they are not really just a collection of constraints anymore
-* Unify "get" of AutoSerializable and AutoTagSerializable bc i want to eventually add AutoGUIBuilder
 * Make "constraint fixer" to update old mconstraints
 
 # Maybe

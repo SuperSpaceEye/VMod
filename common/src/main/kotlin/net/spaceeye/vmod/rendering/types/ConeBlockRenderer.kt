@@ -92,7 +92,7 @@ class ConeBlockRenderer(): BlockRenderer, AutoSerializable {
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
         val spoint = updatePosition(pos, oldToNew[shipId]!!)
-        return ConeBlockRenderer(spoint, Quaterniond(rot), scale, oldToNew[shipId]!!.id)
+        return ConeBlockRenderer(spoint, Quaterniond(rot), scale, oldToNew[shipId]!!.id, color)
     }
 
     override fun scaleBy(by: Double) {

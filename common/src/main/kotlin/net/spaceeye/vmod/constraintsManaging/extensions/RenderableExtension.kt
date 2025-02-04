@@ -1,12 +1,13 @@
 package net.spaceeye.vmod.constraintsManaging.extensions
 
-import io.netty.buffer.Unpooled
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
 import net.spaceeye.vmod.constraintsManaging.util.MConstraintExtension
+import net.spaceeye.vmod.reflectable.ReflectableItems
+import net.spaceeye.vmod.reflectable.tDeserialize
+import net.spaceeye.vmod.reflectable.tSerialize
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.RenderingTypes.getType
 import net.spaceeye.vmod.rendering.ServerRenderingData
@@ -44,7 +45,7 @@ class RenderableExtension(): MConstraintExtension {
         val tag = CompoundTag()
         try {
             tag.putString("rendererType", renderer.getType())
-            tag.putByteArray("renderer", renderer.serialize().accessByteBufWithCorrectSize())
+            tag.put("renderer", (renderer as ReflectableItems).tSerialize())
         } catch (e: Exception) { ELOG("FAILED TO SERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}"); return null
         } catch (e: Error) { ELOG("FAILED TO SERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}"); return null }
         return tag
@@ -55,7 +56,7 @@ class RenderableExtension(): MConstraintExtension {
         try {
             val type = tag.getString("rendererType")
             renderer = RenderingTypes.strTypeToSupplier(type).get()
-            renderer.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(tag.getByteArray("renderer"))))
+            (renderer as ReflectableItems).tDeserialize(tag.getCompound("renderer"))
         } catch (e: Exception) { ELOG("FAILED TO DESERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}"); return false
         } catch (e: Error) { ELOG("FAILED TO DESERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}"); return false}
 

@@ -4,10 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.constraintsManaging.addFor
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.constraints.SliderMConstraint
+import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.makeVEntity
+import net.spaceeye.vmod.vEntityManaging.types.constraints.SliderConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.gui.SliderGUI
@@ -27,7 +27,7 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
     @JsonIgnore private var i = 0
 
     var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
-    var connectionMode: SliderMConstraint.ConnectionMode by get(i++, SliderMConstraint.ConnectionMode.FIXED_ORIENTATION)
+    var connectionMode: SliderConstraint.ConnectionMode by get(i++, SliderConstraint.ConnectionMode.FIXED_ORIENTATION)
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
@@ -69,7 +69,7 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
         val axisPair = getModePositions(posMode, axisRes1, axisRes2, precisePlacementAssistSideNum)
         val shipPair = getModePositions(posMode, shipRes1, shipRes2, precisePlacementAssistSideNum)
 
-        level.makeManagedConstraint(SliderMConstraint(
+        level.makeVEntity(SliderConstraint(
             (axisPair.first + axisPair.second) / 2,
             (shipPair.first + shipPair.second) / 2,
             (axisPair.first - axisPair.second).normalize(),

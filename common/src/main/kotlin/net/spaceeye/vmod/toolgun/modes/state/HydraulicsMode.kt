@@ -3,12 +3,12 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.constraintsManaging.addFor
-import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
-import net.spaceeye.vmod.constraintsManaging.extensions.SignalActivator
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.constraints.HydraulicsMConstraint
+import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.vEntityManaging.extensions.SignalActivator
+import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.makeVEntity
+import net.spaceeye.vmod.vEntityManaging.types.constraints.HydraulicsConstraint
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
@@ -41,7 +41,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     var color: Color by get(i++, Color(62, 62, 200, 255))
 
     var fixedMinLength: Float by get(i++, -1f, {ServerLimits.instance.fixedDistance.get(it)})
-    var connectionMode: HydraulicsMConstraint.ConnectionMode by get(i++, HydraulicsMConstraint.ConnectionMode.FIXED_ORIENTATION)
+    var connectionMode: HydraulicsConstraint.ConnectionMode by get(i++, HydraulicsConstraint.ConnectionMode.FIXED_ORIENTATION)
     var primaryFirstRaycast: Boolean by get(i++, false)
 
     var extensionDistance: Float by get(i++, 5f, {ServerLimits.instance.extensionDistance.get(it)})
@@ -59,7 +59,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
         val minLength = if (fixedMinLength <= 0.0) (rpoint2 - rpoint1).dist().toFloat() else fixedMinLength
         val wDir = (rpoint2 - rpoint1).normalize()
 
-        level.makeManagedConstraint(HydraulicsMConstraint(
+        level.makeVEntity(HydraulicsConstraint(
             spoint1, spoint2,
             (ship1?.let { transformDirectionWorldToShip(it, wDir) } ?: wDir).normalize(),
             (ship2?.let { transformDirectionWorldToShip(it, wDir) } ?: wDir).normalize(),
@@ -101,9 +101,9 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                 }.addExtension<HydraulicsMode> {
                     PlacementAssistExtension(true, HydraulicsNetworking,
                         { (it as HydraulicsMode).primaryFirstRaycast },
-                        { (it as HydraulicsMode).connectionMode == HydraulicsMConstraint.ConnectionMode.HINGE_ORIENTATION },
+                        { (it as HydraulicsMode).connectionMode == HydraulicsConstraint.ConnectionMode.HINGE_ORIENTATION },
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->
-                            HydraulicsMConstraint(
+                            HydraulicsConstraint(
                                 spoint1, spoint2,
                                 -rresults.first.globalNormalDirection!!,
                                 rresults.second.globalNormalDirection!!,

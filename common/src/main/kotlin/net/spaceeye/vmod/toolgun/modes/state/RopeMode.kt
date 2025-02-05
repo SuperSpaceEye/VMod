@@ -3,11 +3,11 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.constraintsManaging.addFor
-import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.constraints.RopeMConstraint
+import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.makeVEntity
+import net.spaceeye.vmod.vEntityManaging.types.constraints.RopeConstraint
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.IntLimit
 import net.spaceeye.vmod.limits.ServerLimits
@@ -49,7 +49,7 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
 
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist().toFloat()}
 
-        level.makeManagedConstraint(RopeMConstraint(
+        level.makeVEntity(RopeConstraint(
             spoint1, spoint2,
             shipId1, shipId2,
             maxForce, stiffness, damping, dist,

@@ -3,11 +3,11 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.constraintsManaging.addFor
-import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.constraints.ConnectionMConstraint
+import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.makeVEntity
+import net.spaceeye.vmod.vEntityManaging.types.constraints.ConnectionConstraint
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.A2BRenderer
@@ -37,7 +37,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     var color: Color by get(i++, Color(62, 62, 62, 255))
 
     var fixedDistance: Float by get(i++, -1.0f, {ServerLimits.instance.fixedDistance.get(it)})
-    var connectionMode: ConnectionMConstraint.ConnectionModes by get(i++, ConnectionMConstraint.ConnectionModes.FIXED_ORIENTATION)
+    var connectionMode: ConnectionConstraint.ConnectionModes by get(i++, ConnectionConstraint.ConnectionModes.FIXED_ORIENTATION)
     var primaryFirstRaycast: Boolean by get(i++, false)
 
 
@@ -52,7 +52,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
         val wDir = (rpoint2 - rpoint1).normalize()
         val distance = if (fixedDistance < 0) {(rpoint2 - rpoint1).dist().toFloat()} else {fixedDistance}
 
-        level.makeManagedConstraint(ConnectionMConstraint(
+        level.makeVEntity(ConnectionConstraint(
             spoint1, spoint2,
             ship1?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
             ship2?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
@@ -91,9 +91,9 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                 }.addExtension<ConnectionMode> {
                     PlacementAssistExtension(true, paNetworkingObj,
                         { (it as ConnectionMode).primaryFirstRaycast },
-                        { (it as ConnectionMode).connectionMode == ConnectionMConstraint.ConnectionModes.HINGE_ORIENTATION },
+                        { (it as ConnectionMode).connectionMode == ConnectionConstraint.ConnectionModes.HINGE_ORIENTATION },
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->
-                            ConnectionMConstraint(
+                            ConnectionConstraint(
                                 spoint1, spoint2,
                                 -rresults.first.globalNormalDirection!!,
                                 rresults.second.globalNormalDirection!!,

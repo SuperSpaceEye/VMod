@@ -3,9 +3,9 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.constraintsManaging.*
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.types.constraints.DisabledCollisionMConstraint
+import net.spaceeye.vmod.vEntityManaging.*
+import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.types.constraints.DisabledCollisionConstraint
 import net.spaceeye.vmod.toolgun.modes.gui.DisableCollisionsGUI
 import net.spaceeye.vmod.toolgun.modes.hud.DisableCollisionHUD
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
@@ -28,7 +28,7 @@ class DisableCollisionsMode: ExtendableToolgunMode(), DisableCollisionHUD, Disab
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(PositionModes.NORMAL, 3, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        level.makeManagedConstraint(DisabledCollisionMConstraint(shipId1, shipId2).addExtension(Strippable())){it.addFor(player)}
+        level.makeVEntity(DisabledCollisionConstraint(shipId1, shipId2).addExtension(Strippable())){it.addFor(player)}
         resetState()
     }
 

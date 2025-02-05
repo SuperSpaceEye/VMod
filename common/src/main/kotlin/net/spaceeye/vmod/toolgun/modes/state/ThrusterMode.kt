@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.constraintsManaging.*
-import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
-import net.spaceeye.vmod.constraintsManaging.extensions.SignalActivator
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.types.entities.ThrusterMConstraint
+import net.spaceeye.vmod.vEntityManaging.*
+import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.vEntityManaging.extensions.SignalActivator
+import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.types.entities.ThrusterVEntity
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
@@ -46,7 +46,7 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
         val pos = getModePosition(posMode, raycastResult, precisePlacementAssistSideNum)
         val basePos = pos + raycastResult.globalNormalDirection!! * 0.5
 
-        level.makeManagedConstraint(ThrusterMConstraint(
+        level.makeVEntity(ThrusterVEntity(
             ship.id,
             basePos,
             raycastResult.blockPosition,

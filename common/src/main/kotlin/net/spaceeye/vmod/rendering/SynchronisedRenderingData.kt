@@ -39,7 +39,7 @@ class ClientSynchronisedRenderingData:
         ) {
 
     init {
-        addCustomClient { clear() }
+        addCustomClientClosable { clear() }
         EnvExecutor.runInEnv(EnvType.CLIENT) {
             Runnable {
                 ClientTickEvent.CLIENT_PRE.register {
@@ -84,7 +84,7 @@ class ServerSynchronisedRenderingData:
         ) {
 
     init {
-        addCustomServer { close(); idToPage.clear() }
+        addCustomServerClosable { close(); idToPage.clear() }
         TickEvent.SERVER_PRE.register {
             synchronizationTick()
         }

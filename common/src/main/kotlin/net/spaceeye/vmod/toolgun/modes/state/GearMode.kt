@@ -3,10 +3,10 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.constraintsManaging.addFor
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.constraints.GearMConstraint
+import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.makeVEntity
+import net.spaceeye.vmod.vEntityManaging.types.constraints.GearConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
@@ -38,7 +38,7 @@ class GearMode: ExtendableToolgunMode(), GearGUI, GearHUD {
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        level.makeManagedConstraint(GearMConstraint(
+        level.makeVEntity(GearConstraint(
             spoint1, spoint2,
             prresult.globalNormalDirection!!,
             rresult.globalNormalDirection!!,

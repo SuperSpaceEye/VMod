@@ -15,7 +15,7 @@ object ServerPhysEntitiesHolder: ServerClosable() {
     data class EntityLoadedEvent(val uuid: UUID, val entity: Entity)
     data class ServerRemovedEntity(val uuid: UUID, val entity: Entity)
 
-    // Entities load after constraint manager so that's good
+    // Entities load after VEntity manager so that's good
     fun entityLoaded(uuid: UUID, entity: Entity) {
         entities[uuid] = entity
         entityLoadedEvent.emit(EntityLoadedEvent(uuid, entity))

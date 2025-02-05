@@ -7,9 +7,9 @@ import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.config.ConfigDelegateRegister
-import net.spaceeye.vmod.constraintsManaging.ConstraintManager
-import net.spaceeye.vmod.constraintsManaging.MConstraintTypes
-import net.spaceeye.vmod.constraintsManaging.MExtensionTypes
+import net.spaceeye.vmod.vEntityManaging.VEntityManager
+import net.spaceeye.vmod.vEntityManaging.VEntityTypes
+import net.spaceeye.vmod.vEntityManaging.VEExtensionTypes
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
 import net.spaceeye.vmod.limits.ServerLimits
@@ -79,8 +79,8 @@ object VM {
 
     @JvmStatic
     fun initRegistries() {
-        MConstraintTypes
-        MExtensionTypes
+        VEntityTypes
+        VEExtensionTypes
         MessageTypes
         RenderingTypes
         ToolgunExtensions
@@ -97,7 +97,7 @@ object VM {
 
         LifecycleEvent.SERVER_LEVEL_SAVE.register {
             if (it != ServerLevelHolder.overworldServerLevel) {return@register}
-            ConstraintManager.setDirty()
+            VEntityManager.setDirty()
         }
 
         LifecycleEvent.SERVER_STOPPING.register {
@@ -114,7 +114,7 @@ object VM {
             ServerLevelHolder.server = server
             ServerLevelHolder.overworldServerLevel = server.overworld()
             ServerLevelHolder.shipObjectWorld = server.shipObjectWorld
-            ConstraintManager.initNewInstance()
+            VEntityManager.initNewInstance()
 
             VSGravityManager
             PlayerAccessManager.afterInit()

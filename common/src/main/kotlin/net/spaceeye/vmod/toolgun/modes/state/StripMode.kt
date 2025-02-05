@@ -6,10 +6,10 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.constraintsManaging.*
-import net.spaceeye.vmod.constraintsManaging.extensions.RenderableExtension
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.util.ExtendableMConstraint
+import net.spaceeye.vmod.vEntityManaging.*
+import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
+import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.util.ExtendableVEntity
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
@@ -91,15 +91,15 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     private fun stripAll(level: ServerLevel, raycastResult: RaycastFunctions.RaycastResult) {
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return
 
-        level.getAllManagedConstraintIdsOfShipId(ship.id).forEach {
-            val mc = level.getManagedConstraint(it)
-            if (mc !is ExtendableMConstraint || mc.getExtensionsOfType<Strippable>().isEmpty()) { return@forEach }
-            level.removeManagedConstraint(it)
+        level.getAllVEntityIdsOfShipId(ship.id).forEach {
+            val mc = level.getVEntity(it)
+            if (mc !is ExtendableVEntity || mc.getExtensionsOfType<Strippable>().isEmpty()) { return@forEach }
+            level.removeVEntity(it)
         }
     }
 
     private fun stripInRadius(level: ServerLevel, raycastResult: RaycastFunctions.RaycastResult) {
-        val instance = ConstraintManager.getInstance()
+        val instance = VEntityManager.getInstance()
 
         val b = raycastResult.blockPosition
         val r = max(ceil(radius).toInt(), 1)
@@ -108,14 +108,14 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         for (y in b.y-r .. b.y+r) {
         for (z in b.z-r .. b.z+r) {
             val list = instance.tryGetIdsOfPosition(BlockPos(x, y, z)) ?: continue
-            val temp = mutableListOf<ManagedConstraintId>()
+            val temp = mutableListOf<VEntityId>()
             temp.addAll(list)
             temp.forEach {const ->
-                val mc = level.getManagedConstraint(const)
-                if (mc !is ExtendableMConstraint || mc.getExtensionsOfType<Strippable>().isEmpty()) { return@forEach }
+                val mc = level.getVEntity(const)
+                if (mc !is ExtendableVEntity || mc.getExtensionsOfType<Strippable>().isEmpty()) { return@forEach }
                 mc!!.getAttachmentPoints().forEach {
                     if ((it - raycastResult.globalHitPos!!).dist() <= radius) {
-                        level.removeManagedConstraint(const)
+                        level.removeVEntity(const)
                     }
                 }
             }
@@ -132,19 +132,19 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         private val c2sQueryStrippableRendererIds = regC2S<CS2QueryStrippableRendererIds>("query_strippable_renderer_ids", "strip_mode", {ServerToolGunState.playerHasAccess(it)}, {}) {
             pkt, player ->
             val level = ServerLevelHolder.overworldServerLevel!!
-            val constraints = level
-                .getAllManagedConstraintIdsOfShipId(pkt.shipId)
+            val ventities = level
+                .getAllVEntityIdsOfShipId(pkt.shipId)
                 .mapNotNull {
-                    level.getManagedConstraint(it)?.let {con ->
-                if (   con is ExtendableMConstraint
+                    level.getVEntity(it)?.let { con ->
+                if (   con is ExtendableVEntity
                     && con.getExtensionsOfType<Strippable>().isNotEmpty()
                     && con.getExtensionsOfType<RenderableExtension>().isNotEmpty()
                 ) con else null}
             }
 
-            val renderIds = constraints.map { it.getExtensionsOfType<RenderableExtension>().map { it.getRID() } }.flatten().toIntArray()
+            val renderIds = ventities.map { it.getExtensionsOfType<RenderableExtension>().map { it.getRID() } }.flatten().toIntArray()
             val pkt = S2CSendStrippableRendererIds(pkt.shipId, renderIds)
-            pkt.positions = constraints.map { it.iGetAttachmentPoints(pkt.shipid)[0] }
+            pkt.positions = ventities.map { it.iGetAttachmentPoints(pkt.shipid)[0] }
             s2cSendStrippableRendererIds.sendToClient(player, pkt)
         }
 

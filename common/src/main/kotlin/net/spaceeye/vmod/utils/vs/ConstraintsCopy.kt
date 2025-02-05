@@ -28,6 +28,7 @@ fun VSJoint.copy(shipId0_: ShipId? = null, shipId1_: ShipId? = null, localPos0_:
 }
 
 //it's needed to not use ship's chunk claim
+//TODO rework to use arbitrary centers
 inline fun getCenterPos(x: Int, z: Int) = Vector3d(((x / 16 / 256 - 1) * 256 + 128) * 16, 0, ((z / 16 / 256) * 256 + 128) * 16)
 inline fun getCenterPos(pos: Vector3d): Vector3d = getCenterPos(pos.x.toInt(), pos.z.toInt())
 inline fun getCenterPos(pos:  org.joml.Vector3dc): Vector3d = getCenterPos(pos.x().toInt(), pos.z().toInt())

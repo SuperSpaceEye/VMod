@@ -16,8 +16,8 @@ fun main() {
 
     val constData = """
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
-  "key.vmod.remove_top_constraint": "Remove Top Constraint",
-  "key.vmod.reset_constraint_mode": "Reset Constraint Mode",
+  "key.vmod.remove_top_ventity": "Remove Top VEntity",
+  "key.vmod.reset_ventity_mode": "Reset VEntity Mode",
   "vmod.keymappings_name": "VMod Toolgun",
   
   "item.valkyrien_mod.toolgun": "Toolgun",

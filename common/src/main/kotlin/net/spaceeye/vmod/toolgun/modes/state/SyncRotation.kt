@@ -3,10 +3,10 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.constraintsManaging.addFor
-import net.spaceeye.vmod.constraintsManaging.extensions.Strippable
-import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
-import net.spaceeye.vmod.constraintsManaging.types.constraints.SyncRotationMConstraint
+import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.makeVEntity
+import net.spaceeye.vmod.vEntityManaging.types.constraints.SyncRotationConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.gui.SyncRotationGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SyncRotationHUD
@@ -30,8 +30,8 @@ class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivation(PositionModes.NORMAL, 1, level, raycastResult, { if (previousResult == null || primaryFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, ::resetState) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
-        level.makeManagedConstraint(
-            SyncRotationMConstraint(
+        level.makeVEntity(
+            SyncRotationConstraint(
                 (Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond())).invert(),
                 (Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond())).invert(),
                 shipId1, shipId2, maxForce

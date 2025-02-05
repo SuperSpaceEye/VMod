@@ -22,7 +22,7 @@ abstract class ClientClosable: Closable() {
     }
 }
 
-fun addCustomServer(fn: () -> Unit) {
+fun addCustomServerClosable(fn: () -> Unit) {
     serverClosable.add(object : Closable() {
         override fun close() {
             fn()
@@ -30,7 +30,7 @@ fun addCustomServer(fn: () -> Unit) {
     })
 }
 
-fun addCustomClient(fn: () -> Unit) {
+fun addCustomClientClosable(fn: () -> Unit) {
     clientClosable.add(object : Closable() {
         override fun close() {
             fn()

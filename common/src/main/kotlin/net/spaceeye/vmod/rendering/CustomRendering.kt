@@ -82,7 +82,7 @@ internal object RenderingStuff {
 
 //TODO renderBlockRenderers is fucking stupid
 //this is called from two places: GameRendererMixin and LevelRendererMixin.
-// from GameRendererMixin it renders mconstraints and from LevelRendererMixin it renders BlockRenderers
+// from GameRendererMixin it renders VEntities and from LevelRendererMixin it renders BlockRenderers
 // why? if normal renderers are rendered in LevelRenderMixin, blending shits itself
 // if BlockRenderers are rendered in GameRendererMixin, blocks "bob" with the hand, and i have 0 idea why. probably
 // because of poseStack but idk

@@ -3,8 +3,8 @@ package net.spaceeye.vmod.toolgun
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.constraintsManaging.ManagedConstraintId
-import net.spaceeye.vmod.constraintsManaging.removeManagedConstraint
+import net.spaceeye.vmod.vEntityManaging.VEntityId
+import net.spaceeye.vmod.vEntityManaging.removeVEntity
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
@@ -35,7 +35,7 @@ fun sendHUDErrorToOperators(error: String) {
 
 object ServerToolGunState: ServerClosable() {
     val playersStates = ConcurrentHashMap<UUID, PlayerToolgunState>()
-    val playersConstraintsStack = ConcurrentHashMap<UUID, MutableList<ManagedConstraintId>>()
+    val playersVEntitiesStack = ConcurrentHashMap<UUID, MutableList<VEntityId>>()
 
     init {
         // it needs to initialize all c2s and s2c receivers
@@ -68,28 +68,28 @@ object ServerToolGunState: ServerClosable() {
 
     override fun close() {
         playersStates.clear()
-        playersConstraintsStack.clear()
+        playersVEntitiesStack.clear()
     }
     val s2cToolgunUsageRejected = regS2C<EmptyPacket>("toolgun_usage_rejected", "server_toolgun") {
         ClientToolGunState.currentMode?.resetState()
         ClientToolGunState.addHUDError("You don't have the permission to use toolgun")
     }
 
-    val c2sRequestRemoveLastConstraint = regC2S<EmptyPacket>("request_remove_last_constraint", "server_toolgun",
-        {PlayerAccessManager.hasPermission(it, "request_remove_last_constraint")},
+    val c2sRequestRemoveLastVEntity = regC2S<EmptyPacket>("request_remove_last_ventity", "server_toolgun",
+        {PlayerAccessManager.hasPermission(it, "request_remove_last_ventity")},
         {s2cToolgunUsageRejected.sendToClient(it, EmptyPacket())}
         ) { pkt, player->
-        val stack = playersConstraintsStack[player.uuid] ?: return@regC2S
-        var item: ManagedConstraintId = stack.removeLastOrNull() ?: return@regC2S
+        val stack = playersVEntitiesStack[player.uuid] ?: return@regC2S
+        var item: VEntityId = stack.removeLastOrNull() ?: return@regC2S
 
         val level = player.level as ServerLevel
 
         RandomEvents.serverOnTick.on {
                 _, unsubscribe ->
             unsubscribe()
-            // if constraint wasn't already removed, then remove it
+            // if VEntity wasn't already removed, then remove it
             while (true) {
-                if (level.removeManagedConstraint(item)) {
+                if (level.removeVEntity(item)) {
                     break
                 } else {
                     item = stack.removeLastOrNull() ?: return@on

@@ -37,9 +37,9 @@ object ClientToolGunState : ClientClosable() {
         "vmod.keymappings_name"
     ))
 
-    val TOOLGUN_REMOVE_TOP_CONSTRAINT = register(
+    val TOOLGUN_REMOVE_TOP_VENTITY = register(
         KeyMapping(
-            "key.vmod.remove_top_constraint",
+            "key.vmod.remove_top_ventity",
             InputConstants.Type.KEYSYM,
             InputConstants.KEY_Z,
             "vmod.keymappings_name"
@@ -48,7 +48,7 @@ object ClientToolGunState : ClientClosable() {
 
     val TOOLGUN_RESET_KEY = register(
         KeyMapping(
-            "key.vmod.reset_constraint_mode",
+            "key.vmod.reset_ventity_mode",
             InputConstants.Type.KEYSYM,
             InputConstants.KEY_R,
             "vmod.keymappings_name"
@@ -73,8 +73,8 @@ object ClientToolGunState : ClientClosable() {
         val cancel = if (currentMode == null) { false } else { currentMode!!.onKeyEvent(keyCode, scanCode, action, modifiers) }
         if (cancel) { return true }
 
-        if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_CONSTRAINT.matches(keyCode, scanCode)) {
-            ServerToolGunState.c2sRequestRemoveLastConstraint.sendToServer(EmptyPacket())
+        if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_VENTITY.matches(keyCode, scanCode)) {
+            ServerToolGunState.c2sRequestRemoveLastVEntity.sendToServer(EmptyPacket())
             return true
         }
 

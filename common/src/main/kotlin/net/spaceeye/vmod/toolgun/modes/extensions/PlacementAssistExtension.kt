@@ -11,9 +11,9 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.constraintsManaging.MConstraint
-import net.spaceeye.vmod.constraintsManaging.addFor
-import net.spaceeye.vmod.constraintsManaging.makeManagedConstraint
+import net.spaceeye.vmod.vEntityManaging.VEntity
+import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
@@ -58,7 +58,7 @@ class PlacementAssistExtension(
     override val paNetworkingObject: PlacementAssistNetworking,
     val blockPredicate: (mode: ExtendableToolgunMode) -> Boolean,
     val canUseJoinMode: (inst: ExtendableToolgunMode) -> Boolean,
-    override val paMConstraintBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> MConstraint
+    override val paVEntityBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> VEntity
 ): PlacementModesExtension(showCenteredInBlock),
     PlacementAssistClient, PlacementAssistServerPart, AutoSerializable {
     override lateinit var inst: ExtendableToolgunMode
@@ -267,7 +267,7 @@ open class PlacementAssistNetworking(networkName: String): BaseNetworking<Extend
         clientObj?.resetState()
     }
 
-    // Client has no information about constraints, so server should send it to the client
+    // Client has no information about VEntities, so server should send it to the client
     val s2cSendTraversalInfo = regS2C<S2CSendTraversalInfo>("send_traversal_info", networkName) {pkt->
         val mobj = clientObj!!
         val obj = mobj.getExtensionOfType<PlacementAssistExtension>()
@@ -304,7 +304,7 @@ interface PlacementAssistServerPart {
     var paSecondResult: RaycastFunctions.RaycastResult?
 
     //TODO change stuff to floats
-    val paMConstraintBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> MConstraint
+    val paVEntityBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> VEntity
     val paNetworkingObject: PlacementAssistNetworking
 
     val paDistanceFromBlock: Double
@@ -346,8 +346,8 @@ interface PlacementAssistServerPart {
         val shipId1: ShipId = ship1.id
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
-        val constraint = paMConstraintBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult), paDistanceFromBlock)
-        level.makeManagedConstraint(constraint){it.addFor(player)}
+        val ventity = paVEntityBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult), paDistanceFromBlock)
+        level.makeVEntity(ventity){it.addFor(player)}
         paServerResetState()
     }
 
@@ -432,8 +432,8 @@ interface PlacementAssistServerPart {
         val shipId1: ShipId = ship1.id
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
-        val constraint = paMConstraintBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult), paDistanceFromBlock)
-        level.makeManagedConstraint(constraint){it.addFor(player)}
+        val ventity = paVEntityBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult), paDistanceFromBlock)
+        level.makeVEntity(ventity){it.addFor(player)}
         paServerResetState()
     }
     fun paServerResetState() {

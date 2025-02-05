@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.utils.vs
 
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.getManagedConstraint
+import net.spaceeye.vmod.vEntityManaging.getVEntity
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
@@ -66,5 +66,5 @@ fun teleportShipWithConnected(
         )
     )
 
-    if (scaleBy != 1.0) { traversed.traversedMConstraintIds.forEach { level.getManagedConstraint(it)?.onScaleBy(level, scaleBy, Vector3d(mainShip.transform.positionInWorld)) } }
+    if (scaleBy != 1.0) { traversed.traversedVEntityIds.forEach { level.getVEntity(it)?.onScaleBy(level, scaleBy, Vector3d(mainShip.transform.positionInWorld)) } }
 }

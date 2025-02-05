@@ -16,8 +16,8 @@ import org.valkyrienskies.core.apigame.joints.VSJointPose
 import java.util.*
 
 class SyncRotationConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
-    override lateinit var sPos1: Vector3d
-    override lateinit var sPos2: Vector3d
+    override var sPos1: Vector3d get() = Vector3d(); set(value) {}
+    override var sPos2: Vector3d get() = Vector3d(); set(value) {}
     override var shipId1: Long = -1
     override var shipId2: Long = -1
 

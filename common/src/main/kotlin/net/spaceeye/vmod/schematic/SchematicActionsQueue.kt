@@ -78,11 +78,12 @@ object SchematicActionsQueue: ServerClosable() {
                     var delayLoading = true
                     var bcb: ((BlockEntity?) -> Unit)? = null
                     val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state) { delayLoading = it }
-                    if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag, { delayLoading = it }) { bcb = it }
+                    var callback: ((CompoundTag?) -> CompoundTag?)? = null
+                    if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag, {delay, fn -> delayLoading = delay; callback = fn }) { bcb = it }
 
                     val fn = {
                         val be = level.getChunkAt(pos).getBlockEntity(pos)
-                        be?.load(tag) ?: run {
+                        be?.load(callback?.invoke(tag) ?: tag) ?: run {
                             ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
                         }
                         cb?.let  { afterPasteCallbacks.add { it(be) } }

@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.texture.OverlayTexture
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.VMBlocks
 import net.spaceeye.vmod.reflectable.AutoSerializable

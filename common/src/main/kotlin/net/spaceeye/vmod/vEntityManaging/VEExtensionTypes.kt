@@ -9,5 +9,6 @@ object VEExtensionTypes: Registry<VEntityExtension>(false) {
         register(RenderableExtension::class)
         register(Strippable::class)
         register(SignalActivator::class)
+        register(ConvertedFromLegacy::class)
     }
 }

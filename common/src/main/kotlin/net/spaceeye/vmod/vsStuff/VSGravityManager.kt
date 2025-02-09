@@ -3,6 +3,7 @@ package net.spaceeye.vmod.vsStuff
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.mixin.ShipObjectWorldAccessor
+import net.spaceeye.vmod.shipAttachments.CustomMassSave
 import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.shipAttachments.NOOP
 import net.spaceeye.vmod.shipAttachments.PhysgunController
@@ -32,6 +33,7 @@ object VSGravityManager {
             NOOP.getOrCreate(ship)
             PhysgunController.getOrCreate(ship)
             ThrustersController.getOrCreate(ship)
+            CustomMassSave.getOrCreate(ship)
         }
     }
     //TODO this is dumb

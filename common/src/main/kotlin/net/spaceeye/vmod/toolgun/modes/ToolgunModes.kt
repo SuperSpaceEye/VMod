@@ -23,6 +23,7 @@ object ToolgunModes: Registry<BaseMode>() {
         register(ScaleMode::class)
         register(StripMode::class)
         register(ShipRemoverMode::class)
+        register(TestMode::class)
 
         ToolgunExtensions
         initAccessPermissions()

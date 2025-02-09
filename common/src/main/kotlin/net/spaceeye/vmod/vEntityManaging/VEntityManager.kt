@@ -22,7 +22,7 @@ import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.utils.PosMap
+import net.spaceeye.vmod.utils.PosMapList
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.addCustomServerClosable
@@ -78,7 +78,7 @@ class VEntityManager: SavedData() {
     private val groupedToLoadVEntities = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
     private val shipDataStatus = mutableMapOf<ShipId, ShipData>()
 
-    private val posToMId = PosMap<VEntityId>()
+    private val posToMId = PosMapList<VEntityId>()
 
     fun saveActiveVEntities(tag: CompoundTag): CompoundTag {
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values

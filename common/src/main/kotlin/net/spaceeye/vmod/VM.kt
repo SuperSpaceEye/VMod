@@ -52,6 +52,7 @@ object VM {
 
     @JvmStatic
     fun init() {
+        VMAttachments.register()
         ConfigDelegateRegister.initConfig()
         initRenderingData()
         initRegistries()
@@ -70,7 +71,6 @@ object VM {
         VMBlockEntities.register()
         VMItems.register()
         VMEntities.register()
-        VMAttachments.register()
 
         makeEvents()
     }

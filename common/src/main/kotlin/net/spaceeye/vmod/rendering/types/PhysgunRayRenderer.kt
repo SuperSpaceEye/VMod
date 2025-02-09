@@ -57,14 +57,12 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
     }
 
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
-        val targetUUID = player
-
+        val selfPlayer = Minecraft.getInstance().player
         val player = Minecraft.getInstance().level!!.getPlayerByUUID(player) ?: return
 
         val level = player.level as ClientLevel
 
-
-        val inFirstPerson = player.uuid == targetUUID && !camera.isDetached
+        val inFirstPerson = player.uuid == selfPlayer?.uuid && !camera.isDetached
 
         val (point1, dir) = if (inFirstPerson) {
             val dir = Vector3d(camera.lookVector).snormalize()

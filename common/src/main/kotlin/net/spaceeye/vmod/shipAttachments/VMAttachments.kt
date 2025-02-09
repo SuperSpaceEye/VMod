@@ -1,33 +1,24 @@
 package net.spaceeye.vmod.shipAttachments
 
-import net.spaceeye.vmod.events.RandomEvents
 import org.valkyrienskies.mod.api.vsApi
+import org.valkyrienskies.mod.common.ValkyrienSkiesMod
 
 object VMAttachments {
     fun register() {
-        try {
-            vsApi.registerAttachment(GravityController::class.java) {
-                useTransientSerializer()
-            }
-            vsApi.registerAttachment(PhysgunController::class.java) {
-                useTransientSerializer()
-            }
-            vsApi.registerAttachment(ThrustersController::class.java) {
-                useTransientSerializer()
-            }
-            vsApi.registerAttachment(NOOP::class.java) {
-                useTransientSerializer()
-            }
-        } catch (e: Exception) {
-            RandomEvents.serverOnTick.on { _, unsub ->
-                register()
-                unsub.invoke()
-            }
-        } catch (e: Error) {
-            RandomEvents.serverOnTick.on { _, unsub ->
-                register()
-                unsub.invoke()
-            }
+        //do not remove. registerAttachment doesn't initialize vsCore by itself for some reason
+        ValkyrienSkiesMod.vsCore
+        vsApi.registerAttachment(GravityController::class.java) {
+            useTransientSerializer()
         }
+        vsApi.registerAttachment(PhysgunController::class.java) {
+            useTransientSerializer()
+        }
+        vsApi.registerAttachment(ThrustersController::class.java) {
+            useTransientSerializer()
+        }
+        vsApi.registerAttachment(NOOP::class.java) {
+            useTransientSerializer()
+        }
+        vsApi.registerAttachment(CustomMassSave::class.java)
     }
 }

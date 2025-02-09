@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes
 
+import dev.architectury.platform.Platform
 import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.modes.state.*
 import net.spaceeye.vmod.utils.Registry
@@ -23,7 +24,10 @@ object ToolgunModes: Registry<BaseMode>() {
         register(ScaleMode::class)
         register(StripMode::class)
         register(ShipRemoverMode::class)
-        register(TestMode::class)
+        register(MassChangerMode::class)
+        if (Platform.isDevelopmentEnvironment()) {
+            register(TestMode::class)
+        }
 
         ToolgunExtensions
         initAccessPermissions()

@@ -83,7 +83,6 @@ object VM {
         VEExtensionTypes
         MessageTypes
         RenderingTypes
-        ToolgunExtensions
         ToolgunModes
         ServerSettingsTypes
         ByteSerializableItem

@@ -50,6 +50,7 @@ val GEAR = t("Gear")
 val THRUSTER = t("Thruster")
 val SENSOR = t("Sensor")
 val SHIP_REMOVER = t("Ship Remover")
+val MASS_CHANGER = t("Mass Changer")
 
 val DIMENSIONAL_GRAVITY = v("Dimensional Gravity")
 val PLAYER_ROLE_MANAGER = v("Player Role Manager")
@@ -81,6 +82,7 @@ val GEAR_RATIO = s("Gear Ratio")
 val MAX_DISTANCE = s("Max Distance")
 val IGNORE_SELF_SHIP = s("Ignore Self Ship")
 val TRANSMIT = s("Transmit")
+val NEW_MASS = s("New Mass")
 
 val PLACEMENT_ASSIST_SCROLL_STEP = s("Placement Assist Scroll Step")
 
@@ -148,6 +150,8 @@ val SYNC_ROTATION_HUD_1 = x("LMB to select first", "sync_rotation_hud_1")
 val SYNC_ROTATION_HUD_2 = x("LMB to select second ship", "sync_rotation_hud_2")
 
 val GEAR_HUD_1 = x("LMB on the other ship")
+
+val MASS_CHANGER_HUD_1 = x("LMB - change weight, RMB - reset to default")
 
 val YOU_DONT_HAVE_ACCESS_TO_THIS = x("You don't have access to this")
 val APPLY_NEW_GRAVITY_SETTINGS = x("Apply new Gravity Settings")

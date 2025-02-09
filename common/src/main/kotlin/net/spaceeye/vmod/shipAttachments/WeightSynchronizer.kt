@@ -8,13 +8,13 @@ import org.valkyrienskies.core.api.ships.LoadedServerShip
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ServerTickListener
 import org.valkyrienskies.core.api.ships.ShipForcesInducer
+import org.valkyrienskies.mod.common.shipObjectWorld
 
 class WeightSynchronizer: ShipForcesInducer, ServerTickListener {
     @JsonIgnore var shipId: Long = -1
     @JsonIgnore var dimensionId: String = ""
     override fun applyForces(physShip: PhysShip) {
         shipId = physShip.id
-
         dimensionId = physShip.chunkClaimDimension
     }
 
@@ -27,6 +27,7 @@ class WeightSynchronizer: ShipForcesInducer, ServerTickListener {
             lastDimensionId = dimensionId
         }
         val level = level ?: return
+        val ship = level.shipObjectWorld.allShips.getById(shipId) ?: return
 
 
     }

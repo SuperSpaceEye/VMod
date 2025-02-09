@@ -5,7 +5,7 @@ import org.valkyrienskies.mod.common.ValkyrienSkiesMod
 
 object VMAttachments {
     fun register() {
-        //do not remove. registerAttachment doesn't initialize vsCore by itself for some reason
+        ValkyrienSkiesMod
         ValkyrienSkiesMod.vsCore
         vsApi.registerAttachment(GravityController::class.java) {
             useTransientSerializer()

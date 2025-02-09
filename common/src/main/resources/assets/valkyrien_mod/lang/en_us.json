@@ -14,6 +14,7 @@
   "vmod.gui.thruster": "Thruster",
   "vmod.gui.sensor": "Sensor",
   "vmod.gui.ship_remover": "Ship Remover",
+  "vmod.gui.mass_changer": "Mass Changer",
 
   "vmod.gui.server_setting.dimensional_gravity": "Dimensional Gravity",
   "vmod.gui.server_setting.player_role_manager": "Player Role Manager",
@@ -45,6 +46,7 @@
   "vmod.gui.setting.max_distance": "Max Distance",
   "vmod.gui.setting.ignore_self_ship": "Ignore Self Ship",
   "vmod.gui.setting.transmit": "Transmit",
+  "vmod.gui.setting.new_mass": "New Mass",
   "vmod.gui.setting.placement_assist_scroll_step": "Placement Assist Scroll Step",
   "vmod.gui.setting.hitpos_modes": "Hitpos Modes",
   "vmod.gui.setting.normal": "Normal",
@@ -95,6 +97,7 @@
   "vmod.gui.text.sync_rotation_hud_1": "LMB to select first",
   "vmod.gui.text.sync_rotation_hud_2": "LMB to select second ship",
   "vmod.gui.text.lmb_on_the_other_ship": "LMB on the other ship",
+  "vmod.gui.text.lmb_-_change_weight,_rmb_-_reset_to_default": "LMB - change weight, RMB - reset to default",
   "vmod.gui.text.you_dont_have_access_to_this": "You don't have access to this",
   "vmod.gui.text.apply_new_gravity_settings": "Apply new Gravity Settings",
   "vmod.gui.text.levels": "Levels",
@@ -109,8 +112,8 @@
   "vmod.gui.text.role_name": "Role Name",
 
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
-  "key.vmod.remove_top_constraint": "Remove Top Constraint",
-  "key.vmod.reset_constraint_mode": "Reset Constraint Mode",
+  "key.vmod.remove_top_ventity": "Remove Top VEntity",
+  "key.vmod.reset_ventity_mode": "Reset VEntity Mode",
   "vmod.keymappings_name": "VMod Toolgun",
   
   "item.valkyrien_mod.toolgun": "Toolgun",

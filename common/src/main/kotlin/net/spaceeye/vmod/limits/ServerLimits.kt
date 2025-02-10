@@ -40,7 +40,7 @@ class ServerLimitsInstance: AutoSerializable {
     val precisePlacementAssistSides: IntLimit by get(i++, IntLimit(2, 11))
     val gearRatio: FloatLimit by get(i++, FloatLimit(0.001f))
     val maxDistance: DoubleLimit by get(i++, DoubleLimit(0.0, 100.0))
-    var massLimit: DoubleLimit by get(i++, DoubleLimit(0.0))
+    var massLimit: DoubleLimit by get(i++, DoubleLimit(Double.MIN_VALUE))
 
     val physRopeSegments: IntLimit by get(i++, IntLimit(1, 100))
     val physRopeMassPerSegment: DoubleLimit by get(i++, DoubleLimit(0.01, 10000.0))

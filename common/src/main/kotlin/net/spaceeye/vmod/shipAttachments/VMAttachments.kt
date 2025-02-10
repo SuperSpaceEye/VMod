@@ -5,8 +5,6 @@ import org.valkyrienskies.mod.common.ValkyrienSkiesMod
 
 object VMAttachments {
     fun register() {
-        ValkyrienSkiesMod
-        ValkyrienSkiesMod.vsCore
         vsApi.registerAttachment(GravityController::class.java) {
             useTransientSerializer()
         }

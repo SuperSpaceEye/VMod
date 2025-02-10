@@ -8,6 +8,7 @@ repositories {
 
 dependencies {
     modImplementation "net.spaceeye:valkyrien-ship-schematics-$project.name:1.0"
+    implementation "org.jgrapht:jgrapht-core:1.5.2"
 
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'

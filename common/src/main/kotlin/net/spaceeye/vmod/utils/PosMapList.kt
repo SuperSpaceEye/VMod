@@ -56,15 +56,15 @@ class PosMap<T> {
     fun getItemAt(pos: BlockPos) = yxz.get(pos.y)?.get(pos.x)?.get(pos.z)
     fun getItemAt(x: Int, y: Int, z: Int) = yxz.get(y)?.get(x)?.get(z)
 
-    fun removeItemFromPos(item: T, pos: BlockPos): Boolean {
-        val xz = yxz[pos.y] ?: return false
-        val  z =  xz[pos.x] ?: return false
-        z.remove(pos.z)
+    fun removeItemFromPos(xPos: Int, yPos: Int, zPos: Int): Boolean {
+        val xz = yxz[yPos] ?: return false
+        val  z =  xz[xPos] ?: return false
+        z.remove(zPos)
 
         if (z.isNotEmpty())  { return true }
-        xz.remove(pos.x)
+        xz.remove(xPos)
         if (xz.isNotEmpty()) { return true }
-        yxz.remove(pos.y)
+        yxz.remove(yPos)
         return true
     }
 

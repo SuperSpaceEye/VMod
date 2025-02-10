@@ -5,7 +5,10 @@ import dev.architectury.event.events.common.TickEvent
 import dev.architectury.utils.EnvExecutor
 import net.fabricmc.api.EnvType
 import net.minecraft.client.Minecraft
+import net.minecraft.core.BlockPos
 import net.minecraft.server.MinecraftServer
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.utils.CancellableEventEmitter
 import net.spaceeye.vmod.utils.SafeEventEmitter
 
@@ -32,9 +35,12 @@ object RandomEvents {
 
     val clientPreRender = SafeEventEmitter<ClientPreRender>()
 
+    val onBlockStateChange = SafeEventEmitter<OnBlockStateChange>()
+
     data class ServerOnTick(val server: MinecraftServer)
     data class ClientOnTick(val minecraft: Minecraft)
     data class OnMouseMove(val x: Double, val y: Double)
     data class OnKeyPress(val key: Int, val scanCode: Int, val action: Int, val modifiers: Int)
     data class ClientPreRender(val timestamp: Long)
+    data class OnBlockStateChange(val level: ServerLevel, val pos: BlockPos, val newState: BlockState, val isMoving: Boolean)
 }

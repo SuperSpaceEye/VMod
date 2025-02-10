@@ -41,7 +41,10 @@ abstract public class ShipObjectServerWorldMixin {
 
     @WrapOperation(method = "onSetBlock", at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/shadow/Er;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;DD)V"), remap = false)
     void vmod$onSetBlock(Ep instance, int posX, int posY, int posZ, String dimensionId, BlockType oldBlockType, BlockType newBlockType, double oldBlockMass, double newBlockMass, Operation<Void> original) {
-        var mass = CustomBlockMassManager.INSTANCE.getCustomMass(dimensionId, posX, posY, posZ);
+        Double mass = CustomBlockMassManager.INSTANCE.getCustomMass(dimensionId, posX, posY, posZ);
+        if (oldBlockType != newBlockType) {
+            CustomBlockMassManager.INSTANCE.removeCustomMass(dimensionId, posX, posY, posZ);
+        }
         original.call(instance, posX, posY, posZ, dimensionId, oldBlockType, newBlockType, Objects.requireNonNullElse(mass, oldBlockMass), newBlockMass);
     }
 

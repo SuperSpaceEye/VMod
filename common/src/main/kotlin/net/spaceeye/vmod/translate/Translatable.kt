@@ -83,6 +83,7 @@ val MAX_DISTANCE = s("Max Distance")
 val IGNORE_SELF_SHIP = s("Ignore Self Ship")
 val TRANSMIT = s("Transmit")
 val NEW_MASS = s("New Mass")
+val PERSISTENT = s("Persistent")
 
 val PLACEMENT_ASSIST_SCROLL_STEP = s("Placement Assist Scroll Step")
 

@@ -47,6 +47,7 @@ fun traverseGetAllTouchingShips(level: ServerLevel, shipId: ShipId, blacklist: S
     return traversedShips
 }
 
+//TODO i should redo this
 fun traverseGetConnectedShips(shipId: ShipId, blacklist: Set<ShipId> = setOf(), withJointInfo: Boolean = false): TraversedData {
     val instance = VEntityManager.getInstance()
     val dimensionIds = ServerLevelHolder.server!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values

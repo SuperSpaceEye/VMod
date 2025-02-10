@@ -2,7 +2,6 @@ package net.spaceeye.vmod.vsStuff
 
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
-import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.utils.PosMap
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -16,6 +15,10 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 object CustomBlockMassManager {
     val dimToPosToMass = mutableMapOf<DimensionId, PosMap<Double>>()
     val shipToPosToMass = mutableMapOf<ShipId, PosMap<Double>>()
+
+    fun removeCustomMass(dimensionId: DimensionId, x: Int, y: Int, z: Int) {
+        dimToPosToMass.getOrPut(dimensionId) { PosMap() }.removeItemFromPos(x, y, z)
+    }
 
     fun getCustomMass(dimension: DimensionId, x: Int, y: Int, z: Int): Double? {
         return dimToPosToMass.getOrPut(dimension) { PosMap() }.getItemAt(x, y, z)

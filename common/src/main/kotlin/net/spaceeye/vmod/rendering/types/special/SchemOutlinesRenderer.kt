@@ -58,7 +58,7 @@ class SchemOutlinesRenderer(
         )
 
         val hitPos = raycastResult.worldHitPos ?: return
-        val pos = hitPos + (raycastResult.worldNormalDirection!! * maxObjectEdge.y)
+        val pos = hitPos + ((raycastResult.worldNormalDirection ?: return) * maxObjectEdge.y)
 
         val rotation = Quaterniond()
             .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))

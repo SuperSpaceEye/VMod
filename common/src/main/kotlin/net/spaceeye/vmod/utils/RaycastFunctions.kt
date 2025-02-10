@@ -121,7 +121,7 @@ object RaycastFunctions {
         )
 
         val state = level.getBlockState(clipResult.blockPos)
-        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, source.origin + unitLookVec * maxDistance, null, null, null, null, null, null, null, -1) }
+        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null, null, -1) }
 
         val ship = level.getShipManagingPos(clipResult.blockPos)
 

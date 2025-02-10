@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIContainer
+import net.spaceeye.vmod.guiElements.makeCheckBox
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
@@ -15,5 +16,6 @@ interface MassChangerGUI: GUIBuilder, EGUIBuilder {
         this as MassChangerMode
 
         makeTextEntry(NEW_MASS.get(), ::newMass, 2f, 2f, parentWindow, ServerLimits.instance.massLimit)
+        makeCheckBox(PERSISTENT.get(), ::persistent, 2f, 2f, parentWindow)
     }
 }

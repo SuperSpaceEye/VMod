@@ -23,15 +23,6 @@ class TestMode: ExtendableToolgunMode() {
         if (raycastResult.state.isAir) {return}
         val ship = raycastResult.ship as? ServerShip ?: return
 
-        val aabb = ship.shipAABB!!
-
-        for (x in aabb.minX()..aabb.maxX()) {
-        for (z in aabb.minZ()..aabb.maxZ()) {
-        for (y in aabb.minY()..aabb.maxY()) {
-            val state = level.getBlockState(BlockPos(x, y, z))
-            if (state.isAir) {continue}
-            CustomBlockMassManager.setCustomMass(level, x, y, z, 1.0)
-        } } }
     }
     companion object {
         init {

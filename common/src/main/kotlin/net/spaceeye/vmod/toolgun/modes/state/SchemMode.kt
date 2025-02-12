@@ -72,6 +72,16 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
         inst.deserialize(buf)
         return inst
     } else {
+        try {
+            val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
+            buf.readUtf()
+            val type = buf.readUtf()
+            if (type == "VModShipSchematicV1") {
+                return VModShipSchematicV1().also { it.deserialize(buf) }
+            }
+        } catch (e: Exception) {
+        } catch (e: Error) {}
+
         return ShipSchematic.getSchematicFromBytes(bytes)
     }
 }

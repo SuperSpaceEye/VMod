@@ -34,7 +34,7 @@ import java.util.*
 import kotlin.math.max
 
 internal const val SAVE_TAG_NAME_STRING = "vmod_VEntities"
-private const val LEGACY_SAVE_TAG_NAME = "vmod_ships_constraints" //TODO REMOVE EVENTUALLY
+internal const val LEGACY_SAVE_TAG_NAME = "vmod_ships_constraints" //TODO REMOVE EVENTUALLY
 
 typealias VEntityId = Int
 

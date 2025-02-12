@@ -15,6 +15,7 @@ import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
 import net.spaceeye.vmod.utils.vs.toShipTransform
 import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
+import net.spaceeye.vmod.vEntityManaging.legacy.LegacyConstraintFixers
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.joml.Vector3d
@@ -58,6 +59,7 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, 
 
     SchematicActionsQueue.queueShipsCreationEvent(level, uuid, shipInitializers, this) { ships ->
         ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData.toMap())
+        LegacyConstraintFixers.tryLoadLegacyVModSchemData(level, ships, extraData.toMap()) //TODO Remove
 
         val createdShips = ships.map { it.first }
         createdShips.zip(newTransforms).forEach {

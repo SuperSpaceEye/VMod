@@ -3,19 +3,27 @@ package net.spaceeye.vmod.vEntityManaging.legacy
 import io.netty.buffer.Unpooled
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.ListTag
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.server.level.ServerLevel
+import net.spaceeye.valkyrien_ship_schematics.containers.CompoundTagSerializable
+import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.types.BaseRenderer
+import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.deserializeBlockPositions
 import net.spaceeye.vmod.utils.getMyVector3d
 import net.spaceeye.vmod.utils.getQuatd
+import net.spaceeye.vmod.vEntityManaging.LEGACY_SAVE_TAG_NAME
 import net.spaceeye.vmod.vEntityManaging.VEntity
+import net.spaceeye.vmod.vEntityManaging.VEntityManager
 import net.spaceeye.vmod.vEntityManaging.extensions.ConvertedFromLegacy
 import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.SignalActivator
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
+import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.vEntityManaging.types.constraints.ConnectionConstraint
 import net.spaceeye.vmod.vEntityManaging.types.constraints.DisabledCollisionConstraint
 import net.spaceeye.vmod.vEntityManaging.types.constraints.HydraulicsConstraint
@@ -23,8 +31,11 @@ import net.spaceeye.vmod.vEntityManaging.types.constraints.RopeConstraint
 import net.spaceeye.vmod.vEntityManaging.types.constraints.SyncRotationConstraint
 import net.spaceeye.vmod.vEntityManaging.types.entities.ThrusterVEntity
 import org.joml.Quaterniond
+import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
+import kotlin.math.max
 
 object LegacyConstraintFixers {
     @JvmStatic fun tryFixRenderer(tag: CompoundTag): BaseRenderer? {
@@ -255,6 +266,60 @@ object LegacyConstraintFixers {
             "ThrusterMConstraint" -> fixThruster(tag, oldToNew)
             "DisabledCollisionMConstraint" -> fixDisabledCollisions(tag, oldToNew)
             else -> throw NotImplementedError("Conversion not implemented")
+        }
+    }
+
+    @JvmStatic fun tryLoadLegacyVModSchemData(level: ServerLevel, ships: List<Pair<ServerShip, Long>>, data: Map<String, ISerializable>) {
+        val str = "VMod Constraint Manager"
+
+        val file = CompoundTagSerializable(CompoundTag())
+        file.deserialize(data[str]?.serialize() ?: return)
+        val instance = VEntityManager.getInstance()
+
+        val tag = file.tag!!
+        val toInitConstraints = mutableListOf<VEntity>()
+
+        val lastDimensionIds = instance.loadDimensionIds(tag)
+        val newDimensionIds = ServerLevelHolder.shipObjectWorld!!.dimensionToGroundBodyIdImmutable
+        val oldToNew = lastDimensionIds.map { Pair(it.key, newDimensionIds[it.value]!!) }.toMap()
+
+        val shipsTag = tag[LEGACY_SAVE_TAG_NAME]!! as CompoundTag
+
+        var count = 0
+        var maxId = -1
+        for (shipId in shipsTag.allKeys) {
+            val shipConstraintsTag = shipsTag[shipId]!! as ListTag
+            val constraints = mutableListOf<VEntity>()
+            var strType = "None"
+            for (ctag in shipConstraintsTag) {
+                try {
+                    ctag as CompoundTag
+                    strType = ctag.getString("MConstraintType")
+
+                    val vEntity = tryUpdateMConstraint(strType, ctag, oldToNew)
+
+                    maxId = max(maxId, vEntity.mID)
+                    constraints.add(vEntity)
+                    count++
+                } catch (e: Exception) { ELOG("Failed to update constraint of type $strType\n${e.stackTraceToString()}")
+                } catch (e: Error    ) { ELOG("Failed to update constraint of type $strType\n${e.stackTraceToString()}")}
+            }
+            toInitConstraints.addAll(constraints)
+        }
+
+        val mapped = ships.associate {
+            if (lastDimensionIds.containsKey(it.second)) {
+                Pair(level.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
+            } else {
+                Pair(it.second, it.first.id)
+            }
+        }
+
+        val changedIds = mutableMapOf<Int, Int>()
+        for (it in toInitConstraints) {
+            level.makeVEntity(it.copyVEntity(level, mapped) ?: continue) {newId ->
+                changedIds[it.mID] = newId ?: return@makeVEntity
+            }
         }
     }
 }

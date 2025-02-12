@@ -27,7 +27,7 @@ class TestMode: ExtendableToolgunMode() {
 
         val aabb = ship.shipAABB ?: return
 
-        val (airMass, airType) = BlockStateInfo.get(Blocks.AIR.defaultBlockState()) ?: return
+//        val (airMass, airType) = BlockStateInfo.get(Blocks.AIR.defaultBlockState()) ?: return
 
 //        val bpos = raycastResult.blockPosition
 //        val state = level.getBlockState(bpos)
@@ -46,23 +46,23 @@ class TestMode: ExtendableToolgunMode() {
 //            level.shipObjectWorld.onSetBlock(bpos.x, bpos.y, bpos.z, level.dimensionId, airType, type, airMass, mass)
 //        } } }
 
-        var totalMass = 0.0
-        for (x in aabb.minX()-1..aabb.maxX()+1) {
-        for (z in aabb.minZ()-1..aabb.maxZ()+1) {
-        for (y in aabb.minY()-1..aabb.maxY()+1) {
-            val bpos = BlockPos(x, y, z)
-            val state = level.getBlockState(bpos)
-            if (state.isAir) {continue}
-            val (mass, type) = BlockStateInfo.get(state) ?: continue
-            totalMass += mass
-            CustomBlockMassManager.setCustomMass(level, x, y, z, 0.0)
-        } } }
-
-        val bpos = raycastResult.blockPosition
+//        var totalMass = 0.0
+//        for (x in aabb.minX()-1..aabb.maxX()+1) {
+//        for (z in aabb.minZ()-1..aabb.maxZ()+1) {
+//        for (y in aabb.minY()-1..aabb.maxY()+1) {
+//            val bpos = BlockPos(x, y, z)
+//            val state = level.getBlockState(bpos)
+//            if (state.isAir) {continue}
+//            val (mass, type) = BlockStateInfo.get(state) ?: continue
+//            totalMass += mass
+//            CustomBlockMassManager.setCustomMass(level, x, y, z, 0.0)
+//        } } }
+//
+//        val bpos = raycastResult.blockPosition
 //        level.setBlockAndUpdate(bpos, Blocks.AIR.defaultBlockState())
 //        val (_, type) = BlockStateInfo.get(Blocks.TNT.defaultBlockState()) ?: return
 //        level.shipObjectWorld.onSetBlock(bpos.x, bpos.y, bpos.z, level.dimensionId, airType, type, airMass, totalMass)
-        CustomBlockMassManager.setCustomMass(level, bpos.x, bpos.y, bpos.z, totalMass)
+//        CustomBlockMassManager.setCustomMass(level, bpos.x, bpos.y, bpos.z, totalMass)
 
     }
     companion object {

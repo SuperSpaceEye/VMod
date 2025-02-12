@@ -1,8 +1,5 @@
 # VERY IMPORTANT
 
-* Rename MConstraint to smth else. Maybe "VEntity" or "VmEntity" or smth like that cuz they are not really just a collection of constraints anymore
-* Make "constraint fixer" to update old mconstraints
-
 # Maybe
 
 * Mode to change COM (set mass of all blocks to 0 and set mass of target block to total mass)

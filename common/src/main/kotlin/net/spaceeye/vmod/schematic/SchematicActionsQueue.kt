@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.chunk.LevelChunk
 import net.minecraft.world.phys.AABB
 import net.spaceeye.valkyrien_ship_schematics.SchematicRegistry
+import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.BlockItem
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.ChunkyBlockData
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.EntityItem
@@ -126,7 +127,7 @@ object SchematicActionsQueue: ServerClosable() {
             while (currentShip < shipsToCreate.size) {
                 if (createdShips.size - 1 < currentShip) {
                     createdShips.add(shipsToCreate[currentShip].let { Pair(it.first.invoke(), it.second) })
-                    //TODO add here event
+                    ShipSchematic.onPasteBeforeBlocksAreLoaded(level, createdShips, createdShips[currentShip], schematicV1.extraData.toMap())
                 }
                 val ship = createdShips[currentShip].first
 

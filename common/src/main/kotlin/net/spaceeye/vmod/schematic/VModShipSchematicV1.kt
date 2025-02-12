@@ -56,11 +56,8 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, 
 
     if (!verifyBlockDataIsValid(shipInitializers.map { it.second })) { return false }
 
-    //TODO change onPasteBeforeBlocksAreLoaded to be on "per ship" basis so that you can make ships as you need instead of all at once
-    // also have a onPasteBeforeBlockEntitiesAreLoaded
-//    ShipSchematic.onPasteBeforeBlocksAreLoaded(level, ships, extraData)
     SchematicActionsQueue.queueShipsCreationEvent(level, uuid, shipInitializers, this) { ships ->
-        ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData)
+        ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData.toMap())
 
         val createdShips = ships.map { it.first }
         createdShips.zip(newTransforms).forEach {

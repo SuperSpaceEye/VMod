@@ -1,17 +1,13 @@
 package net.spaceeye.vmod.vEntityManaging
 
 import dev.architectury.event.events.common.TickEvent
-import io.netty.buffer.Unpooled
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
-import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.saveddata.SavedData
-import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
-import net.spaceeye.valkyrien_ship_schematics.containers.CompoundTagSerializable
-import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
+import net.spaceeye.valkyrien_ship_schematics.SchematicEventRegistry
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.VMConfig
@@ -19,30 +15,13 @@ import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.vEntityManaging.VEntityTypes.getType
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.RandomEvents
-import net.spaceeye.vmod.rendering.RenderingTypes
-import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.utils.PosMapList
 import net.spaceeye.vmod.utils.ServerLevelHolder
-import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.addCustomServerClosable
-import net.spaceeye.vmod.utils.deserializeBlockPositions
-import net.spaceeye.vmod.utils.getMyVector3d
-import net.spaceeye.vmod.utils.getQuatd
-import net.spaceeye.vmod.vEntityManaging.extensions.ConvertedFromLegacy
-import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
-import net.spaceeye.vmod.vEntityManaging.extensions.SignalActivator
-import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.legacy.LegacyConstraintFixers
-import net.spaceeye.vmod.vEntityManaging.types.constraints.ConnectionConstraint
-import net.spaceeye.vmod.vEntityManaging.types.constraints.DisabledCollisionConstraint
-import net.spaceeye.vmod.vEntityManaging.types.constraints.HydraulicsConstraint
-import net.spaceeye.vmod.vEntityManaging.types.constraints.RopeConstraint
-import net.spaceeye.vmod.vEntityManaging.types.constraints.SyncRotationConstraint
-import net.spaceeye.vmod.vEntityManaging.types.entities.ThrusterVEntity
 import org.apache.commons.lang3.tuple.MutablePair
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.Ship
@@ -51,11 +30,10 @@ import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
 import org.valkyrienskies.mod.common.shipObjectWorld
-import java.awt.Color
 import java.util.*
 import kotlin.math.max
 
-private const val SAVE_TAG_NAME_STRING = "vmod_VEntities"
+internal const val SAVE_TAG_NAME_STRING = "vmod_VEntities"
 private const val LEGACY_SAVE_TAG_NAME = "vmod_ships_constraints" //TODO REMOVE EVENTUALLY
 
 typealias VEntityId = Int
@@ -68,7 +46,7 @@ fun VEntityId?.addFor(player: Player): VEntityId? {
 @Internal
 class VEntityManager: SavedData() {
     // shipToVEntity and idToVEntity should share VEntity
-    private val shipToVEntity = mutableMapOf<ShipId, MutableList<VEntity>>()
+    internal val shipToVEntity = mutableMapOf<ShipId, MutableList<VEntity>>()
     private val idToVEntity = mutableMapOf<VEntityId, VEntity>()
     private var vEntityIdCounter = 0
     private val idToDisabledCollisions = mutableMapOf<ShipId, MutableMap<ShipId, MutablePair<Int, MutableList<(() -> Unit)?>>>>()
@@ -107,7 +85,7 @@ class VEntityManager: SavedData() {
         return null
     }
 
-    private fun saveVEntityToList(
+    internal fun saveVEntityToList(
         vEntity: VEntity,
         dimensionIds: Collection<ShipId>,
         vEntitiesTag: ListTag
@@ -147,7 +125,7 @@ class VEntityManager: SavedData() {
         return tag
     }
 
-    private fun saveDimensionIds(tag: CompoundTag): CompoundTag {
+    internal fun saveDimensionIds(tag: CompoundTag): CompoundTag {
         val ids = dimensionToGroundBodyIdImmutable!!
 
         val idsTag = CompoundTag()
@@ -168,7 +146,7 @@ class VEntityManager: SavedData() {
     }
 
     //It's loading them the other way around because it needs to get dimensionId from saved shipId
-    private fun loadDimensionIds(tag: CompoundTag): Map<Long, String> {
+    internal fun loadDimensionIds(tag: CompoundTag): Map<Long, String> {
         val ret = mutableMapOf<Long, String>()
 
         if (!tag.contains("lastDimensionIds")) {
@@ -451,6 +429,7 @@ class VEntityManager: SavedData() {
         init {
             makeServerEvents()
             addCustomServerClosable { close() }
+            SchematicEventRegistry.register(VModVEntityManagerCopyPasteEvents::class)
         }
 
         fun setDirty() {
@@ -532,49 +511,6 @@ class VEntityManager: SavedData() {
                 it, handler ->
                 instance?.shipWasSplitEvent(it.originalShip, it.newShip, it.centerBlock, it.blocks)
             }
-
-            ShipSchematic.registerCopyPasteEvents(
-                    "VMod VEntity Manager",
-            {level: ServerLevel, shipsToBeSaved: List<ServerShip>, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
-                val instance = getInstance()
-
-                val toSave = shipsToBeSaved.filter { instance.shipToVEntity.containsKey(it.id) }
-                if (toSave.isEmpty()) {return@registerCopyPasteEvents null}
-
-                val vEntitiesToSave = toSave.mapNotNull { instance.shipToVEntity[it.id] }.flatten().toSet()
-                val tag = CompoundTag()
-                tag.put(SAVE_TAG_NAME_STRING, ListTag().also { tag ->
-                    vEntitiesToSave.forEach { instance.saveVEntityToList(it, dimensionToGroundBodyIdImmutable!!.values, tag) } })
-                instance.saveDimensionIds(tag)
-
-                CompoundTagSerializable(tag)
-            }, { level: ServerLevel, loadedShips: List<Pair<ServerShip, Long>>, loadFile: ISerializable?, globalMap: MutableMap<String, Any>, unregister: () -> Unit ->
-
-                if (loadFile == null) {return@registerCopyPasteEvents}
-                val instance = getInstance()
-
-                val tag = CompoundTagSerializable(CompoundTag()).also { it.deserialize(loadFile.serialize()) }.tag!!
-                val lastDimensionIds = instance.loadDimensionIds(tag)
-                val toInitVEntities = (tag[SAVE_TAG_NAME_STRING] as ListTag).mapNotNull { instance.loadVEntityFromTag(it as CompoundTag, lastDimensionIds) }
-
-                val mapped = loadedShips.associate {
-                    if (lastDimensionIds.containsKey(it.second)) {
-                        Pair(level.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
-                    } else {
-                        Pair(it.second, it.first.id)
-                    }
-                }
-
-                val changedIds = mutableMapOf<Int, Int>()
-                for (it in toInitVEntities) {
-                    level.makeVEntity(it.copyVEntity(level, mapped) ?: continue) { newId ->
-                        changedIds[it.mID] = newId ?: return@makeVEntity
-                    }
-                }
-
-                globalMap["changedIDs"] = changedIds
-            }
-            )
         }
     }
 }

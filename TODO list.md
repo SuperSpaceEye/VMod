@@ -1,5 +1,7 @@
 # VERY IMPORTANT
 
+* Rework schems
+
 # Maybe
 
 * Mode to change COM (set mass of all blocks to 0 and set mass of target block to total mass)

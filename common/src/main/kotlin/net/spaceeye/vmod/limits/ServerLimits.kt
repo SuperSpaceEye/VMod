@@ -27,20 +27,21 @@ data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
 class ServerLimitsInstance: AutoSerializable {
     @JsonIgnore private var i = 0
 
-    val maxForce: FloatLimit by get(i++, FloatLimit())
+    val maxForce : FloatLimit by get(i++, FloatLimit())
     val stiffness: FloatLimit by get(i++, FloatLimit())
-    val damping: FloatLimit by get(i++, FloatLimit())
+    val damping  : FloatLimit by get(i++, FloatLimit())
 
-    val fixedDistance: FloatLimit by get(i++, FloatLimit())
-    val extensionDistance: FloatLimit by get(i++, FloatLimit(0.001f))
-    val extensionSpeed: FloatLimit by get(i++, FloatLimit(0.001f))
-    val distanceFromBlock: DoubleLimit by get(i++, DoubleLimit(0.0))
-    val stripRadius: DoubleLimit by get(i++, DoubleLimit(0.0, 10.0))
-    val scale: DoubleLimit by get(i++, DoubleLimit(0.001))
     val precisePlacementAssistSides: IntLimit by get(i++, IntLimit(2, 11))
-    val gearRatio: FloatLimit by get(i++, FloatLimit(0.001f))
+    val extensionDistance: FloatLimit by get(i++, FloatLimit(0.001f))
+    val distanceFromBlock: DoubleLimit by get(i++, DoubleLimit(0.0))
+    val extensionSpeed: FloatLimit by get(i++, FloatLimit(0.001f))
+    val fixedDistance: FloatLimit by get(i++, FloatLimit())
+    val thrusterForce: DoubleLimit by get(i++, DoubleLimit(1.0, 1e100))
+    val stripRadius: DoubleLimit by get(i++, DoubleLimit(0.0, 10.0))
     val maxDistance: DoubleLimit by get(i++, DoubleLimit(0.0, 100.0))
+    val gearRatio: FloatLimit by get(i++, FloatLimit(0.001f))
     var massLimit: DoubleLimit by get(i++, DoubleLimit(Double.MIN_VALUE))
+    val scale: DoubleLimit by get(i++, DoubleLimit(0.001))
 
     val physRopeSegments: IntLimit by get(i++, IntLimit(1, 100))
     val physRopeMassPerSegment: DoubleLimit by get(i++, DoubleLimit(0.01, 10000.0))
@@ -48,8 +49,8 @@ class ServerLimitsInstance: AutoSerializable {
 
     val channelLength: StrLimit by get(i++, StrLimit(50))
 
-    val thrusterScale: DoubleLimit by get(i++, DoubleLimit(0.1, 10.0))
-    val sensorScale: DoubleLimit by get(i++, DoubleLimit(0.1, 10.0))
+    val thrusterScale: DoubleLimit by get(i++, DoubleLimit(0.001, 10.0))
+    val sensorScale: DoubleLimit by get(i++, DoubleLimit(0.001, 10.0))
 }
 
 object ServerLimits {

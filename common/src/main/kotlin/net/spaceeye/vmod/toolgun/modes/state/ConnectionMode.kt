@@ -28,15 +28,15 @@ import java.awt.Color
 class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, -1f, {ServerLimits.instance.maxForce.get(it)})
-    var stiffness: Float by get(i++, -1f, {ServerLimits.instance.stiffness.get(it)})
-    var damping: Float by get(i++, -1f, {ServerLimits.instance.damping.get(it)})
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
+    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }
+    var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }
 
-    var width: Double by get(i++, .2, {DoubleLimit(0.01).get(it)}) //TODO
+    var width: Double by get(i++, .2)
 
     var color: Color by get(i++, Color(62, 62, 62, 255))
 
-    var fixedDistance: Float by get(i++, -1.0f, {ServerLimits.instance.fixedDistance.get(it)})
+    var fixedDistance: Float by get(i++, -1.0f) { ServerLimits.instance.fixedDistance.get(it) }
     var connectionMode: ConnectionConstraint.ConnectionModes by get(i++, ConnectionConstraint.ConnectionModes.FIXED_ORIENTATION)
     var primaryFirstRaycast: Boolean by get(i++, false)
 
@@ -78,7 +78,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     companion object {
         val paNetworkingObj = PlacementAssistNetworking("connection_networking")
         init {
-            //TODO "it" IS THE SAME ON CLIENT BUT ON SERVER IT CREATES NEW INSTANCE OF THE MODE
+            //"it" IS THE SAME ON CLIENT BUT ON SERVER IT CREATES NEW INSTANCE OF THE MODE
             ToolgunModes.registerWrapper(ConnectionMode::class) {
                 it.addExtension<ConnectionMode> {
                     BasicConnectionExtension<ConnectionMode>("connection_mode"

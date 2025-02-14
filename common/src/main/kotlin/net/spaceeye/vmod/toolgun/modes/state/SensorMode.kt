@@ -27,9 +27,9 @@ import java.awt.Color
 class SensorMode: ExtendableToolgunMode(), SensorGUI {
     @JsonIgnore private var i = 0
 
-    var maxDistance: Double by get(i++, 10.0, {ServerLimits.instance.maxDistance.get(it)})
-    var channel: String by get(i++, "sensor", {ServerLimits.instance.channelLength.get(it)})
-    var scale: Double by get(i++, 1.0, {ServerLimits.instance.thrusterScale.get(it)})
+    var maxDistance: Double by get(i++, 10.0) { ServerLimits.instance.maxDistance.get(it) }
+    var channel: String by get(i++, "sensor") { ServerLimits.instance.channelLength.get(it) }
+    var scale: Double by get(i++, 1.0) { ServerLimits.instance.thrusterScale.get(it) }
     var ignoreSelf: Boolean by get(i++, false)
 
 

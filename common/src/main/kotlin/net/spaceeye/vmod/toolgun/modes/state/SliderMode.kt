@@ -26,7 +26,7 @@ import org.joml.Quaterniond
 class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
     var connectionMode: SliderConstraint.ConnectionMode by get(i++, SliderConstraint.ConnectionMode.FIXED_ORIENTATION)
 
 

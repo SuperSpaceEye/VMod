@@ -146,7 +146,7 @@ class PlacementAssistExtension(
 
     override fun eMakeGUISettings(parentWindow: UIContainer) {
         super.eMakeGUISettings(parentWindow)
-        makeTextEntry(PLACEMENT_ASSIST_SCROLL_STEP.get(), ::paScrollAngleDeg, 2f, 2f, parentWindow, DoubleLimit())
+        makeTextEntry(PLACEMENT_ASSIST_SCROLL_STEP.get(), ::paScrollAngleDeg, 2f, 2f, parentWindow, DoubleLimit(0.0))
         makeTextEntry(DISTANCE_FROM_BLOCK.get(), ::paDistanceFromBlock, 2f, 2f, parentWindow, ServerLimits.instance.distanceFromBlock)
     }
 

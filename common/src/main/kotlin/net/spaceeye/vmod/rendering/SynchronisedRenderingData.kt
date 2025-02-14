@@ -11,6 +11,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.networking.*
+import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.rendering.types.*
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -56,7 +57,10 @@ class ClientSynchronisedRenderingData:
     override fun onClear() { idToItem.clear() }
     override fun onRemove(page: Long) { cachedData[page]?.forEach {idToItem.remove(it.key)} }
     override fun onRemove(page: Long, idx: Int) { idToItem.remove(idx) }
-    override fun onAdd(page: Long, idx: Int, item: BaseRenderer) { idToItem[idx] = item }
+    override fun onAdd(page: Long, idx: Int, item: BaseRenderer) {
+        idToItem[idx] = item
+        if (item is AutoSerializable) {item.getAllReflectableItems().forEach { it.setValue(null, null, (it.metadata["verification"] as? (Any) -> Any)?.invoke(it.it!!) ?: it.it!!) }}
+    }
 
     fun removeTimedRenderers(toRemove: List<Int>) {
         toRemove.forEach { remove(ReservedRenderingPages.TimedRenderingObjects, it) }

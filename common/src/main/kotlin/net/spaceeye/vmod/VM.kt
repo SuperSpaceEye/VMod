@@ -24,7 +24,7 @@ import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.shipAttachments.VMAttachments
 import net.spaceeye.vmod.toolgun.*
-import net.spaceeye.vmod.toolgun.modes.ToolgunExtensions
+import net.spaceeye.vmod.toolgun.clientSettings.ClientSettingsTypes
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsTypes
 import net.spaceeye.vmod.utils.ServerLevelHolder
@@ -65,6 +65,7 @@ object VM {
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientToolGunState
             ClientPhysgunState
+            ClientSettingsTypes
         } }
 
         VMBlocks.register()

@@ -11,8 +11,9 @@ import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.VMBlocks
+import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingStuff
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -37,7 +38,7 @@ class ConeBlockRenderer(): BlockRenderer(), AutoSerializable {
     var shipId: Long by get(i++, -1L)
     var pos: Vector3d by get(i++, Vector3d())
     var rot: Quaterniond by get(i++, Quaterniond())
-    var scale: Float by get(i++, 1.0f)
+    var scale: Float by get(i++, 1.0f) { ClientLimits.instance.blockRendererScale.get(it) }
     var color: Color by get(i++, Color(255, 255, 255))
 
     constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId, color: Color = Color(255, 255, 255)): this() {

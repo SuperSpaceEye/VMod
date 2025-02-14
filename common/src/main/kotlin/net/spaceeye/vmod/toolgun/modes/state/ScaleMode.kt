@@ -22,7 +22,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 class ScaleMode: ExtendableToolgunMode(), ScaleGUI, ScaleHUD {
     @JsonIgnore private var i = 0
 
-    var scale: Double by get(i++, 1.0, {ServerLimits.instance.scale.get(it)})
+    var scale: Double by get(i++, 1.0) { ServerLimits.instance.scale.get(it) }
     var scaleAllConnected: Boolean by get(i++, true)
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {

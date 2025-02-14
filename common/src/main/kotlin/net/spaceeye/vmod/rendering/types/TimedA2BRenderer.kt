@@ -8,8 +8,9 @@ import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.renderer.GameRenderer
+import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import org.lwjgl.opengl.GL11
@@ -25,7 +26,7 @@ class TimedA2BRenderer(): BaseRenderer(), TimedRenderer, PositionDependentRender
 
     var color: Color by get(i++, Color(0))
 
-    var width: Double by get(i++, .2)
+    var width: Double by get(i++, .2) { ClientLimits.instance.lineRendererWidth.get(it) }
 
     override var timestampOfBeginning: Long by get(i++, -1)
     override var activeFor_ms: Long by get(i++, -1)

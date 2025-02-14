@@ -9,8 +9,9 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
+import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -31,8 +32,8 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
 
     var length: Double by get(i++, 0.0)
 
-    var width: Double by get(i++, .2)
-    var segments: Int by get(i++, 16)
+    var width: Double by get(i++, .2) { ClientLimits.instance.ropeRendererWidth.get(it) }
+    var segments: Int by get(i++, 16) { ClientLimits.instance.ropeRendererSegments.get(it) }
 
     constructor(shipId1: Long,
                 shipId2: Long,

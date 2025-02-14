@@ -6,8 +6,9 @@ import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
+import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -43,7 +44,7 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
 
     var color: Color by get(i++, Color(0))
 
-    var width: Double by get(i++, .2)
+    var width: Double by get(i++, .2) { ClientLimits.instance.lineRendererWidth.get(it) }
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {

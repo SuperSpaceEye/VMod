@@ -16,9 +16,6 @@ object VMAttachments {
         vsApi.registerAttachment(ThrustersController::class.java) {
             useTransientSerializer()
         }
-        vsApi.registerAttachment(NOOP::class.java) {
-            useTransientSerializer()
-        }
         vsApi.registerAttachment(CustomMassSave::class.java)
         vsApi.registerAttachment(WeightSynchronizer::class.java)
     }

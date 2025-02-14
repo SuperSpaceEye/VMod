@@ -20,6 +20,7 @@
   "vmod.gui.server_setting.player_role_manager": "Player Role Manager",
   "vmod.gui.server_setting.roles_settings": "Roles Settings",
   "vmod.gui.server_setting.sever_limits": "Sever Limits",
+  "vmod.gui.server_setting.client_limits": "Client Limits",
 
   "vmod.gui.tabs.main": "Main",
   "vmod.gui.tabs.client_settings": "Client Settings",
@@ -104,6 +105,7 @@
   "vmod.gui.text.levels": "Levels",
   "vmod.gui.text.roles": "Roles",
   "vmod.gui.text.apply_new_server_limits": "Apply new Server Limits",
+  "vmod.gui.text.apply_new_client_limits": "Apply new Client Limits",
   "vmod.gui.text.apply_new_role_permissions": "Apply new Role Permissions",
   "vmod.gui.text.enable_all": "Enable All",
   "vmod.gui.text.disable_all": "Disable All",

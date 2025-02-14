@@ -5,7 +5,6 @@ import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.mixin.ShipObjectWorldAccessor
 import net.spaceeye.vmod.shipAttachments.CustomMassSave
 import net.spaceeye.vmod.shipAttachments.GravityController
-import net.spaceeye.vmod.shipAttachments.NOOP
 import net.spaceeye.vmod.shipAttachments.PhysgunController
 import net.spaceeye.vmod.shipAttachments.ThrustersController
 import net.spaceeye.vmod.utils.ServerLevelHolder
@@ -30,7 +29,6 @@ object VSGravityManager {
             GravityController.getOrCreate(ship)
 
             //TODO temp solution, remove from here
-            NOOP.getOrCreate(ship)
             PhysgunController.getOrCreate(ship)
             ThrustersController.getOrCreate(ship)
             CustomMassSave.getOrCreate(ship)

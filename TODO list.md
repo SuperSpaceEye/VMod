@@ -19,18 +19,13 @@
 * rework completely
 
 ## Rendering
-* Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
-* Add clientside validation 
 * Add effects for toolgun
 * Group rendering objects by types to elevate common operations and add shared data between rendering types
-* "Double rendering" so that if the "main" ship is out of rendering distance, it will still render correctly
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
 * Redo how normal renderers and block renderers work
 
 ## Constraint disabler
 * A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
-
-## java.awt.Color doesn't exist in headless mode
 
 ## Toolgun settings presets menu
 * maybe when pressing alt or smth it will show all presets for this mode, and allow player to cycle them

@@ -11,7 +11,7 @@ import net.spaceeye.vmod.guiElements.ColorPicker
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
-import net.spaceeye.vmod.limits.DoubleLimit
+import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.limits.FloatLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
@@ -27,7 +27,7 @@ interface HydraulicsGUI: GUIBuilder, EGUIBuilder {
         val offset = 2.0f
         val limits = ServerLimits.instance
 
-        makeTextEntry(WIDTH.get(), ::width, offset, offset, parentWindow, DoubleLimit(0.0, 1.0)) //TODO this
+        makeTextEntry(WIDTH.get(), ::width, offset, offset, parentWindow, ClientLimits.instance.lineRendererWidth)
 
         makeTextEntry(MAX_FORCE.get(), ::maxForce, offset, offset, parentWindow, limits.maxForce)
         makeTextEntry(STIFFNESS.get(), ::stiffness, offset, offset, parentWindow, limits.stiffness)
@@ -35,7 +35,7 @@ interface HydraulicsGUI: GUIBuilder, EGUIBuilder {
 
         makeTextEntry(FIXED_DISTANCE.get(), ::fixedMinLength, offset, offset, parentWindow)
 
-        makeTextEntry(EXTENSION_DISTANCE.get(), ::extensionDistance, offset, offset, parentWindow, FloatLimit())
+        makeTextEntry(EXTENSION_DISTANCE.get(), ::extensionDistance, offset, offset, parentWindow)
         makeTextEntry(EXTENSION_SPEED.get(), ::extensionSpeed, offset, offset, parentWindow, limits.extensionSpeed)
 
         makeTextEntry(CHANNEL.get(), ::channel, offset, offset, parentWindow, limits.channelLength)

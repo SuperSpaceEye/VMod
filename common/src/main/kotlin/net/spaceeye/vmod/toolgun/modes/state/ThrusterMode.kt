@@ -29,9 +29,9 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
     @JsonIgnore private var i = 0
 
-    var force: Double by get(i++, 10000.0, {DoubleLimit(1.0, 1e100).get(it)})
-    var channel: String by get(i++, "thruster", {ServerLimits.instance.channelLength.get(it)})
-    var scale: Double by get(i++, 1.0, {ServerLimits.instance.thrusterScale.get(it)})
+    var force: Double by get(i++, 10000.0) { ServerLimits.instance.thrusterForce.get(it) }
+    var channel: String by get(i++, "thruster") { ServerLimits.instance.channelLength.get(it) }
+    var scale: Double by get(i++, 1.0) { ServerLimits.instance.thrusterScale.get(it) }
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode

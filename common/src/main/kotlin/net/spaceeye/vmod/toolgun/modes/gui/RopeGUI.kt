@@ -2,8 +2,7 @@ package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIContainer
 import net.spaceeye.vmod.guiElements.makeTextEntry
-import net.spaceeye.vmod.limits.DoubleLimit
-import net.spaceeye.vmod.limits.IntLimit
+import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
@@ -22,7 +21,7 @@ interface RopeGUI: GUIBuilder, EGUIBuilder {
         makeTextEntry(STIFFNESS.get(),      ::stiffness,     offset, offset, parentWindow, limits.stiffness)
         makeTextEntry(DAMPING.get(),        ::damping,       offset, offset, parentWindow, limits.damping)
         makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow, limits.fixedDistance)
-        makeTextEntry(WIDTH.get(),          ::width,         offset, offset, parentWindow, DoubleLimit(0.0, 1.0)) //TODO those
-        makeTextEntry(SEGMENTS.get(),       ::segments,      offset, offset, parentWindow, IntLimit(1, 100))
+        makeTextEntry(WIDTH.get(),          ::width,         offset, offset, parentWindow, ClientLimits.instance.ropeRendererWidth)
+        makeTextEntry(SEGMENTS.get(),       ::segments,      offset, offset, parentWindow, ClientLimits.instance.ropeRendererSegments)
     }
 }

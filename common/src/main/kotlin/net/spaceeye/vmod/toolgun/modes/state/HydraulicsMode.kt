@@ -32,21 +32,21 @@ object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
-    var stiffness: Float by get(i++, -1f, {ServerLimits.instance.stiffness.get(it)})
-    var damping: Float by get(i++, -1f, {ServerLimits.instance.damping.get(it)})
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
+    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }
+    var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }
 
-    var width: Double by get(i++, .2, { DoubleLimit(0.01).get(it)})
+    var width: Double by get(i++, .2)
 
     var color: Color by get(i++, Color(62, 62, 200, 255))
 
-    var fixedMinLength: Float by get(i++, -1f, {ServerLimits.instance.fixedDistance.get(it)})
+    var fixedMinLength: Float by get(i++, -1f) { ServerLimits.instance.fixedDistance.get(it) }
     var connectionMode: HydraulicsConstraint.ConnectionMode by get(i++, HydraulicsConstraint.ConnectionMode.FIXED_ORIENTATION)
     var primaryFirstRaycast: Boolean by get(i++, false)
 
-    var extensionDistance: Float by get(i++, 5f, {ServerLimits.instance.extensionDistance.get(it)})
-    var extensionSpeed: Float by get(i++, 1f, {ServerLimits.instance.extensionSpeed.get(it)})
-    var channel: String by get(i++, "hydraulics", {ServerLimits.instance.channelLength.get(it)})
+    var extensionDistance: Float by get(i++, 5f) { ServerLimits.instance.extensionDistance.get(it) }
+    var extensionSpeed: Float by get(i++, 1f) { ServerLimits.instance.extensionSpeed.get(it) }
+    var channel: String by get(i++, "hydraulics") { ServerLimits.instance.channelLength.get(it) }
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementAssistExtension>().posMode
     val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementAssistExtension>().precisePlacementAssistSideNum

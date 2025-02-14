@@ -8,8 +8,6 @@ import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.vEntityManaging.types.constraints.RopeConstraint
-import net.spaceeye.vmod.limits.DoubleLimit
-import net.spaceeye.vmod.limits.IntLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.RopeRenderer
 import net.spaceeye.vmod.toolgun.modes.gui.RopeGUI
@@ -27,16 +25,16 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, -1f, { ServerLimits.instance.maxForce.get(it) })
-    var stiffness: Float by get(i++, 0f, {ServerLimits.instance.stiffness.get(it)})
-    var damping: Float by get(i++, 0f, {ServerLimits.instance.damping.get(it)})
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
+    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }
+    var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }
 
-    var fixedDistance: Float by get(i++, -1.0f, {ServerLimits.instance.fixedDistance.get(it)})
+    var fixedDistance: Float by get(i++, -1.0f) { ServerLimits.instance.fixedDistance.get(it) }
 
     var primaryFirstRaycast: Boolean by get(i++, false)
 
-    var segments: Int by get(i++, 16, { IntLimit(1, 100).get(it)})
-    var width: Double by get(i++, .2, { DoubleLimit(0.01).get(it)})
+    var segments: Int by get(i++, 16)
+    var width: Double by get(i++, .2)
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode

@@ -10,6 +10,7 @@ import gg.essential.elementa.constraints.resolution.ConstraintVisitor
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.ToggleButton
+import net.spaceeye.vmod.translate.CLIENT_SETTINGS
 import net.spaceeye.vmod.translate.MAIN
 import net.spaceeye.vmod.translate.SERVER_SETTINGS
 import net.spaceeye.vmod.translate.get
@@ -59,7 +60,7 @@ class MainToolgunGUIWindow(): WindowScreen(ElementaVersion.V5) {
 
     internal var windows = mutableListOf(
         DItem(MAIN.get(), true) {currentWindow = ToolgunGUI(mainWindow)},
-//        DItem("Client Settings", false) {},
+        DItem(CLIENT_SETTINGS.get(), false) {currentWindow = ClientSettingsGUI(mainWindow)},
         DItem(SERVER_SETTINGS.get(), false) {currentWindow = ServerSettingsGUI(mainWindow)},
 //        DItem("Settings Presets", false) {}
     )
@@ -86,7 +87,7 @@ class MainToolgunGUIWindow(): WindowScreen(ElementaVersion.V5) {
                 width = ChildBasedSizeConstraint() + 2.pixels
                 height = ChildBasedSizeConstraint() + 2.pixels
 
-                x = SiblingConstraint()
+                x = SiblingConstraint() + if (i != 0) 2.pixels else 0.pixels
                 y = CenterConstraint()
             } childOf btns
 

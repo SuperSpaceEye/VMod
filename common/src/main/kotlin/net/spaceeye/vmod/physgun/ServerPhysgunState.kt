@@ -255,7 +255,7 @@ object ServerPhysgunState: ServerClosable() {
                 if (state.rID == -1) {
                     val renderer = PhysgunRayRenderer()
                     renderer.player = uuid
-                    state.rID = ServerRenderingData.addRenderer(pageId, pageId, renderer)
+                    state.rID = ServerRenderingData.addRenderer(listOf(pageId), renderer)
                 }
 
                 if (result.state.isAir) {return@forEach}
@@ -287,7 +287,7 @@ object ServerPhysgunState: ServerClosable() {
                 renderer.player = uuid
                 renderer.shipId = state.mainShipId
                 renderer.hitPosInShipyard = result.globalHitPos!!
-                ServerRenderingData.setRenderer(pageId, pageId, state.rID, renderer)
+                ServerRenderingData.setRenderer(listOf(pageId), state.rID, renderer)
 
                 toRemove.add(uuid)
                 active.add(uuid)

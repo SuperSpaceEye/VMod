@@ -13,6 +13,7 @@ import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.rendering.types.*
+import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.*
@@ -91,6 +92,7 @@ class ServerSynchronisedRenderingData:
     }
 
     private var idToPage = mutableMapOf<Int, Long>()
+    private val groundIds: Collection<Long> get() = ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
     fun setUpdated(id: Int, renderer: BaseRenderer): Boolean = lock {
         val page = idToPage[id] ?: return@lock false
@@ -98,15 +100,21 @@ class ServerSynchronisedRenderingData:
         return@lock true
     }
 
-    fun setRenderer(shipId1: Long, shipId2: Long, id: Int, renderer: BaseRenderer): Int = lock {
-        val idToUse = if (ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.containsValue(shipId1)) {shipId2} else {shipId1}
+    fun setRenderer(shipIds: List<ShipId>, id: Int, renderer: BaseRenderer): Int = lock {
+        //TODO
+        val idsToUse = shipIds.filter { !groundIds.contains(it) }.also { if (it.isEmpty()) { throw NotImplementedError("World Renderers are not implemented") } }
+        val idToUse = idsToUse[0]
+
         set(idToUse, id, renderer)
         idToPage[id] = idToUse
         return id
     }
 
-    fun addRenderer(shipId1: Long, shipId2: Long, renderer: BaseRenderer): Int = lock {
-        val idToUse = if (ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.containsValue(shipId1)) {shipId2} else {shipId1}
+    fun addRenderer(shipIds: List<ShipId>, renderer: BaseRenderer): Int = lock {
+        //TODO
+        val idsToUse = shipIds.filter { !groundIds.contains(it) }.also { if (it.isEmpty()) { throw NotImplementedError("World Renderers are not implemented") } }
+        val idToUse = idsToUse[0]
+
         val id = add(idToUse, renderer)
         idToPage[id] = idToUse
         return id

@@ -66,7 +66,7 @@ class RenderableExtension(): VEntityExtension {
     override fun onMakeVEntity(level: ServerLevel) {
         val ids = obj.attachedToShips(listOf())
         ServerRenderingData.removeRenderer(rID)
-        rID = ServerRenderingData.addRenderer(ids[0], if (ids.size > 1) {ids[1]} else {ids[0]}, renderer)
+        rID = ServerRenderingData.addRenderer(ids, renderer)
     }
 
     override fun onDeleteVEntity(level: ServerLevel) {

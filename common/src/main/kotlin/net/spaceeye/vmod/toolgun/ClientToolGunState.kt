@@ -4,13 +4,18 @@ import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.blaze3d.vertex.PoseStack
 import dev.architectury.event.EventResult
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry
+import gg.essential.elementa.components.UIBlock
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
+import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.gui.ScreenWindow
+import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
+import net.spaceeye.vmod.toolgun.gui.ToolgunWindow
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.EmptyPacket
 import org.lwjgl.glfw.GLFW
@@ -116,8 +121,15 @@ object ClientToolGunState : ClientClosable() {
     internal fun guiIsOpened() = Minecraft.getInstance().screen == gui
     internal fun otherGuiIsOpened() = Minecraft.getInstance().screen != null && Minecraft.getInstance().screen != gui
 
+    private val externalWindows = mutableListOf<Pair<TranslatableComponent, (UIBlock) -> ToolgunWindow>>()
+
     internal fun init() {
         gui = MainToolgunGUIWindow()
+        externalWindows.forEach { gui.windows.add(DItem(it.first.get(), false) { gui.currentWindow =  it.second.invoke(gui.mainWindow)}) }
+    }
+
+    fun addWindow(name: TranslatableComponent, windowConstructor: (UIBlock) -> ToolgunWindow) {
+        externalWindows.add(name to windowConstructor)
     }
 
     override fun close() {

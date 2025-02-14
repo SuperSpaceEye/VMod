@@ -18,7 +18,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-open class A2BRenderer(): BaseRenderer, AutoSerializable {
+open class A2BRenderer(): BaseRenderer(), AutoSerializable {
     constructor(shipId1: Long,
                 shipId2: Long,
                 point1: Vector3d,

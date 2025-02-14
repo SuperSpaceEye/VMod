@@ -31,7 +31,7 @@ object A {
     val testState = VMBlocks.CONE_THRUSTER.get().defaultBlockState()
 }
 
-class ConeBlockRenderer(): BlockRenderer, AutoSerializable {
+class ConeBlockRenderer(): BlockRenderer(), AutoSerializable {
     @JsonIgnore private var i = 0
 
     var shipId: Long by get(i++, -1L)

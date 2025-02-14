@@ -29,7 +29,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
 //TODO redo
-class PhysRopeRenderer(): BaseRenderer {
+class PhysRopeRenderer(): BaseRenderer() {
     class State: AutoSerializable {
         @JsonIgnore private var i = 0
 

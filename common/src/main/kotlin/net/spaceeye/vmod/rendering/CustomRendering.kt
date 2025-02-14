@@ -80,6 +80,8 @@ internal object RenderingStuff {
     }
 }
 
+private var renderTick = 0L
+
 //TODO renderBlockRenderers is fucking stupid
 //this is called from two places: GameRendererMixin and LevelRendererMixin.
 // from GameRendererMixin it renders VEntities and from LevelRendererMixin it renders BlockRenderers
@@ -91,7 +93,7 @@ fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft, re
     RandomEvents.clientPreRender.emit(RandomEvents.ClientPreRender(now))
 
     minecraft.profiler.push("vmod_rendering_ship_objects")
-    renderShipObjects(poseStack, camera, renderBlockRenderers, now)
+    renderShipObjects(poseStack, camera, renderBlockRenderers, now, renderTick++)
     minecraft.profiler.pop()
 
     minecraft.profiler.push("vmod_rendering_timed_objects")
@@ -103,7 +105,7 @@ fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft, re
     minecraft.profiler.pop()
 }
 
-private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
+private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long, renderTick: Long) {
     val level = Minecraft.getInstance().level!!
 
     try {
@@ -111,8 +113,8 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
         val data = ClientRenderingData.getData()
         for ((_, render) in data[ship.id] ?: continue) {
             when (render) {
-                is BlockRenderer -> if (renderBlockRenderers) render.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
-                else -> if(!renderBlockRenderers) render.renderData(poseStack, camera, timestamp)
+                is BlockRenderer -> if (renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
+                else -> if(!renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderData(poseStack, camera, timestamp)
             }
         }
     }

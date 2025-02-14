@@ -10,7 +10,6 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
@@ -30,7 +29,7 @@ fun closestPointOnALineToAnotherPoint(originPoint: Vector3d, linePoint1: Vector3
     return linePoint1 + wdir * t
 }
 
-class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer, AutoSerializable {
+class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRenderer, AutoSerializable {
     @JsonIgnore private var i = 0
 
     var player: UUID by get(i++, UUID(0L, 0L))

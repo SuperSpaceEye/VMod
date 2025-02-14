@@ -85,49 +85,44 @@ class ServerSynchronisedRenderingData:
         ) {
 
     init {
-        addCustomServerClosable { close(); idToPage.clear() }
+        addCustomServerClosable { close(); idToPages.clear() }
         TickEvent.SERVER_PRE.register {
             synchronizationTick()
         }
     }
 
-    private var idToPage = mutableMapOf<Int, Long>()
+    private var idToPages = mutableMapOf<Int, Set<Long>>()
     private val groundIds: Collection<Long> get() = ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
     fun setUpdated(id: Int, renderer: BaseRenderer): Boolean = lock {
-        val page = idToPage[id] ?: return@lock false
-        set(page, id, renderer)
+        val pages = idToPages[id] ?: return@lock false
+        set(pages, id, renderer)
         return@lock true
     }
 
     fun setRenderer(shipIds: List<ShipId>, id: Int, renderer: BaseRenderer): Int = lock {
-        //TODO
-        val idsToUse = shipIds.filter { !groundIds.contains(it) }.also { if (it.isEmpty()) { throw NotImplementedError("World Renderers are not implemented") } }
-        val idToUse = idsToUse[0]
-
-        set(idToUse, id, renderer)
-        idToPage[id] = idToUse
+        val idsToUse = shipIds.filter { !groundIds.contains(it) }.also { if (it.isEmpty()) { throw NotImplementedError("World Renderers are not implemented") } }.toSet()
+        set(idsToUse, id, renderer)
+        idToPages[id] = idsToUse
         return id
     }
 
     fun addRenderer(shipIds: List<ShipId>, renderer: BaseRenderer): Int = lock {
-        //TODO
-        val idsToUse = shipIds.filter { !groundIds.contains(it) }.also { if (it.isEmpty()) { throw NotImplementedError("World Renderers are not implemented") } }
-        val idToUse = idsToUse[0]
-
-        val id = add(idToUse, renderer)
-        idToPage[id] = idToUse
+        val idsToUse = shipIds.filter { !groundIds.contains(it) }.also { if (it.isEmpty()) { throw NotImplementedError("World Renderers are not implemented") } }.toSet()
+        val id = add(idsToUse, renderer)
+        idToPages[id] = idsToUse
         return id
     }
 
     fun removeRenderer(id: Int): Boolean = lock {
-        val pageId = idToPage[id] ?: return false
-        return remove(pageId, id)
+        val pageIds = idToPages[id] ?: return false
+        return pageIds.map { pageId -> remove(pageId, id) }.any { it }
     }
 
     fun getRenderer(id: Int): BaseRenderer? = lock {
-        val pageId = idToPage[id] ?: return null
-        return get(pageId)?.get(id)
+        val pagesId = idToPages[id] ?: return null
+        pagesId.forEach { pageId -> get(pageId)?.get(id)?.also { return it } }
+        return null
     }
 
     private fun trimTimedRenderers() = lock {

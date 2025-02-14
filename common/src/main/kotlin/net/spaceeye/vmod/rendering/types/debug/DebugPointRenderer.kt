@@ -21,7 +21,7 @@ import org.lwjgl.opengl.GL11
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-class DebugPointRenderer(): BaseRenderer, AutoSerializable, DebugRenderer {
+class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer {
     @JsonIgnore private var i = 0
 
     var shipId: Long by get(i++, -1L)

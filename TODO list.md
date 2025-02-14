@@ -1,8 +1,10 @@
 # VERY IMPORTANT
 
-* Rework schems
+* Rework permission level and player roles
 
 # Maybe
+
+* Rework schems?
 
 * Mode to change COM (set mass of all blocks to 0 and set mass of target block to total mass)
 * Mode to disable collisions for certain blocks (will need to mixin into shipAABB cuz blocks without collisions don't contribute to) (set type to type of air)
@@ -14,7 +16,7 @@
 * when smth like "onMassChange" exists, create another mode for stiffness, damping, and bounce threshold that makes values depend on mass of the first ship or smth, so that instead of absolute values (like 3000 N of force) it's Nx ship mass (0.5 * 100kg)
 
 # Phys rope
-* fix incorrect loading
+* rework completely
 
 ## Rendering
 * Add clientside rendering options (like for Rope renderer allow setting maximum number of segments)
@@ -56,7 +58,6 @@
 * Make menu look better
 
 ## Custom Access Levels
-* Allow op users to change server settings of VMod from toolgun menu.
 * Make special commands for op users
     * Clean every mconstraint of acc level.
     * Set limit for total mconstraints of acc level.
@@ -66,16 +67,12 @@
 * Add server side validation for (kinda ✅) constraints and rendering
 
 ## Schematic
-* Copy entities (maybe, idfk)
 * Copy phys entities (not very important rn)
 * Right now schematic logic assumes default mc world height. Make it not do that
 
 ## Rope Constraint
 * Add ability to change rendering modes
 * Add more setting options
-
-## Elastic
-A rope that can stretch or push (if option is chosen)
 
 ## Motor Constraint
 
@@ -84,9 +81,6 @@ A rope with connections to the ground through which it like moves. No idea on ho
 
 ## Winch
 A rope that can be made longer or shorter
-Maybe have 2 ropes.
-first rope will be "supporting rope" - it will have max compliance and force, but during retraction it will only shorten to diff between target and point
-second rope will be "retracting rope" - it will have max force == needed force to counteract other forces + more, but idk how to calculate other forces
 
 ## Wheels
 A tool that will create wheels from VS phys entities + maybe 

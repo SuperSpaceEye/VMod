@@ -8,25 +8,27 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
-interface BaseRenderer: Serializable {
-    fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long)
-    fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer?
-    fun scaleBy(by: Double)
-    fun highlightUntil(until: Long) {}
+abstract class BaseRenderer: Serializable {
+    var renderingTick = -1L
+
+    abstract fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long)
+    abstract fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer?
+    abstract fun scaleBy(by: Double)
+    open fun highlightUntil(until: Long) {}
 }
 
-interface BlockRenderer: BaseRenderer {
+abstract class BlockRenderer: BaseRenderer() {
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {}
-    fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource, timestamp: Long)
+    abstract fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource, timestamp: Long)
 }
 
-interface PositionDependentRenderer: BaseRenderer {
+interface PositionDependentRenderer {
     // position that will be used in calculation of whenever or not to render the object
     // doesn't need to be an actual position
     val renderingPosition: Vector3d
 }
 
-interface TimedRenderer: BaseRenderer {
+interface TimedRenderer {
     // timestamp of when it was started
     // if -1, then do not take beginning time into account, and always start executing it
     var timestampOfBeginning: Long

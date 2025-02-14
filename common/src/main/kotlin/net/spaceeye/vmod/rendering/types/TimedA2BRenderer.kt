@@ -17,7 +17,7 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
-class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer, AutoSerializable {
+class TimedA2BRenderer(): BaseRenderer(), TimedRenderer, PositionDependentRenderer, AutoSerializable {
     @JsonIgnore private var i = 0
 
     var point1: Vector3d by get(i++, Vector3d())

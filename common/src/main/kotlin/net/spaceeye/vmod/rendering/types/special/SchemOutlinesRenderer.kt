@@ -27,7 +27,6 @@ import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
-import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import java.awt.Color
 
 class SchemOutlinesRenderer(
@@ -35,7 +34,7 @@ class SchemOutlinesRenderer(
     val rotationAngle: Ref<Double>,
     val center: ShipTransform,
     val ships: List<Pair<ShipTransform, AABBic>>
-): BaseRenderer {
+): BaseRenderer() {
     val aabbPoints = mutableListOf(Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d())
 
     val level = Minecraft.getInstance().level!!

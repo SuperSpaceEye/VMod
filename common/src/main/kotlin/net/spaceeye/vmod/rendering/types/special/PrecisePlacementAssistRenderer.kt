@@ -23,9 +23,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color
 
-class PrecisePlacementAssistRenderer(
-    var precisePlacementAssistSideNum: Int
-): BaseRenderer {
+class PrecisePlacementAssistRenderer(var precisePlacementAssistSideNum: Int): BaseRenderer() {
     val level = Minecraft.getInstance().level!!
 
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {

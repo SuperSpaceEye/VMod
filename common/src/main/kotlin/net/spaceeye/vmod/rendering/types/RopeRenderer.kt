@@ -9,7 +9,6 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
@@ -21,7 +20,7 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class RopeRenderer(): BaseRenderer, AutoSerializable {
+class RopeRenderer(): BaseRenderer(), AutoSerializable {
     @JsonIgnore private var i = 0
 
     var shipId1: Long by get(i++, -1L)

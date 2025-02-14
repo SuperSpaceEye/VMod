@@ -61,7 +61,7 @@ class VModVEntityManagerCopyPasteEvents: ISchematicEvent {
 
         val changedIds = mutableMapOf<Int, Int>()
         for (it in toInitVEntities) {
-            level.makeVEntity(it.copyVEntity(level, mapped) ?: continue) { newId ->
+            level.makeVEntity(it.copyVEntity(level, mapped, TODO(), TODO()) ?: continue) { newId ->
                 changedIds[it.mID] = newId ?: return@makeVEntity
             }
         }

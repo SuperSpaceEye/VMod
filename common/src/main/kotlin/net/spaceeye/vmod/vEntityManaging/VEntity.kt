@@ -39,7 +39,7 @@ interface VEntity {
     // is called on ship splitting
     fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId)
 
-    fun copyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity?
+    fun copyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, oldCenter: Vector3d, newCenter: Vector3d): VEntity?
 
     fun onScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d)
 

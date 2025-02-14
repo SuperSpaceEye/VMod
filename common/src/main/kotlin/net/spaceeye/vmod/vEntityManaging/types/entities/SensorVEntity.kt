@@ -64,16 +64,13 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         maxDistance *= scaleBy
     }
 
-    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
+    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, oldCenter: Vector3d, newCenter: Vector3d): VEntity? {
         val nId = mapped[shipId] ?: return null
 
         val nShip = level.shipObjectWorld.loadedShips.getById(nId) ?: level.shipObjectWorld.allShips.getById(nId) ?: return null
 
-        val oCentered = getCenterPos(pos.x.toInt(), pos.z.toInt())
-        val nCentered = getCenterPos(nShip.transform.positionInShip.x().toInt(), nShip.transform.positionInShip.z().toInt())
-
-        val nPos = pos - oCentered + nCentered
-        val nBPos = (Vector3d(bpos) - oCentered + nCentered).toBlockPos()
+        val nPos = pos - oldCenter + newCenter
+        val nBPos = (Vector3d(bpos) - oldCenter + newCenter).toBlockPos()
 
         return SensorVEntity(nShip.id, nPos, nBPos, lookDir, maxDistance, ignoreSelf, scale, channel)
     }

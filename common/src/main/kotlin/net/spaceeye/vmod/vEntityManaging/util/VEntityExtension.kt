@@ -17,10 +17,10 @@ interface VEntityExtension {
 
     fun onAfterMoveShipyardPositions(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
 
-    fun onBeforeCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>) {}
+    fun onBeforeCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, oldCenter: Vector3d, newCenter: Vector3d) {}
     //should add new extension to new VEntity
     //TODO maybe just have return be VEntityExtensionv? which then will be added to new instead of manually adding it at the end?
-    fun onAfterCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableVEntity)
+    fun onAfterCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableVEntity, prevCenter: Vector3d, newCenter: Vector3d)
 
     fun onBeforeOnScaleByVEntity(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
 

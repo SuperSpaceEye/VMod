@@ -93,9 +93,9 @@ open class A2BRenderer(): BaseRenderer, AutoSerializable {
         poseStack.popPose()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
-        val spoint1 = if (shipId1 != -1L) {updatePosition(point1, oldToNew[shipId1]!!)} else {Vector3d(point1)}
-        val spoint2 = if (shipId2 != -1L) {updatePosition(point2, oldToNew[shipId2]!!)} else {Vector3d(point2)}
+    override fun copy(oldToNew: Map<ShipId, Ship>, oldCenter: Vector3d, newCenter: Vector3d): BaseRenderer? {
+        val spoint1 = if (shipId1 != -1L) {updatePosition(point1, oldCenter, newCenter)} else {Vector3d(point1)}
+        val spoint2 = if (shipId2 != -1L) {updatePosition(point2, oldCenter, newCenter)} else {Vector3d(point2)}
 
         val newId1 = if (shipId1 != -1L) {oldToNew[shipId1]!!.id} else {-1}
         val newId2 = if (shipId2 != -1L) {oldToNew[shipId2]!!.id} else {-1}

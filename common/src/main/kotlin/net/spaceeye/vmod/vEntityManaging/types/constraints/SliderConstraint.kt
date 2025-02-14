@@ -77,10 +77,10 @@ class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         attachmentPoints_.addAll(attachmentPoints)
     }
 
-    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
+    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, oldCenter: Vector3d, newCenter: Vector3d): VEntity? {
         return SliderConstraint(
-            tryMovePosition(sPos1, shipId1, level, mapped) ?: return null,
-            tryMovePosition(sPos2, shipId2, level, mapped) ?: return null,
+            tryMovePosition(sPos1, shipId1, level, mapped, oldCenter, newCenter) ?: return null,
+            tryMovePosition(sPos2, shipId2, level, mapped, oldCenter, newCenter) ?: return null,
             sDir1, sDir2, sRot1, sRot2,
             mapped[shipId1] ?: return null,
             mapped[shipId2] ?: return null,

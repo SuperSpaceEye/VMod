@@ -27,7 +27,7 @@ interface ExtendableVEntityIMethods {
     // is called on ship splitting
     fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
 
-    fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity?
+    fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, oldCenter: Vector3d, newCenter: Vector3d): VEntity?
 
     fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d)
 
@@ -77,10 +77,10 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
         _extensions.forEach { it.onAfterMoveShipyardPositions(level, previous, new, newShipId) }
     }
 
-    final override fun copyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
-        _extensions.forEach { it.onBeforeCopyVEntity(level, mapped) }
-        val new = iCopyVEntity(level, mapped)
-        new?.let { _extensions.forEach { it.onAfterCopyVEntity(level, mapped, new as ExtendableVEntity) } }
+    final override fun copyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, oldCenter: Vector3d, newCenter: Vector3d): VEntity? {
+        _extensions.forEach { it.onBeforeCopyVEntity(level, mapped, oldCenter, newCenter) }
+        val new = iCopyVEntity(level, mapped, oldCenter, newCenter)
+        new?.let { _extensions.forEach { it.onAfterCopyVEntity(level, mapped, new as ExtendableVEntity, oldCenter, newCenter) } }
         return new
     }
 

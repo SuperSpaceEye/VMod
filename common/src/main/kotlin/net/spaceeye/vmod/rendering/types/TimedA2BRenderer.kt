@@ -86,6 +86,6 @@ class TimedA2BRenderer(): BaseRenderer, TimedRenderer, PositionDependentRenderer
         poseStack.popPose()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
+    override fun copy(oldToNew: Map<ShipId, Ship>, oldCenter: Vector3d, newCenter: Vector3d): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
     override fun scaleBy(by: Double) { throw AssertionError("Shouldn't be scaled") }
 }

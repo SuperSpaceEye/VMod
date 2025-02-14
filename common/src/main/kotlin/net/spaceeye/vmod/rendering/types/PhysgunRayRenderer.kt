@@ -144,6 +144,6 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
         poseStack.popPose()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? = throw AssertionError("shouldn't be copied")
+    override fun copy(oldToNew: Map<ShipId, Ship>, oldCenter: Vector3d, newCenter: Vector3d): BaseRenderer? = throw AssertionError("shouldn't be copied")
     override fun scaleBy(by: Double) = throw AssertionError("shouldn't be scaled")
 }

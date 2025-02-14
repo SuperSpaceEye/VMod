@@ -131,6 +131,6 @@ class SchemOutlinesRenderer(
     // only for internal use on client
     override fun serialize(): FriendlyByteBuf { throw AssertionError("Shouldn't be serialized") }
     override fun deserialize(buf: FriendlyByteBuf) { throw AssertionError("Shouldn't be deserialized") }
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
+    override fun copy(oldToNew: Map<ShipId, Ship>, oldCenter: Vector3d, newCenter: Vector3d): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
     override fun scaleBy(by: Double) { throw AssertionError("Shouldn't be scaled") }
 }

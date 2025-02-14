@@ -10,7 +10,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 
 interface BaseRenderer: Serializable {
     fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long)
-    fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer?
+    fun copy(oldToNew: Map<ShipId, Ship>, oldCenter: Vector3d, newCenter: Vector3d): BaseRenderer?
     fun scaleBy(by: Double)
     fun highlightUntil(until: Long) {}
 }

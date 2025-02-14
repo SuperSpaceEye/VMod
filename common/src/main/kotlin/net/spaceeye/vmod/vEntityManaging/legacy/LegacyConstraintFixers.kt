@@ -317,7 +317,7 @@ object LegacyConstraintFixers {
 
         val changedIds = mutableMapOf<Int, Int>()
         for (it in toInitConstraints) {
-            level.makeVEntity(it.copyVEntity(level, mapped) ?: continue) {newId ->
+            level.makeVEntity(it.copyVEntity(level, mapped, TODO(), TODO()) ?: continue) {newId ->
                 changedIds[it.mID] = newId ?: return@makeVEntity
             }
         }

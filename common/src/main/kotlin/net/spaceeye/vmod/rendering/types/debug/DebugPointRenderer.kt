@@ -85,9 +85,7 @@ class DebugPointRenderer(): BaseRenderer, AutoSerializable, DebugRenderer {
         poseStack.popPose()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
-        return null
-    }
+    override fun copy(oldToNew: Map<ShipId, Ship>, oldCenter: Vector3d, newCenter: Vector3d): BaseRenderer? { return null }
 
     override fun scaleBy(by: Double) {}
 }

@@ -44,16 +44,11 @@ class RotationAssistTransformProvider(
         shipTransform: ShipTransform,
         partialTick: Double
     ): ShipTransform? {
-        //TODO think of a better way
         if (!ToolgunItem.playerIsUsingToolgun()) {return null}
 
-        val dir2 = if (ship2 != null) { transformDirectionShipToWorldRender(ship2!!, gdir2) } else {gdir2}
-
-        val angle = Quaterniond(AxisAngle4d(angle.it, dir2.toJomlVector3d()))
-
-        val newRot = Quaterniond()
-            .mul(angle)
-            .mul(getQuatFromDir(dir2))
+        val newRot = (ship2?.renderTransform?.rotation?.get(Quaterniond()) ?: Quaterniond())
+            .mul(Quaterniond(AxisAngle4d(angle.it, gdir2.toJomlVector3d())))
+            .mul(getQuatFromDir(gdir2))
             .mul(getQuatFromDir(gdir1))
             .normalize()
 

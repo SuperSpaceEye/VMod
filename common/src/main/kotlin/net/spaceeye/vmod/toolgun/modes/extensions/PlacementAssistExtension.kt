@@ -393,18 +393,12 @@ interface PlacementAssistServerPart {
         if (ship1 == null) {return handleFailure(player)}
         if (ship1 == ship2) {return handleFailure(player)}
 
-        // not sure why i need to flip normal but it works
-        val dir1 =  when {
-            paFirstResult.globalNormalDirection!!.y ==  1.0 -> -paFirstResult.globalNormalDirection!!
-            paFirstResult.globalNormalDirection!!.y == -1.0 -> -paFirstResult.globalNormalDirection!!
-            else -> paFirstResult.globalNormalDirection!!
-        }
-        val dir2 = paSecondResult.worldNormalDirection!!
+        // not sure why i need to flip y, but it works
+        val dir1 = paFirstResult .globalNormalDirection!!.also { it.copy().set(it.x, -it.y, it.z) }
+        val dir2 = paSecondResult.globalNormalDirection!!
 
-        val angle = Quaterniond(AxisAngle4d(paAngle.it, dir2.toJomlVector3d()))
-
-        val rotation = Quaterniond()
-            .mul(angle)
+        val rotation = (ship2?.transform?.rotation?.get(Quaterniond()) ?: Quaterniond())
+            .mul(Quaterniond(AxisAngle4d(paAngle.it, dir2.toJomlVector3d())))
             .mul(getQuatFromDir(dir2))
             .mul(getQuatFromDir(dir1))
             .normalize()

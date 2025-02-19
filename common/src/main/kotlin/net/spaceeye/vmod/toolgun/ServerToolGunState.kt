@@ -122,7 +122,7 @@ object ServerToolGunState: ServerClosable() {
         ServerSettings
     }
 
-    private data class C2SAskIfIHaveAccess(var accessTo: AccessTo, var callbackId: UUID): AutoSerializable
+    data class C2SAskIfIHaveAccess(var accessTo: AccessTo, var callbackId: UUID): AutoSerializable
 
     private val callbacks = mutableMapOf<UUID, (Boolean) -> Unit>()
 
@@ -145,7 +145,7 @@ object ServerToolGunState: ServerClosable() {
         s2cResponseToAccessRequest.sendToClient(player, S2CResponseToAccessRequest(pkt.accessTo, pkt.callbackId, hasAccess))
     }
 
-    private data class S2CResponseToAccessRequest(var accessTo: AccessTo, val callbackId: UUID, var response: Boolean): AutoSerializable
+    data class S2CResponseToAccessRequest(var accessTo: AccessTo, val callbackId: UUID, var response: Boolean): AutoSerializable
 
     private val s2cResponseToAccessRequest = regS2C<S2CResponseToAccessRequest>("response_to_access_request", "server_toolgun") {
         callbacks[it.callbackId]?.invoke(it.response)

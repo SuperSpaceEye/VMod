@@ -1,6 +1,8 @@
 package net.spaceeye.vmod.limits
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import dev.architectury.event.events.common.LifecycleEvent
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.*
@@ -25,6 +27,7 @@ data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
     }
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class ServerLimitsInstance: AutoSerializable {
     @JsonIgnore private var i = 0
 
@@ -60,6 +63,10 @@ object ServerLimits {
         ByteSerializableItem.registerSerializationItem(FloatLimit::class, { it, buf -> buf.writeFloat(it.minValue); buf.writeFloat(it.maxValue) }) { buf -> FloatLimit(buf.readFloat(), buf.readFloat())}
         ByteSerializableItem.registerSerializationItem(IntLimit::class, { it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) { buf -> IntLimit(buf.readInt(), buf.readInt())}
         ByteSerializableItem.registerSerializationItem(StrLimit::class, { it, buf -> buf.writeInt(it.sizeLimit)}) { buf -> StrLimit(buf.readInt())}
+
+        LifecycleEvent.SERVER_STOPPED.register {
+            wasLoaded = false
+        }
     }
     private var _instance = ServerLimitsInstance()
     var wasLoaded = false

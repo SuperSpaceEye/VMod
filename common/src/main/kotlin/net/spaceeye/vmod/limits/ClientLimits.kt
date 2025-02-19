@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.limits
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.reflectable.AutoSerializable
@@ -12,10 +13,11 @@ class ClientLimitsInstance: AutoSerializable {
 
     var lineRendererWidth    : DoubleLimit by get(i++, DoubleLimit(0.0, 5.0))
     var ropeRendererWidth    : DoubleLimit by get(i++, DoubleLimit(0.0, 5.0))
-    var blockRendererScale   : FloatLimit by get(i++, FloatLimit(0.001f, 10f))
+    var blockRendererScale   : FloatLimit  by get(i++, FloatLimit(0.001f, 10f))
     var ropeRendererSegments : IntLimit    by get(i++, IntLimit(0, 128))
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 object ClientLimits {
     private var _instance = ClientLimitsInstance()
 

@@ -3,12 +3,16 @@ package net.spaceeye.vmod.toolgun
 import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.blaze3d.vertex.PoseStack
 import dev.architectury.event.EventResult
+import dev.architectury.event.events.client.ClientLifecycleEvent
+import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry
 import gg.essential.elementa.components.UIBlock
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.gui.ScreenWindow
+import net.spaceeye.vmod.gui.additions.ErrorAddition
+import net.spaceeye.vmod.gui.additions.HUDAddition
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
 import net.spaceeye.vmod.toolgun.gui.ToolgunWindow
@@ -32,7 +36,15 @@ object ClientToolGunState : ClientClosable() {
             _currentMode?.onOpenMode()
         }
 
-    fun refreshHUD() { screen?.refreshHUD() }
+    init {
+        ClientPlayerEvent.CLIENT_PLAYER_JOIN.register {
+            if (it != Minecraft.getInstance().player) {return@register}
+            currentMode = null
+            refreshHUD()
+        }
+    }
+
+    fun refreshHUD() { screen?.getExtensionOfType<HUDAddition>()?.refreshHUD() }
 
     val GUI_MENU_OPEN_OR_CLOSE = register(
         KeyMapping(
@@ -100,13 +112,13 @@ object ClientToolGunState : ClientClosable() {
 
     //TODO make a unified way of using those
     internal fun addHUDError(str: String) {
-        screen?.addError(str)
+        screen?.getExtensionOfType<ErrorAddition>()?.addError(str)
     }
 
     internal fun onRenderHUD(stack: PoseStack, delta: Float) {
         try {
         (screen ?: run {
-            val temp = ScreenWindow()
+            val temp = ScreenWindow.makeScreen()
             val minecraft = Minecraft.getInstance()
             temp.init(minecraft, minecraft.window.guiScaledWidth, minecraft.window.guiScaledHeight)
             screen = temp

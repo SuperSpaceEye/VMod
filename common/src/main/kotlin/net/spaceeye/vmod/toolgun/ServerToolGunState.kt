@@ -14,6 +14,9 @@ import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.getPermission
 import net.spaceeye.vmod.translate.REMOVED
+import net.spaceeye.vmod.translate.YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN
+import net.spaceeye.vmod.translate.getTranslationKey
+import net.spaceeye.vmod.translate.translate
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.ServerLevelHolder
@@ -37,6 +40,27 @@ object ServerToolGunState: ServerClosable() {
     val playersStates = ConcurrentHashMap<UUID, PlayerToolgunState>()
     val playersVEntitiesStack = ConcurrentHashMap<UUID, MutableList<VEntityId>>()
 
+    data class S2CErrorHappened(var errorStr: String, var translatable: Boolean = true): AutoSerializable
+
+    val s2cErrorHappened = regS2C<S2CErrorHappened>("error_happened", "server_toolgun") {(errorStr) ->
+        ClientToolGunState.addHUDError(errorStr)
+    }
+
+    val s2cErrorHappenedResetToolgun = regS2C<S2CErrorHappened>("error_happened_reset_toolgun", "server_toolgun") {(errorStr, translate) ->
+        ClientToolGunState.currentMode?.resetState()
+        ClientToolGunState.currentMode?.refreshHUD()
+        ClientToolGunState.addHUDError(if (translate) errorStr.translate() else errorStr)
+    }
+
+    val s2cTooglunWasReset = regS2C<EmptyPacket>("toolgun_was_reset", "server_toolgun") {
+        ClientToolGunState.currentMode?.resetState()
+        ClientToolGunState.currentMode?.refreshHUD()
+    }
+
+    val c2sToolgunWasReset = regC2S<EmptyPacket>("toolgun_was_reset", "server_toolgun") {pkt, player ->
+        playersStates[player.uuid]?.mode?.resetState()
+    }
+
     init {
         // it needs to initialize all c2s and s2c receivers
         ToolgunModes.asList().forEach { it.get().init(BaseNetworking.EnvType.Server) }
@@ -52,7 +76,7 @@ object ServerToolGunState: ServerClosable() {
 
     @JvmStatic fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
         if (!PlayerAccessManager.hasPermission(player, clazz.getPermission())) {
-            s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
+            s2cErrorHappenedResetToolgun.sendToClient(player, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))
             return
         }
         fn()
@@ -60,7 +84,7 @@ object ServerToolGunState: ServerClosable() {
 
     @JvmStatic fun verifyPlayerAccessLevel(player: ServerPlayer, permission: String, fn: () -> Unit) {
         if (!PlayerAccessManager.hasPermission(player, permission)) {
-            s2cToolgunUsageRejected.sendToClient(player, EmptyPacket())
+            s2cErrorHappenedResetToolgun.sendToClient(player, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))
             return
         }
         fn()
@@ -70,14 +94,10 @@ object ServerToolGunState: ServerClosable() {
         playersStates.clear()
         playersVEntitiesStack.clear()
     }
-    val s2cToolgunUsageRejected = regS2C<EmptyPacket>("toolgun_usage_rejected", "server_toolgun") {
-        ClientToolGunState.currentMode?.resetState()
-        ClientToolGunState.addHUDError("You don't have the permission to use toolgun")
-    }
 
     val c2sRequestRemoveLastVEntity = regC2S<EmptyPacket>("request_remove_last_ventity", "server_toolgun",
         {PlayerAccessManager.hasPermission(it, "request_remove_last_ventity")},
-        {s2cToolgunUsageRejected.sendToClient(it, EmptyPacket())}
+        {s2cErrorHappenedResetToolgun.sendToClient(it, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))}
         ) { pkt, player->
         val stack = playersVEntitiesStack[player.uuid] ?: return@regC2S
         var item: VEntityId = stack.removeLastOrNull() ?: return@regC2S
@@ -98,21 +118,6 @@ object ServerToolGunState: ServerClosable() {
 
             player.sendMessage(REMOVED, player.uuid)
         }
-    }
-
-    data class S2CErrorHappened(var errorStr: String): AutoSerializable
-
-    val s2cErrorHappened = regS2C<S2CErrorHappened>("error_happened", "server_toolgun") {(errorStr) ->
-        ClientToolGunState.addHUDError(errorStr)
-    }
-
-    val s2cTooglunWasReset = regS2C<EmptyPacket>("toolgun_was_reset", "server_toolgun") {
-        ClientToolGunState.currentMode?.resetState()
-        ClientToolGunState.currentMode?.refreshHUD()
-    }
-
-    val c2sToolgunWasReset = regC2S<EmptyPacket>("toolgun_was_reset", "server_toolgun") {pkt, player ->
-        playersStates[player.uuid]?.mode?.resetState()
     }
 
     enum class AccessTo {

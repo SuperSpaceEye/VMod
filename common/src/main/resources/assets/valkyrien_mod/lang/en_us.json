@@ -113,6 +113,8 @@
   "vmod.gui.text.remove": "Remove",
   "vmod.gui.text.ok": "Ok",
   "vmod.gui.text.role_name": "Role Name",
+  "vmod.gui.text.default_hud_gui": "Press ==GUI_MENU_OPEN_OR_CLOSE== to open or close GUI",
+  "vmod.gui.text.you_dont_have_the_permission_to_use_toolgun": "You don't have the permission to use toolgun",
 
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
   "key.vmod.remove_top_ventity": "Remove Top VEntity",

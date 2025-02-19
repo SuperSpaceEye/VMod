@@ -17,6 +17,8 @@ data class MyTranslatableComponent(val enTranslation: String, val key: String) {
 
 private inline fun makeComponent(default: String, key: String) = MyTranslatableComponent(default, key).asMC()
 inline fun TranslatableComponent.get(): String = I18n.get(this.key)
+inline fun TranslatableComponent.getTranslationKey(): String = this.key
+inline fun String.translate(): String = I18n.get(this)
 inline fun Component.get(): String = if (this is TranslatableComponent) {this.get()} else { ELOG(".get() WAS CALLED ON A NOT TRANSLATABLE COMPONENT");"Not a translatable component."}
 inline fun makeFake(s: String) = TranslatableComponent(s)
 
@@ -168,3 +170,5 @@ val NEW_ROLE = x("New Role")
 val REMOVE = x("Remove")
 val OK = x("Ok")
 val ROLE_NAME = x("Role Name")
+val DEFAULT_HUD_GUI = x("Press ==GUI_MENU_OPEN_OR_CLOSE== to open or close GUI", "default_hud_gui")
+val YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN = x("You don't have the permission to use toolgun")

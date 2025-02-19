@@ -86,7 +86,7 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
     }
 
     fun sresetState(player: ServerPlayer) {
-        ServerToolGunState.s2cTooglunWasReset.sendToClient(player, EmptyPacket())
+        ServerToolGunState.s2cToolgunWasReset.sendToClient(player, EmptyPacket())
         resetState()
     }
 

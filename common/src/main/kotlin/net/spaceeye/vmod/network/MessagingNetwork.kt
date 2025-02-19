@@ -18,7 +18,7 @@ object MessagingNetwork: ServerClosable() {
             (listeners[channel] ?: return).forEach { handler: handlerType -> handler(msg) { toRemove.add(handler) } }
             listeners[channel]!!.removeAll(toRemove)
         } catch (e: Exception) {
-            ELOG("NOTIFY HAS FAILED.\n${e.stackTraceToString()}")
+            ELOG("Notify has failed.\n${e.stackTraceToString()}")
         }
     }
 

@@ -4,21 +4,18 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
-import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.rendering.Effects
 import net.spaceeye.vmod.toolgun.PlayerToolgunState
+import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState.verifyPlayerAccessLevel
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
+import net.spaceeye.vmod.translate.TOOLGUN_MODE_ACTIVATION_HAS_FAILED
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.rotateVecByQuat
-import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
-import org.joml.primitives.AABBd
-import org.valkyrienskies.mod.common.getShipsIntersecting
 import java.util.function.Supplier
 
 fun <T: BaseMode> BaseMode.serverTryActivate(
@@ -41,11 +38,11 @@ fun <T: BaseMode> BaseMode.serverTryActivate(
             try {
                 fn(serverMode.mode as T, player.level as ServerLevel, player)
             } catch (e: Exception) {
-                ELOG("Failed to activate function of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
+                SELOG("Failed to activate function of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}", player, TOOLGUN_MODE_ACTIVATION_HAS_FAILED)
             }
         }
     } catch (e: Exception) {
-        ELOG("Failed to activate function of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
+        SELOG("Failed to activate function of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}", player, TOOLGUN_MODE_ACTIVATION_HAS_FAILED)
     }
 }
 
@@ -57,14 +54,9 @@ fun <T : BaseMode> BaseMode.serverRaycastAndActivate(
     fn: (T, ServerLevel, ServerPlayer, RaycastFunctions.RaycastResult) -> Unit
 ) = serverTryActivate<T>(player, buf, clazz, supplier) { item: T, level: ServerLevel, player: ServerPlayer ->
     try {
-        val lookAngle = player.lookAngle
-
-//        ELOG("Look Angle ${Vector3d(player.lookAngle)}")
-//        ELOG("Euler ${player.xRot} ${player.yRot}")
-
         val result = RaycastFunctions.raycast(
             level,
-            RaycastFunctions.Source(Vector3d(lookAngle), Vector3d(player.eyePosition)),
+            RaycastFunctions.Source(Vector3d(player.lookAngle), Vector3d(player.eyePosition)),
             VMConfig.SERVER.TOOLGUN.MAX_RAYCAST_DISTANCE
         )
 
@@ -72,6 +64,6 @@ fun <T : BaseMode> BaseMode.serverRaycastAndActivate(
 
         fn(item, level, player, result)
     } catch (e: Exception) {
-        ELOG("Failed to activate function of ${item.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}")
+        SELOG("Failed to activate function of ${item.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}", player, TOOLGUN_MODE_ACTIVATION_HAS_FAILED)
     }
 }

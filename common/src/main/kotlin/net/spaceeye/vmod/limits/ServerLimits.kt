@@ -7,7 +7,8 @@ import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
-import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.translate.SERVER_LIMITS_UPDATE_WAS_REJECTED
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.getMapper
 import kotlin.math.max
@@ -86,7 +87,7 @@ object ServerLimits {
             val mapper = getMapper()
             _instance = mapper.readValue(bytes, ServerLimitsInstance::class.java)
         } catch (e: Exception) {
-            ELOG("Failed to deserialize Server Limits")
+            ELOG("Failed to deserialize Server Limits.\n${e.stackTraceToString()}")
             save(_instance)
         }
     }
@@ -101,15 +102,9 @@ object ServerLimits {
     private val s2cSendCurrentServerLimits = regS2C<ServerLimitsInstance>("send_current_server_limits", "server_limits") {
         instance = it
     }
-    //TODO
-    private val c2sSendUpdatedServerLimits = regC2S<ServerLimitsInstance>("send_updated_server_limits", "server_limits",
-        {it.hasPermissions(4)}, { s2cServerLimitsUpdateWasRejected.sendToClient(it, EmptyPacket())}) { pkt, player ->
-        instance = pkt
-    }
 
-    //TODO
-    private val s2cServerLimitsUpdateWasRejected = regS2C<EmptyPacket>("server_limits_update_was_rejected", "server_limits") {
-        ClientToolGunState.closeGUI()
-        ClientToolGunState.addHUDError("Serve Limits update was rejected")
+    private val c2sSendUpdatedServerLimits = regC2S<ServerLimitsInstance>("send_updated_server_limits", "server_limits",
+        {it.hasPermissions(4)}, { ServerToolGunState.sendErrorTo(it, SERVER_LIMITS_UPDATE_WAS_REJECTED) }) { pkt, player ->
+        instance = pkt
     }
 }

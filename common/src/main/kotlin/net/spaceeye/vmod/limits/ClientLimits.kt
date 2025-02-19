@@ -44,7 +44,7 @@ object ClientLimits {
             val mapper = getMapper()
             _instance = mapper.readValue(bytes, ClientLimitsInstance::class.java)
         } catch (e: Exception) {
-            ELOG("Failed to deserialize Client Limits")
+            ELOG("Failed to deserialize Client Limits.\n${e.stackTraceToString()}")
             save(_instance)
         }
     }

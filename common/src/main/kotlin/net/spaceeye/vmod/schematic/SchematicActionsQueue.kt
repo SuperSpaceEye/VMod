@@ -6,11 +6,13 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.DoubleTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.Mob
 import net.minecraft.world.entity.MobSpawnType
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.chunk.LevelChunk
 import net.minecraft.world.phys.AABB
@@ -25,6 +27,11 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
+import net.spaceeye.vmod.toolgun.SELOG
+import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.translate.SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_COPIED
+import net.spaceeye.vmod.translate.SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_PLACED
+import net.spaceeye.vmod.translate.SCHEMATIC_HAD_NONFATAL_ERRORS
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
@@ -61,12 +68,13 @@ object SchematicActionsQueue: ServerClosable() {
 
     fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
 
-    fun queueShipsCreationEvent(level: ServerLevel, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: (ships: List<Pair<ServerShip, Long>>) -> Unit) {
-        placeData[uuid] = SchemPlacementItem(level, schematicV1, ships, postPlacementFn)
+    fun queueShipsCreationEvent(level: ServerLevel, player: ServerPlayer?, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: (ships: List<Pair<ServerShip, Long>>) -> Unit) {
+        placeData[uuid] = SchemPlacementItem(level, player, schematicV1, ships, postPlacementFn)
     }
 
     class SchemPlacementItem(
         val level: ServerLevel,
+        val player: ServerPlayer?,
         val schematicV1: IShipSchematicDataV1,
         val shipsToCreate: List<Pair<() -> ServerShip, Long>>,
         val postPlacementFn: (ships: List<Pair<ServerShip, Long>>) -> Unit
@@ -79,12 +87,17 @@ object SchematicActionsQueue: ServerClosable() {
         var afterPasteCallbacks = mutableListOf<() -> Unit>()
         var delayedBlockEntityLoading = ChunkyBlockData<() -> Unit>()
 
+        var hadNonfatalErrors = false
+
         private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: ChunkyBlockData<BlockItem>, blockPalette: IBlockStatePalette, flatTagData: List<CompoundTag>, offset: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
                 val pos = BlockPos(x + offset.x, y + offset.y, z + offset.z)
                 val state = blockPalette.fromId(it.paletteId) ?: run {
-                    throw RuntimeException("State under ID ${it.paletteId} is null.")
+                    ELOG("State under ID ${it.paletteId} is null.")
+                    hadNonfatalErrors = true
+                    Blocks.AIR.defaultBlockState()
                 }
+                if (state.isAir) {return@chunkForEach}
                 val block = state.block
 
                 level.getChunkAt(pos).setBlockState(pos, state, false)
@@ -105,6 +118,7 @@ object SchematicActionsQueue: ServerClosable() {
                         val be = level.getChunkAt(pos).getBlockEntity(pos)
                         be?.load(callback?.invoke(tag) ?: tag) ?: run {
                             ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
+                            hadNonfatalErrors = true
                         }
                         cb?.let  { afterPasteCallbacks.add { it(be) } }
                         bcb?.let { afterPasteCallbacks.add { it(be) } }
@@ -131,7 +145,7 @@ object SchematicActionsQueue: ServerClosable() {
                 }
                 val ship = createdShips[currentShip].first
 
-                val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
+                val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("Block data is null")
                 val blockPalette = schematicV1.blockPalette
                 val flatExtraData = schematicV1.flatTagData.map { it.copy() }
                 oldToNewId.clear()
@@ -161,7 +175,7 @@ object SchematicActionsQueue: ServerClosable() {
             currentChunk = 0
             while (currentShip < shipsToCreate.size) {
                 val ship = createdShips[currentShip].first
-                val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("BLOCK DATA IS NULL. SHOULDN'T HAPPEN.")
+                val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("Block data is null")
                 currentBlockData.updateKeys()
 
                 val offset = MVector3d(
@@ -185,7 +199,7 @@ object SchematicActionsQueue: ServerClosable() {
             currentShip = 0
             while (currentShip < shipsToCreate.size) {
                 schematicV1.entityData.forEach { (oldId, entities) ->
-                    val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId] ?: run { ELOG("HOW???"); null } ?: return@forEach)!!
+                    val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId]!!)!!
                     entities.forEach { (pos, tag) ->
                         val shipCenter = Vector3d(
                             newShip.chunkClaim.xMiddle*16-7,
@@ -217,22 +231,26 @@ object SchematicActionsQueue: ServerClosable() {
                 currentShip++
             }
 
+            if (hadNonfatalErrors) { player?.let { ServerToolGunState.sendErrorTo(it, SCHEMATIC_HAD_NONFATAL_ERRORS) } }
+
             return true
         }
     }
 
     fun queueShipsSavingEvent(
         level: ServerLevel,
+        player: ServerPlayer?,
         uuid: UUID,
         ships: List<ServerShip>,
         schematicV1: IShipSchematicDataV1,
         padBoundary: Boolean,
         postPlacementFn: () -> Unit) {
-        saveData[uuid] = SchemSaveItem(level, schematicV1, ships, postPlacementFn, padBoundary)
+        saveData[uuid] = SchemSaveItem(level, player, schematicV1, ships, postPlacementFn, padBoundary)
     }
 
     class SchemSaveItem(
         val level: ServerLevel,
+        val player: ServerPlayer?,
         val schematicV1: IShipSchematicDataV1,
         val ships: List<ServerShip>,
         val postCopyFn: () -> Unit,
@@ -405,7 +423,7 @@ object SchematicActionsQueue: ServerClosable() {
                 }
 
                 val item = placeData[placeLastKeys[placeLastPosition]]
-                val result = try {item?.place(start, timeout)} catch (e: Exception) {ELOG("Failed to place item with exception:\n${e.stackTraceToString()}"); null}
+                val result = try {item?.place(start, timeout)} catch (e: Exception) { SELOG("Failed to place item with exception:\n${e.stackTraceToString()}", item?.player, SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_PLACED); null}
                 if (result == null || result) {
                     item!!.postPlacementFn(item.createdShips)
                     placeData.remove(placeLastKeys[placeLastPosition])
@@ -427,7 +445,7 @@ object SchematicActionsQueue: ServerClosable() {
                 }
 
                 val item = saveData[saveLastKeys[saveLastPosition]]
-                val result = try {item?.save(start, timeout)} catch (e: Exception) {ELOG("Failed to copy item with exception:\n${e.stackTraceToString()}"); null}
+                val result = try {item?.save(start, timeout)} catch (e: Exception) {SELOG("Failed to copy item with exception:\n${e.stackTraceToString()}", item?.player, SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_COPIED); null}
                 if (result == null || result) {
                     item!!.postCopyFn()
                     saveData.remove(saveLastKeys[saveLastPosition])

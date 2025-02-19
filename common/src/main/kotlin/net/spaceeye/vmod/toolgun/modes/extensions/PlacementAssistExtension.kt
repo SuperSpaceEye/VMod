@@ -21,6 +21,7 @@ import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.networking.regS2C
+import net.spaceeye.vmod.toolgun.CELOG
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.util.*
@@ -236,12 +237,12 @@ interface PlacementAssistClient {
         paAngle.it = 0.0
         try {
             paCaughtShip.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle)
-        } catch (e: Exception) { ELOG("HOW TF DID YOU DO THIS???????????????????????????\n${e.stackTraceToString()}"); paClientResetState(); return}
+        } catch (e: Exception) { CELOG("HOW TF DID YOU DO THIS???????????????????????????\n${e.stackTraceToString()}", "HOW TF DID YOU DO THIS????"); paClientResetState(); return}
 
         val shipObjectWorld = Minecraft.getInstance().shipObjectWorld
         paCaughtShips.forEach {
             val ship = shipObjectWorld.allShips.getById(it)
-            ship?.transformProvider = CenteredAroundRotationAssistTransformProvider(ship!!.transformProvider as CenteredAroundPlacementAssistTransformProvider)
+            ship?.transformProvider = CenteredAroundRotationAssistTransformProvider(ship.transformProvider as CenteredAroundPlacementAssistTransformProvider)
         }
     }
 

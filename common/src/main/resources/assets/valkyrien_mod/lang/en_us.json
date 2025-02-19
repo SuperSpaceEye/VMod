@@ -115,6 +115,12 @@
   "vmod.gui.text.role_name": "Role Name",
   "vmod.gui.text.default_hud_gui": "Press ==GUI_MENU_OPEN_OR_CLOSE== to open or close GUI",
   "vmod.gui.text.you_dont_have_the_permission_to_use_toolgun": "You don't have the permission to use toolgun",
+  "vmod.gui.text.toolgun_mode_activation_has_failed": "Toolgun mode activation has failed",
+  "vmod.gui.text.server_limits_update_was_rejected": "Server Limits update was rejected",
+  "vmod.gui.text.rendering_has_thrown_an_exception": "Rendering has thrown an exception",
+  "vmod.gui.text.schematic_had_fatal_error_and_couldnt_be_placed": "Schematic had fatal error and couldn't be placed",
+  "vmod.gui.text.schematic_had_fatal_error_and_couldnt_be_copied": "Schematic had fatal error and couldn't be copied",
+  "vmod.gui.text.schematic_had_nonfatal_errors": "Schematic had nonfatal errors",
 
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
   "key.vmod.remove_top_ventity": "Remove Top VEntity",

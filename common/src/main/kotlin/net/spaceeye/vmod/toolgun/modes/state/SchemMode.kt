@@ -367,12 +367,11 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
 
     var scrollAngle = Math.toRadians(10.0)
 
-    fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
+    fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {
             resetState();
             ServerPlayerSchematics.schematics.remove(player.uuid)
             return}
-        player as ServerPlayer
         // TODO
         if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}
 
@@ -382,13 +381,13 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             null
         } ?: return
         val schem = VModShipSchematicV1()
-        schem.makeFrom(player.level as ServerLevel, player.uuid, serverCaughtShip) {
+        schem.makeFrom(player.level as ServerLevel, player, player.uuid, serverCaughtShip) {
             SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.info!!))
             ServerPlayerSchematics.schematics[player.uuid] = schem
         }
     }
 
-    fun activateSecondaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+    fun activateSecondaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) {
         val schem = ServerPlayerSchematics.schematics[player.uuid] ?: return
         if (raycastResult.state.isAir) {return}
         //TODO
@@ -404,7 +403,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
             .normalize()
 
-        (schem as IShipSchematicDataV1).placeAt(level, player.uuid, pos.toJomlVector3d(), rotation) {}
+        (schem as IShipSchematicDataV1).placeAt(level, player, player.uuid, pos.toJomlVector3d(), rotation) {}
     }
 
     override fun eResetState() {

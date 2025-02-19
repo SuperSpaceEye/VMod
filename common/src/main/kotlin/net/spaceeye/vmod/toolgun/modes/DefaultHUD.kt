@@ -13,7 +13,6 @@ import net.spaceeye.vmod.translate.DEFAULT_HUD_GUI
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
-//TODO move stuff to translatable
 class DefaultHUD: HUDBuilder {
     override fun makeHUD(screen: UIContainer) {
         val background = GradientComponent(

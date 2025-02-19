@@ -40,12 +40,6 @@ fun WLOG(s: String) = VM.logger.warn(s)
 fun DLOG(s: String) = VM.logger.debug(s)
 fun ELOG(s: String) = VM.logger.error(s)
 
-// B is for broadcast
-fun BWLOG(main: String, toBroadcast: String) {
-    WLOG(main)
-    sendHUDErrorToOperators(toBroadcast)
-}
-
 object VM {
     const val MOD_ID = "valkyrien_mod"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!

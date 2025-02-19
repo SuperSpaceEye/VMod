@@ -8,6 +8,7 @@ import gg.essential.elementa.dsl.constrain
 import gg.essential.elementa.dsl.percent
 import net.spaceeye.vmod.gui.ScreenWindowAddition
 import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ToolgunItem.Companion.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.modes.DefaultHUD
 
 class HUDAddition: ScreenWindowAddition {
@@ -29,6 +30,11 @@ class HUDAddition: ScreenWindowAddition {
     }
 
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
+        if (!playerIsUsingToolgun()) {
+            hudContainer.clearChildren()
+            return
+        }
+
         val currentMode = ClientToolGunState.currentMode ?: defaultHUD
 
         if (refreshHUD) {

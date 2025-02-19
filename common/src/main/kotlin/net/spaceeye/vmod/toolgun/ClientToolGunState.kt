@@ -3,13 +3,13 @@ package net.spaceeye.vmod.toolgun
 import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.blaze3d.vertex.PoseStack
 import dev.architectury.event.EventResult
-import dev.architectury.event.events.client.ClientLifecycleEvent
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry
 import gg.essential.elementa.components.UIBlock
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.TranslatableComponent
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
@@ -23,6 +23,15 @@ import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.EmptyPacket
 import org.lwjgl.glfw.GLFW
+
+fun CELOG(s: String, toShow: String) {
+    ELOG(s)
+    ClientToolGunState.addHUDError(toShow)
+}
+fun CELOG(s: String, toShow: TranslatableComponent) = CELOG(s, toShow.get())
+
+fun CERROR(toShow: String) = ClientToolGunState.addHUDError(toShow)
+fun CERROR(toShow: TranslatableComponent) = CERROR(toShow.get())
 
 object ClientToolGunState : ClientClosable() {
     val modes = ToolgunModes.asList().map { it.get() }.map { it.init(BaseNetworking.EnvType.Client); it }

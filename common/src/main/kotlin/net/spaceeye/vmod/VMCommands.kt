@@ -163,7 +163,7 @@ object VMCommands {
 
         placeUUID = UUID(placeUUID.mostSignificantBits, placeUUID.leastSignificantBits + 1)
 
-        (schem as IShipSchematicDataV1).placeAt(cc.source.level, placeUUID, Vector3d(position).toJomlVector3d(), rotation) { ships ->
+        (schem as IShipSchematicDataV1).placeAt(cc.source.level, null, placeUUID, Vector3d(position).toJomlVector3d(), rotation) { ships ->
             if (!customName) {return@placeAt}
             if (ships.size == 1) {
                 ships[0].slug = name

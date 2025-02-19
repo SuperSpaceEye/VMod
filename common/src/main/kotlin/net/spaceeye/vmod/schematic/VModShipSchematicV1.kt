@@ -2,6 +2,7 @@ package net.spaceeye.vmod.schematic
 
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.*
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
@@ -11,6 +12,7 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.SchemSerializeDataV1Impl
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
 import net.spaceeye.vmod.utils.vs.toShipTransform
@@ -27,7 +29,6 @@ import org.valkyrienskies.core.api.bodies.properties.BodyTransform
 import org.valkyrienskies.core.api.bodies.properties.rebuild
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipData
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
@@ -50,14 +51,14 @@ class VModShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
 }
 
 @OptIn(VsBeta::class)
-fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc, postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
+fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid: UUID, pos: Vector3d, rotation: Quaterniondc, postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
     val newTransforms = mutableListOf<BodyTransform>()
 
-    val shipInitializers = (this as IShipSchematic).createShips(level, pos, rotation, newTransforms)
+    val shipInitializers = (this as IShipSchematic).createShipConstructors(level, pos, rotation, newTransforms)
 
-    if (!verifyBlockDataIsValid(shipInitializers.map { it.second })) { return false }
+    if (!verifyBlockDataIsValid(shipInitializers.map { it.second }, player)) { return false }
 
-    SchematicActionsQueue.queueShipsCreationEvent(level, uuid, shipInitializers, this) { ships ->
+    SchematicActionsQueue.queueShipsCreationEvent(level, player, uuid, shipInitializers, this) { ships ->
         ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData.toMap())
         LegacyConstraintFixers.tryLoadLegacyVModSchemData(level, ships, extraData.toMap()) //TODO Remove
 
@@ -80,8 +81,7 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, 
     return true
 }
 
-//TODO rename
-private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<BodyTransform>): List<Pair<() -> ServerShip, Long>> {
+private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<BodyTransform>): List<Pair<() -> ServerShip, Long>> {
     val shipData = info!!.shipsInfo
     // during schem creation ship positions are normalized so that the center is at 0 0 0
     val center = ShipTransformImpl.create(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
@@ -113,17 +113,19 @@ private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotati
 
 fun IShipSchematicDataV1.verifyBlockDataIsValid(
     ids: List<Long>,
+    player: ServerPlayer?,
 ): Boolean {
     ids.forEach { id ->
         blockData[id] ?: run {
-            ELOG("SHIP ID EXISTS BUT NO BLOCK DATA WAS SAVED. NOT PLACING A SCHEMATIC.")
+            val str = "Ship ID exists not no block data was saved. Not placing a schematic."
+            player?.also { SELOG(str, player, str, false) } ?: run { ELOG(str) }
             return false
         }
     }
     return true
 }
 
-fun IShipSchematicDataV1.makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
+fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
     val traversed = traverseGetAllTouchingShips(level, originShip.id)
 
     // this is needed so that schem doesn't try copying phys entities (TODO)
@@ -133,7 +135,7 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, uuid: UUID, originShip: Se
 
     (this as IShipSchematic).saveShipData(ships, originShip)
     // copy ship blocks separately
-    SchematicActionsQueue.queueShipsSavingEvent(level, uuid, ships, this, true, postSaveFn)
+    SchematicActionsQueue.queueShipsSavingEvent(level, player, uuid, ships, this, true, postSaveFn)
     return true
 }
 

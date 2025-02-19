@@ -11,13 +11,14 @@ import net.minecraft.client.resources.model.BakedModel
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.RenderShape
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.mixin.BlockRenderDispatcherAccessor
 import net.spaceeye.vmod.rendering.types.BlockRenderer
 import net.spaceeye.vmod.rendering.types.PositionDependentRenderer
 import net.spaceeye.vmod.rendering.types.TimedRenderer
+import net.spaceeye.vmod.toolgun.CELOG
+import net.spaceeye.vmod.translate.RENDERING_HAS_THROWN_AN_EXCEPTION
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -119,7 +120,7 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
         }
     }
     // let's hope that it never happens, but if it does, then do nothing
-    } catch (e: ConcurrentModificationException) { ELOG("GOT ConcurrentModificationException WHILE RENDERING.\n${e.stackTraceToString()}"); }
+    } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION); }
 
     if (renderBlockRenderers) RenderingStuff.blockBuffer.endBatch()
 }
@@ -131,7 +132,7 @@ private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlock
     val toDelete = mutableListOf<Int>()
     val page = ClientRenderingData.getData()[ReservedRenderingPages.TimedRenderingObjects] ?: return
     for ((idx, render) in page) {
-        if (render !is TimedRenderer || render !is PositionDependentRenderer) { toDelete.add(idx); ELOG("FOUND RENDERING DATA ${render.javaClass.simpleName} IN renderTimedObjects THAT DIDN'T IMPLEMENT INTERFACE TimedRenderingData OR PositionDependentRenderingData."); continue }
+        if (render !is TimedRenderer || render !is PositionDependentRenderer) { toDelete.add(idx); CELOG("Found renderer in ${render.javaClass.simpleName} in renderTimedObjects that didn't implement interface TimedRenderingData or PositionDependentRenderingData.", RENDERING_HAS_THROWN_AN_EXCEPTION); continue }
         if (!render.wasActivated && render.activeFor_ms == -1L) { render.timestampOfBeginning = now }
         if (render.activeFor_ms + render.timestampOfBeginning < now) { toDelete.add(idx); continue }
         if ((render.renderingPosition - cpos).sqrDist() > RenderingSettings.renderingArea*RenderingSettings.renderingArea) { continue }

@@ -95,6 +95,7 @@ object ServerLimits {
             _instance = mapper.readValue(bytes, ServerLimitsInstance::class.java)
         } catch (e: Exception) {
             ELOG("Failed to deserialize Server Limits.\n${e.stackTraceToString()}")
+            _instance = ServerLimitsInstance()
             save(_instance)
         }
     }

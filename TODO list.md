@@ -58,16 +58,9 @@
     * Set limit for total mconstraints of acc level.
     * Some other commands idk
 
-## Server side things
-* Add server side validation for (kinda ✅) constraints and rendering
-
 ## Schematic
 * Copy phys entities (not very important rn)
 * Right now schematic logic assumes default mc world height. Make it not do that
-
-## Rope Constraint
-* Add ability to change rendering modes
-* Add more setting options
 
 ## Motor Constraint
 

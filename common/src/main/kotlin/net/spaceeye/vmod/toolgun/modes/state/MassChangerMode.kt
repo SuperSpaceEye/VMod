@@ -44,7 +44,7 @@ class MassChangerMode: ExtendableToolgunMode(), MassChangerGUI, MassChangerHUD {
             atch.shipId = sship.id
             atch.level = level
 
-            sship.setAttachment(atch)
+            sship.setAttachment(atch.javaClass, atch)
 
             return
         } else {

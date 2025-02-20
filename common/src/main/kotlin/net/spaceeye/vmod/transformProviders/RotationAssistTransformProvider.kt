@@ -10,6 +10,7 @@ import org.joml.Quaterniond
 import org.valkyrienskies.core.api.VsBeta
 import org.valkyrienskies.core.api.bodies.properties.BodyTransform
 import org.valkyrienskies.core.api.bodies.properties.rebuild
+import org.valkyrienskies.core.api.bodies.properties.rotation
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform

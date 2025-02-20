@@ -4,8 +4,7 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.VsBeta
-import org.valkyrienskies.core.api.bodies.properties.BodyTransform
-import org.valkyrienskies.core.api.bodies.properties.rebuild
+import org.valkyrienskies.core.api.bodies.properties.*
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 
 // does quaternion magic to rotate object around a center by given rotation

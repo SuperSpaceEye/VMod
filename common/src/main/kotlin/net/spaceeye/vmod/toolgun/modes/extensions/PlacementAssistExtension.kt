@@ -40,6 +40,7 @@ import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.VsBeta
 import org.valkyrienskies.core.api.bodies.properties.rebuild
+import org.valkyrienskies.core.api.bodies.properties.rotation
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId

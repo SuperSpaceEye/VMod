@@ -27,7 +27,7 @@ class CustomMassSave: ShipForcesInducer {
                 ?: CustomMassSave().also {
                     it.shipId = ship.id
                     it.dimensionId = ship.chunkClaimDimension
-                    ship.setAttachment(it)
+                    ship.setAttachment(it.javaClass, it)
                 }
     }
 }

@@ -35,6 +35,7 @@ import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.UUID
+import org.valkyrienskies.core.api.bodies.properties.*
 
 typealias MVector3d = net.spaceeye.vmod.utils.Vector3d
 
@@ -67,7 +68,7 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid
                 (it, transform) ->
             val toPos = MVector3d(transform.position) + MVector3d(pos)
 //            //TODO redo
-            (it as ShipData).unsafeSetTransform(it.transform.rebuild {
+            (it as ShipData).transform = (it.transform.rebuild {
                 this.position(toPos.toJomlVector3d())
                 this.rotation(Quaterniond(transform.rotation))
                 this.scaling (Vector3d(transform.scaling))

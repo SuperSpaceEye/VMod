@@ -82,7 +82,7 @@ class WeightSynchronizer: ShipForcesInducer, ServerTickListener {
         fun getOrCreate(ship: LoadedServerShip) =
             ship.getAttachment<WeightSynchronizer>()
                 ?: WeightSynchronizer().also {
-                    ship.setAttachment(it)
+                    ship.setAttachment(it.javaClass, it)
                 }
     }
 }

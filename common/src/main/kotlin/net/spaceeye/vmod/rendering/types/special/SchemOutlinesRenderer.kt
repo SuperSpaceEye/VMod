@@ -27,6 +27,7 @@ import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
+import org.valkyrienskies.core.api.bodies.properties.*
 import java.awt.Color
 
 class SchemOutlinesRenderer(

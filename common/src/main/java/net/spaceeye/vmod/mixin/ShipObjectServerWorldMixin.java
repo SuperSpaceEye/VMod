@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.valkyrienskies.core.apigame.joints.VSJoint;
@@ -39,8 +40,12 @@ abstract public class ShipObjectServerWorldMixin {
         o.forEach((data) -> AVSEvents.INSTANCE.getServerShipRemoveEvent().emit(new AVSEvents.ServerShipRemoveEvent(data)));
     }
 
-    @WrapOperation(method = "onSetBlock", at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/shadow/Er;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;DD)V"), remap = false)
-    void vmod$onSetBlock(Ep instance, int posX, int posY, int posZ, String dimensionId, BlockType oldBlockType, BlockType newBlockType, double oldBlockMass, double newBlockMass, Operation<Void> original) {
+    @ModifyArgs(
+            method = "onSetBlock",
+            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectWorld;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;DD)V"),
+            remap = false
+    )
+    void vmod$onSetBlock(Args args, int posX, int posY, int posZ, String dimensionId, BlockType oldBlockType, BlockType newBlockType, double oldBlockMass, double newBlockMass) {
         Double mass = CustomBlockMassManager.INSTANCE.getCustomMass(dimensionId, posX, posY, posZ);
         if (oldBlockType != newBlockType) {
             CustomBlockMassManager.INSTANCE.removeCustomMass(dimensionId, posX, posY, posZ);
@@ -59,7 +64,7 @@ abstract public class ShipObjectServerWorldMixin {
         vmod$oldJoint.set(((ShipObjectWorldAccessor)(Object)this).getConstraints().get(constraintId));
     }
     @Inject(method = "updateConstraint", at = @At(value = "RETURN"), remap = false)
-    void vmod$updateConstraintTrackerRet(int constraintId, VSJoint updatedVSJoint, CallbackInfoReturnable<Boolean> cir, @Share("vmod$oldJoint") LocalRef<VSJoint> vmod$oldJoint) {
+    void vmod$updateConstraintTrackerRet(int constraintId, VSConstraint updatedVSJoint, CallbackInfoReturnable<Boolean> cir, @Share("vmod$oldJoint") LocalRef<VSConstraint> vmod$oldJoint) {
         if (cir.getReturnValue() == null) {return;}
         VSJointsTracker.onUpdateConstraint(constraintId, vmod$oldJoint.get(), updatedVSJoint);
     }

@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import org.valkyrienskies.core.apigame.joints.VSJoint;
 import org.valkyrienskies.core.apigame.world.chunks.BlockType;
 import org.valkyrienskies.core.impl.game.ships.ShipData;
@@ -42,7 +43,7 @@ abstract public class ShipObjectServerWorldMixin {
 
     @ModifyArgs(
             method = "onSetBlock",
-            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectWorld;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;DD)V"),
+            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/shadow/Er;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;DD)V"),
             remap = false
     )
     void vmod$onSetBlock(Args args, int posX, int posY, int posZ, String dimensionId, BlockType oldBlockType, BlockType newBlockType, double oldBlockMass, double newBlockMass) {
@@ -50,7 +51,7 @@ abstract public class ShipObjectServerWorldMixin {
         if (oldBlockType != newBlockType) {
             CustomBlockMassManager.INSTANCE.removeCustomMass(dimensionId, posX, posY, posZ);
         }
-        original.call(instance, posX, posY, posZ, dimensionId, oldBlockType, newBlockType, Objects.requireNonNullElse(mass, oldBlockMass), newBlockMass);
+        args.set(6, Objects.requireNonNullElse(mass, oldBlockMass));
     }
 
     @Inject(method = "createNewConstraint", at = @At(value = "RETURN"), remap = false)

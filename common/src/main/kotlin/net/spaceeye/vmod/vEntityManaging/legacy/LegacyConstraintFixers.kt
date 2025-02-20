@@ -61,6 +61,7 @@ object LegacyConstraintFixers {
         return null
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     @JvmStatic fun fixConnection(tag: CompoundTag, oldToNew: Map<ShipId, ShipId>): VEntity {
         val attachmentPoints = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 
@@ -115,6 +116,7 @@ object LegacyConstraintFixers {
             .also { ventity -> renderer?.let { ventity.addExtension(RenderableExtension(it)) } }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     @JvmStatic fun fixHydraulics(tag: CompoundTag, oldToNew: Map<ShipId, ShipId>): VEntity {
         val attachmentPoints = deserializeBlockPositions(tag.get("attachmentPoints")!!)
 

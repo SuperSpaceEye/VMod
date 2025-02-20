@@ -63,7 +63,7 @@ object VSGravityManager {
 
     fun getDimensionGravityMutableReference(id: DimensionId): Vector3d {
         return __gravities.getOrElse(id) {
-            val default = (ServerLevelHolder.shipObjectWorld!! as ShipObjectWorldAccessor).dimensionState[id]?.c?.let { Vector3d(it) } ?: Vector3d(0, -10, 0)
+            val default = Vector3d(0, -10, 0)
             __gravities[id] = default
             saveState()
             default

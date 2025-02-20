@@ -10,12 +10,12 @@ import net.spaceeye.vmod.vEntityManaging.util.mc
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.VSDistanceJoint
-import org.valkyrienskies.core.apigame.joints.VSJointPose
+//import org.valkyrienskies.core.apigame.joints.VSDistanceJoint
+//import org.valkyrienskies.core.apigame.joints.VSJointPose
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.tryMovePosition
-import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
+//import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
 
 class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override lateinit var sPos1: Vector3d
@@ -76,19 +76,20 @@ class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     }
 
     override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
-        val stiffness = if (stiffness < 0) {null} else {stiffness}
-        val damping = if (damping < 0) {null} else {damping}
-
-        val mainConstraint = VSDistanceJoint(
-            shipId1, VSJointPose(sPos1.toJomlVector3d(), Quaterniond()),
-            shipId2, VSJointPose(sPos2.toJomlVector3d(), Quaterniond()),
-            maxForceTorque,
-            0f, ropeLength,
-            stiffness = stiffness,
-            damping = damping
-        )
-        mc(mainConstraint, cIDs, level) {return false}
-        return true
+        TODO()
+//        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+//        val stiffness = if (stiffness < 0) {null} else {stiffness}
+//        val damping = if (damping < 0) {null} else {damping}
+//
+//        val mainConstraint = VSDistanceJoint(
+//            shipId1, VSJointPose(sPos1.toJomlVector3d(), Quaterniond()),
+//            shipId2, VSJointPose(sPos2.toJomlVector3d(), Quaterniond()),
+//            maxForceTorque,
+//            0f, ropeLength,
+//            stiffness = stiffness,
+//            damping = damping
+//        )
+//        mc(mainConstraint, cIDs, level) {return false}
+//        return true
     }
 }

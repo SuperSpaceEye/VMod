@@ -4,7 +4,7 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.bodies.properties.BodyTransform
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
-import org.valkyrienskies.core.api.ships.properties.ShipTransform
+import org.valkyrienskies.core.api.bodies.properties.*
 
 inline fun posShipToWorld(ship: Ship?, pos: Vector3d, transform: BodyTransform? = null): Vector3d { return Vector3d((transform ?: ship!!.transform).toWorld.transformPosition(pos.toJomlVector3d())) }
 inline fun posWorldToShip(ship: Ship?, pos: Vector3d, transform: BodyTransform? = null): Vector3d { return Vector3d((transform ?: ship!!.transform).toModel.transformPosition(pos.toJomlVector3d())) }

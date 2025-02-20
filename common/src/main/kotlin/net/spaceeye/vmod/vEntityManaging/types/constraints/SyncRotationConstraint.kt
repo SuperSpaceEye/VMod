@@ -10,9 +10,9 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.VSD6Joint
-import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
-import org.valkyrienskies.core.apigame.joints.VSJointPose
+//import org.valkyrienskies.core.apigame.joints.VSD6Joint
+//import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
+//import org.valkyrienskies.core.apigame.joints.VSJointPose
 import java.util.*
 
 class SyncRotationConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
@@ -51,20 +51,21 @@ class SyncRotationConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> { return emptyList() }
 
     override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
-//        val stiffness = if (stiffness < 0) {null} else {stiffness}
-//        val damping = if (damping < 0) {null} else {damping}
-        val mainConstraint = VSD6Joint(
-            shipId1, VSJointPose(org.joml.Vector3d(), sRot1),
-            shipId2, VSJointPose(org.joml.Vector3d(), sRot2),
-            maxForceTorque,
-            EnumMap(mapOf(
-                Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
-                Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
-                Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
-            ))
-        )
-        mc(mainConstraint, cIDs, level) {return false}
-        return true
+        TODO()
+//        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+////        val stiffness = if (stiffness < 0) {null} else {stiffness}
+////        val damping = if (damping < 0) {null} else {damping}
+//        val mainConstraint = VSD6Joint(
+//            shipId1, VSJointPose(org.joml.Vector3d(), sRot1),
+//            shipId2, VSJointPose(org.joml.Vector3d(), sRot2),
+//            maxForceTorque,
+//            EnumMap(mapOf(
+//                Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
+//                Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
+//                Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
+//            ))
+//        )
+//        mc(mainConstraint, cIDs, level) {return false}
+//        return true
     }
 }

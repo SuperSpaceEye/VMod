@@ -10,12 +10,12 @@ import net.spaceeye.vmod.vEntityManaging.util.mc
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.VSJointPose
+//import org.valkyrienskies.core.apigame.joints.VSJointPose
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.utils.getHingeRotation
 import net.spaceeye.vmod.utils.vs.tryMovePosition
-import org.valkyrienskies.core.apigame.joints.VSGearJoint
-import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
+//import org.valkyrienskies.core.apigame.joints.VSGearJoint
+//import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
 
 class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override lateinit var sPos1: Vector3d
@@ -90,16 +90,17 @@ class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> { return emptyList() }
 
     override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
-        val rotationConstraint = VSGearJoint(
-            shipId1, VSJointPose(sPos1.toJomlVector3d(), getHingeRotation(sDir1)),
-            shipId2, VSJointPose(sPos2.toJomlVector3d(), getHingeRotation(sDir2)),
-            maxForceTorque,
-            gearRatio = gearRatio,
-        )
-
-        mc(rotationConstraint, cIDs, level) {return false}
-
-        return true
+        TODO()
+//        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+//        val rotationConstraint = VSGearJoint(
+//            shipId1, VSJointPose(sPos1.toJomlVector3d(), getHingeRotation(sDir1)),
+//            shipId2, VSJointPose(sPos2.toJomlVector3d(), getHingeRotation(sDir2)),
+//            maxForceTorque,
+//            gearRatio = gearRatio,
+//        )
+//
+//        mc(rotationConstraint, cIDs, level) {return false}
+//
+//        return true
     }
 }

@@ -16,7 +16,7 @@ val BodyTransform.positionInModel: Vector3dc get() = this.positionInShip
 val BodyTransform.toWorld: Matrix4dc get() = this.shipToWorld
 val BodyTransform.toModel: Matrix4dc get() = this.worldToShip
 
-fun BodyTransform.toBuilder(): BodyTransformBuilder {return BodyTransformBuilder().also {it.from(this)}}
+fun BodyTransform.toBuilder(): BodyTransformBuilder {return BodyTransformBuilder().from(this)}
 fun BodyTransform.create(position: Vector3dc, rotation: Quaterniondc, positionInModel: Vector3dc, scaling: Vector3dc): BodyTransform = ShipTransformImpl.create(position, positionInModel, rotation, scaling)
 
 class BodyTransformBuilder {
@@ -47,12 +47,11 @@ class BodyTransformBuilder {
      * @see BodyTransform.toBuilder
      */
     fun from(transform: BodyTransform): BodyTransformBuilder {
-        return BodyTransformBuilder().also {
-            it.position(transform.position.get(Vector3d()))
-            it.positionInModel(transform.positionInModel.get(Vector3d()))
-            it.rotation(transform.rotation.get(Quaterniond()))
-            it.scaling(transform.scaling.get(Vector3d()))
-        }
+        position(transform.position.get(Vector3d()))
+        positionInModel(transform.positionInModel.get(Vector3d()))
+        rotation(transform.rotation.get(Quaterniond()))
+        scaling(transform.scaling.get(Vector3d()))
+        return this
     }
 
     /**

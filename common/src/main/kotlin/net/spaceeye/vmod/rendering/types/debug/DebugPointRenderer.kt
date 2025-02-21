@@ -39,9 +39,7 @@ class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer {
     ) {
         val level = Minecraft.getInstance().level!!
 
-        val ship = level.shipObjectWorld.loadedShips.getById(shipId) ?: return
-
-        val rPos = posShipToWorldRender(ship, sPos)
+        val rPos = level.shipObjectWorld.loadedShips.getById(shipId)?.let { posShipToWorldRender(it, sPos) } ?: sPos
 
 
         val tesselator = Tesselator.getInstance()

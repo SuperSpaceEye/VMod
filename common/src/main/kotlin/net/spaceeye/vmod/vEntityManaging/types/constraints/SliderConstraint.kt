@@ -8,14 +8,11 @@ import net.spaceeye.vmod.vEntityManaging.util.*
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.getHingeRotation
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.tryMovePosition
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSSlideConstraint
-import org.valkyrienskies.core.apigame.joints.*
-import java.util.*
 
 class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     enum class ConnectionMode {

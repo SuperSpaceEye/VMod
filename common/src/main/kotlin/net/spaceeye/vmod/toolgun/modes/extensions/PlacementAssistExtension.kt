@@ -395,7 +395,7 @@ interface PlacementAssistServerPart {
         if (ship1 == ship2) {return handleFailure(player)}
 
         // not sure why i need to flip y, but it works
-        val dir1 = paFirstResult .globalNormalDirection!!.also { it.copy().set(it.x, -it.y, it.z) }
+        val dir1 = paFirstResult .globalNormalDirection!!.let {it.copy().also{it.set(it.x, -it.y, it.z)}}
         val dir2 = paSecondResult.globalNormalDirection!!
 
         val rotation = (ship2?.transform?.rotation?.get(Quaterniond()) ?: Quaterniond())

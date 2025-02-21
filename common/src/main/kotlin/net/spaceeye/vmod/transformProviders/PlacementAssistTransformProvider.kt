@@ -55,7 +55,7 @@ class PlacementAssistTransformProvider(
 
         if (firstResult.globalNormalDirection == null || secondResult.worldNormalDirection == null) { return null }
         // not sure why i need to flip y, but it works
-        gdir1 = firstResult .globalNormalDirection!!.also { it.copy().set(it.x, -it.y, it.z) }
+        gdir1 = firstResult .globalNormalDirection!!.let {it.copy().also{it.set(it.x, -it.y, it.z)}}
         gdir2 = secondResult.globalNormalDirection!!
 
         if (secondResult.state.isAir) {return null}

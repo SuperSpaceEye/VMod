@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.*
@@ -12,7 +11,6 @@ import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.joints.VSDistanceJoint
 import org.valkyrienskies.core.apigame.joints.VSJointPose
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.tryMovePosition
 import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
@@ -22,8 +20,6 @@ class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override lateinit var sPos2: Vector3d
     override var shipId1: Long = -1
     override var shipId2: Long = -1
-
-    @JsonIgnore private var i = 0
 
     var maxForce: Float by get(i++, -1f)
     var stiffness: Float by get(i++, 0f)

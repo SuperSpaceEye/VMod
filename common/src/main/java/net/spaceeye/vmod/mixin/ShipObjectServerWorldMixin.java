@@ -1,7 +1,5 @@
 package net.spaceeye.vmod.mixin;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.spaceeye.vmod.events.AVSEvents;
@@ -65,7 +63,7 @@ abstract public class ShipObjectServerWorldMixin {
         vmod$oldJoint.set(((ShipObjectWorldAccessor)(Object)this).getConstraints().get(constraintId));
     }
     @Inject(method = "updateConstraint", at = @At(value = "RETURN"), remap = false)
-    void vmod$updateConstraintTrackerRet(int constraintId, VSConstraint updatedVSJoint, CallbackInfoReturnable<Boolean> cir, @Share("vmod$oldJoint") LocalRef<VSConstraint> vmod$oldJoint) {
+    void vmod$updateConstraintTrackerRet(int constraintId, VSJoint updatedVSJoint, CallbackInfoReturnable<Boolean> cir, @Share("vmod$oldJoint") LocalRef<VSJoint> vmod$oldJoint) {
         if (cir.getReturnValue() == null) {return;}
         VSJointsTracker.onUpdateConstraint(constraintId, vmod$oldJoint.get(), updatedVSJoint);
     }

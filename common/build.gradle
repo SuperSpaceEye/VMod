@@ -34,7 +34,8 @@ dependencies {
 
     modImplementation("gg.essential:elementa-1.18.1-forge:622")
 
-    modCompileOnlyApi(files("vs_jars/clockwork.jar"))
+    modCompileOnlyApi(files("vs_jars/clockwork-1.18.2-0.1.16-fabric-a0682a9698.jar"))
+    modCompileOnlyApi(files("vs_jars/takeoff-fabric-1.0.0-beta1+308678c5c5.jar"))
     modCompileOnlyApi(files("vs_jars/trackwork-1.18.2-1.0.0-beta.jar"))
 
     modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")

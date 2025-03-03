@@ -111,7 +111,7 @@ object SchematicActionsQueue: ServerClosable() {
                     var delayLoading = true
                     var callback: ((CompoundTag?) -> CompoundTag?)? = null
                     var bcb: ((BlockEntity?) -> Unit)? = null
-                    val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state) { delay, fn -> delayLoading = delay; callback = fn }
+                    val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, pos, state) { delay, fn -> delayLoading = delay; callback = fn }
                     if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag, {delay, fn -> delayLoading = delay; callback = fn }) { bcb = it }
 
                     val fn = {
@@ -207,7 +207,7 @@ object SchematicActionsQueue: ServerClosable() {
                             newShip.chunkClaim.zMiddle*16-7,
                         )
 
-                        val newPos = pos.add(shipCenter.toJomlVector3d())
+                        val newPos = pos.add(shipCenter.toJomlVector3d(), org.joml.Vector3d())
 
                         val posTag = ListTag()
                         posTag.add(DoubleTag.valueOf(newPos.x))

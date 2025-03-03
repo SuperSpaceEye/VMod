@@ -28,8 +28,6 @@ object SchemCompatObj {
     }
 
     init {
-//        safeAdd("create") { CreateBlocksCompat() } //TODO why tf did i make this
-
         safeAdd("vs_clockwork") { ClockworkSchemCompat() }
         safeAdd("trackwork") { TrackworkSchemCompat() }
     }

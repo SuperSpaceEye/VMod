@@ -207,7 +207,7 @@ object SchematicActionsQueue: ServerClosable() {
                             newShip.chunkClaim.zMiddle*16-7,
                         )
 
-                        val newPos = pos.add(shipCenter.toJomlVector3d())
+                        val newPos = pos.add(shipCenter.toJomlVector3d(), org.joml.Vector3d())
 
                         val posTag = ListTag()
                         posTag.add(DoubleTag.valueOf(newPos.x))

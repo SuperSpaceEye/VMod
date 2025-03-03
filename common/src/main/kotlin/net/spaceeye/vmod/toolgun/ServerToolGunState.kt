@@ -39,15 +39,19 @@ object ServerToolGunState: ServerClosable() {
     data class S2CErrorHappened(var errorStr: String, var translatable: Boolean = true, var closeGUI: Boolean = false): AutoSerializable
 
     val s2cErrorHappened = regS2C<S2CErrorHappened>("error_happened_reset_toolgun", "server_toolgun") { (errorStr, translate, closeGUI) ->
-        ClientToolGunState.currentMode?.resetState()
-        ClientToolGunState.currentMode?.refreshHUD()
-        ClientToolGunState.addHUDError(if (translate) errorStr.translate() else errorStr)
-        ClientToolGunState.closeGUI()
+        RandomEvents.clientOnTick.on { _, unsub -> unsub.invoke()
+            ClientToolGunState.currentMode?.resetState()
+            ClientToolGunState.currentMode?.refreshHUD()
+            ClientToolGunState.addHUDError(if (translate) errorStr.translate() else errorStr)
+            ClientToolGunState.closeGUI()
+        }
     }
 
     val s2cToolgunWasReset = regS2C<EmptyPacket>("toolgun_was_reset", "server_toolgun") {
-        ClientToolGunState.currentMode?.resetState()
-        ClientToolGunState.currentMode?.refreshHUD()
+        RandomEvents.clientOnTick.on { _, unsub -> unsub.invoke()
+            ClientToolGunState.currentMode?.resetState()
+            ClientToolGunState.currentMode?.refreshHUD()
+        }
     }
 
     val c2sToolgunWasReset = regC2S<EmptyPacket>("toolgun_was_reset", "server_toolgun") {pkt, player ->

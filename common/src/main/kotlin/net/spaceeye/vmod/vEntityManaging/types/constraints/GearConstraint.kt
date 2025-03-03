@@ -23,8 +23,6 @@ class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override var shipId1: Long = -1
     override var shipId2: Long = -1
 
-    @JsonIgnore private var i = 0
-
     var maxForce: Float by get(i++, -1f)
 
     var sRot1: Quaterniond by get(i++, Quaterniond())
@@ -33,7 +31,7 @@ class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     var sDir1: Vector3d by get(i++, Vector3d())
     var sDir2: Vector3d by get(i++, Vector3d())
 
-    var gearRatio: Float = 1f
+    var gearRatio: Float by get(i++, 1f)
 
      constructor(
         sPos1: Vector3d,

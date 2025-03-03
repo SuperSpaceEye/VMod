@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.vEntityManaging.util
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
@@ -42,6 +43,7 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
     final override var mID: VEntityId = -1
 
     private val _extensions = mutableSetOf<VEntityExtension>()
+    @get:JsonIgnore
     open val extensions: Collection<VEntityExtension> get() = _extensions
 
     open fun addExtension(extension: VEntityExtension): ExtendableVEntity {

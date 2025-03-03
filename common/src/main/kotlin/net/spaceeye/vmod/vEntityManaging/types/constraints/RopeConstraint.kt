@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.*
@@ -19,8 +18,6 @@ class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override lateinit var sPos2: Vector3d
     override var shipId1: Long = -1
     override var shipId2: Long = -1
-
-    @JsonIgnore private var i = 0
 
     var maxForce: Float by get(i++, -1f)
     var stiffness: Float by get(i++, 0f)

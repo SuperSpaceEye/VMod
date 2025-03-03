@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.vEntityManaging.util
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
@@ -14,8 +15,9 @@ import org.valkyrienskies.core.apigame.joints.VSJointId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
-    val cIDs = mutableListOf<VSJointId>() // should be used to store VS ids
-    var attachmentPoints_ = mutableListOf<BlockPos>()
+    @JsonIgnore val cIDs = mutableListOf<VSJointId>() // should be used to store VS ids
+    @JsonIgnore var attachmentPoints_ = mutableListOf<BlockPos>()
+    @JsonIgnore protected var i = 0 // use in get for auto serialization TODO move it to ExtendableVEntity?
 
     abstract var shipId1: Long
     abstract var shipId2: Long

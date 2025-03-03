@@ -10,7 +10,6 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
 
 class DisabledCollisionConstraint(): ExtendableVEntity(), VEAutoSerializable {
     @JsonIgnore private var i = 0

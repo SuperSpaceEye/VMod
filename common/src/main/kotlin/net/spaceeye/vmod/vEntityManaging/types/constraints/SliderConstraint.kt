@@ -1,11 +1,9 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.VEntity
 import net.spaceeye.vmod.vEntityManaging.util.*
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
@@ -25,8 +23,6 @@ class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override lateinit var sPos2: Vector3d
     override var shipId1: Long = -1
     override var shipId2: Long = -1
-
-    @JsonIgnore private var i = 0
 
     var connectionMode: ConnectionMode by get(i++, ConnectionMode.FIXED_ORIENTATION)
     var maxForce: Float by get(i++, -1f)

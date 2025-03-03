@@ -1,11 +1,9 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.VEntity
 import net.spaceeye.vmod.vEntityManaging.util.*
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
@@ -13,17 +11,15 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
 
 class SyncRotationConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
-    override var sPos1: Vector3d get() = Vector3d(); set(value) {}
-    override var sPos2: Vector3d get() = Vector3d(); set(value) {}
+    override var sPos1: Vector3d get() = Vector3d(); set(_) {}
+    override var sPos2: Vector3d get() = Vector3d(); set(_) {}
     override var shipId1: Long = -1
     override var shipId2: Long = -1
-
-    @JsonIgnore private var i = 0
 
     var sRot1: Quaterniond by get(i++, Quaterniond())
     var sRot2: Quaterniond by get(i++, Quaterniond())
 
-    var maxForce: Float by get(i++, 0f)
+    var maxForce: Float by get(i++, -1f)
 
     constructor(
         sRot1: Quaterniondc,

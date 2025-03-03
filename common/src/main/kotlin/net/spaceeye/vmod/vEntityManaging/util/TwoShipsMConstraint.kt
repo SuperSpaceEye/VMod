@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.VSJointId
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {

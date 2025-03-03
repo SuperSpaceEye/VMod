@@ -5,8 +5,7 @@ import net.spaceeye.vmod.vEntityManaging.getVEntity
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
-import org.valkyrienskies.core.api.VsBeta
-import org.valkyrienskies.core.api.bodies.properties.rebuild
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl

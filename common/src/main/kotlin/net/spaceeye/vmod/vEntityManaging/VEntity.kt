@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.VSJointId
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 
 interface Tickable {
     fun tick(server: MinecraftServer, unregister: () -> Unit)

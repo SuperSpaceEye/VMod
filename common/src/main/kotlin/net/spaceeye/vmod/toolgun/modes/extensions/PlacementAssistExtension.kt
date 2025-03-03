@@ -9,7 +9,6 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.vEntityManaging.VEntity
 import net.spaceeye.vmod.vEntityManaging.addFor
@@ -38,9 +37,7 @@ import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
 import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
-import org.valkyrienskies.core.api.VsBeta
-import org.valkyrienskies.core.api.bodies.properties.rebuild
-import org.valkyrienskies.core.api.bodies.properties.rotation
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId

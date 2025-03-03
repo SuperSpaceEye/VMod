@@ -5,8 +5,8 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.utils.PosMap
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.api.world.properties.DimensionId
 import org.valkyrienskies.core.apigame.world.chunks.BlockType
+import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.mod.common.BlockStateInfo
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos

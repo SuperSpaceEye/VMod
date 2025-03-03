@@ -1,8 +1,6 @@
 package net.spaceeye.vmod.shipAttachments
 
-import org.valkyrienskies.core.api.VsBeta
-import org.valkyrienskies.mod.api.vsApi
-import org.valkyrienskies.mod.common.ValkyrienSkiesMod
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 
 object VMAttachments {
     @OptIn(VsBeta::class)

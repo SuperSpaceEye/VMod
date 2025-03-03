@@ -3,14 +3,12 @@ package net.spaceeye.vmod.shipAttachments
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.physgun.PlayerPhysgunState
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.rotateVecByQuat
-import net.spaceeye.vmod.utils.vs.getCenterPos
-import net.spaceeye.vmod.utils.vs.posShipToWorld
-import net.spaceeye.vmod.utils.vs.posWorldToShip
 import org.joml.Quaterniond
-import org.valkyrienskies.core.api.attachment.getAttachment
+import net.spaceeye.vmod.compat.vsBackwardsCompat.getAttachment
 import org.valkyrienskies.core.api.ships.*
 import org.valkyrienskies.core.api.ships.properties.ShipId
 

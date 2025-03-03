@@ -12,8 +12,7 @@ import org.jgrapht.graph.DefaultListenableGraph
 import org.jgrapht.graph.Multigraph
 import org.jgrapht.graph.concurrent.AsSynchronizedGraph
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.VSJoint
-import org.valkyrienskies.core.apigame.joints.VSJointId
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 object VSJointsTracker {

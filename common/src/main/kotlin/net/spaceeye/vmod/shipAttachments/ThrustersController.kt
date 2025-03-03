@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
-import org.valkyrienskies.core.api.attachment.getAttachment
+import net.spaceeye.vmod.compat.vsBackwardsCompat.getAttachment
 import org.valkyrienskies.core.api.ships.*
 import java.util.concurrent.locks.ReentrantLock
 

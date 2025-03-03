@@ -1,4 +1,4 @@
-package org.valkyrienskies.core.api.attachment
+package net.spaceeye.vmod.compat.vsBackwardsCompat
 
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.getAttachment

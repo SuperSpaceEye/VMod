@@ -1,8 +1,8 @@
 package net.spaceeye.vmod.vEntityManaging.util
 
 import net.minecraft.server.level.ServerLevel
-import org.valkyrienskies.core.apigame.joints.VSJoint
-import org.valkyrienskies.core.apigame.joints.VSJointId
+import net.spaceeye.vmod.compat.vsBackwardsCompat.VSJoint
+import net.spaceeye.vmod.compat.vsBackwardsCompat.VSJointId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 /**

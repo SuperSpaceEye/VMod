@@ -4,18 +4,13 @@ import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
-import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorldRender
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
-import org.valkyrienskies.core.api.VsBeta
-import org.valkyrienskies.core.api.bodies.properties.BodyTransform
-import org.valkyrienskies.core.api.bodies.properties.rebuild
-import org.valkyrienskies.core.api.bodies.properties.rotation
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
-import org.valkyrienskies.mod.common.ValkyrienSkiesMod
 import org.valkyrienskies.mod.common.getShipObjectManagingPos
 
 class RotationAssistTransformProvider(

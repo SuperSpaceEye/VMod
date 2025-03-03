@@ -6,7 +6,6 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.joints.*
 import org.valkyrienskies.mod.common.isBlockInShipyard
 import org.valkyrienskies.mod.common.isChunkInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -15,7 +14,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 //TODO rework to use arbitrary centers
 inline fun getCenterPos(x: Int, z: Int) = Vector3d(((x / 16 / 256 - 1) * 256 + 128) * 16, 0, ((z / 16 / 256) * 256 + 128) * 16)
 inline fun getCenterPos(pos: Vector3d): Vector3d = getCenterPos(pos.x.toInt(), pos.z.toInt())
-inline fun getCenterPos(pos:  org.joml.Vector3dc): Vector3d = getCenterPos(pos.x().toInt(), pos.z().toInt())
+inline fun getCenterPos(pos:  Vector3dc): Vector3d = getCenterPos(pos.x().toInt(), pos.z().toInt())
 
 inline fun updatePosition(old: Vector3d, newShip: Ship): Vector3d = old - Vector3d(getCenterPos(old.x.toInt(), old.z.toInt())) + Vector3d(getCenterPos(newShip.transform.positionInShip.x().toInt(), newShip.transform.positionInShip.z().toInt()))
 

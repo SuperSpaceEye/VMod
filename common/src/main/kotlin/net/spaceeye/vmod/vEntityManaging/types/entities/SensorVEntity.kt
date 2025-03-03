@@ -16,11 +16,10 @@ import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
-import org.valkyrienskies.mod.api.dimensionId
+import org.valkyrienskies.mod.common.dimensionId
 import kotlin.math.min
 
 class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {

@@ -14,8 +14,7 @@ import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.shipAttachments.WeightSynchronizer
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager
-import org.valkyrienskies.core.api.attachment.getAttachment
-import org.valkyrienskies.core.api.attachment.removeAttachment
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.apigame.world.chunks.BlockType
 import org.valkyrienskies.mod.common.BlockStateInfo

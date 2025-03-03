@@ -1,4 +1,4 @@
-package org.valkyrienskies.core.api
+package net.spaceeye.vmod.compat.vsBackwardsCompat
 
 import org.jetbrains.annotations.ApiStatus
 

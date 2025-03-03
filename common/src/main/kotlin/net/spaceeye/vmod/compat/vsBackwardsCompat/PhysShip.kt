@@ -1,7 +1,8 @@
-package org.valkyrienskies.core.api.ships
+package net.spaceeye.vmod.compat.vsBackwardsCompat
 
 import org.joml.Matrix3dc
 import org.joml.Vector3dc
+import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 
 val PhysShip.mass: Double get() = (this as PhysShipImpl).inertia.shipMass

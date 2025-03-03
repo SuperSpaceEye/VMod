@@ -1,4 +1,4 @@
-package org.valkyrienskies.core.api.bodies.properties
+package net.spaceeye.vmod.compat.vsBackwardsCompat
 
 import org.joml.*
 import org.valkyrienskies.core.api.ships.properties.ShipTransform

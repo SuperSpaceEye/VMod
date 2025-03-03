@@ -2,7 +2,7 @@ package net.spaceeye.vmod.shipAttachments
 
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager
 import org.joml.Vector3i
-import org.valkyrienskies.core.api.attachment.getAttachment
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.LoadedServerShip
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ShipForcesInducer

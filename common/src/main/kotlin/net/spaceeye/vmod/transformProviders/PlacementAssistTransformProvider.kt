@@ -8,9 +8,7 @@ import net.spaceeye.vmod.toolgun.modes.util.getModePosition
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import org.joml.Quaterniond
-import org.valkyrienskies.core.api.VsBeta
-import org.valkyrienskies.core.api.bodies.properties.rebuild
-import org.valkyrienskies.core.api.bodies.properties.rotation
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform

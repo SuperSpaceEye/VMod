@@ -3,10 +3,11 @@ package net.spaceeye.vmod.shipAttachments
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import net.spaceeye.vmod.compat.vsBackwardsCompat.mass
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.vsStuff.VSGravityManager
-import org.valkyrienskies.core.api.attachment.getAttachment
+import net.spaceeye.vmod.compat.vsBackwardsCompat.getAttachment
 import org.valkyrienskies.core.api.ships.*
 
 @JsonAutoDetect(

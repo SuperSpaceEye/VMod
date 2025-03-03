@@ -24,9 +24,7 @@ import org.joml.Vector3d
 import org.joml.Vector3i
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
-import org.valkyrienskies.core.api.VsBeta
-import org.valkyrienskies.core.api.bodies.properties.BodyTransform
-import org.valkyrienskies.core.api.bodies.properties.rebuild
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
@@ -35,7 +33,6 @@ import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.UUID
-import org.valkyrienskies.core.api.bodies.properties.*
 
 typealias MVector3d = net.spaceeye.vmod.utils.Vector3d
 

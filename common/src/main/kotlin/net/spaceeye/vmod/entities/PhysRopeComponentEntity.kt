@@ -16,14 +16,12 @@ import net.minecraft.world.level.entity.EntityInLevelCallback
 import net.spaceeye.vmod.VMEntities
 import net.spaceeye.vmod.entities.events.ClientPhysEntitiesHolder
 import net.spaceeye.vmod.entities.events.ServerPhysEntitiesHolder
-import net.spaceeye.vmod.utils.vs.createD
 import net.spaceeye.vmod.utils.vs.transformF
 import org.joml.Matrix3d
 import org.joml.Quaterniond
 import org.joml.Vector3d
 import org.joml.Vector3dc
-import org.valkyrienskies.core.api.VsBeta
-import org.valkyrienskies.core.api.bodies.properties.BodyTransform
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipInertiaData
 import org.valkyrienskies.core.api.ships.properties.ShipTransform

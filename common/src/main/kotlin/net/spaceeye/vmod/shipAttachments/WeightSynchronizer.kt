@@ -8,7 +8,7 @@ import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.Tuple
 import net.spaceeye.vmod.utils.Tuple3
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager
-import org.valkyrienskies.core.api.attachment.getAttachment
+import net.spaceeye.vmod.compat.vsBackwardsCompat.getAttachment
 import org.valkyrienskies.core.api.ships.LoadedServerShip
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ServerShip

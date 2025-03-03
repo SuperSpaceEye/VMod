@@ -1,4 +1,4 @@
-package org.valkyrienskies.mod.api
+package net.spaceeye.vmod.compat.vsBackwardsCompat
 
 object vsApi {
     class Builder {

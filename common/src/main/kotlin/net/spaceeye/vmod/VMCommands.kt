@@ -18,6 +18,8 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.shipForceInducers.GravityController
+import net.spaceeye.vmod.shipForceInducers.PhysgunController
+import net.spaceeye.vmod.shipForceInducers.ThrustersController
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
@@ -317,6 +319,21 @@ object VMCommands {
 
             return 0
         }
+
+        fun clearVmodAttachments(cc: CommandContext<CommandSourceStack>): Int {
+            val level = cc.source.level
+            level.shipObjectWorld.loadedShips.forEach {
+                it.getAttachment(GravityController::class.java)?.let { _ -> it.setAttachment(GravityController::class.java, null) }
+                it.getAttachment(PhysgunController::class.java)?.let { _ -> it.setAttachment(PhysgunController::class.java, null) }
+                it.getAttachment(ThrustersController::class.java)?.let { _ -> it.setAttachment(ThrustersController::class.java, null) }
+            }
+            level.shipObjectWorld.allShips.forEach {
+                it.getAttachment(GravityController::class.java)?.let { _ -> it.saveAttachment(GravityController::class.java, null) }
+                it.getAttachment(PhysgunController::class.java)?.let { _ -> it.saveAttachment(PhysgunController::class.java, null) }
+                it.getAttachment(ThrustersController::class.java)?.let { _ -> it.saveAttachment(ThrustersController::class.java, null) }
+            }
+            return 0
+        }
     }
 
     fun registerServerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
@@ -464,6 +481,8 @@ object VMCommands {
                             )
                         )
                     )
+                ).then(
+                    lt("clear-vmod-attachments").executes { OP.clearVmodAttachments(it) }
                 )
             )
         )

@@ -27,11 +27,6 @@ object VSGravityManager {
 
             val ship = ServerLevelHolder.server!!.shipObjectWorld.loadedShips.getById(ship.id) ?: return@on
             GravityController.getOrCreate(ship)
-
-            //TODO temp solution, remove from here
-            PhysgunController.getOrCreate(ship)
-            ThrustersController.getOrCreate(ship)
-            CustomMassSave.getOrCreate(ship)
         }
     }
     //TODO this is dumb

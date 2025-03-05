@@ -19,7 +19,11 @@ import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.debug.DebugRenderer
 import net.spaceeye.vmod.schematic.placeAt
+import net.spaceeye.vmod.shipAttachments.CustomMassSave
 import net.spaceeye.vmod.shipAttachments.GravityController
+import net.spaceeye.vmod.shipAttachments.PhysgunController
+import net.spaceeye.vmod.shipAttachments.ThrustersController
+import net.spaceeye.vmod.shipAttachments.WeightSynchronizer
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
@@ -314,6 +318,25 @@ object VMCommands {
 
             return 0
         }
+
+        fun clearVmodAttachments(cc: CommandContext<CommandSourceStack>): Int {
+            val level = cc.source.level
+            level.shipObjectWorld.loadedShips.forEach {
+                it.getAttachment(GravityController::class.java)?.let { _ -> it.setAttachment(GravityController::class.java, null) }
+                it.getAttachment(PhysgunController::class.java)?.let { _ -> it.setAttachment(PhysgunController::class.java, null) }
+                it.getAttachment(ThrustersController::class.java)?.let { _ -> it.setAttachment(ThrustersController::class.java, null) }
+                it.getAttachment(CustomMassSave::class.java)?.let { _ -> it.setAttachment(CustomMassSave::class.java, null) }
+                it.getAttachment(WeightSynchronizer::class.java)?.let { _ -> it.setAttachment(WeightSynchronizer::class.java, null) }
+            }
+            level.shipObjectWorld.allShips.forEach {
+                it.getAttachment(GravityController::class.java)?.let { _ -> it.saveAttachment(GravityController::class.java, null) }
+                it.getAttachment(PhysgunController::class.java)?.let { _ -> it.saveAttachment(PhysgunController::class.java, null) }
+                it.getAttachment(ThrustersController::class.java)?.let { _ -> it.saveAttachment(ThrustersController::class.java, null) }
+                it.getAttachment(CustomMassSave::class.java)?.let { _ -> it.saveAttachment(CustomMassSave::class.java, null) }
+                it.getAttachment(WeightSynchronizer::class.java)?.let { _ -> it.saveAttachment(WeightSynchronizer::class.java, null) }
+            }
+            return 0
+        }
     }
 
     private object DEBUG {
@@ -471,6 +494,8 @@ object VMCommands {
                             )
                         )
                     )
+                ).then(
+                    lt("clear-vmod-attachments").executes { OP.clearVmodAttachments(it) }
                 )
             ).then(
                 lt("debug")

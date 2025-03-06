@@ -79,7 +79,7 @@ object SchematicActionsQueue: ServerClosable() {
                     var bcb: ((BlockEntity?) -> Unit)? = null
                     val cb = SchemCompatObj.onPaste(level, oldToNewId, tag, state) { delayLoading = it }
                     var callback: ((CompoundTag?) -> CompoundTag?)? = null
-                    if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag, {delay, fn -> delayLoading = delay; callback = fn }) { bcb = it }
+                    if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, tag, {delay -> delayLoading = delay }) { bcb = it }
 
                     val fn = {
                         val be = level.getChunkAt(pos).getBlockEntity(pos)

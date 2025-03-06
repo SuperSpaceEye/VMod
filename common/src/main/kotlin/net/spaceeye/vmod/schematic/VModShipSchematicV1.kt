@@ -41,7 +41,7 @@ class VModShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
     override var extraData: MutableList<Pair<String, ISerializable>> = mutableListOf()
 
     override var info: IShipSchematicInfo? = null
-    override var entityData: MutableMap<ShipId, List<EntityItem>> = mutableMapOf()
+//    override var entityData: MutableMap<ShipId, List<EntityItem>> = mutableMapOf()
 }
 
 fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc, postPlaceFn: (List<ServerShip>) -> Unit): Boolean {

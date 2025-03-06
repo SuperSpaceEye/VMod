@@ -12,59 +12,39 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
-import net.spaceeye.vmod.entities.events.ClientPhysEntitiesHolder
-import net.spaceeye.vmod.entities.PhysRopeComponentEntity
-import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
-import net.spaceeye.vmod.rendering.RenderingUtils.Quad.makePolygon
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.apigame.physics.VSCapsuleCollisionShapeData
 import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
 //TODO redo
-class PhysRopeRenderer(): BaseRenderer() {
-    class State: AutoSerializable {
-        @JsonIgnore private var i = 0
+class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
+    @JsonIgnore private var i = 0
 
-        var shipId1: Long by get(i++, -1L)
-        var shipId2: Long by get(i++, -1)
+    var shipId1: Long by get(i++, -1L)
+    var shipId2: Long by get(i++, -1)
 
-        var point1: Vector3d by get(i++, Vector3d())
-        var point2: Vector3d by get(i++, Vector3d())
+    var point1: Vector3d by get(i++, Vector3d())
+    var point2: Vector3d by get(i++, Vector3d())
 
-        var color: Color by get(i++, Color(0))
+    var color: Color by get(i++, Color(0))
 
-        var width: Double by get(i++, .2)
-        var chainLength: Double by get(i++, 1.0)
+    var sides: Int by get(i++, 8)
 
-        var sides: Int by get(i++, 8)
-    }
-    val state = State()
-
-    inline var shipId1 get() = state.shipId1; set(value) {state.shipId1 = value}
-    inline var shipId2 get() = state.shipId2; set(value) {state.shipId2 = value}
-    inline var point1 get() = state.point1; set(value) {state.point1 = value}
-    inline var point2 get() = state.point2; set(value) {state.point2 = value}
-    inline var color get() = state.color; set(value) {state.color = value}
-    inline var width get() = state.width; set(value) {state.width = value}
-    inline var chainLength get() = state.chainLength; set(value) {state.chainLength = value}
-    inline var sides get() = state.sides; set(value) {state.sides = value}
-
-    var ids = listOf<Int>()
-    var entities = mutableListOf<PhysRopeComponentEntity?>()
-
+    var shipIds = listOf<Long>()
 
     constructor(shipId1: ShipId, shipId2: ShipId,
                 point1: Vector3d, point2: Vector3d,
-                color: Color, width: Double, chainLength: Double,
-                uuids: List<Int>
+                color: Color,
+                shipIds: List<Long>
         ): this() {
             this.shipId1 = shipId1
             this.shipId2 = shipId2
@@ -74,11 +54,12 @@ class PhysRopeRenderer(): BaseRenderer() {
 
             this.color = color
 
-            this.width = width
-            this.chainLength = chainLength
-
-            this.ids = uuids
+            this.shipIds = shipIds
         }
+
+    //TODO this is stupid
+    private var delayedFn: ((PhysRopeRenderer) -> Unit)? = null
+    fun addDelayedFn(fn: (PhysRopeRenderer) -> Unit): PhysRopeRenderer {delayedFn = fn; return this}
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {
@@ -110,18 +91,18 @@ class PhysRopeRenderer(): BaseRenderer() {
         val matrix = poseStack.last().pose()
 
         // ========================
-        val dir1 = Vector3d(chainLength, 0, 0) * 0.5
-        val dir2 = -dir1
+        val entities = shipIds.mapNotNull { (level.shipObjectWorld as ShipObjectClientWorld).physicsEntities[it] }
 
-        for (entity in entities) {
-            if (entity == null) {continue}
+        entities.forEach {
+            val shape = it.collisionShapeData as VSCapsuleCollisionShapeData
 
-            val transform = entity.getRenderTransform(level.shipObjectWorld as ShipObjectClientWorld) ?: continue
+            val dir1 = Vector3d(shape.length + shape.radius, 0, 0)
+            val dir2 = -dir1
 
-            val pos1 = posShipToWorldRender(null, dir1, transform) - cameraPos
-            val pos2 = posShipToWorldRender(null, dir2, transform) - cameraPos
+            val pos1 = posShipToWorldRender(null, dir1, it.renderTransform) - cameraPos
+            val pos2 = posShipToWorldRender(null, dir2, it.renderTransform) - cameraPos
 
-            RenderingUtils.Quad.makeFlatRectFacingCameraTexture(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, width, pos1, pos2)
+            RenderingUtils.Quad.makeFlatRectFacingCameraTexture(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, shape.radius, pos1, pos2)
         }
         // =======================
 //        val ship1 = level.shipObjectWorld.allShips.getById(shipId1)
@@ -177,57 +158,18 @@ class PhysRopeRenderer(): BaseRenderer() {
         RenderSystem.enableCull()
     }
 
-    private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, ) = makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse)
+//    private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, ) = makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse)
 
     override fun serialize(): FriendlyByteBuf {
-        val buf = state.serialize()
-        buf.writeCollection(ids) { buf, id -> buf.writeInt(id)}
+        val buf = super.serialize()
+        delayedFn?.invoke(this)
+        buf.writeCollection(shipIds) { buf, id -> buf.writeLong(id)}
         return buf
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
-        state.deserialize(buf)
-
-        ids = buf.readCollection({ mutableListOf() }) {buf.readInt()}
-
-        ids.forEachIndexed { i, id ->
-            entities.add(null)
-            val anEntity = Minecraft.getInstance().level!!.getEntity(id)
-            if (anEntity != null) {
-                entities[i] = anEntity as PhysRopeComponentEntity
-                return@forEachIndexed
-            }
-
-            var got = false
-            ClientPhysEntitiesHolder.clientEntityLoadedEvent.on {
-                (anID, anEntity), unregister ->
-                if (got) {unregister(); return@on}
-                val entity = Minecraft.getInstance().level!!.getEntity(id)
-                if (entity != null) {
-                    entities[i] = entity as PhysRopeComponentEntity
-                    unregister()
-                    got = true
-                }
-
-                if (anID != id) {return@on}
-                entities[i] = anEntity as PhysRopeComponentEntity
-                unregister()
-                got = true
-            }
-
-            //kinda stupid but it's needed because last entity id may not appear and idk why it doesn't
-            var times = 0
-            RandomEvents.clientOnTick.on {
-                _, unregister ->
-                if (got) {unregister(); return@on}
-                times++
-                if (times > 11) {unregister(); return@on}
-                val entity = Minecraft.getInstance().level!!.getEntity(id) ?: return@on
-                entities[i] = entity as PhysRopeComponentEntity
-                unregister()
-                got = true
-            }
-        }
+        super.deserialize(buf)
+        shipIds = buf.readCollection({ mutableListOf() }) {buf.readLong()}
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { return null }

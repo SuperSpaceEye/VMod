@@ -18,6 +18,7 @@ import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawQuad
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import org.lwjgl.opengl.GL11
+import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
@@ -39,8 +40,8 @@ class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer {
     ) {
         val level = Minecraft.getInstance().level!!
 
-        val rPos = level.shipObjectWorld.loadedShips.getById(shipId)?.let { posShipToWorldRender(it, sPos) } ?: sPos
-
+        val rPos = level.shipObjectWorld.loadedShips.getById(shipId)?.let { posShipToWorldRender(it, sPos) }
+            ?: (level.shipObjectWorld as ShipObjectClientWorld).physicsEntities[shipId]?.let { posShipToWorldRender(null, sPos, it.renderTransform) } ?: sPos
 
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder

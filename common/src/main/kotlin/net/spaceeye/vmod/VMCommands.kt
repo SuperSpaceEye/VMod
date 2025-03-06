@@ -328,13 +328,6 @@ object VMCommands {
                 it.getAttachment(CustomMassSave::class.java)?.let { _ -> it.setAttachment(CustomMassSave::class.java, null) }
                 it.getAttachment(WeightSynchronizer::class.java)?.let { _ -> it.setAttachment(WeightSynchronizer::class.java, null) }
             }
-            level.shipObjectWorld.allShips.forEach {
-                it.getAttachment(GravityController::class.java)?.let { _ -> it.saveAttachment(GravityController::class.java, null) }
-                it.getAttachment(PhysgunController::class.java)?.let { _ -> it.saveAttachment(PhysgunController::class.java, null) }
-                it.getAttachment(ThrustersController::class.java)?.let { _ -> it.saveAttachment(ThrustersController::class.java, null) }
-                it.getAttachment(CustomMassSave::class.java)?.let { _ -> it.saveAttachment(CustomMassSave::class.java, null) }
-                it.getAttachment(WeightSynchronizer::class.java)?.let { _ -> it.saveAttachment(WeightSynchronizer::class.java, null) }
-            }
             return 0
         }
     }

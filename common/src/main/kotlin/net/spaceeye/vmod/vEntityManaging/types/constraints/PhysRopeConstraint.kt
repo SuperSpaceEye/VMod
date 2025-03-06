@@ -1,5 +1,191 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
+import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vmod.rendering.ServerRenderingData
+import net.spaceeye.vmod.rendering.types.debug.DebugPointRenderer
+import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.linspace
+import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.vEntityManaging.VEntity
+import net.spaceeye.vmod.vEntityManaging.util.TwoShipsMConstraint
+import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
+import org.joml.AxisAngle4d
+import org.joml.Matrix3d
+import org.joml.Quaterniond
+import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
+import org.valkyrienskies.core.apigame.physics.PhysicsEntityData
+import org.valkyrienskies.core.apigame.physics.PhysicsEntityServer
+import org.valkyrienskies.core.apigame.physics.VSCapsuleCollisionShapeData
+import org.valkyrienskies.core.impl.game.ships.ShipInertiaDataImpl
+import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
+import org.valkyrienskies.mod.common.dimensionId
+import org.valkyrienskies.mod.common.shipObjectWorld
+import kotlin.math.PI
+
+class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
+    override var shipId1: Long = -1
+    override var shipId2: Long = -1
+    override lateinit var sPos1: Vector3d
+    override lateinit var sPos2: Vector3d
+
+    var ropeLength: Float by get(i++, 0f)
+    var segments: Int by get(i++, 0)
+    var massPerSegment: Double by get(i++, 0.0)
+    var radius: Double by get(i++, 0.0)
+
+    var data = mutableListOf<PhysicsEntityData>()
+
+
+    var entities = mutableListOf<PhysicsEntityServer>()
+
+    constructor(
+        shipId1: ShipId,
+        shipId2: ShipId,
+        sPos1: Vector3d,
+        sPos2: Vector3d,
+        ropeLength: Float,
+        segments: Int,
+        massPerSegment: Double,
+        radius: Double,
+    ): this() {
+        this.shipId1 = shipId1
+        this.shipId2 = shipId2
+
+        this.sPos1 = sPos1
+        this.sPos2 = sPos2
+
+        this.ropeLength = ropeLength
+        this.segments = segments
+        this.massPerSegment = massPerSegment
+        this.radius = radius
+    }
+
+    override fun iCopyVEntity(
+        level: ServerLevel,
+        mapped: Map<ShipId, ShipId>
+    ): VEntity? {
+        TODO("Not yet implemented")
+    }
+
+    override fun iOnScaleBy(
+        level: ServerLevel,
+        scaleBy: Double,
+        scalingCenter: Vector3d
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    private fun makeLinkData(level: ServerLevel, pos: Vector3d, rot: Quaterniond, mass: Double, length: Double, radius: Double): PhysicsEntityData {
+        val h = length
+        val r = radius
+        val rSq = r * r
+
+        val cM_temp = h * rSq * PI
+        val hsM_temp = 2.0 * rSq * r * PI * (1.0/3.0)
+
+        val density = mass / (cM_temp + hsM_temp)
+
+        val cM = cM_temp * density
+        val hsM = hsM_temp * density
+
+        val inertiaTensor = Matrix3d()
+
+        inertiaTensor.m11 = rSq * cM * 0.5
+
+        inertiaTensor.m22 = inertiaTensor.m11 * 0.5 + cM * h * h * (1.0/12.0)
+        inertiaTensor.m00 = inertiaTensor.m22
+
+        val temp0 = hsM * 2.0 * rSq / 5.0
+        inertiaTensor.m11 += temp0 * 2.0
+        val temp1 = h * 0.5
+        val temp2 = temp0 + hsM * (temp1 * temp1 + 3.0 * (1.0/8.0) * h * r)
+        inertiaTensor.m00 += temp2 * 2.0
+        inertiaTensor.m22 += temp2 * 2.0
+
+        return PhysicsEntityData(
+            level.shipObjectWorld.allocateShipId(level.dimensionId),
+            ShipTransformImpl.create(pos.toJomlVector3d(), Vector3d().toJomlVector3d(), rot),
+            ShipInertiaDataImpl(Vector3d().toJomlVector3d(), mass, inertiaTensor),
+            Vector3d().toJomlVector3d(),
+            Vector3d().toJomlVector3d(),
+            VSCapsuleCollisionShapeData(r, h),
+            staticFrictionCoefficient =  1e30, dynamicFrictionCoefficient = 1e30, restitutionCoefficient = 1e30
+        )
+    }
+
+    private fun makeData(level: ServerLevel) {
+        val dimensionIds = level.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
+
+        val rPos1 = if (dimensionIds.contains(shipId1)) {sPos1.copy()} else { posShipToWorld(level.shipObjectWorld.allShips.getById(shipId1), sPos1) }
+        val rPos2 = if (dimensionIds.contains(shipId2)) {sPos2.copy()} else { posShipToWorld(level.shipObjectWorld.allShips.getById(shipId2), sPos2) }
+
+        val rDir = (rPos1 - rPos2).normalize()
+        val rot = Quaterniond(AxisAngle4d(0.0, rDir.toJomlVector3d()))
+
+        val xLin = linspace(rPos1.x, rPos2.x, segments + 2)
+        val yLin = linspace(rPos1.y, rPos2.y, segments + 2)
+        val zLin = linspace(rPos1.z, rPos2.z, segments + 2)
+
+        val segmentLength = ropeLength / segments.toDouble()
+
+        var radius = radius
+        var length = segmentLength * 0.5
+        if (length < radius) { radius = length / 2}
+        if (length > radius * 4) { radius = length / 4 }
+
+        for (i in 0 until segments) {
+            val pos = Vector3d(xLin[i+1], yLin[i+1], zLin[i+1])
+            data.add(makeLinkData(level, pos, rot, massPerSegment, length - radius, radius))
+        }
+    }
+
+    private fun makeConstraints(level: ServerLevel): Boolean {
+        val dir = Vector3d(1, 0, 0)
+
+        var prevId = shipId1
+        var prevPos = sPos1
+        var radius = 0.5
+
+//        return true
+
+        entities.withIndex().forEach { (i, entity) ->
+            val length = (entity.collisionShapeData as VSCapsuleCollisionShapeData).length
+            radius = (entity.collisionShapeData as VSCapsuleCollisionShapeData).radius
+            cIDs.add(level.shipObjectWorld.createNewConstraint(VSRopeConstraint(
+                shipId1, shipId2, 1e-300, prevPos.toJomlVector3d(), (dir * (length + radius)).toJomlVector3d(), 1e300, 0.0
+            )) ?: run { return false })
+            level.shipObjectWorld.disableCollisionBetweenBodies(prevId, entity.id)
+            ServerRenderingData.addRenderer(listOf(entity.id, shipId1, shipId2), DebugPointRenderer(entity.id, prevPos))
+            ServerRenderingData.addRenderer(listOf(entity.id, shipId1, shipId2), DebugPointRenderer(entity.id, (dir * (length + radius))))
+
+            prevId = entity.id
+            prevPos = (-dir * (length + radius))
+        }
+
+        ServerRenderingData.addRenderer(listOf(shipId1, shipId2), DebugPointRenderer(prevId, prevPos))
+        ServerRenderingData.addRenderer(listOf(shipId1, shipId2), DebugPointRenderer(prevId, sPos2))
+
+        cIDs.add(level.shipObjectWorld.createNewConstraint(VSRopeConstraint(
+            prevId, shipId2, 1e-300, prevPos.toJomlVector3d(), sPos2.toJomlVector3d(), 1e300, 0.0
+        )) ?: run { return false })
+        level.shipObjectWorld.disableCollisionBetweenBodies(prevId, shipId2)
+
+        return true
+    }
+
+    override fun iOnMakeVEntity(level: ServerLevel): Boolean {
+        if (data.isEmpty()) { makeData(level) }
+        entities = data.map { level.shipObjectWorld.createPhysicsEntity(it, level.dimensionId) }.toMutableList()
+        return makeConstraints(level)
+    }
+
+    override fun iOnDeleteVEntity(level: ServerLevel) {
+        super.iOnDeleteVEntity(level)
+        entities.forEach { level.shipObjectWorld.deletePhysicsEntity(it.id) }
+    }
+}
+
 //class PhysRopeMConstraint(): TwoShipsMConstraint() {
 //    lateinit var constraint: VSDistanceJoint
 //    override val mainConstraint: VSJoint get() = constraint

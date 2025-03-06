@@ -8,7 +8,7 @@ object VEntityTypes: Registry<VEntity>(false) {
     init {
         register(RopeConstraint::class)
         register(HydraulicsConstraint::class)
-//        register(PhysRopeMConstraint::class)
+        register(PhysRopeConstraint::class)
         register(DisabledCollisionConstraint::class)
         register(ConnectionConstraint::class)
         register(SliderConstraint::class)

@@ -21,6 +21,7 @@ import net.spaceeye.vmod.toolgun.CELOG
 import net.spaceeye.vmod.translate.RENDERING_HAS_THROWN_AN_EXCEPTION
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
+import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 import java.util.*
@@ -92,6 +93,8 @@ private var renderTick = 0L
 fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft, renderBlockRenderers: Boolean) {
     val now = getNow_ms()
     RandomEvents.clientPreRender.emit(RandomEvents.ClientPreRender(now))
+
+//    (Minecraft.getInstance().shipObjectWorld as ShipObjectClientWorld).physicsEntities
 
     minecraft.profiler.push("vmod_rendering_ship_objects")
     renderShipObjects(poseStack, camera, renderBlockRenderers, now, renderTick++)

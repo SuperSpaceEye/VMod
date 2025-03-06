@@ -133,8 +133,8 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
 
     @Internal
     final override fun onMakeVEntity(level: ServerLevel): Boolean {
-        _extensions.forEach { it.onMakeVEntity(level) }
         return iOnMakeVEntity(level)
+            .also { _extensions.forEach { it.onMakeVEntity(level) } }
     }
 
     @Internal

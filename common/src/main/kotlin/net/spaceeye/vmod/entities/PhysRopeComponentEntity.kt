@@ -14,8 +14,6 @@ import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.entity.EntityInLevelCallback
 import net.spaceeye.vmod.VMEntities
-import net.spaceeye.vmod.entities.events.ClientPhysEntitiesHolder
-import net.spaceeye.vmod.entities.events.ServerPhysEntitiesHolder
 import net.spaceeye.vmod.utils.vs.createD
 import net.spaceeye.vmod.utils.vs.transformF
 import org.joml.Matrix3d
@@ -57,7 +55,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
 
     init {
         if (level.isClientSide) {
-            ClientPhysEntitiesHolder.entityLoaded(id, this)
+//            ClientPhysEntitiesHolder.entityLoaded(id, this)
         }
     }
 
@@ -158,7 +156,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
         super.load(compoundTag)
 
         if (!level.isClientSide) {
-            ServerPhysEntitiesHolder.entityLoaded(uuid, this)
+//            ServerPhysEntitiesHolder.entityLoaded(uuid, this)
         }
     }
 
@@ -224,12 +222,12 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
     }
 
     override fun kill() {
-        ServerPhysEntitiesHolder.serverRemovedEntity.emit(ServerPhysEntitiesHolder.ServerRemovedEntity(uuid, this))
+//        ServerPhysEntitiesHolder.serverRemovedEntity.emit(ServerPhysEntitiesHolder.ServerRemovedEntity(uuid, this))
         super.kill()
     }
 
     override fun onClientRemoval() {
-        ClientPhysEntitiesHolder.clientRemovedEntity.emit(ClientPhysEntitiesHolder.ClientRemovedEntity(id, this))
+//        ClientPhysEntitiesHolder.clientRemovedEntity.emit(ClientPhysEntitiesHolder.ClientRemovedEntity(id, this))
         super.onClientRemoval()
     }
 
@@ -257,7 +255,7 @@ class PhysRopeComponentEntity(type: EntityType<PhysRopeComponentEntity>, level: 
             entity.setPos(pos.x, pos.y, pos.z)
             level.addFreshEntity(entity)
             if (!level.isClientSide) {
-                ServerPhysEntitiesHolder.entityLoaded(entity.uuid, entity)
+//                ServerPhysEntitiesHolder.entityLoaded(entity.uuid, entity)
             }
             return entity
         }

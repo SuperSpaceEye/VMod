@@ -77,6 +77,31 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         TODO("Not yet implemented")
     }
 
+//    private fun makeShip(level: ServerLevel, pos: Vector3d, rot: Quaterniond, mass: Double, length: Double, preferredRadius: Double): ServerShip {
+//        val shipyardLength = length / preferredRadius // radius is also a scale
+//        val nearestWhole = shipyardLength.roundToInt()
+//        val scaleMultiplier = nearestWhole.toDouble() / shipyardLength
+//        val scale = preferredRadius / scaleMultiplier
+//
+//        level.shipObjectWorld.dimensionToGroundBodyIdImmutable
+//        val ship = level.shipObjectWorld.createNewShipAtBlock(pos.toJomlVector3i(), false, scale, level.dimensionId)
+//        val center = Vector3d(ship.chunkClaim.xMiddle * 16 + 7, 128, ship.chunkClaim.zMiddle * 16 + 7)
+//
+//        val blockMass = mass / nearestWhole.toDouble()
+//        val airType = BlockStateInfo.get(Blocks.AIR.defaultBlockState())!!
+//        val plankType = BlockStateInfo.get(Blocks.OAK_PLANKS.defaultBlockState())!!
+//
+//        for (i in 0 until nearestWhole) {
+//            val pos = (center + Vector3d(nearestWhole/2 - i, 0, 0)).toJomlVector3i()
+//            level.shipObjectWorld.onSetBlock(pos.x, pos.y, pos.z, level.dimensionId, airType.second, plankType.second, airType.first, plankType.first)
+//            CustomBlockMassManager.setCustomMass(level, pos.x, pos.y, pos.z, blockMass, plankType.second, plankType.first, ship)
+//        }
+//
+//        level.shipObjectWorld.teleportShip(ship, ShipTeleportDataImpl(pos.toJomlVector3d(), rot))
+//
+//        return ship
+//    }
+
     private fun makeLinkData(level: ServerLevel, pos: Vector3d, rot: Quaterniond, mass: Double, length: Double, radius: Double): PhysicsEntityData {
         val h = length
         val r = radius
@@ -122,22 +147,26 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         val rPos2 = if (dimensionIds.contains(shipId2)) {sPos2.copy()} else { posShipToWorld(level.shipObjectWorld.allShips.getById(shipId2), sPos2) }
 
         val rDir = (rPos1 - rPos2).normalize()
-        val rot = Quaterniond(AxisAngle4d(0.0, rDir.toJomlVector3d()))
-
-        val xLin = linspace(rPos1.x, rPos2.x, segments + 2)
-        val yLin = linspace(rPos1.y, rPos2.y, segments + 2)
-        val zLin = linspace(rPos1.z, rPos2.z, segments + 2)
 
         val segmentLength = ropeLength / segments.toDouble()
 
+        val startDir = rPos1 - rDir * (segmentLength / 2.0)
+        val stopDir  = rPos2 + rDir * (segmentLength / 2.0)
+
+        val rot = Quaterniond(AxisAngle4d(0.0, rDir.toJomlVector3d()))
+
+        val xLin = linspace(startDir.x, stopDir.x, segments)
+        val yLin = linspace(startDir.y, stopDir.y, segments)
+        val zLin = linspace(startDir.z, stopDir.z, segments)
+
         var radius = radius
         var length = segmentLength * 0.5
-        if (length < radius) { radius = length / 2}
+        if (length < radius) { radius = length / 2 }
         if (length > radius * 4) { radius = length / 4 }
 
         for (i in 0 until segments) {
-            val pos = Vector3d(xLin[i+1], yLin[i+1], zLin[i+1])
-            data.add(makeLinkData(level, pos, rot, massPerSegment, length - radius, radius))
+            val pos = Vector3d(xLin[i], yLin[i], zLin[i])
+            data.add(makeLinkData(level, pos, rot, massPerSegment, length, radius))
         }
     }
 
@@ -159,6 +188,7 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
                 minDistance = 0f,
                 maxDistance = 0.01f
             )) ?: run { return false })
+
             level.shipObjectWorld.disableCollisionBetweenBodies(prevId, entity.id)
             ServerRenderingData.addRenderer(listOf(entity.id, shipId1, shipId2), DebugPointRenderer(entity.id, prevPos))
             ServerRenderingData.addRenderer(listOf(entity.id, shipId1, shipId2), DebugPointRenderer(entity.id, (dir * (length + radius))))

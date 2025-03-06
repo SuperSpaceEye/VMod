@@ -47,10 +47,7 @@ class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer {
         val vBuffer = tesselator.builder
 
         RenderSystem.disableDepthTest()
-        RenderSystem.depthFunc(GL11.GL_LEQUAL)
-        RenderSystem.depthMask(false)
         RenderSystem.setShader(GameRenderer::getPositionColorShader)
-        RenderSystem.enableBlend()
 
         vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
         poseStack.pushPose()
@@ -82,6 +79,8 @@ class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer {
 
         tesselator.end()
         poseStack.popPose()
+
+        RenderSystem.enableDepthTest()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {

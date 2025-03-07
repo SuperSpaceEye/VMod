@@ -87,6 +87,7 @@ interface TagAutoSerializable: TagSerializable, ReflectableItems {
     }
 }
 
+//TODO you can't define custom ser/deser
 fun ReflectableItems.tSerialize() = CompoundTag().also { buf ->
     getAllReflectableItems().forEach {
         typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf, it.cachedName) }

@@ -70,7 +70,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist().toFloat()}
 
         PhysRopeConstraint(shipId1, shipId2, spoint1, spoint2, dist, segments, massPerSegment, radius)
-            .also { it.addExtension(RenderableExtension(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, Color(120, 0, 120), listOf()).addDelayedFn { r -> r.shipIds = it.entities.map { it.id } })) }
+            .also { it.addExtension(RenderableExtension(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, Color(120, 0, 120), listOf()).addDelayedFn { r -> r.shipIds = it.entities.map { it.id }.toLongArray() })) }
             .addExtension(Strippable())
             .also {level.makeVEntity(it) {it.addFor(player)} }
 

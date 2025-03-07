@@ -145,9 +145,9 @@ object ByteSerializableItem {
         registerSerializationItem(Int::class, {it, buf -> buf.writeInt(it)}) {buf -> buf.readInt()}
 
         registerSerializationItem(IntArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeInt(it)}}) {buf -> buf.readCollection({mutableListOf<Int>()}) {buf.readInt()}.toIntArray()}
-        registerSerializationItem(LongArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeLong(it)}}) {buf -> buf.readCollection({mutableListOf<Long>()}) {buf.readInt()}.toLongArray()}
-        registerSerializationItem(FloatArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeFloat(it)}}) {buf -> buf.readCollection({mutableListOf<Float>()}) {buf.readInt()}.toFloatArray()}
-        registerSerializationItem(DoubleArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeDouble(it)}}) {buf -> buf.readCollection({mutableListOf<Double>()}) {buf.readInt()}.toDoubleArray()}
+        registerSerializationItem(LongArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeLong(it)}}) {buf -> buf.readCollection({mutableListOf<Long>()}) {buf.readLong()}.toLongArray()}
+        registerSerializationItem(FloatArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeFloat(it)}}) {buf -> buf.readCollection({mutableListOf<Float>()}) {buf.readFloat()}.toFloatArray()}
+        registerSerializationItem(DoubleArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeDouble(it)}}) {buf -> buf.readCollection({mutableListOf<Double>()}) {buf.readDouble()}.toDoubleArray()}
     }
 
     private inline fun makeByteSerDeser(noinline verification: ((it: Nothing) -> Any), noinline ser: ByteSerializeFn, noinline deser: ByteDeserializeFn<Any>): MutableMap<String, Any> = mutableMapOf(

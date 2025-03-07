@@ -44,7 +44,8 @@ dependencies {
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
-    modApi("org.valkyrienskies:valkyrienskies-118-fabric:${rootProject.vs2_version}")
+//    modApi("org.valkyrienskies:valkyrienskies-118-fabric:${rootProject.vs2_version}")
+    modApi(files("vs_jars/valkyrienskies-118-2.1.1-beta.5.jar"))
     implementation("org.valkyrienskies.core:api:${rootProject.vscore_version}") {
         exclude group: 'org.joml', module: ''
     }

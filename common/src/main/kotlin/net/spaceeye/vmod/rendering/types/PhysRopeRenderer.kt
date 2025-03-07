@@ -39,7 +39,7 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
 
     var sides: Int by get(i++, 8)
 
-    var shipIds = listOf<Long>()
+    var shipIds: LongArray by get(i++, longArrayOf())
 
     constructor(shipId1: ShipId, shipId2: ShipId,
                 point1: Vector3d, point2: Vector3d,
@@ -54,7 +54,7 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
 
             this.color = color
 
-            this.shipIds = shipIds
+            this.shipIds = shipIds.toLongArray()
         }
 
     //TODO this is stupid
@@ -91,7 +91,7 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
         val matrix = poseStack.last().pose()
 
         // ========================
-        val entities = shipIds.mapNotNull { (level.shipObjectWorld as ShipObjectClientWorld).physicsEntities[it] }
+        val entities = shipIds.map { (level.shipObjectWorld as ShipObjectClientWorld).physicsEntities[it] }.filterNotNull()
 
         entities.forEach {
             val shape = it.collisionShapeData as VSCapsuleCollisionShapeData
@@ -161,15 +161,13 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
 //    private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, ) = makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse)
 
     override fun serialize(): FriendlyByteBuf {
-        val buf = super.serialize()
         delayedFn?.invoke(this)
-        buf.writeCollection(shipIds) { buf, id -> buf.writeLong(id)}
+        val buf = super.serialize()
         return buf
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
         super.deserialize(buf)
-        shipIds = buf.readCollection({ mutableListOf() }) {buf.readLong()}
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { return null }

@@ -10,5 +10,6 @@ object VEExtensionTypes: Registry<VEntityExtension>(false) {
         register(Strippable::class)
         register(SignalActivator::class)
         register(ConvertedFromLegacy::class)
+        register(PhysRopeRenderable::class)
     }
 }

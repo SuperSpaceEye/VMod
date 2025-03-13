@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.mod.common.dimensionId
 
 interface ExtendableVEntityIMethods {
     fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
@@ -41,6 +42,7 @@ interface ExtendableVEntityIMethods {
 
 abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
     final override var mID: VEntityId = -1
+    final override var dimensionId: String? = null
 
     private val _extensions = mutableSetOf<VEntityExtension>()
     @get:JsonIgnore
@@ -82,7 +84,10 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
     final override fun copyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
         _extensions.forEach { it.onBeforeCopyVEntity(level, mapped) }
         val new = iCopyVEntity(level, mapped)
-        new?.let { _extensions.forEach { it.onAfterCopyVEntity(level, mapped, new as ExtendableVEntity) } }
+        new?.let {
+            it.dimensionId = level.dimensionId
+            _extensions.forEach { it.onAfterCopyVEntity(level, mapped, new as ExtendableVEntity) }
+        }
         return new
     }
 
@@ -96,6 +101,7 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
         val saveTag = CompoundTag()
 
         saveTag.putInt("mID", mID)
+        saveTag.putString("dimensionId", dimensionId)
 
         val mainTag = iNbtSerialize() ?: return null
         saveTag.put("Main", mainTag)
@@ -114,6 +120,7 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
     @NonExtendable
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity? {
         mID = tag.getInt("mID")
+        dimensionId = tag.getString("dimensionId")
 
         val mainTag = tag.getCompound("Main")
         val mc = iNbtDeserialize(mainTag, lastDimensionIds)
@@ -133,6 +140,7 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
 
     @Internal
     final override fun onMakeVEntity(level: ServerLevel): Boolean {
+        if (dimensionId == null) {dimensionId = level.dimensionId}
         return iOnMakeVEntity(level)
             .also { _extensions.forEach { it.onMakeVEntity(level) } }
     }

@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.saveddata.SavedData
 import net.spaceeye.valkyrien_ship_schematics.SchematicEventRegistry
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.ILOG
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.WLOG
@@ -29,6 +30,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
+import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.*
 import kotlin.math.max
@@ -171,11 +173,12 @@ class VEntityManager: SavedData() {
             maxId = max(maxId, toLoadVEntities.last().mID)
         }
         vEntityIdCounter = maxId + 1
-        WLOG("Deserialized $count VEntities")
+        ILOG("Deserialized $count VEntities")
     }
 
     private fun groupLoadedData() {
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values
+        val levels = ServerLevelHolder.server!!.allLevels.associate { Pair(it.dimensionId, it) }
 
         val groups = mutableMapOf<MutableSet<Long>, MutableList<VEntity>>()
 
@@ -186,7 +189,7 @@ class VEntityManager: SavedData() {
         }
 
         for ((neededIds, toLoad) in groups) {
-            val group = LoadingGroup(level!!, toLoad, neededIds, shipDataStatus)
+            val group = LoadingGroup(levels[toLoad[0].dimensionId]!!, toLoad, neededIds, shipDataStatus)
             for (id in neededIds) {
                 groupedToLoadVEntities.computeIfAbsent(id) { mutableListOf() }.add(group)
             }

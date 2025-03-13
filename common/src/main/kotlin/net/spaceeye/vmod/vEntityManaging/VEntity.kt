@@ -22,6 +22,7 @@ interface VSJointUser {
 //VMod Entity -> VEntity
 interface VEntity {
     var mID: VEntityId
+    var dimensionId: String?
 
     fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
     // SHOULDN'T RETURN GROUND SHIPID

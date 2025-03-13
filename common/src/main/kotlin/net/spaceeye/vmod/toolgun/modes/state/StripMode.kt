@@ -142,7 +142,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
                 ) con else null}
             }
 
-            val renderIds = ventities.map { it.getExtensionsOfType<RenderableExtension>().map { it.getRID() } }.flatten().toIntArray()
+            val renderIds = ventities.map { it.getExtensionsOfType<RenderableExtension>().map { it.rID } }.flatten().toIntArray()
             val pkt = S2CSendStrippableRendererIds(pkt.shipId, renderIds)
             pkt.positions = ventities.map { it.iGetAttachmentPoints(pkt.shipid)[0] }
             s2cSendStrippableRendererIds.sendToClient(player, pkt)

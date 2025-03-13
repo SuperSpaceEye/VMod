@@ -16,16 +16,16 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class RenderableExtension(): VEntityExtension {
-    private lateinit var renderer: BaseRenderer
-    private var rID = -1
-    private lateinit var obj: ExtendableVEntity
+open class RenderableExtension(): VEntityExtension {
+    protected lateinit var renderer: BaseRenderer
+    var rID = -1
+        protected set
+        public get
+    protected lateinit var obj: ExtendableVEntity
 
     constructor(renderer: BaseRenderer): this() {
         this.renderer = renderer
     }
-
-    fun getRID(): Int = rID
 
     override fun onInit(obj: ExtendableVEntity) {
         this.obj = obj

@@ -48,8 +48,10 @@ class ServerLimitsInstance: AutoSerializable {
     val scale: DoubleLimit by get(i++, DoubleLimit(0.001))
 
     val physRopeSegments: IntLimit by get(i++, IntLimit(1, 100))
-    val physRopeMassPerSegment: DoubleLimit by get(i++, DoubleLimit(0.01, 10000.0))
+    val totalMassOfPhysRope: DoubleLimit by get(i++, DoubleLimit(0.01, Double.MAX_VALUE))
     val physRopeRadius: DoubleLimit by get(i++, DoubleLimit(0.01, 10.0))
+    val physRopeAngleLimit: DoubleLimit by get(i++, DoubleLimit(0.0, 180.0))
+    val physRopeSides: IntLimit by get(i++, IntLimit(2, 10))
 
     val channelLength: StrLimit by get(i++, StrLimit(50))
 

@@ -125,7 +125,7 @@ fun _serverRaycast2PointsFnActivation(
     fnToActivate(level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, previousResult, raycastResult)
 }
 
-//TODO
+//TODO this is stupid
 fun BaseMode.serverRaycast2PointsFnActivation(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,

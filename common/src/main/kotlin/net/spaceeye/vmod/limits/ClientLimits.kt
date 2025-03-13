@@ -15,6 +15,7 @@ class ClientLimitsInstance: AutoSerializable {
     var ropeRendererWidth    : DoubleLimit by get(i++, DoubleLimit(0.0, 5.0))
     var blockRendererScale   : FloatLimit  by get(i++, FloatLimit(0.001f, 10f))
     var ropeRendererSegments : IntLimit    by get(i++, IntLimit(0, 128))
+    var physRopeSides        : IntLimit    by get(i++, IntLimit(2, 10))
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -16,7 +16,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 
 abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
     @JsonIgnore val cIDs = mutableListOf<VSJointId>() // should be used to store VS ids
-    @JsonIgnore var attachmentPoints_ = mutableListOf<BlockPos>()
+    @JsonIgnore var attachmentPoints_ = mutableListOf<BlockPos>() //TODO i should do smth about this
     @JsonIgnore protected var i = 0 // use in get for auto serialization TODO move it to ExtendableVEntity?
 
     abstract var shipId1: Long

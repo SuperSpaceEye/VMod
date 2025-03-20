@@ -2,8 +2,6 @@ package net.spaceeye.vmod.translate
 
 import net.minecraft.client.resources.language.I18n
 import net.minecraft.network.chat.Component
-import net.minecraft.network.chat.TranslatableComponent
-import net.spaceeye.vmod.ELOG
 
 val registeredComponents = mutableListOf<MyTranslatableComponent>()
 
@@ -12,15 +10,14 @@ data class MyTranslatableComponent(val enTranslation: String, val key: String) {
         registeredComponents.add(this)
     }
 
-    fun asMC() = TranslatableComponent(key)
+    fun asMC() = Component.translatable(key)
 }
 
 private inline fun makeComponent(default: String, key: String) = MyTranslatableComponent(default, key).asMC()
-inline fun TranslatableComponent.get(): String = I18n.get(this.key)
-inline fun TranslatableComponent.getTranslationKey(): String = this.key
+inline fun Component.get(): String = I18n.get(this.string)
+inline fun Component.getTranslationKey(): String = this.string
 inline fun String.translate(): String = I18n.get(this)
-inline fun Component.get(): String = if (this is TranslatableComponent) {this.get()} else { ELOG(".get() WAS CALLED ON A NOT TRANSLATABLE COMPONENT");"Not a translatable component."}
-inline fun makeFake(s: String) = TranslatableComponent(s)
+inline fun makeFake(s: String) = Component.translatable(s)
 
 private const val path = "vmod.gui."
 private inline fun t(default: String) = makeComponent(default, path                  +default.lowercase().replace(" ", "_").replace("'", ""))

@@ -13,7 +13,7 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.arguments.DimensionArgument
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.commands.arguments.coordinates.Vec3Argument
-import net.minecraft.network.chat.TextComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.ServerRenderingData
@@ -126,7 +126,7 @@ object VMCommands {
         val uuid = try { cc.source.playerOrException.uuid } catch (e: Exception) { ELOG("Failed to save schematic to server because user is not a player"); return 1 }
 
         val schem = ServerPlayerSchematics.schematics[uuid] ?: run {
-            cc.source.playerOrException.sendMessage(TextComponent("Failed to save schematic to sever because player has no schematic chosen. Choose schematic with a toolgun and try again."), uuid)
+            cc.source.playerOrException.sendSystemMessage(Component.literal("Failed to save schematic to sever because player has no schematic chosen. Choose schematic with a toolgun and try again."))
             return 1
         }
         ClientPlayerSchematics.saveSchematic(name, schem)
@@ -282,7 +282,7 @@ object VMCommands {
 
         string += "Page: ${page+1}/${ordered.size/10+1}"
 
-        player.sendMessage(TextComponent(string), player.uuid)
+        player.sendSystemMessage(Component.literal(string))
 
         return 0
     }

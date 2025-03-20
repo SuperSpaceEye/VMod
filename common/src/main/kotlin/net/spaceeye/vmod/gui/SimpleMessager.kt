@@ -150,7 +150,7 @@ object SimpleMessagerNetworking {
     }
 
     val c2sRequestState = regC2S<C2SRequestStatePacket>("request_state", "simple_messager") {pkt, player ->
-        val level = player.level
+        val level = player.serverLevel()
 
         var succeeded = (Vector3d(player.position()) - Vector3d(pkt.pos) + 0.5).sqrDist() <= 64
         if (!succeeded) {
@@ -186,7 +186,7 @@ object SimpleMessagerNetworking {
     }
 
     val c2sSendStateUpdate = regC2S<C2SSendStateUpdate>("send_state_update", "simple_messager") {pkt, player ->
-        val level = player.getLevel()
+        val level = player.serverLevel()
 
         var succeeded = (Vector3d(player.position()) - Vector3d(pkt.pos) + 0.5).sqrDist() <= 64
         if (!succeeded) {

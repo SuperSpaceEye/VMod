@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.toolgun
 
 import com.mojang.blaze3d.platform.InputConstants
-import com.mojang.blaze3d.vertex.PoseStack
 import dev.architectury.event.EventResult
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry
@@ -9,7 +8,7 @@ import gg.essential.elementa.components.UIBlock
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.additions.ErrorAddition
@@ -29,10 +28,10 @@ fun CELOG(s: String, toShow: String) {
     ELOG(s)
     ClientToolGunState.addHUDError(toShow)
 }
-fun CELOG(s: String, toShow: TranslatableComponent) = CELOG(s, toShow.get())
+fun CELOG(s: String, toShow: Component) = CELOG(s, toShow.get())
 
 fun CERROR(toShow: String) = ClientToolGunState.addHUDError(toShow)
-fun CERROR(toShow: TranslatableComponent) = CERROR(toShow.get())
+fun CERROR(toShow: Component) = CERROR(toShow.get())
 
 object ClientToolGunState : ClientClosable() {
     val modes = ToolgunModes.asList().map { it.get() }.map { it.init(BaseNetworking.EnvType.Client); it }
@@ -133,7 +132,7 @@ object ClientToolGunState : ClientClosable() {
             temp.init(minecraft, minecraft.window.guiScaledWidth, minecraft.window.guiScaledHeight)
             screen = temp
             temp
-        }).onRenderHUD(stack, delta)
+        }).onRenderHUD(stack.pose(), delta)
         } catch (e: Exception) {
         } catch (e: Error) {}
     }
@@ -143,14 +142,14 @@ object ClientToolGunState : ClientClosable() {
     internal fun guiIsOpened() = Minecraft.getInstance().screen == gui
     internal fun otherGuiIsOpened() = Minecraft.getInstance().screen != null && Minecraft.getInstance().screen != gui
 
-    private val externalWindows = mutableListOf<Pair<TranslatableComponent, (UIBlock) -> ToolgunWindow>>()
+    private val externalWindows = mutableListOf<Pair<Component, (UIBlock) -> ToolgunWindow>>()
 
     internal fun init() {
         gui = MainToolgunGUIWindow()
         externalWindows.forEach { gui.windows.add(DItem(it.first.get(), false) { gui.currentWindow =  it.second.invoke(gui.mainWindow)}) }
     }
 
-    fun addWindow(name: TranslatableComponent, windowConstructor: (UIBlock) -> ToolgunWindow) {
+    fun addWindow(name: Component, windowConstructor: (UIBlock) -> ToolgunWindow) {
         externalWindows.add(name to windowConstructor)
     }
 

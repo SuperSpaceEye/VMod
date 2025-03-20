@@ -1,6 +1,6 @@
 package net.spaceeye.vmod.toolgun
 
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.ELOG
@@ -30,7 +30,7 @@ fun SELOG(s: String, player: ServerPlayer, toSend: String, translatable: Boolean
     ELOG(s)
     ServerToolGunState.sendErrorTo(player, toSend, translatable)
 }
-fun SELOG(s: String, player: ServerPlayer?, toSend: TranslatableComponent) = player?.also { SELOG(s, player, toSend.getTranslationKey(), true) } ?: ELOG(s)
+fun SELOG(s: String, player: ServerPlayer?, toSend: Component) = player?.also { SELOG(s, player, toSend.getTranslationKey(), true) } ?: ELOG(s)
 
 object ServerToolGunState: ServerClosable() {
     val playersStates = ConcurrentHashMap<UUID, PlayerToolgunState>()
@@ -59,7 +59,7 @@ object ServerToolGunState: ServerClosable() {
     }
 
     fun sendErrorTo(player: ServerPlayer, errorStr: String, translatable: Boolean = true, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr, translatable, closeGUI))
-    fun sendErrorTo(player: ServerPlayer, errorStr: TranslatableComponent, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr.getTranslationKey(), true, closeGUI))
+    fun sendErrorTo(player: ServerPlayer, errorStr: Component, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr.getTranslationKey(), true, closeGUI))
 
     init {
         // it needs to initialize all c2s and s2c receivers

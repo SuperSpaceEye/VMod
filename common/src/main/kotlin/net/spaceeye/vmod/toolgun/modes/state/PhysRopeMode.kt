@@ -16,6 +16,7 @@ import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.utils.RaycastFunctions
+import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.vEntityManaging.addFor
 import net.spaceeye.vmod.vEntityManaging.extensions.PhysRopeRenderable
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
@@ -34,6 +35,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
     var radius: Double by get(i++, 0.5) { ServerLimits.instance.physRopeRadius.get(it) }
     var angleLimit: Double by get(i++, 15.0) { ServerLimits.instance.physRopeAngleLimit.get(it) }
     var sides: Int by get(i++, 8) { ServerLimits.instance.physRopeSides.get(it) }
+    var fullbright: Boolean by get(i++, false)
 
     var primaryFirstRaycast: Boolean by get(i++, false)
 
@@ -46,15 +48,34 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
         val dist = if (fixedDistance > 0) {fixedDistance} else {(rpoint1 - rpoint2).dist().toFloat()}
 
+        val sDir1 = prresult.globalNormalDirection!!
+        val sDir2 = rresult.globalNormalDirection!!
+
+        var up1 = if (sDir1.y < 0.01 && sDir1.y > -0.01) { Vector3d(0, 1, 0) } else { Vector3d(1, 0, 0) }
+        var up2 = if (sDir2.y < 0.01 && sDir2.y > -0.01) { Vector3d(0, 1, 0) } else { Vector3d(1, 0, 0) }
+
+        var right1 = sDir1.cross(up1)
+        var right2 = (-sDir2).cross(up2)
+
+        //rendering fuckery
+        if (sDir1.y < -0.5) {
+            up1 = -up1
+            right1 = -right1
+        }
+
+        if (sDir2.y > 0.5) {
+            up2 = -up2
+            right2 = -right2
+        }
+
         PhysRopeConstraint(
             spoint1, spoint2,
-            prresult.globalNormalDirection!!,
-            rresult.globalNormalDirection!!,
+            sDir1, sDir2,
             shipId1, shipId2,
             stiffness, maxForce,
             dist, segments, totalMass / segments, radius, Math.toRadians(angleLimit),
             listOf(prresult.blockPosition, rresult.blockPosition),
-        )   .also { it.addExtension(PhysRopeRenderable(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, Color(120, 0, 120), sides, listOf()))) }
+        )   .also { it.addExtension(PhysRopeRenderable(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, up1, up2, right1, right2, Color(255, 255, 255), sides, fullbright, listOf()))) }
             .addExtension(Strippable())
             .also {level.makeVEntity(it) {it.addFor(player)} }
 

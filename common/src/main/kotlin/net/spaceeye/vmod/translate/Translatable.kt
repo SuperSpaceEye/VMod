@@ -89,6 +89,7 @@ val NEW_MASS = s("New Mass")
 val PERSISTENT = s("Persistent")
 val ANGLE_LIMIT = s("Angle Limit")
 val SIDES = s("Sides")
+val FULLBRIGHT = s("Fullbright")
 
 val PLACEMENT_ASSIST_SCROLL_STEP = s("Placement Assist Scroll Step")
 

@@ -39,6 +39,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     var width: Double by get(i++, .2)
 
     var color: Color by get(i++, Color(62, 62, 200, 255))
+    var fullbright: Boolean by get(i++, false)
 
     var fixedMinLength: Float by get(i++, -1f) { ServerLimits.instance.fixedDistance.get(it) }
     var connectionMode: HydraulicsConstraint.ConnectionMode by get(i++, HydraulicsConstraint.ConnectionMode.FIXED_ORIENTATION)
@@ -74,7 +75,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
             ship1?.id ?: -1L,
             ship2?.id ?: -1L,
             spoint1, spoint2,
-            color, width
+            color, width, fullbright
         ))).addExtension(SignalActivator(
             "channel", "targetPercentage"
         )).addExtension(Strippable())){it.addFor(player)}
@@ -118,7 +119,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                                 ship1?.id ?: -1L,
                                 ship2?.id ?: -1L,
                                 spoint1, spoint2,
-                                it.color, it.width
+                                it.color, it.width, it.fullbright
                             ))).addExtension(SignalActivator(
                                 "channel", "targetPercentage"
                             )).addExtension(Strippable())

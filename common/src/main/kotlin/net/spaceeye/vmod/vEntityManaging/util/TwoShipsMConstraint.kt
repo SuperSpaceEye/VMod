@@ -29,8 +29,8 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
         val ship2Exists = allShips.contains(shipId2)
 
         return     (ship1Exists && ship2Exists)
-                || (ship1Exists && dimensionIds.contains(shipId1))
-                || (ship2Exists && dimensionIds.contains(shipId2))
+                || (ship1Exists && dimensionIds.contains(shipId2))
+                || (ship2Exists && dimensionIds.contains(shipId1))
     }
 
     override fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {

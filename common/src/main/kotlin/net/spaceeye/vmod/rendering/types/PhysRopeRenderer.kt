@@ -2,27 +2,23 @@ package net.spaceeye.vmod.rendering.types
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawPolygonTube
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.makePolygon
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import net.spaceeye.vmod.utils.vs.updatePosition
-import org.joml.Quaterniond
-import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.physics.VSCapsuleCollisionShapeData
@@ -40,17 +36,29 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
     var point1: Vector3d by get(i++, Vector3d())
     var point2: Vector3d by get(i++, Vector3d())
 
-    var color: Color by get(i++, Color(0))
+    var up1: Vector3d by get(i++, Vector3d())
+    var up2: Vector3d by get(i++, Vector3d())
 
-    var sides: Int by get(i++, 8) { ClientLimits.instance.physRopeSides.get(it) }
+    var right1: Vector3d by get(i++, Vector3d())
+    var right2: Vector3d by get(i++, Vector3d())
+
+    var color: Color by get(i++, Color(0))
+    var sides: Int by get(i++, 8, true) { ClientLimits.instance.physRopeSides.get(it) }
+    var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
 
     var shipIds: LongArray by get(i++, longArrayOf())
 
     constructor(
         shipId1: ShipId,
         shipId2: ShipId,
-        point1: Vector3d, point2: Vector3d,
+        point1: Vector3d,
+        point2: Vector3d,
+        up1: Vector3d,
+        up2: Vector3d,
+        right1: Vector3d,
+        right2: Vector3d,
         color: Color, sides: Int,
+        fullbright: Boolean,
         shipIds: List<Long>
     ): this() {
         this.shipId1 = shipId1
@@ -59,8 +67,16 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
         this.point1 = point1
         this.point2 = point2
 
+        this.up1 = up1
+        this.up2 = up2
+
+        this.right1 = right1
+        this.right2 = right2
+
         this.color = color
         this.sides = sides
+
+        this.fullbright = fullbright
 
         this.shipIds = shipIds.toLongArray()
     }
@@ -72,6 +88,8 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
 
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
         val level = Minecraft.getInstance().level!!
+        val sides = sides
+        val fullbright = fullbright
 
         val entities = shipIds.map { (level.shipObjectWorld as ShipObjectClientWorld).physicsEntities[it] }.filterNotNull()
         if (entities.isEmpty()) { return }
@@ -79,20 +97,14 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
-        RenderSystem.enableDepthTest()
-        RenderSystem.disableCull()
-        RenderSystem.depthFunc(GL11.GL_LEQUAL)
-        RenderSystem.depthMask(true)
-        RenderSystem.setShader(GameRenderer::getPositionTexShader)
-        RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
         if (timestamp < highlightTimestamp) {
             RenderSystem.setShaderColor(0f, 1f, 0f, 0.5f)
         }
 
-        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
-        poseStack.pushPose()
+        RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
 
-        val light = LightTexture.pack(level.getBrightness(LightLayer.BLOCK, point1.toBlockPos()), level.getBrightness(LightLayer.SKY, point1.toBlockPos()))
+        poseStack.pushPose()
 
         val cameraPos = -Vector3d(camera.position)
         poseStack.translate(cameraPos.x, cameraPos.y, cameraPos.z)
@@ -117,17 +129,17 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
         val ship1 = level.shipObjectWorld.allShips.getById(shipId1)
         val ship2 = level.shipObjectWorld.allShips.getById(shipId2)
 
-        val quat1 = Quaterniond(ship1?.renderTransform?.shipToWorldRotation ?: Quaterniond())
-        val quat2 = Quaterniond(ship2?.renderTransform?.shipToWorldRotation ?: Quaterniond())
-
         var ppos = (if (ship1 == null) point1 else posShipToWorldRender(ship1, point1))
         var cpos = Vector3d(entities[0].renderTransform.positionInWorld)
 
-        var up = getUpFromQuat(quat1)
+        var up    = ship1?.shipToWorld?.transformDirection(up1   .toJomlVector3d())?.let { Vector3d(it) } ?: up1
+        var right = ship1?.shipToWorld?.transformDirection(right1.toJomlVector3d())?.let { Vector3d(it) } ?: right1
 
         var shape = entities[0].collisionShapeData as VSCapsuleCollisionShapeData
         var rPoints: List<Vector3d>
-        var lPoints = makePoints(cpos, ppos, ppos, up, shape.radius)
+        var lPoints = makePolygon(sides, shape.radius, up, right, ppos)
+
+        var scale = 0.75f //TODO sus
 
         for (entity in entities) {
             shape = entity.collisionShapeData as VSCapsuleCollisionShapeData
@@ -138,7 +150,10 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
             up = getUpFromQuat(entity.renderTransform.shipToWorldRotation)
             rPoints = makePoints(cpos, ppos, cpos, up, shape.radius)
 
-            drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, 0.0f, 1.0f, lPoints, rPoints)
+            val leftLight  = if (fullbright) LightTexture.FULL_BRIGHT else ppos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
+            val rightLight = if (fullbright) LightTexture.FULL_BRIGHT else cpos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
+            drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, 0.0f, scale, lPoints, rPoints)
+            scale = 1.0f
 
             lPoints = rPoints
             ppos = cpos
@@ -146,11 +161,14 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
 
         cpos = if (ship2 == null) point2 else posShipToWorldRender(ship2, point2)
 
-        up = getUpFromQuat(quat2)
+        up    = ship2?.shipToWorld?.transformDirection(up2   .toJomlVector3d())?.let { Vector3d(it) } ?: up2
+        right = ship2?.shipToWorld?.transformDirection(right2.toJomlVector3d())?.let { Vector3d(it) } ?: right2
 
-        rPoints = makePoints(cpos, ppos, cpos, up, shape.radius)
+        rPoints = makePolygon(sides, shape.radius, up, right, cpos)
 
-        drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, 0.0f, 1.0f, lPoints, rPoints)
+        val leftLight  = if (fullbright) LightTexture.FULL_BRIGHT else ppos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
+        val rightLight = if (fullbright) LightTexture.FULL_BRIGHT else cpos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
+        drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, 0.0f, 0.25f, lPoints, rPoints)
 
         tesselator.end()
         poseStack.popPose()
@@ -159,7 +177,7 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
             RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
         }
 
-        RenderSystem.enableCull()
+        RenderTypes.clearFullRendering()
     }
 
     private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse)
@@ -170,7 +188,8 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
             oldToNew[shipId2]?.id ?: -1,
             oldToNew[shipId1]?.let { updatePosition(point1, it) } ?: point1,
             oldToNew[shipId2]?.let { updatePosition(point2, it) } ?: point2,
-            color, sides, listOf()
+            up1.copy(), up2.copy(), right1.copy(), right2.copy(),
+            color, sides, fullbright, listOf()
         )
     }
     override fun scaleBy(by: Double) {}

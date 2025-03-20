@@ -1,31 +1,33 @@
 package net.spaceeye.vmod.rendering.types
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.GameRenderer
+import net.minecraft.client.renderer.LightTexture
+import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import net.spaceeye.vmod.utils.vs.updatePosition
-import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
 open class A2BRenderer(): BaseRenderer(), AutoSerializable {
-    constructor(shipId1: Long,
-                shipId2: Long,
-                point1: Vector3d,
-                point2: Vector3d,
-                color: Color,
-                width: Double,
+    constructor(
+        shipId1: Long,
+        shipId2: Long,
+        point1: Vector3d,
+        point2: Vector3d,
+        color: Color,
+        width: Double,
+        fullbright: Boolean
     ): this() {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
@@ -33,6 +35,7 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
         this.point2 = point2
         this.color = color
         this.width = width
+        this.fullbright = fullbright
     }
     @JsonIgnore private var i = 0
 
@@ -44,7 +47,8 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
 
     var color: Color by get(i++, Color(0))
 
-    var width: Double by get(i++, .2) { ClientLimits.instance.lineRendererWidth.get(it) }
+    var width: Double by get(i++, .2, true) { ClientLimits.instance.lineRendererWidth.get(it) }
+    var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {
@@ -59,21 +63,18 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
 
         val rpoint1 = if (ship1 == null) point1 else posShipToWorldRender(ship1, point1)
         val rpoint2 = if (ship2 == null) point2 else posShipToWorldRender(ship2, point2)
+        val center = (rpoint1 + rpoint2) / 2
 
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
-        RenderSystem.enableDepthTest()
-        RenderSystem.depthFunc(GL11.GL_LEQUAL)
-        RenderSystem.depthMask(true)
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
-        RenderSystem.enableBlend()
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
 
         val color = if (timestamp < highlightTimestamp) Color(255, 0, 0, 255) else color
 
-        val light = Int.MAX_VALUE
+        val light = if (fullbright) LightTexture.FULL_BRIGHT else center.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
 
-        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer()
 
         poseStack.pushPose()
 
@@ -90,8 +91,9 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
         )
 
         tesselator.end()
-
         poseStack.popPose()
+
+        RenderTypes.clearFullRendering()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
@@ -101,7 +103,7 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
         val newId1 = if (shipId1 != -1L) {oldToNew[shipId1]!!.id} else {-1}
         val newId2 = if (shipId2 != -1L) {oldToNew[shipId2]!!.id} else {-1}
 
-        return A2BRenderer(newId1, newId2, spoint1, spoint2, color, width)
+        return A2BRenderer(newId1, newId2, spoint1, spoint2, color, width, fullbright)
     }
 
     override fun scaleBy(by: Double) {

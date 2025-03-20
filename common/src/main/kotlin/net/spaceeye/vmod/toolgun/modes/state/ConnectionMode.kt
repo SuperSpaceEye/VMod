@@ -33,8 +33,8 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }
 
     var width: Double by get(i++, .2)
-
     var color: Color by get(i++, Color(62, 62, 62, 255))
+    var fullbright: Boolean by get(i++, false)
 
     var fixedDistance: Float by get(i++, -1.0f) { ServerLimits.instance.fixedDistance.get(it) }
     var connectionMode: ConnectionConstraint.ConnectionModes by get(i++, ConnectionConstraint.ConnectionModes.FIXED_ORIENTATION)
@@ -64,7 +64,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
             ship1?.id ?: -1L,
             ship2?.id ?: -1L,
             spoint1, spoint2,
-            color, width
+            color, width, fullbright
         ))).addExtension(Strippable())){it.addFor(player)}
 
         resetState()

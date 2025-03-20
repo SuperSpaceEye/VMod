@@ -2,21 +2,21 @@ package net.spaceeye.vmod.rendering.types
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.GameRenderer
+import net.minecraft.client.renderer.LightTexture
+import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import net.spaceeye.vmod.utils.vs.updatePosition
-import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -32,17 +32,20 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
 
     var length: Double by get(i++, 0.0)
 
-    var width: Double by get(i++, .2) { ClientLimits.instance.ropeRendererWidth.get(it) }
-    var segments: Int by get(i++, 16) { ClientLimits.instance.ropeRendererSegments.get(it) }
+    var width: Double by get(i++, .2, true) { ClientLimits.instance.ropeRendererWidth.get(it) }
+    var segments: Int by get(i++, 16, true) { ClientLimits.instance.ropeRendererSegments.get(it) }
+    var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
 
-    constructor(shipId1: Long,
-                shipId2: Long,
-                point1: Vector3d,
-                point2: Vector3d,
-                length: Double,
-                width: Double,
-                segments: Int
-        ): this() {
+    constructor(
+        shipId1: Long,
+        shipId2: Long,
+        point1: Vector3d,
+        point2: Vector3d,
+        length: Double,
+        width: Double,
+        segments: Int,
+        fullbright: Boolean,
+    ): this() {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
         this.point1 = point1
@@ -50,6 +53,7 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
         this.length = length
         this.width = width
         this.segments = segments
+        this.fullbright = fullbright
     }
 
     private var highlightTimestamp = 0L
@@ -69,16 +73,12 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
-        RenderSystem.enableDepthTest()
-        RenderSystem.depthFunc(GL11.GL_LEQUAL)
-        RenderSystem.depthMask(true)
-        RenderSystem.setShader(GameRenderer::getPositionTexShader)
-        RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
         if (timestamp < highlightTimestamp) {
             RenderSystem.setShaderColor(1f, 0f, 0f, 1f)
         }
 
-        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+        RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
 
         poseStack.pushPose()
 
@@ -90,13 +90,16 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
         val matrix = poseStack.last().pose()
         RenderingUtils.Quad.drawRope(
             vBuffer, matrix,
-            255, 0, 0, 255, 255,
+            255, 255, 255, 255,
             width, segments, length,
-            tpos1, tpos2
+            tpos1, tpos2,
+            if (fullbright) { { LightTexture.FULL_BRIGHT} } else { pos -> (pos + cameraPos).toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) } }
         )
 
         tesselator.end()
         poseStack.popPose()
+
+        RenderTypes.clearFullRendering()
 
         if (timestamp < highlightTimestamp) {
             RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
@@ -110,7 +113,7 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
         val newId1 = if (shipId1 != -1L) {oldToNew[shipId1]!!.id} else {-1}
         val newId2 = if (shipId2 != -1L) {oldToNew[shipId2]!!.id} else {-1}
 
-        return RopeRenderer(newId1, newId2, spoint1, spoint2, length, width, segments)
+        return RopeRenderer(newId1, newId2, spoint1, spoint2, length, width, segments, fullbright)
     }
 
     override fun scaleBy(by: Double) {

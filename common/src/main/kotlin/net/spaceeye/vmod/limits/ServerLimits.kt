@@ -20,6 +20,20 @@ data class DoubleLimit(var minValue: Double = -Double.MAX_VALUE, var maxValue: D
 data class FloatLimit (var minValue: Float  = -Float.MAX_VALUE,  var maxValue: Float  = Float.MAX_VALUE ) { fun get(num: Float)  = max(minValue, min(maxValue, num)) }
 data class IntLimit   (var minValue: Int    =  Int.MIN_VALUE,    var maxValue: Int    = Int.MAX_VALUE   ) { fun get(num: Int)    = max(minValue, min(maxValue, num)) }
 
+data class BoolLimit  (var mode: Force = Force.NOTHING) {
+    enum class Force {
+        TRUE,
+        FALSE,
+        NOTHING
+    }
+
+    fun get(state: Boolean) = when(mode) {
+        Force.TRUE -> true
+        Force.FALSE -> false
+        Force.NOTHING -> state
+    }
+}
+
 data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
     fun get(str: String): String {
         if (str.length <= sizeLimit) { return str }
@@ -65,6 +79,7 @@ object ServerLimits {
         ByteSerializableItem.registerSerializationItem(FloatLimit::class, { it, buf -> buf.writeFloat(it.minValue); buf.writeFloat(it.maxValue) }) { buf -> FloatLimit(buf.readFloat(), buf.readFloat())}
         ByteSerializableItem.registerSerializationItem(IntLimit::class, { it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) { buf -> IntLimit(buf.readInt(), buf.readInt())}
         ByteSerializableItem.registerSerializationItem(StrLimit::class, { it, buf -> buf.writeInt(it.sizeLimit)}) { buf -> StrLimit(buf.readInt())}
+        ByteSerializableItem.registerSerializationItem(BoolLimit::class, { it, buf -> buf.writeEnum(it.mode) }) { buf -> BoolLimit(buf.readEnum(BoolLimit.Force::class.java)) }
 
         LifecycleEvent.SERVER_STOPPED.register {
             wasLoaded = false

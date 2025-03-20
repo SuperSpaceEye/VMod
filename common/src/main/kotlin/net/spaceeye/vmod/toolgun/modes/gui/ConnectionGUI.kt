@@ -9,10 +9,10 @@ import gg.essential.elementa.dsl.plus
 import net.spaceeye.vmod.vEntityManaging.types.constraints.ConnectionConstraint.ConnectionModes
 import net.spaceeye.vmod.guiElements.ColorPicker
 import net.spaceeye.vmod.guiElements.DItem
+import net.spaceeye.vmod.guiElements.makeCheckBox
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.ClientLimits
-import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
@@ -28,6 +28,7 @@ interface ConnectionGUI: GUIBuilder, EGUIBuilder {
         val limits = ServerLimits.instance
 
         makeTextEntry(WIDTH.get(), ::width, offset, offset, parentWindow, ClientLimits.instance.lineRendererWidth)
+        makeCheckBox(FULLBRIGHT.get(), ::fullbright, offset, offset, parentWindow)
 
         makeTextEntry(MAX_FORCE.get(), ::maxForce, offset, offset, parentWindow, limits.maxForce)
         makeTextEntry(STIFFNESS.get(), ::stiffness, offset, offset, parentWindow, limits.stiffness)

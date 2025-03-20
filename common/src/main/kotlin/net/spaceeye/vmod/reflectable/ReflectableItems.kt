@@ -10,16 +10,18 @@ import kotlin.reflect.jvm.javaField
 open class ReflectableItemDelegate <T : Any>(
     var reflectionPos: Int,
     var it: T?,
-    val metadata: MutableMap<String, Any> = mutableMapOf<String, Any>()
-    )
-{
+    val metadata: MutableMap<String, Any> = mutableMapOf<String, Any>(),
+    val setWrapper: ((old: T, new: T) -> T)? = null,
+    val getWrapper: ((value: T) -> T)? = null
+) {
     lateinit var cachedName: String
     open operator fun getValue(thisRef: Any?, property: KProperty<*>):T {
-        return it!!
+        return getWrapper?.invoke(it!!) ?: it!!
     }
 
     open operator fun setValue(thisRef: Any?, property: KProperty<*>?, value: Any) {
-        it = value as T
+        value as T
+        it = setWrapper?.invoke(it!!, value) ?: value
     }
 
     open operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): ReflectableItemDelegate<T> {

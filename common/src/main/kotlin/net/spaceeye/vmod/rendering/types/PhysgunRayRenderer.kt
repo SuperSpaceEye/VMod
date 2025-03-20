@@ -9,14 +9,14 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
-import net.minecraft.client.renderer.GameRenderer
+import net.minecraft.client.renderer.LightTexture
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.*
-import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -103,17 +103,9 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
 
         poseStack.pushPose()
 
-        RenderSystem.enableDepthTest()
-        RenderSystem.depthFunc(GL11.GL_LEQUAL)
-        RenderSystem.depthMask(true)
-        RenderSystem.enableDepthTest()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
-        RenderSystem.enableBlend()
+        val light = LightTexture.FULL_BRIGHT
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupPCRendering())
         RenderSystem.enableCull()
-
-        val light = Int.MAX_VALUE
-
-        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
 
         poseStack.translate(-camera.position.x, -camera.position.y, -camera.position.z)
 
@@ -133,7 +125,7 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
 
             val rightPoints = RenderingUtils.Quad.makePolygon(4, width, up, right, spos)
 
-            RenderingUtils.Quad.drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, 0.0f, 0.0f, leftPoints, rightPoints)
+            RenderingUtils.Quad.drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, light, 0.0f, 0.0f, leftPoints, rightPoints)
 
             leftPoints = rightPoints
             fpos = spos
@@ -141,6 +133,8 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
 
         tesselator.end()
         poseStack.popPose()
+
+        RenderTypes.clearPCRendering()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? = throw AssertionError("shouldn't be copied")

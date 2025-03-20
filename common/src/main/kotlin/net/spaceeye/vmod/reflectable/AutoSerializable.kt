@@ -156,24 +156,32 @@ object ByteSerializableItem {
         Pair("byteDeserialize", deser)
     )
 
-    @JvmStatic fun <T: Any> get(pos: Int, default: T, verification: (T) -> T = {it}) = get(pos, default, verification, null, null)
+    @JvmStatic fun <T: Any> get(pos: Int, default: T, verification: (T) -> T = {it}) = get(pos, default, false, verification, null, null)
+    @JvmStatic fun <T: Any> get(pos: Int, default: T, verifyOnGet: Boolean = false, verification: (T) -> T = {it}) = get(pos, default, verifyOnGet, verification, null, null)
+
+
+    @JvmStatic fun <T: Any> get(pos: Int, default: T,
+                                verification: ((it: T) -> T),
+                                customSerialize: ((it: T, buf: FriendlyByteBuf) -> Unit)? = null,
+                                customDeserialize: ((buf: FriendlyByteBuf) -> T)? = null) = get(pos, default, false, verification, customSerialize, customDeserialize)
 
     /**
      * Should be used in the body of the AutoSerializable class
      */
     @JvmStatic fun <T: Any> get(pos: Int, default: T,
+                                verifyOnGet: Boolean = false,
                                 verification: ((it: T) -> T),
                                 customSerialize: ((it: T, buf: FriendlyByteBuf) -> Unit)? = null,
                                 customDeserialize: ((buf: FriendlyByteBuf) -> T)? = null): ReflectableItemDelegate<T> {
-        typeToSerDeser[default::class]?.let { return ReflectableItemDelegate(pos, default, mutableMapOf(Pair("verification", verification))) }
+        typeToSerDeser[default::class]?.let { return ReflectableItemDelegate(pos, default, mutableMapOf(Pair("verification", verification)), getWrapper = if (verifyOnGet) verification else null) }
 
         when (default) {
             is Enum<*> -> {
                 val enumClass = default.javaClass as Class<out Enum<*>>
-                return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, { it, buf -> buf.writeEnum(it as Enum<*>)}) { buf -> buf.readEnum(enumClass) as T })
+                return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, { it, buf -> buf.writeEnum(it as Enum<*>)}) { buf -> buf.readEnum(enumClass) as T }, getWrapper = if (verifyOnGet) verification else null)
             }
         }
 
-        return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, customSerialize as (Any, FriendlyByteBuf) -> Unit, customDeserialize!!))
+        return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, customSerialize as (Any, FriendlyByteBuf) -> Unit, customDeserialize!!), getWrapper = if (verifyOnGet) verification else null)
     }
 }

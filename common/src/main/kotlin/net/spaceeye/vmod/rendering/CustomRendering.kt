@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.rendering
 
+import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
@@ -11,6 +12,7 @@ import net.minecraft.client.resources.model.BakedModel
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.RenderShape
 import net.minecraft.world.level.block.state.BlockState
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.mixin.BlockRenderDispatcherAccessor
@@ -21,7 +23,6 @@ import net.spaceeye.vmod.toolgun.CELOG
 import net.spaceeye.vmod.translate.RENDERING_HAS_THROWN_AN_EXCEPTION
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
-import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 import java.util.*
@@ -94,8 +95,6 @@ fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft, re
     val now = getNow_ms()
     RandomEvents.clientPreRender.emit(RandomEvents.ClientPreRender(now))
 
-//    (Minecraft.getInstance().shipObjectWorld as ShipObjectClientWorld).physicsEntities
-
     minecraft.profiler.push("vmod_rendering_ship_objects")
     renderShipObjects(poseStack, camera, renderBlockRenderers, now, renderTick++)
     minecraft.profiler.pop()
@@ -123,7 +122,9 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
         }
     }
     // let's hope that it never happens, but if it does, then do nothing
-    } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION); }
+    } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION);
+    } catch (e: Exception) { ELOG("Renderer raised exception:\n${e.stackTraceToString()}")
+    } catch (e: Error) { ELOG("Renderer raised error!!!\n${e.stackTraceToString()}") }
 
     if (renderBlockRenderers) RenderingStuff.blockBuffer.endBatch()
 }

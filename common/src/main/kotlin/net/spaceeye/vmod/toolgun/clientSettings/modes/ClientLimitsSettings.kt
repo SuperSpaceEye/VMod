@@ -6,6 +6,8 @@ import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.guiElements.Button
+import net.spaceeye.vmod.guiElements.DItem
+import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.*
 import net.spaceeye.vmod.toolgun.clientSettings.ClientSettingsGUIBuilder
@@ -49,6 +51,13 @@ class ClientLimitsSettings: ClientSettingsGUIBuilder {
                 }
                 is StrLimit -> {
                     makeTextEntry("Max \"$name\"", FakeKProperty({limit.sizeLimit}) {limit.sizeLimit = it}, 2f, 2f, parentWindow)
+                }
+                is BoolLimit -> {
+                    makeDropDown("Fullbright lighting override", parentWindow, 2f, 2f, listOf(
+                        DItem("True",    limit.mode == BoolLimit.Force.TRUE   ) {limit.mode = BoolLimit.Force.TRUE},
+                        DItem("False",   limit.mode == BoolLimit.Force.FALSE  ) {limit.mode = BoolLimit.Force.FALSE},
+                        DItem("Nothing", limit.mode == BoolLimit.Force.NOTHING) {limit.mode = BoolLimit.Force.NOTHING},
+                        ))
                 }
                 else -> throw AssertionError("Unhandled type")
             }

@@ -35,6 +35,7 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
 
     var segments: Int by get(i++, 16)
     var width: Double by get(i++, .2)
+    var fullbright: Boolean by get(i++, false)
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
@@ -56,7 +57,7 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
             ship1?.id ?: -1L,
             ship2?.id ?: -1L,
             spoint1, spoint2,
-            dist.toDouble(), width, segments
+            dist.toDouble(), width, segments, fullbright
         ))).addExtension(Strippable())){it.addFor(player)}
 
         resetState()

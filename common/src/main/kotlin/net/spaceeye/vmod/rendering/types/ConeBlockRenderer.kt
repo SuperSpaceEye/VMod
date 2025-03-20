@@ -38,7 +38,7 @@ class ConeBlockRenderer(): BlockRenderer(), AutoSerializable {
     var shipId: Long by get(i++, -1L)
     var pos: Vector3d by get(i++, Vector3d())
     var rot: Quaterniond by get(i++, Quaterniond())
-    var scale: Float by get(i++, 1.0f) { ClientLimits.instance.blockRendererScale.get(it) }
+    var scale: Float by get(i++, 1.0f, true) { ClientLimits.instance.blockRendererScale.get(it) }
     var color: Color by get(i++, Color(255, 255, 255))
 
     constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId, color: Color = Color(255, 255, 255)): this() {
@@ -56,6 +56,7 @@ class ConeBlockRenderer(): BlockRenderer(), AutoSerializable {
 
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource, timestamp: Long) {
         val level = Minecraft.getInstance().level!!
+        val scale = scale
 
         RenderSystem.enableDepthTest()
         RenderSystem.depthFunc(GL11.GL_LEQUAL)

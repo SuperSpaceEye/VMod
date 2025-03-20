@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "id": "valkyrien_mod",
+  "id": "the_vmod",
   "version": "${version}",
 
   "name": "VMod",
   "description": "",
   "authors": ["SpaceEye"],
-  "contributors": ["getItemFromBlock"],
+  "contributors": ["getItemFromBlock", "Jakub"],
   "contact": {
     "issues": "https://github.com/SuperSpaceEye/VMod/issues",
     "sources": "https://github.com/SuperSpaceEye/VMod"

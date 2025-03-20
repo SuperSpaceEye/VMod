@@ -6,7 +6,6 @@ import java.util.function.Supplier
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
 
-//TODO revise?
 open class Registry<T>(private val useFullNames: Boolean = false) {
     private val typeToSupplier = mutableMapOf<Class<T>, Supplier<T>>()
     private val typeToWrappers = mutableMapOf<Class<T>, MutableList<(T) -> T>>()

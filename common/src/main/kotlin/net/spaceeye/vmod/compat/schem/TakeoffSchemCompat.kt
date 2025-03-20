@@ -23,10 +23,10 @@ class TakeoffSchemCompat: SchemCompatItem {
         tag.putLong("VMOD_INJECT_otherId", level.getShipManagingPos(BlockPos.of(tag.getLong("otherPos")))?.id ?: return)
     }
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (Boolean) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((BlockEntity?) -> Unit) -> Unit) {
         if (   state.block != TakeoffBlocks.BEARING.get()
             && state.block != TakeoffBlocks.BEARING_TOP.get()
-            ) { return }
+        ) { return }
         if (!tag.contains("VMOD_INJECT_otherId")) {return}
         if (!tag.getBoolean("isBase")) {return}
 

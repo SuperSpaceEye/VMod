@@ -1,16 +1,17 @@
 package net.spaceeye.vmod.physgun
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.events.RandomEvents
-import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.rendering.ReservedRenderingPages
 import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.PhysgunRayRenderer
-import net.spaceeye.vmod.shipForceInducers.PhysgunController
+import net.spaceeye.vmod.shipAttachments.PhysgunController
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
@@ -88,16 +89,18 @@ object ServerPhysgunState: ServerClosable() {
     }
 
     class C2SPhysgunStateChanged(): AutoSerializable {
-        var primaryActivated: Boolean by get(0, false)
-        var rotate: Boolean by get(1, false)
-        var freezeSelected: Boolean by get(2, false)
-        var freezeAll: Boolean by get(3, false)
-        var unfreezeAllOrOne: Boolean by get(4, false)
-        var preciseRotation: Boolean by get(5, false)
+        @JsonIgnore private var i = 0
+
+        var primaryActivated: Boolean by get(i++, false)
+        var rotate: Boolean by get(i++, false)
+        var freezeSelected: Boolean by get(i++, false)
+        var freezeAll: Boolean by get(i++, false)
+        var unfreezeAllOrOne: Boolean by get(i++, false)
+        var preciseRotation: Boolean by get(i++, false)
 
 
-        var quatDiff: Quaterniond by get(6, Quaterniond())
-        var increaseDistanceBy: Double by get(7, 0.0)
+        var quatDiff: Quaterniond by get(i++, Quaterniond())
+        var increaseDistanceBy: Double by get(i++, 0.0)
     }
 
     val c2sPrimaryStateChanged = regC2S<C2SPhysgunStateChanged>("state_changed", "server_physgun") { pkt, player ->
@@ -251,8 +254,8 @@ object ServerPhysgunState: ServerClosable() {
                 val pageId = ReservedRenderingPages.TimedRenderingObjects
                 if (state.rID == -1) {
                     val renderer = PhysgunRayRenderer()
-                    renderer.state.player = uuid
-                    state.rID = ServerRenderingData.addRenderer(pageId, pageId, renderer)
+                    renderer.player = uuid
+                    state.rID = ServerRenderingData.addRenderer(listOf(pageId), renderer)
                 }
 
                 if (result.state.isAir) {return@forEach}
@@ -264,7 +267,7 @@ object ServerPhysgunState: ServerClosable() {
                 state.mainShipId = result.shipId
                 state.playerLastRot = playerRotToQuat(player.xRot.toDouble(), player.yRot.toDouble())
 
-                val ship = server.shipObjectWorld.loadedShips.getById(state.mainShipId)!!
+                val ship = server.shipObjectWorld.loadedShips.getById(state.mainShipId) ?: return@forEach
                 ship.isStatic = false
 
                 val traversedIds = traverseGetConnectedShips(ship.id).traversedShipIds
@@ -280,11 +283,11 @@ object ServerPhysgunState: ServerClosable() {
 
                 controller.sharedState = state
 
-                val renderer = ServerRenderingData.getRenderer(state.rID)!! as PhysgunRayRenderer
-                renderer.state.player = uuid
-                renderer.state.shipId = state.mainShipId
-                renderer.state.hitPosInShipyard = result.globalHitPos!!
-                ServerRenderingData.setRenderer(pageId, pageId, state.rID, renderer)
+                val renderer = (ServerRenderingData.getRenderer(state.rID) ?: return@forEach) as PhysgunRayRenderer
+                renderer.player = uuid
+                renderer.shipId = state.mainShipId
+                renderer.hitPosInShipyard = result.globalHitPos!!
+                ServerRenderingData.setRenderer(listOf(pageId), state.rID, renderer)
 
                 toRemove.add(uuid)
                 active.add(uuid)

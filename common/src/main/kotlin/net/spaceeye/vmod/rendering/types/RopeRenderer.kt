@@ -1,59 +1,51 @@
 package net.spaceeye.vmod.rendering.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.minecraft.client.renderer.LightTexture
+import net.minecraft.world.level.LightLayer
+import net.spaceeye.vmod.limits.ClientLimits
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import net.spaceeye.vmod.utils.vs.updatePosition
-import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class RopeRenderer(): BaseRenderer {
-    class State: AutoSerializable {
-        var shipId1: Long by get(0, -1L)
-        var shipId2: Long by get(1, -1L)
+class RopeRenderer(): BaseRenderer(), AutoSerializable {
+    @JsonIgnore private var i = 0
 
-        var point1: Vector3d by get(2, Vector3d())
-        var point2: Vector3d by get(3, Vector3d())
+    var shipId1: Long by get(i++, -1L)
+    var shipId2: Long by get(i++, -1L)
 
-        var length: Double by get(4, 0.0)
+    var point1: Vector3d by get(i++, Vector3d())
+    var point2: Vector3d by get(i++, Vector3d())
 
-        var width: Double by get(5, .2)
-        var segments: Int by get(6, 16)
-    }
-    val state = State()
+    var length: Double by get(i++, 0.0)
 
-    inline var shipId1 get() = state.shipId1; set(value) {state.shipId1 = value}
-    inline var shipId2 get() = state.shipId2; set(value) {state.shipId2 = value}
-    inline var point1 get() = state.point1; set(value) {state.point1 = value}
-    inline var point2 get() = state.point2; set(value) {state.point2 = value}
-    inline var length get() = state.length; set(value) {state.length = value}
-    inline var width get() = state.width; set(value) {state.width = value}
-    inline var segments get() = state.segments; set(value) {state.segments = value}
+    var width: Double by get(i++, .2, true) { ClientLimits.instance.ropeRendererWidth.get(it) }
+    var segments: Int by get(i++, 16, true) { ClientLimits.instance.ropeRendererSegments.get(it) }
+    var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
 
-    override fun serialize() = state.serialize()
-    override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
-
-    constructor(shipId1: Long,
-                shipId2: Long,
-                point1: Vector3d,
-                point2: Vector3d,
-                length: Double,
-                width: Double,
-                segments: Int
-        ): this() {
+    constructor(
+        shipId1: Long,
+        shipId2: Long,
+        point1: Vector3d,
+        point2: Vector3d,
+        length: Double,
+        width: Double,
+        segments: Int,
+        fullbright: Boolean,
+    ): this() {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
         this.point1 = point1
@@ -61,6 +53,7 @@ class RopeRenderer(): BaseRenderer {
         this.length = length
         this.width = width
         this.segments = segments
+        this.fullbright = fullbright
     }
 
     private var highlightTimestamp = 0L
@@ -80,16 +73,12 @@ class RopeRenderer(): BaseRenderer {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
-        RenderSystem.enableDepthTest()
-        RenderSystem.depthFunc(GL11.GL_LEQUAL)
-        RenderSystem.depthMask(true)
-        RenderSystem.setShader(GameRenderer::getPositionTexShader)
-        RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
         if (timestamp < highlightTimestamp) {
             RenderSystem.setShaderColor(1f, 0f, 0f, 1f)
         }
 
-        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+        RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
 
         poseStack.pushPose()
 
@@ -101,13 +90,16 @@ class RopeRenderer(): BaseRenderer {
         val matrix = poseStack.last().pose()
         RenderingUtils.Quad.drawRope(
             vBuffer, matrix,
-            255, 0, 0, 255, 255,
+            255, 255, 255, 255,
             width, segments, length,
-            tpos1, tpos2
+            tpos1, tpos2,
+            if (fullbright) { { LightTexture.FULL_BRIGHT} } else { pos -> (pos + cameraPos).toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) } }
         )
 
         tesselator.end()
         poseStack.popPose()
+
+        RenderTypes.clearFullRendering()
 
         if (timestamp < highlightTimestamp) {
             RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
@@ -121,7 +113,7 @@ class RopeRenderer(): BaseRenderer {
         val newId1 = if (shipId1 != -1L) {oldToNew[shipId1]!!.id} else {-1}
         val newId2 = if (shipId2 != -1L) {oldToNew[shipId2]!!.id} else {-1}
 
-        return RopeRenderer(newId1, newId2, spoint1, spoint2, length, width, segments)
+        return RopeRenderer(newId1, newId2, spoint1, spoint2, length, width, segments, fullbright)
     }
 
     override fun scaleBy(by: Double) {

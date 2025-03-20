@@ -11,7 +11,7 @@ import org.valkyrienskies.core.api.ships.ServerShip
 
 interface SchemCompatItem {
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit)
-    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (Boolean) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
+    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
 }
 
 object SchemCompatObj {
@@ -30,11 +30,7 @@ object SchemCompatObj {
     init {
         safeAdd("vs_clockwork") { ClockworkSchemCompat() }
         safeAdd("trackwork") { TrackworkSchemCompat() }
-        safeAdd("vs_takeoff") { TakeoffSchemCompat() }
-
-        safeAdd("create") { CreateSuperglueSchemCompat() }
-        safeAdd("create") { CreateContraptionEntitiesSchemCompat() }
-        safeAdd("create") { CreateBlocksCompat() }
+        safeAdd("takeoff") { TakeoffSchemCompat() }
     }
 
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?): Boolean {
@@ -47,11 +43,11 @@ object SchemCompatObj {
         }
         return cancel
     }
-    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, state: BlockState, delayLoading: (Boolean) -> Unit): ((BlockEntity?) -> Unit)? {
+    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit): ((BlockEntity?) -> Unit)? {
         val callbacks = mutableListOf<(BlockEntity?) -> Unit>()
         items.forEach {
             try {
-                it.onPaste(level, oldToNewId, tag, state, delayLoading) { cb -> callbacks.add(cb) }
+                it.onPaste(level, oldToNewId, tag, pos, state, delayLoading) { cb -> callbacks.add(cb) }
             } catch (e: Exception) { ELOG("Compat object $it has failed onPaste with exception:\n${e.stackTraceToString()}")
             } catch (e: Error) { ELOG("Compat object $it has failed onPaste with error:\n${e.stackTraceToString()}") }
         }

@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes
 
+import dev.architectury.platform.Platform
 import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.modes.state.*
 import net.spaceeye.vmod.utils.Registry
@@ -13,14 +14,20 @@ object ToolgunModes: Registry<BaseMode>() {
         register(PhysRopeMode::class)
         register(SliderMode::class)
         register(SyncRotation::class)
+//        register(GearMode::class)
 
         register(ThrusterMode::class)
+        register(SensorMode::class)
         register(GravChangerMode::class)
         register(DisableCollisionsMode::class)
         register(SchemMode::class)
         register(ScaleMode::class)
         register(StripMode::class)
         register(ShipRemoverMode::class)
+        register(MassChangerMode::class)
+        if (Platform.isDevelopmentEnvironment()) {
+            register(TestMode::class)
+        }
 
         ToolgunExtensions
         initAccessPermissions()

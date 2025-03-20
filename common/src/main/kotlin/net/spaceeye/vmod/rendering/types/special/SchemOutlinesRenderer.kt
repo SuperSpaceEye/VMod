@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.VMConfig
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
@@ -27,15 +28,14 @@ import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
-import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import java.awt.Color
 
 class SchemOutlinesRenderer(
     val maxObjectEdge: Vector3d,
     val rotationAngle: Ref<Double>,
-    val center: ShipTransformImpl,
+    val center: ShipTransform,
     val ships: List<Pair<ShipTransform, AABBic>>
-): BaseRenderer {
+): BaseRenderer() {
     val aabbPoints = mutableListOf(Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d(), Vector3d())
 
     val level = Minecraft.getInstance().level!!
@@ -58,7 +58,7 @@ class SchemOutlinesRenderer(
         )
 
         val hitPos = raycastResult.worldHitPos ?: return
-        val pos = hitPos + (raycastResult.worldNormalDirection!! * maxObjectEdge.y)
+        val pos = hitPos + ((raycastResult.worldNormalDirection ?: return) * maxObjectEdge.y)
 
         val rotation = Quaterniond()
             .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))
@@ -102,7 +102,7 @@ class SchemOutlinesRenderer(
 
             RenderingUtils.Line.renderLineBox(vBuffer, matrix, Color.RED, aabbPoints, width)
 
-            var transformCenter = Vector3d(newTransform.positionInShip)
+            var transformCenter = Vector3d(newTransform.positionInModel)
 
             var xAxis = Vector3d(transformCenter)
             var yAxis = Vector3d(transformCenter)

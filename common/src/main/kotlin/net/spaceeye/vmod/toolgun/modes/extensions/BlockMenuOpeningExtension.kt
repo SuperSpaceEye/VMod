@@ -4,10 +4,11 @@ import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModeExtension
+import net.spaceeye.vmod.translate.PRESS_R_TO_RESET_STATE
+import net.spaceeye.vmod.translate.get
 import org.lwjgl.glfw.GLFW
 
-//TODO use lang shit
-class BlockMenuOpeningExtension<T: ExtendableToolgunMode>(val failMsg: String? = "Press R to reset state", val predicate: (inst: T) -> Boolean): ToolgunModeExtension {
+class BlockMenuOpeningExtension<T: ExtendableToolgunMode>(val failMsg: String? = PRESS_R_TO_RESET_STATE.get(), var predicate: (inst: T) -> Boolean): ToolgunModeExtension {
     lateinit var inst: ExtendableToolgunMode
 
     override fun onInit(inst: ExtendableToolgunMode, type: BaseNetworking.EnvType) {

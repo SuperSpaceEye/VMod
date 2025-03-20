@@ -14,9 +14,9 @@ plugins {
     id "com.github.johnrengelman.shadow" version "8.1.1"
 
     // Adds the Kotlin Gradle plugin
-    id 'org.jetbrains.kotlin.jvm' version '1.8.21'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.0'
     // OPTIONAL Kotlin Serialization plugin
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.21'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.0'
 }
 architectury {
     platformSetupLoomIde()
@@ -67,7 +67,10 @@ repositories {
 }
 
 dependencies {
-    include(modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.name:1.0"))
+    include modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.name:1.0")
+    forgeRuntimeLibrary include("org.jgrapht:jgrapht-core:1.5.2")
+    forgeRuntimeLibrary include("org.apfloat:apfloat:1.14.0")
+    forgeRuntimeLibrary include("org.jheaps:jheaps:0.14")
 
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
@@ -92,7 +95,6 @@ dependencies {
     modCompileOnly("com.tterrag.registrate:Registrate:${registrate_forge_version}")
     modCompileOnly("com.jozufozu.flywheel:flywheel-forge-${flywheel_forge_minecraft_version}:${flywheel_forge_version}")
 
-    //for mixin
     modCompileOnlyApi(files("vs_jars/takeoff-forge-1.0.0-beta1+308678c5c5.jar"))
 }
 

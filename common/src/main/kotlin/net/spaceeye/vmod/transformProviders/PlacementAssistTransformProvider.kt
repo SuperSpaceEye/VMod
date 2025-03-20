@@ -7,10 +7,8 @@ import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePosition
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
-import net.spaceeye.vmod.utils.vs.posWorldToShipRender
-import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorldRender
-import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShipRender
 import org.joml.Quaterniond
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
@@ -36,12 +34,12 @@ class PlacementAssistTransformProvider(
 
     val ignoreShipIds = mutableSetOf(ship1.id)
 
+    @OptIn(VsBeta::class)
     override fun provideNextRenderTransform(
         prevShipTransform: ShipTransform,
         shipTransform: ShipTransform,
         partialTick: Double
     ): ShipTransform? {
-        //TODO think of a better way
         if (!ToolgunItem.playerIsUsingToolgun()) {return null}
         val secondResult = RaycastFunctions.renderRaycast(
             level,
@@ -55,24 +53,16 @@ class PlacementAssistTransformProvider(
         rresult2 = secondResult
 
         if (firstResult.globalNormalDirection == null || secondResult.worldNormalDirection == null) { return null }
-        // not sure why i need to flip normal but it works
-        val dir1 = when {
-            firstResult.globalNormalDirection!!.y ==  1.0 -> -firstResult.globalNormalDirection!!
-            firstResult.globalNormalDirection!!.y == -1.0 -> -firstResult.globalNormalDirection!!
-            else -> firstResult.globalNormalDirection!!
-        }
-        val dir2 = secondResult.worldNormalDirection!!
-
-        gdir1 = dir1
+        // not sure why i need to flip y, but it works
+        gdir1 = firstResult .globalNormalDirection!!.let {it.copy().also{it.set(it.x, -it.y, it.z)}}
         gdir2 = secondResult.globalNormalDirection!!
 
-        var rotation = Quaterniond()
-        if (!secondResult.state.isAir) {
-            rotation = Quaterniond()
-                .mul(getQuatFromDir(dir2)) // this rotates ship to align with world normal
-                .mul(getQuatFromDir(dir1)) // this rotates ship so that it aligns with hit pos normal
-                .normalize()
-        }
+        if (secondResult.state.isAir) {return null}
+
+        var rotation = (secondResult.ship as ClientShip?)?.renderTransform?.rotation?.get(Quaterniond()) ?: Quaterniond()
+            .mul(getQuatFromDir(gdir2))
+            .mul(getQuatFromDir(gdir1))
+            .normalize()
 
         spoint1 = getModePosition(mode, firstResult, precisePlacementAssistSideNum)
         spoint2 = getModePosition(mode, secondResult, precisePlacementAssistSideNum)
@@ -82,11 +72,11 @@ class PlacementAssistTransformProvider(
         // rotation is incredibly important
 
         val point = rpoint2 - (
-            posShipToWorldRender(ship1, spoint1, (ship1.renderTransform as ShipTransformImpl).copy(shipToWorldRotation = rotation)) -
-            posShipToWorldRender(ship1, Vector3d(ship1.renderTransform.positionInShip), (ship1.renderTransform as ShipTransformImpl).copy(shipToWorldRotation = rotation))
+            posShipToWorldRender(ship1, spoint1, ship1.renderTransform.rebuild{this.rotation(rotation)}) -
+            posShipToWorldRender(ship1, Vector3d(ship1.renderTransform.positionInShip), ship1.renderTransform.rebuild{this.rotation(rotation)})
         )
 
-        return ShipTransformImpl(
+        return ShipTransformImpl.create(
             point.toJomlVector3d(),
             shipTransform.positionInShip,
             rotation,

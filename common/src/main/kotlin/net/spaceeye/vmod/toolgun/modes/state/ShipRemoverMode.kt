@@ -26,7 +26,7 @@ class ShipRemoverMode: ExtendableToolgunMode(), SimpleHUD {
             ToolgunModes.registerWrapper(ShipRemoverMode::class) {
                 it.addExtension<ShipRemoverMode> {
                     BasicConnectionExtension<ShipRemoverMode>("ship_remover"
-                        ,primaryFunction = { mode, level, player, rr -> mode.activatePrimaryFunction(level, player, rr) }
+                        ,leftFunction = { mode, level, player, rr -> mode.activatePrimaryFunction(level, player, rr) }
                     )
                 }
             }

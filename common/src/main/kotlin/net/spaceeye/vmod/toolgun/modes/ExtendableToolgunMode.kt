@@ -38,9 +38,9 @@ interface ToolgunModeExtension: MSerializable, EBase, EClientEventsHandler, EGUI
 abstract class ExtendableToolgunMode: BaseMode, EBase, EGUIBuilder, EHUDBuilder, EClientEventsHandler {
     private val linearExtensions = mutableListOf<ToolgunModeExtension>()
     private val _extensions = mutableSetOf<ToolgunModeExtension>()
-    open val extensions: Collection<ToolgunModeExtension> get() = _extensions
+    val extensions: Collection<ToolgunModeExtension> get() = _extensions
 
-    open fun <T: ExtendableToolgunMode> addExtension(fn: (T) -> ToolgunModeExtension): T {
+    fun <T: ExtendableToolgunMode> addExtension(fn: (T) -> ToolgunModeExtension): T {
         val ext = fn(this as T)
         if (_extensions.add(ext)) {linearExtensions.add(ext)}
         return this

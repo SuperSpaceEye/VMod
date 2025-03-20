@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.rendering.types
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
@@ -8,15 +9,14 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
-import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.network.FriendlyByteBuf
-import net.spaceeye.vmod.networking.AutoSerializable
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.minecraft.client.renderer.LightTexture
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.*
-import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -29,25 +29,18 @@ fun closestPointOnALineToAnotherPoint(originPoint: Vector3d, linePoint1: Vector3
     return linePoint1 + wdir * t
 }
 
-class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer {
-    class State: AutoSerializable {
-        var player: UUID by get(0, UUID(0L, 0L))
-        var shipId: Long by get(1, -1L)
-        var hitPosInShipyard: Vector3d by get(2, Vector3d())
-        var timestampOfBeginning: Long by get(4, -1)
-        var activeFor_ms: Long by get(5, Long.MAX_VALUE)
-    }
-    val state = State()
+class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRenderer, AutoSerializable {
+    @JsonIgnore private var i = 0
 
-    override var timestampOfBeginning get() = state.timestampOfBeginning; set(value) {state.timestampOfBeginning = value}
-    override val activeFor_ms get() = state.activeFor_ms
-
-    override fun serialize() = state.serialize()
-    override fun deserialize(buf: FriendlyByteBuf) = state.deserialize(buf)
+    var player: UUID by get(i++, UUID(0L, 0L))
+    var shipId: Long by get(i++, -1L)
+    var hitPosInShipyard: Vector3d by get(i++, Vector3d())
+    override var timestampOfBeginning: Long by get(i++, -1)
+    override var activeFor_ms: Long by get(i++, Long.MAX_VALUE)
 
     override val renderingPosition: Vector3d
         get() {
-            val player = Minecraft.getInstance().level!!.getPlayerByUUID(state.player) ?: return Vector3d(999999999, 999999999, 999999999)
+            val player = Minecraft.getInstance().level!!.getPlayerByUUID(player) ?: return Vector3d(999999999, 999999999, 999999999)
             return Vector3d(player.eyePosition)
         }
     override var wasActivated: Boolean = false
@@ -63,14 +56,12 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
     }
 
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
-        val targetUUID = state.player
-
-        val player = Minecraft.getInstance().level!!.getPlayerByUUID(state.player) ?: return
+        val selfPlayer = Minecraft.getInstance().player
+        val player = Minecraft.getInstance().level!!.getPlayerByUUID(player) ?: return
 
         val level = player.level() as ClientLevel
 
-
-        val inFirstPerson = player.uuid == targetUUID && !camera.isDetached
+        val inFirstPerson = player.uuid == selfPlayer?.uuid && !camera.isDetached
 
         val (point1, dir) = if (inFirstPerson) {
             val dir = Vector3d(camera.lookVector).snormalize()
@@ -95,11 +86,11 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
 
         val raycastPos = raycastResult.worldHitPos ?: (point1 + dir * 100.0)
 
-        val point2 = if (state.shipId == -1L) {
+        val point2 = if (shipId == -1L) {
             raycastPos
         } else {
-            level.shipObjectWorld.loadedShips.getById(state.shipId)?.let {
-                posShipToWorldRender(it, state.hitPosInShipyard)
+            level.shipObjectWorld.loadedShips.getById(shipId)?.let {
+                posShipToWorldRender(it, hitPosInShipyard)
             } ?: return
         }
 
@@ -112,17 +103,9 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
 
         poseStack.pushPose()
 
-        RenderSystem.enableDepthTest()
-        RenderSystem.depthFunc(GL11.GL_LEQUAL)
-        RenderSystem.depthMask(true)
-        RenderSystem.enableDepthTest()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
-        RenderSystem.enableBlend()
+        val light = LightTexture.FULL_BRIGHT
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupPCRendering())
         RenderSystem.enableCull()
-
-        val light = Int.MAX_VALUE
-
-        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
 
         poseStack.translate(-camera.position.x, -camera.position.y, -camera.position.z)
 
@@ -142,7 +125,7 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
 
             val rightPoints = RenderingUtils.Quad.makePolygon(4, width, up, right, spos)
 
-            RenderingUtils.Quad.drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, 0.0f, 0.0f, leftPoints, rightPoints)
+            RenderingUtils.Quad.drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, light, 0.0f, 0.0f, leftPoints, rightPoints)
 
             leftPoints = rightPoints
             fpos = spos
@@ -150,13 +133,10 @@ class PhysgunRayRenderer: BaseRenderer, TimedRenderer, PositionDependentRenderer
 
         tesselator.end()
         poseStack.popPose()
+
+        RenderTypes.clearPCRendering()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
-        TODO("Not yet implemented")
-    }
-
-    override fun scaleBy(by: Double) {
-        TODO("Not yet implemented")
-    }
+    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? = throw AssertionError("shouldn't be copied")
+    override fun scaleBy(by: Double) = throw AssertionError("shouldn't be scaled")
 }

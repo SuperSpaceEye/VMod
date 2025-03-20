@@ -1,12 +1,13 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.gui.ScaleGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ScaleHUD
-import net.spaceeye.vmod.networking.SerializableItem.get
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -19,8 +20,10 @@ import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class ScaleMode: ExtendableToolgunMode(), ScaleGUI, ScaleHUD {
-    var scale: Double by get(0, 1.0, {ServerLimits.instance.scale.get(it)})
-    var scaleAllConnected: Boolean by get(1, true)
+    @JsonIgnore private var i = 0
+
+    var scale: Double by get(i++, 1.0) { ServerLimits.instance.scale.get(it) }
+    var scaleAllConnected: Boolean by get(i++, true)
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {return}
@@ -39,7 +42,7 @@ class ScaleMode: ExtendableToolgunMode(), ScaleGUI, ScaleHUD {
             ToolgunModes.registerWrapper(ScaleMode::class) {
                 it.addExtension<ScaleMode> {
                     BasicConnectionExtension<ScaleMode>("scale_mode"
-                        ,primaryFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
+                        ,leftFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )
                 }
             }

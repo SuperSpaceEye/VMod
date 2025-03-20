@@ -14,22 +14,22 @@ class FakeKProperty<T>(
         return onSet(value)
     }
 
-    override val annotations: List<Annotation> get() = TODO("Not implemented")
-    override val getter: KProperty0.Getter<T> get() = TODO("Not implemented")
-    override val isAbstract: Boolean get() = TODO("Not implemented")
-    override val isConst: Boolean get() = TODO("Not implemented")
-    override val isFinal: Boolean get() = TODO("Not implemented")
-    override val isLateinit: Boolean get() = TODO("Not implemented")
-    override val isOpen: Boolean get() = TODO("Not implemented")
-    override val isSuspend: Boolean get() = TODO("Not implemented")
-    override val name: String get() = TODO("Not implemented")
-    override val parameters: List<KParameter> get() = TODO("Not implemented")
-    override val returnType: KType get() = TODO("Not implemented")
-    override val setter: KMutableProperty0.Setter<T> get() = TODO("Not implemented")
-    override val typeParameters: List<KTypeParameter> get() = TODO("Not implemented")
-    override val visibility: KVisibility? get() = TODO("Not implemented")
-    override fun call(vararg args: Any?): T { TODO("Not implemented") }
-    override fun callBy(args: Map<KParameter, Any?>): T { TODO("Not implemented") }
-    override fun getDelegate(): Any? { TODO("Not implemented") }
-    override fun invoke(): T { TODO("Not implemented") }
+    override val annotations: List<Annotation> get() = throw NotImplementedError("Not implemented")
+    override val getter: KProperty0.Getter<T> get() = throw NotImplementedError("Not implemented")
+    override val isAbstract: Boolean get() = throw NotImplementedError("Not implemented")
+    override val isConst: Boolean get() = throw NotImplementedError("Not implemented")
+    override val isFinal: Boolean get() = throw NotImplementedError("Not implemented")
+    override val isLateinit: Boolean get() = throw NotImplementedError("Not implemented")
+    override val isOpen: Boolean get() = throw NotImplementedError("Not implemented")
+    override val isSuspend: Boolean get() = throw NotImplementedError("Not implemented")
+    override val name: String get() = throw NotImplementedError("Not implemented")
+    override val parameters: List<KParameter> get() = throw NotImplementedError("Not implemented")
+    override val returnType: KType get() = throw NotImplementedError("Not implemented")
+    override val setter: KMutableProperty0.Setter<T> get() = throw NotImplementedError("Not implemented")
+    override val typeParameters: List<KTypeParameter> get() = throw NotImplementedError("Not implemented")
+    override val visibility: KVisibility? get() = throw NotImplementedError("Not implemented")
+    override fun call(vararg args: Any?): T { throw NotImplementedError("Not implemented") }
+    override fun callBy(args: Map<KParameter, Any?>): T { throw NotImplementedError("Not implemented") }
+    override fun getDelegate(): Any? { throw NotImplementedError("Not implemented") }
+    override fun invoke(): T { throw NotImplementedError("Not implemented") }
 }

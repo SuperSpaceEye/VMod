@@ -2,7 +2,6 @@ package net.spaceeye.vmod
 
 import net.spaceeye.vmod.config.*
 
-//TODO revise
 object VMConfig {
     lateinit var server_config_holder: AbstractConfigBuilder
     lateinit var client_config_holder: AbstractConfigBuilder
@@ -47,7 +46,7 @@ object VMConfig {
         val SCHEMATICS = Schematics()
 
         class ServerPhysgunSettings(): ConfigSubDirectory() {
-            val GRAB_ALL_CONNECTED_SHIPS: Boolean by CBool(false, "A bit buggy.")
+            val GRAB_ALL_CONNECTED_SHIPS: Boolean by CBool(false, "A bit buggy.", false)
             val PCONST: Double   by CDouble(160.0, "a", 0.0 to Double.MAX_VALUE)
             val DCONST: Double   by CDouble(20.0 , "a", 0.0 to Double.MAX_VALUE)
             val IDKCONST: Double by CDouble(90.0 , "a", 0.0 to Double.MAX_VALUE)

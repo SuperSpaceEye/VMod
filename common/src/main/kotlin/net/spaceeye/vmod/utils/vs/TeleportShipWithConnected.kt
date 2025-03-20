@@ -1,15 +1,14 @@
 package net.spaceeye.vmod.utils.vs
 
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.constraintsManaging.VSConstraintsTracker
-import net.spaceeye.vmod.constraintsManaging.getManagedConstraint
+import net.spaceeye.vmod.vEntityManaging.getVEntity
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
-import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 fun getMinScale(level: ServerLevel, traversedData: TraversedData): Double {
@@ -19,6 +18,7 @@ fun getMinScale(level: ServerLevel, traversedData: TraversedData): Double {
     }.min()
 }
 
+@OptIn(VsBeta::class)
 fun teleportShipWithConnected(
     level: ServerLevel,
     mainShip: ServerShip,
@@ -33,7 +33,11 @@ fun teleportShipWithConnected(
     val scale = scale ?: minScale
     val scaleBy = if (minScale != scale) { scale / minScale } else { 1.0 }
 
-    val transform = (mainShip.transform as ShipTransformImpl).copy(pos.toJomlVector3d(), shipToWorldRotation = rotation, shipToWorldScaling = org.joml.Vector3d(1.0, 1.0, 1.0).mul(Vector3d(mainShip.transform.shipToWorldScaling).avg() * scaleBy) )
+    val transform = mainShip.transform.rebuild {
+        this.position(pos.toJomlVector3d())
+        this.rotation(Quaterniond(rotation))
+        this.scaling (org.joml.Vector3d(1.0, 1.0, 1.0).mul(Vector3d(mainShip.transform.shipToWorldScaling).avg() * scaleBy))
+    }
 
     traversed.traversedShipIds.forEach {
         if (it == mainShip.id) { return@forEach }
@@ -61,5 +65,5 @@ fun teleportShipWithConnected(
         )
     )
 
-    if (scaleBy != 1.0) { traversed.traversedMConstraintIds.forEach { level.getManagedConstraint(it)?.onScaleBy(level, scaleBy, Vector3d(mainShip.transform.positionInWorld)) } }
+    if (scaleBy != 1.0) { traversed.traversedVEntityIds.forEach { level.getVEntity(it)?.onScaleBy(level, scaleBy, Vector3d(mainShip.transform.positionInWorld)) } }
 }

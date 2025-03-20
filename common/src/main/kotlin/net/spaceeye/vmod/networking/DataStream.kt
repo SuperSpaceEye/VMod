@@ -17,8 +17,8 @@ abstract class DataStream<
     streamName: String,
     transmitterSide: NetworkManager.Side,
     currentSide: NetworkManager.Side,
-    val partByteAmount: Int = 30000,
     ) {
+    open val partByteAmount: Int = 30000
 
     abstract fun requestPacketConstructor(buf: FriendlyByteBuf): TRequest
     abstract fun dataPacketConstructor(): TData

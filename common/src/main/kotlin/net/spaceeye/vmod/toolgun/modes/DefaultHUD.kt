@@ -9,10 +9,10 @@ import gg.essential.elementa.constraints.ChildBasedSizeConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.translate.DEFAULT_HUD_GUI
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
-//TODO move stuff to translatable
 class DefaultHUD: HUDBuilder {
     override fun makeHUD(screen: UIContainer) {
         val background = GradientComponent(
@@ -51,6 +51,6 @@ class DefaultHUD: HUDBuilder {
             Unit
         }
 
-        makeText("Press ${ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.translatedKeyMessage.get()} to open or close GUI")
+        makeText(DEFAULT_HUD_GUI.get().replace("==GUI_MENU_OPEN_OR_CLOSE==", ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.translatedKeyMessage.get()))
     }
 }

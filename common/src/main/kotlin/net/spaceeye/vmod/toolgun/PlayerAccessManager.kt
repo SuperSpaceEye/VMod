@@ -1,6 +1,6 @@
 package net.spaceeye.vmod.toolgun
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import dev.architectury.event.events.common.LifecycleEvent
 import dev.architectury.event.events.common.PlayerEvent
 import io.netty.buffer.Unpooled
@@ -29,7 +29,6 @@ class RolePermissionsData(): Serializable {
 
             buf.writeCollection(PlayerAccessManager.rolesPermissions.toList()) { buf, it ->
                 buf.writeUtf(it.first)
-                //TODO not optimal but do i care about it?
                 buf.writeCollection(it.second) { buf, it -> buf.writeVarInt(schema[it]!!) }
             }
         }
@@ -72,8 +71,8 @@ class PlayersRolesData(): Serializable {
     }
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class PlayerAccessMangerState {
-    var allPermissionsList = mutableListOf<String>()
     var rolesPermissions = mutableMapOf<String, MutableSet<String>>()
     var playersRoles = mutableMapOf<UUID, PlayerAccessState>()
     var allRoles = mutableListOf<String>()
@@ -82,14 +81,12 @@ class PlayerAccessMangerState {
 object PlayerAccessManager {
     var state = PlayerAccessMangerState()
 
-    var allPermissionsList get() = state.allPermissionsList; set(value) {state.allPermissionsList = value}
+    var allPermissionsList = mutableListOf<String>()
     var rolesPermissions get() = state.rolesPermissions; set(value) {state.rolesPermissions = value}
     var playersRoles get() = state.playersRoles; set(value) {state.playersRoles = value}
     var allRoles get() = state.allRoles; set(value) {state.allRoles = value}
 
-    @JsonIgnore
     val allPermissions = mutableSetOf<String>()
-    @JsonIgnore
     const val defaultRoleName = "default"
 
     init {
@@ -170,7 +167,7 @@ object PlayerAccessManager {
 
     @Synchronized fun save() {
         val mapper = getMapper()
-        val data = mapper.writeValueAsBytes(this)
+        val data = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(this.state)
         ExternalDataUtil.writeObject("role_data.json", data)
     }
 
@@ -182,14 +179,6 @@ object PlayerAccessManager {
 
             val allRolesSet = allRoles.toSet()
             allRoles.addAll(obj.allRoles.filter { !allRolesSet.contains(it) })
-
-            if (!allPermissions.containsAll(obj.allPermissionsList)) {
-                ELOG("FUCK")
-            }
-
-            val permissionsToAdd = obj.allPermissionsList.filter { !allPermissions.contains(it) }
-            allPermissionsList.addAll(permissionsToAdd)
-            allPermissions.addAll(permissionsToAdd)
 
             rolesPermissions = obj.rolesPermissions
             playersRoles = obj.playersRoles

@@ -6,11 +6,10 @@ import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.guiElements.Button
+import net.spaceeye.vmod.guiElements.DItem
+import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
-import net.spaceeye.vmod.limits.DoubleLimit
-import net.spaceeye.vmod.limits.IntLimit
-import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.limits.StrLimit
+import net.spaceeye.vmod.limits.*
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsGUIBuilder
 import net.spaceeye.vmod.translate.APPLY_NEW_SERVER_LIMITS
 import net.spaceeye.vmod.translate.SERVER_LIMITS
@@ -32,7 +31,7 @@ class ServerLimitsSettings: ServerSettingsGUIBuilder {
             width = 98.percent
         } childOf parentWindow
 
-        for (item in ServerLimits.instance.getSerializableItems()) {
+        for (item in ServerLimits.instance.getAllReflectableItems()) {
             val separated = item.cachedName.split(Regex("(?=[A-Z])")).toMutableList()
             separated[0] = separated[0].replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
             val name = separated.reduce { acc, s -> acc + " " + s.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}
@@ -42,12 +41,23 @@ class ServerLimitsSettings: ServerSettingsGUIBuilder {
                     makeTextEntry("Min \"$name\"", FakeKProperty({limit.minValue}) {limit.minValue = it}, 2f, 2f, parentWindow)
                     makeTextEntry("Max \"$name\"", FakeKProperty({limit.maxValue}) {limit.maxValue = it}, 2f, 2f, parentWindow)
                 }
+                is FloatLimit -> {
+                    makeTextEntry("Min \"$name\"", FakeKProperty({limit.minValue}) {limit.minValue = it}, 2f, 2f, parentWindow)
+                    makeTextEntry("Max \"$name\"", FakeKProperty({limit.maxValue}) {limit.maxValue = it}, 2f, 2f, parentWindow)
+                }
                 is IntLimit -> {
                     makeTextEntry("Min \"$name\"", FakeKProperty({limit.minValue}) {limit.minValue = it}, 2f, 2f, parentWindow)
                     makeTextEntry("Max \"$name\"", FakeKProperty({limit.maxValue}) {limit.maxValue = it}, 2f, 2f, parentWindow)
                 }
                 is StrLimit -> {
                     makeTextEntry("Max \"$name\"", FakeKProperty({limit.sizeLimit}) {limit.sizeLimit = it}, 2f, 2f, parentWindow)
+                }
+                is BoolLimit -> {
+                    makeDropDown("Force", parentWindow, 2f, 2f, listOf(
+                        DItem("True",    limit.mode == BoolLimit.Force.TRUE   ) {limit.mode = BoolLimit.Force.TRUE},
+                        DItem("False",   limit.mode == BoolLimit.Force.FALSE  ) {limit.mode = BoolLimit.Force.FALSE},
+                        DItem("Nothing", limit.mode == BoolLimit.Force.NOTHING) {limit.mode = BoolLimit.Force.NOTHING},
+                    ))
                 }
                 else -> throw AssertionError("Unhandled type")
             }

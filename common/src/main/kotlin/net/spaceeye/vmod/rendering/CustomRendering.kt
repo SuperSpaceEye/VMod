@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.rendering
 
+import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
@@ -20,6 +21,8 @@ import net.spaceeye.vmod.mixin.BlockRenderDispatcherAccessor
 import net.spaceeye.vmod.rendering.types.BlockRenderer
 import net.spaceeye.vmod.rendering.types.PositionDependentRenderer
 import net.spaceeye.vmod.rendering.types.TimedRenderer
+import net.spaceeye.vmod.toolgun.CELOG
+import net.spaceeye.vmod.translate.RENDERING_HAS_THROWN_AN_EXCEPTION
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -82,9 +85,11 @@ internal object RenderingStuff {
     }
 }
 
+private var renderTick = 0L
+
 //TODO renderBlockRenderers is fucking stupid
 //this is called from two places: GameRendererMixin and LevelRendererMixin.
-// from GameRendererMixin it renders mconstraints and from LevelRendererMixin it renders BlockRenderers
+// from GameRendererMixin it renders VEntities and from LevelRendererMixin it renders BlockRenderers
 // why? if normal renderers are rendered in LevelRenderMixin, blending shits itself
 // if BlockRenderers are rendered in GameRendererMixin, blocks "bob" with the hand, and i have 0 idea why. probably
 // because of poseStack but idk
@@ -93,7 +98,7 @@ fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft, re
     RandomEvents.clientPreRender.emit(RandomEvents.ClientPreRender(now))
 
     minecraft.profiler.push("vmod_rendering_ship_objects")
-    renderShipObjects(poseStack, camera, renderBlockRenderers, now)
+    renderShipObjects(poseStack, camera, renderBlockRenderers, now, renderTick++)
     minecraft.profiler.pop()
 
     minecraft.profiler.push("vmod_rendering_timed_objects")
@@ -105,7 +110,7 @@ fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft, re
     minecraft.profiler.pop()
 }
 
-private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
+private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long, renderTick: Long) {
     val level = Minecraft.getInstance().level!!
 
     try {
@@ -113,25 +118,27 @@ private inline fun renderShipObjects(poseStack: PoseStack, camera: Camera, rende
         val data = ClientRenderingData.getData()
         for ((_, render) in data[ship.id] ?: continue) {
             when (render) {
-                is BlockRenderer -> if (renderBlockRenderers) render.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
-                else -> if(!renderBlockRenderers) render.renderData(poseStack, camera, timestamp)
+                is BlockRenderer -> if (renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
+                else -> if(!renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderData(poseStack, camera, timestamp)
             }
         }
     }
     // let's hope that it never happens, but if it does, then do nothing
-    } catch (e: ConcurrentModificationException) { ELOG("GOT ConcurrentModificationException WHILE RENDERING.\n${e.stackTraceToString()}"); }
+    } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION);
+    } catch (e: Exception) { ELOG("Renderer raised exception:\n${e.stackTraceToString()}")
+    } catch (e: Error) { ELOG("Renderer raised error!!!\n${e.stackTraceToString()}") }
 
     if (renderBlockRenderers) RenderingStuff.blockBuffer.endBatch()
 }
 
-private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
+private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
     if (renderBlockRenderers) {return}
     val cpos = Vector3d(Minecraft.getInstance().player!!.position())
     val now = getNow_ms()
     val toDelete = mutableListOf<Int>()
     val page = ClientRenderingData.getData()[ReservedRenderingPages.TimedRenderingObjects] ?: return
     for ((idx, render) in page) {
-        if (render !is TimedRenderer || render !is PositionDependentRenderer) { toDelete.add(idx); ELOG("FOUND RENDERING DATA ${render.javaClass.simpleName} IN renderTimedObjects THAT DIDN'T IMPLEMENT INTERFACE TimedRenderingData OR PositionDependentRenderingData."); continue }
+        if (render !is TimedRenderer || render !is PositionDependentRenderer) { toDelete.add(idx); CELOG("Found renderer in ${render.javaClass.simpleName} in renderTimedObjects that didn't implement interface TimedRenderingData or PositionDependentRenderingData.", RENDERING_HAS_THROWN_AN_EXCEPTION); continue }
         if (!render.wasActivated && render.activeFor_ms == -1L) { render.timestampOfBeginning = now }
         if (render.activeFor_ms + render.timestampOfBeginning < now) { toDelete.add(idx); continue }
         if ((render.renderingPosition - cpos).sqrDist() > RenderingSettings.renderingArea*RenderingSettings.renderingArea) { continue }
@@ -144,7 +151,7 @@ private inline fun renderTimedObjects(poseStack: PoseStack, camera: Camera, rend
     ClientRenderingData.removeTimedRenderers(toDelete)
 }
 
-private inline fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
+private fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
     if (renderBlockRenderers) {return}
     val page = ClientRenderingData.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
     for ((_, render) in page) {

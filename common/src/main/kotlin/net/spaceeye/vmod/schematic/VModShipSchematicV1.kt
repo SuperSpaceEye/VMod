@@ -2,6 +2,7 @@ package net.spaceeye.vmod.schematic
 
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.*
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
@@ -11,20 +12,23 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.SchemSerializeDataV1Impl
 import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.vsStuff.VSMasslessShipsProcessor
+import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
+import net.spaceeye.vmod.utils.vs.toShipTransform
 import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
+import net.spaceeye.vmod.vEntityManaging.legacy.LegacyConstraintFixers
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.joml.Vector3d
 import org.joml.Vector3i
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
+import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
+import org.valkyrienskies.core.impl.game.ships.ShipData
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -36,6 +40,7 @@ class VModShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
     override var blockPalette: IBlockStatePalette = BlockPaletteHashMapV1()
 
     override var blockData = mutableMapOf<ShipId, ChunkyBlockData<BlockItem>>()
+    override var entityData: MutableMap<ShipId, List<EntityItem>> = mutableMapOf()
     override var flatTagData: MutableList<CompoundTag> = mutableListOf()
 
     override var extraData: MutableList<Pair<String, ISerializable>> = mutableListOf()
@@ -44,33 +49,28 @@ class VModShipSchematicV1(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
 //    override var entityData: MutableMap<ShipId, List<EntityItem>> = mutableMapOf()
 }
 
-fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, rotation: Quaterniondc, postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
-    val newTransforms = mutableListOf<ShipTransform>()
+@OptIn(VsBeta::class)
+fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid: UUID, pos: Vector3d, rotation: Quaterniondc, postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
+    val newTransforms = mutableListOf<BodyTransform>()
 
-    val ships = (this as IShipSchematic).createShips(level, pos, rotation, newTransforms)
-    ships.forEach { VSMasslessShipsProcessor.shipsToBeCreated.add(it.first.id) }
+    val shipInitializers = (this as IShipSchematic).createShipConstructors(level, pos, rotation, newTransforms)
 
-    if (!verifyBlockDataIsValid(ships, level)) {
-        ships.forEach { level.shipObjectWorld.deleteShip(it.first) }
-        return false
-    }
+    if (!verifyBlockDataIsValid(shipInitializers.map { it.second }, player)) { return false }
 
-    //TODO change onPasteBeforeBlocksAreLoaded to be on "per ship" basis so that you can make ships as you need instead of all at once
-    // also have a onPasteBeforeBlockEntitiesAreLoaded
-    ShipSchematic.onPasteBeforeBlocksAreLoaded(level, ships, extraData)
-    SchematicActionsQueue.queueShipsCreationEvent(level, uuid, ships, this) {
-        ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData)
+    SchematicActionsQueue.queueShipsCreationEvent(level, player, uuid, shipInitializers, this) { ships ->
+        ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, extraData.toMap())
+        LegacyConstraintFixers.tryLoadLegacyVModSchemData(level, ships, extraData.toMap()) //TODO Remove
 
-        val createdShips = ships.map { it.first }.onEach { VSMasslessShipsProcessor.shipsToBeCreated.remove(it.id) }
+        val createdShips = ships.map { it.first }
         createdShips.zip(newTransforms).forEach {
                 (it, transform) ->
-            val toPos = MVector3d(transform.positionInWorld) + MVector3d(pos)
-            level.shipObjectWorld.teleportShip(it, ShipTeleportDataImpl(
-                toPos.toJomlVector3d(),
-                transform.shipToWorldRotation,
-                JVector3d(),
-                newScale = MVector3d(it.transform.shipToWorldScaling).avg(),
-            ))
+            val toPos = MVector3d(transform.position) + MVector3d(pos)
+//            //TODO redo
+            (it as ShipData).transform = (it.transform.rebuild {
+                this.position(toPos.toJomlVector3d())
+                this.rotation(Quaterniond(transform.rotation))
+                this.scaling (Vector3d(transform.scaling))
+            }.toShipTransform())
         }
 
         postPlaceFn(createdShips)
@@ -80,13 +80,13 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, uuid: UUID, pos: Vector3d, 
     return true
 }
 
-private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<ShipTransform>): List<Pair<ServerShip, Long>> {
+private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<BodyTransform>): List<Pair<() -> ServerShip, Long>> {
     val shipData = info!!.shipsInfo
     // during schem creation ship positions are normalized so that the center is at 0 0 0
-    val center = ShipTransformImpl(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
+    val center = ShipTransformImpl.create(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
 
-    return shipData.map {
-        val thisTransform = ShipTransformImpl(
+    return shipData.map { Pair({
+        val thisTransform = ShipTransformImpl.create(
             it.relPositionToCenter,
             it.positionInShip,
             it.rotation,
@@ -96,35 +96,35 @@ private fun IShipSchematic.createShips(level: ServerLevel, pos: Vector3d, rotati
         newTransforms.add(newTransform)
 
         //TODO this is probably wrong?
-        val toPos = MVector3d(newTransform.positionInWorld) + MVector3d(pos)
+        val toPos = MVector3d(newTransform.position) + MVector3d(pos)
 
         val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(), false, it.shipScale, level.dimensionId)
         newShip.isStatic = true
 
         level.shipObjectWorld.teleportShip(newShip, ShipTeleportDataImpl(
             toPos.toJomlVector3d(),
-            newTransform.shipToWorldRotation,
+            newTransform.rotation,
             newScale = it.shipScale
         ))
-        Pair(newShip, it.id)
-    }
+        newShip
+        }, it.id) }
 }
 
 fun IShipSchematicDataV1.verifyBlockDataIsValid(
-    ships: List<Pair<ServerShip, Long>>,
-    level: ServerLevel
+    ids: List<Long>,
+    player: ServerPlayer?,
 ): Boolean {
-    ships.forEach { (ship, id) ->
+    ids.forEach { id ->
         blockData[id] ?: run {
-            ships.forEach { (ship, id) -> level.shipObjectWorld.deleteShip(ship) }
-            ELOG("SHIP ID EXISTS BUT NO BLOCK DATA WAS SAVED. NOT PLACING A SCHEMATIC.")
+            val str = "Ship ID exists not no block data was saved. Not placing a schematic."
+            player?.also { SELOG(str, player, str, false) } ?: run { ELOG(str) }
             return false
         }
     }
     return true
 }
 
-fun IShipSchematicDataV1.makeFrom(level: ServerLevel, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
+fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
     val traversed = traverseGetAllTouchingShips(level, originShip.id)
 
     // this is needed so that schem doesn't try copying phys entities (TODO)
@@ -134,11 +134,11 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, uuid: UUID, originShip: Se
 
     (this as IShipSchematic).saveShipData(ships, originShip)
     // copy ship blocks separately
-    SchematicActionsQueue.queueShipsSavingEvent(level, uuid, ships, this, true, postSaveFn)
+    SchematicActionsQueue.queueShipsSavingEvent(level, player, uuid, ships, this, true, postSaveFn)
     return true
 }
 
-private fun getWorldAABB(it: ServerShip, newTransform: ShipTransform): AABBd = it.worldAABB.transform(it.worldToShip, AABBd()).transform(newTransform.shipToWorld)
+private fun getWorldAABB(it: ServerShip, newTransform: BodyTransform): AABBd = it.worldAABB.transform(it.worldToShip, AABBd()).transform(newTransform.toWorld)
 
 // it will save ship data with origin ship unrotated
 fun IShipSchematic.saveShipData(ships: List<ServerShip>, originShip: ServerShip): AABBd {
@@ -180,11 +180,11 @@ fun IShipSchematic.saveShipData(ships: List<ServerShip>, originShip: ServerShip)
 
         ShipInfo(
             it.id,
-            (MVector3d(newTransform.positionInWorld) - objectCenterInWorld).toJomlVector3d(),
+            (MVector3d(newTransform.position) - objectCenterInWorld).toJomlVector3d(),
             shipAABB,
-            Vector3d(newTransform.positionInShip).sub(chunkMin.toJomlVector3d(), Vector3d()),
-            MVector3d(newTransform.shipToWorldScaling).avg(),
-            Quaterniond(newTransform.shipToWorldRotation)
+            Vector3d(newTransform.positionInModel).sub(chunkMin.toJomlVector3d(), Vector3d()),
+            MVector3d(newTransform.scaling).avg(),
+            Quaterniond(newTransform.rotation)
         )
     }
 

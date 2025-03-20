@@ -15,7 +15,7 @@ issueTrackerURL="https://github.com/SuperSpaceEye/VMod/issues"
 # A list of mods - how many allowed here is determined by the individual mod loader
 [[mods]] #mandatory
 # The modid of the mod
-modId="valkyrien_mod" #mandatory
+modId="the_vmod" #mandatory
 # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
 # ${version} will substitute the value of the Implementation-Version as read from the mod's JAR file metadata
 # see the associated build.gradle script for how to populate this completely automatically during a build
@@ -29,7 +29,7 @@ displayURL="https://github.com/SuperSpaceEye/VMod" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="icon.png" #optional
 # A text field displayed in the mod UI
-credits="getItemFromBlock - Rope renderer and Toolgun model." #optional
+credits="getItemFromBlock - Rope renderer and Toolgun model. Jakub - Physgun model." #optional
 # A text field displayed in the mod UI
 authors="SpaceEye" #optional
 # The description text for the mod (multi line!) (#mandatory)
@@ -37,7 +37,7 @@ description='''
 
 '''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
-[[dependencies.valkyrien_mod]] #optional
+[[dependencies.the_vmod]] #optional
    # the modid of the dependency
    modId="forge" #mandatory
    # Does this dependency have to exist - if not, ordering below must be specified
@@ -49,26 +49,26 @@ description='''
    # Side this dependency is applied on - BOTH, CLIENT or SERVER
    side="BOTH"
 # Here's another dependency
-[[dependencies.valkyrien_mod]]
+[[dependencies.the_vmod]]
    modId="minecraft"
    mandatory=true
    # This version range declares a minimum of the current minecraft version up to but not including the next major version
    versionRange="[1.20.1,1.20.2)"
    ordering="NONE"
    side="BOTH"
-[[dependencies.valkyrien_mod]]
+[[dependencies.the_vmod]]
    modId="valkyrienskies"
    mandatory=false
    versionRange="[2,)"
    ordering="AFTER"
    side="BOTH"
-[[dependencies.valkyrien_mod]]
+[[dependencies.the_vmod]]
    modId="kotlinforforge"
    mandatory=true
    versionRange="[3,)"
    ordering="AFTER"
    side="BOTH"
-[[dependencies.valkyrien_mod]]
+[[dependencies.the_vmod]]
    modId="architectury"
    mandatory=true
    versionRange="[4,)"

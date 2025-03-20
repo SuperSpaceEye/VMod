@@ -65,8 +65,9 @@ class Button(var baseColor: Color, buttonName: String, text_scale: Float = 1f, v
 class ToggleButton(
     var baseColor: Color,
     var activatedColor: Color,
-    buttonName: String, defaultState:
-    Boolean, text_scale: Float = 1f,
+    buttonName: String,
+    defaultState: Boolean,
+    text_scale: Float = 1f,
     var animationTime: Float = 0.5f,
     val fnToActivate: (state: Boolean) -> Unit
 ): UIBlock(if (defaultState) activatedColor else baseColor) {

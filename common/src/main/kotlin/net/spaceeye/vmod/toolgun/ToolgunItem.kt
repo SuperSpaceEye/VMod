@@ -27,7 +27,6 @@ class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
 
             ClientGuiEvent.RENDER_HUD.register {
                 stack, delta ->
-                if (!playerIsUsingToolgun()) {return@register}
                 ClientToolGunState.onRenderHUD(stack, delta)
             }
 

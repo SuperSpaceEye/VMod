@@ -32,9 +32,14 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
 
     private val uuidToPlayer = mutableMapOf<UUID, Player?>()
 
-    val lock = ReentrantLock()
+    protected val lock = ReentrantLock()
+    protected var counter = 0
 
-    var counter = 0
+    val allIds: Set<Int>
+        get() {
+            return mutableSetOf<Int>().also { set -> data.forEach { set.addAll(it.value.keys) } }
+        }
+
 
     protected fun close() {
         subscribersSavedChecksums.clear()
@@ -46,23 +51,27 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
 
 //    abstract fun sendUpdateToSubscriber(ctx: NetworkManager.PacketContext, data: T2RSynchronizationTickData)
 
-    inline fun <T>lock(fn: () -> T): T {
+    protected inline fun <T>lock(fn: () -> T): T {
         synchronized(lock) {
             return fn()
         }
     }
 
-    fun get(page: Long): Map<Int, T>? {return data[page]}
+    fun get(page: Long): Map<Int, T>? = data[page]
 
     fun add(page: Long, item: T): Int = lock {
         set(page, counter, item)
         return counter-1
     }
+    fun add(pages: Set<Long>, item: T): Int = lock {
+        set(pages, counter, item)
+        return counter-1
+    }
 
     fun set(page: Long, index: Int, item: T) = lock {
-        data.getOrPut(page) {mutableMapOf()}[index] = item
+        data.getOrPut(page) { mutableMapOf() }[index] = item
 
-        var updatePage = dataUpdates.getOrPut(page) {mutableMapOf()}
+        var updatePage = dataUpdates.getOrPut(page) { mutableMapOf() }
         if (updatePage == null) {
             updatePage = mutableMapOf()
             dataUpdates[page] = updatePage
@@ -70,6 +79,10 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
         updatePage[index] = item
 
         counter = max(index + 1, counter)
+    }
+
+    fun set(pages: Set<Long>, index: Int, item: T) = lock {
+        pages.forEach { page -> set(page, index, item) }
     }
 
     fun remove(page: Long, index: Int): Boolean = lock {
@@ -120,9 +133,7 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
 
     private fun compileUpdateDataForSubscriber(
         origin: MutableMap<Long, MutableMap<Int, T?>?>,
-        checksums: MutableMap<Long, MutableMap<Int, ByteArray>>,
-        sub: UUID
-    ): T2RSynchronizationTickData? {
+        checksums: MutableMap<Long, MutableMap<Int, ByteArray>>): T2RSynchronizationTickData? {
         val (diff, data) = compileDifferences(origin, checksums)
         if (diff.isEmpty() && data.isEmpty()) { return null }
         diff.forEach { (page, updates) ->
@@ -133,16 +144,23 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
                 line[idx] = item
             }
         }
-        val flatCsms = diff.toList().map { (k, v) -> Pair(k, v?.toList()?.toMutableList()) }.toMutableList()
-        val flatData = data.toList().map { (k, v) -> Pair(k, v.toList().toMutableList<Pair<Int, Serializable>>()) }.toMutableList()
-        return T2RSynchronizationTickData(itemWriter, itemReader, flatCsms, flatData)
+
+        val removedPages = mutableListOf<Long>()
+
+        var idToPageCsms = mutableMapOf<Int, Pair<ByteArray?, MutableList<Long>>>()
+        diff.forEach { (page, idCsm) -> idCsm?.forEach { (id, csm) -> idToPageCsms.getOrPut(id) { Pair(csm, mutableListOf()) }.second.add(page) } ?: removedPages.add(page) }
+
+        var idToPageItem = mutableMapOf<Int, Pair<Serializable, MutableList<Long>>>()
+        data.forEach { (page, idCsm) -> idCsm.forEach { (id, csm) -> idToPageItem.getOrPut(id) { Pair(csm, mutableListOf()) }.second.add(page) } }
+
+        return T2RSynchronizationTickData(itemWriter, itemReader, removedPages, idToPageCsms, idToPageItem)
     }
 
     fun synchronizationTick() {
         if (dataUpdates.isEmpty()) {return}
         lock {
             subscribersSavedChecksums.forEach { (sub, checksums) ->
-                val res = compileUpdateDataForSubscriber(dataUpdates, checksums, sub) ?: return@forEach
+                val res = compileUpdateDataForSubscriber(dataUpdates, checksums) ?: return@forEach
                 trSynchronizeData.startSendingDataToReceiver(res, FakePacketContext((uuidToPlayer[sub] ?: return@forEach) as ServerPlayer))
             }
             dataUpdates.clear()
@@ -152,9 +170,9 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
     internal val trSynchronizeData = object : DataStream<R2TSynchronizationTickData, T2RSynchronizationTickData>(
         streamName,
         receiverSide.opposite(),
-        currentSide,
-        partByteMaxAmount
+        currentSide
     ) {
+        override val partByteAmount: Int = partByteMaxAmount
         override fun requestPacketConstructor(buf: FriendlyByteBuf): R2TSynchronizationTickData = R2TSynchronizationTickData()
         override fun dataPacketConstructor(): T2RSynchronizationTickData = T2RSynchronizationTickData(itemWriter, itemReader)
 
@@ -185,7 +203,7 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
                 }
             }
 
-            val res = compileUpdateDataForSubscriber(tempData, subscribersSavedChecksums[uuid]!!, uuid) ?: return null
+            val res = compileUpdateDataForSubscriber(tempData, subscribersSavedChecksums[uuid]!!) ?: return null
             return Either.Left(res)
         }
     }
@@ -324,9 +342,9 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
     internal val trSynchronizeData = object : DataStream<R2TSynchronizationTickData, T2RSynchronizationTickData>(
         streamName,
         transmitterSide,
-        currentSide,
-        partByteMaxAmount
+        currentSide
     ) {
+        override val partByteAmount: Int = partByteMaxAmount
         override fun requestPacketConstructor(buf: FriendlyByteBuf): R2TSynchronizationTickData = R2TSynchronizationTickData()
         override fun dataPacketConstructor(): T2RSynchronizationTickData = T2RSynchronizationTickData(itemWriter, itemReader)
         override fun transmitterRequestProcessor(req: R2TSynchronizationTickData, ctx: NetworkManager.PacketContext): Either<T2RSynchronizationTickData, RequestFailurePkt>? { throw AssertionError() }
@@ -335,11 +353,13 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
         override fun receiverDataTransmitted(uuid: UUID, pkt: T2RSynchronizationTickData?) {
             if (pkt == null) {return}
             lock {
-                pkt.dataUpdates.forEach { (page, updates) ->
-                    val dataPage = newData  .getOrPut(page) {mutableMapOf()}!!
-                    val sc = serverChecksums.getOrPut(page) {mutableMapOf()}
-                    val cc = cachedChecksums.getOrPut(page) {mutableMapOf()}
-                    updates.forEach {(idx, item) ->
+                pkt.dataUpdates.forEach { (idx, pair) ->
+                    val (item, pages) = pair
+                    pages.forEach { page ->
+                        val dataPage = newData  .getOrPut(page) {mutableMapOf()}!!
+                        val sc = serverChecksums.getOrPut(page) {mutableMapOf()}
+                        val cc = cachedChecksums.getOrPut(page) {mutableMapOf()}
+
                         dataPage[idx] = item as T
                         val hash = item.hash()
                         sc[idx] = hash
@@ -347,28 +367,28 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
                     }
                 }
 
-                pkt.checksumsUpdates.forEach { (page, updates) ->
-                    if (updates == null) {
-                        serverChecksums.remove(page)
-                        cachedChecksums.remove(page)
-                        newData[page] = null
+                pkt.checksumsUpdates.forEach { (idx, pair) ->
+                    val (csm, pages) = pair
+                    if (csm != null) {
+                        pages.forEach { page -> serverChecksums.getOrPut(page) {mutableMapOf()}[idx] = csm }
                         return@forEach
                     }
-                    var newPage = newData.getOrPut(page) {mutableMapOf()}
-                    if (newPage == null) {
-                        newPage = mutableMapOf()
-                        newData[page] = newPage
-                    }
-                    updates.forEach { (idx, item) ->
-                        if (item == null) {
-                            serverChecksums[page]?.remove(idx)
-                            cachedChecksums[page]?.remove(idx)
-                            newPage[idx] = null
-                            return@forEach
-                        }
-                        serverChecksums.getOrPut(page) {mutableMapOf()}[idx] = item
+                    pages.forEach { page ->
+                        serverChecksums[page]?.remove(idx)
+                        cachedData[page]?.remove(idx)
+                        newData
+                            .getOrPut(page) {mutableMapOf()}
+                            .let { it ?: mutableMapOf<Int, T?>().also { newData[page] = it } }
+                            .set(idx, null)
                     }
                 }
+
+                pkt.removedPages.forEach { page ->
+                    serverChecksums.remove(page)
+                    cachedChecksums.remove(page)
+                    newData[page] = null
+                }
+
                 dataChanged = true
             }
         }
@@ -411,59 +431,61 @@ class T2RSynchronizationTickData(
     val itemWriter: (buf: FriendlyByteBuf, item: Serializable) -> Unit,
     val itemReader: (buf: FriendlyByteBuf) -> Serializable
 ): Serializable {
-    var checksumsUpdates = mutableListOf<Pair<Long, MutableList<Pair<Int, ByteArray?>>?>>()
-    var dataUpdates = mutableListOf<Pair<Long, MutableList<Pair<Int, Serializable>>>>()
+    var removedPages = longArrayOf()
+    var checksumsUpdates = mutableListOf<Pair<Int, Pair<ByteArray?, MutableList<Long>>>>()
+    var dataUpdates = mutableListOf<Pair<Int, Pair<Serializable, MutableList<Long>>>>()
 
     constructor(
         itemWriter: (buf: FriendlyByteBuf, item: Serializable) -> Unit,
         itemReader: (buf: FriendlyByteBuf) -> Serializable,
-        _checksumsUpdates: MutableList<Pair<Long, MutableList<Pair<Int, ByteArray?>>?>>,
-        _dataUpdates: MutableList<Pair<Long, MutableList<Pair<Int, Serializable>>>>
+        removedPages: MutableList<Long>,
+        checksumsUpdates: MutableMap<Int, Pair<ByteArray?, MutableList<Long>>>,
+        dataUpdates: MutableMap<Int, Pair<Serializable, MutableList<Long>>>
     ): this(itemWriter, itemReader) {
-        checksumsUpdates = _checksumsUpdates
-        dataUpdates = _dataUpdates
+        this.removedPages = removedPages.toLongArray()
+        this.checksumsUpdates = checksumsUpdates.toList().toMutableList()
+        this.dataUpdates = dataUpdates.toList().toMutableList()
     }
 
     override fun serialize(): FriendlyByteBuf {
         val buf = getBuffer()
 
-        buf.writeCollection(dataUpdates) {buf, item ->
-            buf.writeVarLong(item.first)
-            buf.writeCollection(item.second) {buf, item ->
-                buf.writeVarInt(item.first)
-                itemWriter(buf, item.second)
-            }
+        buf.writeLongArray(removedPages)
+
+        buf.writeCollection(dataUpdates) {buf, (index, pair) ->
+            buf.writeVarInt(index)
+            itemWriter(buf, pair.first)
+            buf.writeVarLongArray(pair.second)
         }
 
-        buf.writeCollection(checksumsUpdates) {buf, item ->
-            buf.writeVarLong(item.first)
-            buf.writeBoolean(item.second != null)
-            if (item.second == null) {return@writeCollection}
-            buf.writeCollection(item.second!!) {buf, item ->
-                buf.writeVarInt(item.first)
-                buf.writeBoolean(item.second != null)
-                if (item.second == null) {return@writeCollection}
-                buf.writeByteArray(item.second!!)
-            }
+        buf.writeCollection(checksumsUpdates) { buf, (index, pair) ->
+            val (csm, pages) = pair
+
+            buf.writeVarInt(index)
+            buf.writeBoolean(csm != null)
+            csm?.let { buf.writeByteArray(it) }
+            buf.writeVarLongArray(pages)
         }
 
         return buf
     }
 
     override fun deserialize(buf: FriendlyByteBuf) {
+        removedPages = buf.readLongArray()
+
         dataUpdates = buf.readCollection({mutableListOf()}) { buf ->
-            Pair(buf.readVarLong(), buf.readCollection({mutableListOf()}) {
-                Pair(buf.readVarInt(), itemReader(buf))
-            })
+            Pair(buf.readVarInt(), Pair(
+                 itemReader(buf),
+                 buf.readVarLongArray()
+            ))
         }
 
-        checksumsUpdates = buf.readCollection({mutableListOf()}) {buf ->
-            Pair(buf.readVarLong(), if (!buf.readBoolean()) {null} else {
-                buf.readCollection({mutableListOf()}) {buf ->
-                Pair(buf.readVarInt(), if (!buf.readBoolean()) {null} else {
-                    buf.readByteArray()
-                })
-            }})
+        checksumsUpdates = buf.readCollection({mutableListOf()}) { buf ->
+            Pair(   buf.readVarInt(), Pair(
+                if (buf.readBoolean())
+                   {buf.readByteArray()} else {null},
+                    buf.readVarLongArray()
+            ))
         }
     }
 }

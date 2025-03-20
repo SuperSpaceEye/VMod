@@ -7,21 +7,24 @@ import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.config.ConfigDelegateRegister
-import net.spaceeye.vmod.constraintsManaging.ConstraintManager
-import net.spaceeye.vmod.constraintsManaging.MConstraintTypes
-import net.spaceeye.vmod.constraintsManaging.MExtensionTypes
+import net.spaceeye.vmod.vEntityManaging.VEntityManager
+import net.spaceeye.vmod.vEntityManaging.VEntityTypes
+import net.spaceeye.vmod.vEntityManaging.VEExtensionTypes
 import net.spaceeye.vmod.events.RandomEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.MessageTypes
+import net.spaceeye.vmod.reflectable.ByteSerializableItem
+import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.physgun.ClientPhysgunState
 import net.spaceeye.vmod.physgun.PhysgunItem
 import net.spaceeye.vmod.physgun.ServerPhysgunState
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
+import net.spaceeye.vmod.shipAttachments.VMAttachments
 import net.spaceeye.vmod.toolgun.*
-import net.spaceeye.vmod.toolgun.modes.ToolgunExtensions
+import net.spaceeye.vmod.toolgun.clientSettings.ClientSettingsTypes
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsTypes
 import net.spaceeye.vmod.utils.ServerLevelHolder
@@ -30,7 +33,6 @@ import net.spaceeye.vmod.utils.closeServerObjects
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.valkyrienskies.core.impl.game.ships.ShipObjectServerWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 fun ILOG(s: String) = VM.logger.info(s)
@@ -38,18 +40,13 @@ fun WLOG(s: String) = VM.logger.warn(s)
 fun DLOG(s: String) = VM.logger.debug(s)
 fun ELOG(s: String) = VM.logger.error(s)
 
-// B is for broadcast
-fun BWLOG(main: String, toBroadcast: String) {
-    WLOG(main)
-    sendHUDErrorToOperators(toBroadcast)
-}
-
 object VM {
     const val MOD_ID = "valkyrien_mod"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!
 
     @JvmStatic
     fun init() {
+        VMAttachments.register()
         ConfigDelegateRegister.initConfig()
         initRenderingData()
         initRegistries()
@@ -62,6 +59,7 @@ object VM {
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientToolGunState
             ClientPhysgunState
+            ClientSettingsTypes
         } }
 
         VMBlocks.register()
@@ -76,13 +74,14 @@ object VM {
 
     @JvmStatic
     fun initRegistries() {
-        MConstraintTypes
-        MExtensionTypes
+        VEntityTypes
+        VEExtensionTypes
         MessageTypes
         RenderingTypes
-        ToolgunExtensions
         ToolgunModes
         ServerSettingsTypes
+        ByteSerializableItem
+        TagSerializableItem
     }
 
     @JvmStatic
@@ -92,7 +91,7 @@ object VM {
 
         LifecycleEvent.SERVER_LEVEL_SAVE.register {
             if (it != ServerLevelHolder.overworldServerLevel) {return@register}
-            ConstraintManager.setDirty()
+            VEntityManager.setDirty()
         }
 
         LifecycleEvent.SERVER_STOPPING.register {
@@ -108,8 +107,8 @@ object VM {
             serverStopping = false
             ServerLevelHolder.server = server
             ServerLevelHolder.overworldServerLevel = server.overworld()
-            ServerLevelHolder.shipObjectWorld = server.shipObjectWorld as ShipObjectServerWorld
-            ConstraintManager.initNewInstance()
+            ServerLevelHolder.shipObjectWorld = server.shipObjectWorld
+            VEntityManager.initNewInstance()
 
             VSGravityManager
             PlayerAccessManager.afterInit()

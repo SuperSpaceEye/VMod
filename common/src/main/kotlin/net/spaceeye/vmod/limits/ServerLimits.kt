@@ -1,18 +1,38 @@
 package net.spaceeye.vmod.limits
 
-import io.netty.buffer.Unpooled
-import net.minecraft.network.FriendlyByteBuf
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import dev.architectury.event.events.common.LifecycleEvent
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.*
-import net.spaceeye.vmod.networking.SerializableItem.get
-import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ByteSerializableItem
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.translate.SERVER_LIMITS_UPDATE_WAS_REJECTED
 import net.spaceeye.vmod.utils.EmptyPacket
+import net.spaceeye.vmod.utils.getMapper
 import kotlin.math.max
 import kotlin.math.min
 
 data class DoubleLimit(var minValue: Double = -Double.MAX_VALUE, var maxValue: Double = Double.MAX_VALUE) { fun get(num: Double) = max(minValue, min(maxValue, num)) }
+data class FloatLimit (var minValue: Float  = -Float.MAX_VALUE,  var maxValue: Float  = Float.MAX_VALUE ) { fun get(num: Float)  = max(minValue, min(maxValue, num)) }
 data class IntLimit   (var minValue: Int    =  Int.MIN_VALUE,    var maxValue: Int    = Int.MAX_VALUE   ) { fun get(num: Int)    = max(minValue, min(maxValue, num)) }
+
+data class BoolLimit  (var mode: Force = Force.NOTHING) {
+    enum class Force {
+        TRUE,
+        FALSE,
+        NOTHING
+    }
+
+    fun get(state: Boolean) = when(mode) {
+        Force.TRUE -> true
+        Force.FALSE -> false
+        Force.NOTHING -> state
+    }
+}
 
 data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
     fun get(str: String): String {
@@ -21,31 +41,49 @@ data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
     }
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class ServerLimitsInstance: AutoSerializable {
-    val compliance: DoubleLimit by get(0, DoubleLimit(1e-300, 1.0))
-    val maxForce: DoubleLimit by get(1, DoubleLimit(1.0))
-    val fixedDistance: DoubleLimit by get(2, DoubleLimit())
-    val extensionDistance: DoubleLimit by get(3, DoubleLimit(0.001))
-    val extensionSpeed: DoubleLimit by get(4, DoubleLimit(0.001))
-    val distanceFromBlock: DoubleLimit by get(5, DoubleLimit(0.0001))
-    val stripRadius: DoubleLimit by get(6, DoubleLimit(0.0, 10.0))
-    val scale: DoubleLimit by get(7, DoubleLimit(0.001))
-    val precisePlacementAssistSides: IntLimit by get(8, IntLimit(2, 11))
+    @JsonIgnore private var i = 0
 
-    val physRopeSegments: IntLimit by get(9, IntLimit(1, 100))
-    val physRopeMassPerSegment: DoubleLimit by get(10, DoubleLimit(0.01, 10000.0))
-    val physRopeRadius: DoubleLimit by get(11, DoubleLimit(0.01, 10.0))
+    val maxForce : FloatLimit by get(i++, FloatLimit())
+    val stiffness: FloatLimit by get(i++, FloatLimit())
+    val damping  : FloatLimit by get(i++, FloatLimit())
 
-    val channelLength: StrLimit by get(12, StrLimit(50))
+    val precisePlacementAssistSides: IntLimit by get(i++, IntLimit(2, 11))
+    val extensionDistance: FloatLimit by get(i++, FloatLimit(0.001f))
+    val distanceFromBlock: DoubleLimit by get(i++, DoubleLimit(0.0))
+    val extensionSpeed: FloatLimit by get(i++, FloatLimit(0.001f))
+    val fixedDistance: FloatLimit by get(i++, FloatLimit())
+    val thrusterForce: DoubleLimit by get(i++, DoubleLimit(1.0, 1e100))
+    val stripRadius: DoubleLimit by get(i++, DoubleLimit(0.0, 10.0))
+    val maxDistance: DoubleLimit by get(i++, DoubleLimit(0.0, 100.0))
+    val gearRatio: FloatLimit by get(i++, FloatLimit(0.001f))
+    var massLimit: DoubleLimit by get(i++, DoubleLimit(Double.MIN_VALUE))
+    val scale: DoubleLimit by get(i++, DoubleLimit(0.001))
 
-    val thrusterScale: DoubleLimit by get(13, DoubleLimit(0.1, 10.0))
+    val physRopeSegments: IntLimit by get(i++, IntLimit(1, 100))
+    val totalMassOfPhysRope: DoubleLimit by get(i++, DoubleLimit(0.01, Double.MAX_VALUE))
+    val physRopeRadius: DoubleLimit by get(i++, DoubleLimit(0.01, 10.0))
+    val physRopeAngleLimit: DoubleLimit by get(i++, DoubleLimit(0.0, 180.0))
+    val physRopeSides: IntLimit by get(i++, IntLimit(2, 10))
+
+    val channelLength: StrLimit by get(i++, StrLimit(50))
+
+    val thrusterScale: DoubleLimit by get(i++, DoubleLimit(0.001, 10.0))
+    val sensorScale: DoubleLimit by get(i++, DoubleLimit(0.001, 10.0))
 }
 
 object ServerLimits {
     init {
-        SerializableItem.registerSerializationItem(DoubleLimit::class, {it, buf -> buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) {buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
-        SerializableItem.registerSerializationItem(IntLimit::class, {it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) {buf -> IntLimit(buf.readInt(), buf.readInt())}
-        SerializableItem.registerSerializationItem(StrLimit::class, {it, buf -> buf.writeInt(it.sizeLimit)}) {buf -> StrLimit(buf.readInt())}
+        ByteSerializableItem.registerSerializationItem(DoubleLimit::class, { it, buf -> buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) { buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
+        ByteSerializableItem.registerSerializationItem(FloatLimit::class, { it, buf -> buf.writeFloat(it.minValue); buf.writeFloat(it.maxValue) }) { buf -> FloatLimit(buf.readFloat(), buf.readFloat())}
+        ByteSerializableItem.registerSerializationItem(IntLimit::class, { it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) { buf -> IntLimit(buf.readInt(), buf.readInt())}
+        ByteSerializableItem.registerSerializationItem(StrLimit::class, { it, buf -> buf.writeInt(it.sizeLimit)}) { buf -> StrLimit(buf.readInt())}
+        ByteSerializableItem.registerSerializationItem(BoolLimit::class, { it, buf -> buf.writeEnum(it.mode) }) { buf -> BoolLimit(buf.readEnum(BoolLimit.Force::class.java)) }
+
+        LifecycleEvent.SERVER_STOPPED.register {
+            wasLoaded = false
+        }
     }
     private var _instance = ServerLimitsInstance()
     var wasLoaded = false
@@ -60,22 +98,21 @@ object ServerLimits {
         }
 
     private fun save(value: ServerLimitsInstance) {
-        val arr = value.serialize().accessByteBufWithCorrectSize()
-        ExternalDataUtil.writeObject("ServerLimits", arr)
+        val mapper = getMapper()
+        ExternalDataUtil.writeObject("ServerLimits.json", mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(value))
     }
 
     private fun load() {
-        val bytes = ExternalDataUtil.readObject("ServerLimits") ?: run {
+        val bytes = ExternalDataUtil.readObject("ServerLimits.json") ?: run {
             save(_instance)
             return
         }
-        val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
         try {
-            val temp = ServerLimitsInstance()
-            temp.deserialize(buf)
-            _instance = temp
+            val mapper = getMapper()
+            _instance = mapper.readValue(bytes, ServerLimitsInstance::class.java)
         } catch (e: Exception) {
-            ELOG("Failed to deserialize Server Limits")
+            ELOG("Failed to deserialize Server Limits.\n${e.stackTraceToString()}")
+            _instance = ServerLimitsInstance()
             save(_instance)
         }
     }
@@ -90,15 +127,9 @@ object ServerLimits {
     private val s2cSendCurrentServerLimits = regS2C<ServerLimitsInstance>("send_current_server_limits", "server_limits") {
         instance = it
     }
-    //TODO
-    private val c2sSendUpdatedServerLimits = regC2S<ServerLimitsInstance>("send_updated_server_limits", "server_limits",
-        {it.hasPermissions(4)}, { s2cServerLimitsUpdateWasRejected.sendToClient(it, EmptyPacket())}) { pkt, player ->
-        instance = pkt
-    }
 
-    //TODO
-    private val s2cServerLimitsUpdateWasRejected = regS2C<EmptyPacket>("server_limits_update_was_rejected", "server_limits") {
-        ClientToolGunState.closeGUI()
-        ClientToolGunState.addHUDError("Serve Limits update was rejected")
+    private val c2sSendUpdatedServerLimits = regC2S<ServerLimitsInstance>("send_updated_server_limits", "server_limits",
+        {it.hasPermissions(4)}, { ServerToolGunState.sendErrorTo(it, SERVER_LIMITS_UPDATE_WAS_REJECTED) }) { pkt, player ->
+        instance = pkt
     }
 }

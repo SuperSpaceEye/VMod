@@ -30,6 +30,7 @@ class SensorMode: ExtendableToolgunMode(), SensorGUI {
     var maxDistance: Double by get(i++, 10.0) { ServerLimits.instance.maxDistance.get(it) }
     var channel: String by get(i++, "sensor") { ServerLimits.instance.channelLength.get(it) }
     var scale: Double by get(i++, 1.0) { ServerLimits.instance.thrusterScale.get(it) }
+    var fullbright: Boolean by get(i++, false)
     var ignoreSelf: Boolean by get(i++, false)
 
 
@@ -52,7 +53,7 @@ class SensorMode: ExtendableToolgunMode(), SensorGUI {
             raycastResult.globalNormalDirection!!,
             maxDistance, ignoreSelf, scale, channel
         ).addExtension(RenderableExtension(ConeBlockRenderer(
-            basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id, Color(0, 255, 0)
+            basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id, Color(0, 255, 0), fullbright
         ))).addExtension(Strippable())){it.addFor(player)}
     }
 

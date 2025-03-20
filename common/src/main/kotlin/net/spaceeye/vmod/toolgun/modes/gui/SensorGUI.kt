@@ -8,6 +8,7 @@ import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.SensorMode
 import net.spaceeye.vmod.translate.CHANNEL
+import net.spaceeye.vmod.translate.FULLBRIGHT
 import net.spaceeye.vmod.translate.IGNORE_SELF_SHIP
 import net.spaceeye.vmod.translate.MAX_DISTANCE
 import net.spaceeye.vmod.translate.SENSOR
@@ -23,6 +24,7 @@ interface SensorGUI: GUIBuilder, EGUIBuilder {
         makeTextEntry(CHANNEL.get(), ::channel, 2f, 2f, parentWindow, ServerLimits.instance.channelLength)
         makeTextEntry(MAX_DISTANCE.get(), ::maxDistance, 2f, 2f, parentWindow, ServerLimits.instance.maxDistance)
         makeTextEntry(SSCALE.get(), ::scale, 2f, 2f, parentWindow, ServerLimits.instance.sensorScale)
+        makeCheckBox(FULLBRIGHT.get(), ::fullbright, 2f, 2f, parentWindow)
         makeCheckBox(IGNORE_SELF_SHIP.get(), ::ignoreSelf, 2f, 2f, parentWindow)
     }
 }

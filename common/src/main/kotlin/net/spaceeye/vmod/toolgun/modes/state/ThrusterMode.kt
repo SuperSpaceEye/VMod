@@ -32,6 +32,7 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
     var force: Double by get(i++, 10000.0) { ServerLimits.instance.thrusterForce.get(it) }
     var channel: String by get(i++, "thruster") { ServerLimits.instance.channelLength.get(it) }
     var scale: Double by get(i++, 1.0) { ServerLimits.instance.thrusterScale.get(it) }
+    var fullbright: Boolean by get(i++, false)
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
@@ -53,7 +54,7 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
             -raycastResult.globalNormalDirection!!,
             force, channel
         ).addExtension(RenderableExtension(ConeBlockRenderer(
-            basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id
+            basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id, fullbright = fullbright
         ))).addExtension(SignalActivator(
             "channel", "percentage"
         )).addExtension(Strippable())){it.addFor(player)}

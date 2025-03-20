@@ -40,13 +40,22 @@ class ConeBlockRenderer(): BlockRenderer(), AutoSerializable {
     var rot: Quaterniond by get(i++, Quaterniond())
     var scale: Float by get(i++, 1.0f, true) { ClientLimits.instance.blockRendererScale.get(it) }
     var color: Color by get(i++, Color(255, 255, 255))
+    var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
 
-    constructor(pos: Vector3d, rot: Quaterniond, scale: Float, shipId: ShipId, color: Color = Color(255, 255, 255)): this() {
+    constructor(
+        pos: Vector3d,
+        rot: Quaterniond,
+        scale: Float,
+        shipId: ShipId,
+        color: Color = Color(255, 255, 255),
+        fullbright: Boolean
+    ): this() {
         this.pos = pos
         this.rot = rot
         this.scale = scale
         this.shipId = shipId
         this.color = color
+        this.fullbright = fullbright
     }
 
     private var highlightTimestamp = 0L
@@ -83,17 +92,17 @@ class ConeBlockRenderer(): BlockRenderer(), AutoSerializable {
         poseStack.scale(scale, scale, scale)
         poseStack.translate(-0.5, -0.5 / scale * shipScale, -0.5)
 
-        val combinedLightIn = LightTexture.pack(0, level.getBrightness(LightLayer.SKY, rpoint.toBlockPos()))
+        val light = if (fullbright) LightTexture.FULL_BRIGHT else rpoint.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
         val combinedOverlayIn = OverlayTexture.NO_OVERLAY
 
-        RenderingStuff.renderSingleBlock(A.testState, poseStack, buffer, combinedLightIn, combinedOverlayIn, if (timestamp < highlightTimestamp) Color(255, 0, 0) else color)
+        RenderingStuff.renderSingleBlock(A.testState, poseStack, buffer, light, combinedOverlayIn, if (timestamp < highlightTimestamp) Color(255, 0, 0) else color)
 
         poseStack.popPose()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
         val spoint = updatePosition(pos, oldToNew[shipId]!!)
-        return ConeBlockRenderer(spoint, Quaterniond(rot), scale, oldToNew[shipId]!!.id, color)
+        return ConeBlockRenderer(spoint, Quaterniond(rot), scale, oldToNew[shipId]!!.id, color, fullbright)
     }
 
     override fun scaleBy(by: Double) {

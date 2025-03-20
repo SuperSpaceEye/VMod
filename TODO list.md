@@ -15,9 +15,6 @@
 # Connection Mode
 * when smth like "onMassChange" exists, create another mode for stiffness, damping, and bounce threshold that makes values depend on mass of the first ship or smth, so that instead of absolute values (like 3000 N of force) it's Nx ship mass (0.5 * 100kg)
 
-# Phys rope
-* rework completely
-
 ## Rendering
 * Add effects for toolgun
 * Group rendering objects by types to elevate common operations and add shared data between rendering types

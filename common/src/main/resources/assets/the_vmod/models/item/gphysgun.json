@@ -1,9 +1,9 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "valkyrien_mod:item/metal_parts",
-		"1": "valkyrien_mod:item/glow_effect",
-		"particle": "valkyrien_mod:item/metal_parts"
+		"0": "the_vmod:item/metal_parts",
+		"1": "the_vmod:item/glow_effect",
+		"particle": "the_vmod:item/metal_parts"
 	},
 	"elements": [
 		{

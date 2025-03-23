@@ -130,10 +130,10 @@
   "key.vmod.reset_ventity_mode": "Reset VEntity Mode",
   "vmod.keymappings_name": "VMod Toolgun",
   
-  "item.valkyrien_mod.toolgun": "Toolgun",
-  "item.valkyrien_mod.physgun": "Physgun",
+  "item.the_vmod.toolgun": "Toolgun",
+  "item.the_vmod.physgun": "Physgun",
   
-  "block.valkyrien_mod.simple_messager": "Simple Messager",
+  "block.the_vmod.simple_messager": "Simple Messager",
   
-  "itemGroup.valkyrien_mod.vmod_tab": "VMod"
+  "itemGroup.the_vmod.vmod_tab": "VMod"
 }

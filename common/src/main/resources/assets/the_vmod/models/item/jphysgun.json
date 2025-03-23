@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
-		"0": "valkyrien_mod:item/phys_gun",
-		"particle": "valkyrien_mod:item/phys_gun"
+		"0": "the_vmod:item/phys_gun",
+		"particle": "the_vmod:item/phys_gun"
 	},
 	"elements": [
 		{

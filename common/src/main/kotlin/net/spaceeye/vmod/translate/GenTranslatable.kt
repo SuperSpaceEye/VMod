@@ -20,17 +20,17 @@ fun main() {
   "key.vmod.reset_ventity_mode": "Reset VEntity Mode",
   "vmod.keymappings_name": "VMod Toolgun",
   
-  "item.valkyrien_mod.toolgun": "Toolgun",
-  "item.valkyrien_mod.physgun": "Physgun",
+  "item.the_vmod.toolgun": "Toolgun",
+  "item.the_vmod.physgun": "Physgun",
   
-  "block.valkyrien_mod.simple_messager": "Simple Messager",
+  "block.the_vmod.simple_messager": "Simple Messager",
   
-  "itemGroup.valkyrien_mod.vmod_tab": "VMod"
+  "itemGroup.the_vmod.vmod_tab": "VMod"
 """
     result += constData
     result += "}"
 
-    Paths.get("common/src/main/resources/assets/valkyrien_mod/lang/en_us.json").writeText(result)
+    Paths.get("common/src/main/resources/assets/the_vmod/lang/en_us.json").writeText(result)
 
     println(result)
 }

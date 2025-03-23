@@ -1,6 +1,6 @@
 {
 	"parent":"minecraft:block/cube_all",
 	"textures": {
-		"all":"valkyrien_mod:block/simple_messager"
+		"all":"the_vmod:block/simple_messager"
 	}
 }

@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [64, 64],
 	"textures": {
-		"0": "valkyrien_mod:block/cone_texture",
-		"particle": "valkyrien_mod:block/cone_texture"
+		"0": "the_vmod:block/cone_texture",
+		"particle": "the_vmod:block/cone_texture"
 	},
 	"elements": [
 		{

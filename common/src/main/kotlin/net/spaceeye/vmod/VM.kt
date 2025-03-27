@@ -41,7 +41,7 @@ fun DLOG(s: String) = VM.logger.debug(s)
 fun ELOG(s: String) = VM.logger.error(s)
 
 object VM {
-    const val MOD_ID = "valkyrien_mod"
+    const val MOD_ID = "the_vmod"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!
 
     @JvmStatic

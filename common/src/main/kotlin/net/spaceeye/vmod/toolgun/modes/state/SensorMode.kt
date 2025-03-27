@@ -49,7 +49,6 @@ class SensorMode: ExtendableToolgunMode(), SensorGUI {
         level.makeVEntity(SensorVEntity(
             ship.id,
             basePos,
-            raycastResult.blockPosition,
             raycastResult.globalNormalDirection!!,
             maxDistance, ignoreSelf, scale, channel
         ).addExtension(RenderableExtension(ConeBlockRenderer(

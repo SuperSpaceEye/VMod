@@ -8,7 +8,6 @@ import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.vEntityManaging.types.constraints.ConnectionConstraint
-import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUI
@@ -58,8 +57,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
             ship2?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
             Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
             Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
-            shipId1, shipId2, maxForce, stiffness, damping, distance, connectionMode,
-            listOf(prresult.blockPosition, rresult.blockPosition),
+            shipId1, shipId2, maxForce, stiffness, damping, distance, connectionMode
         ).addExtension(RenderableExtension(A2BRenderer(
             ship1?.id ?: -1L,
             ship2?.id ?: -1L,
@@ -99,8 +97,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                                 -rresults.second.globalNormalDirection!!,
                                 Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
                                 Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
-                                shipId1, shipId2, it.maxForce, it.stiffness, it.damping, paDistanceFromBlock.toFloat(), it.connectionMode,
-                                listOf(rresults.first.blockPosition, rresults.second.blockPosition),
+                                shipId1, shipId2, it.maxForce, it.stiffness, it.damping, paDistanceFromBlock.toFloat(), it.connectionMode
                             ).addExtension(Strippable())
                         }
                     )

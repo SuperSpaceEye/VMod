@@ -44,8 +44,7 @@ class GearMode: ExtendableToolgunMode(), GearGUI, GearHUD {
             rresult.globalNormalDirection!!,
             Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
             Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
-            shipId1, shipId2, maxForce, gearRatio,
-            listOf()
+            shipId1, shipId2, maxForce, gearRatio
             ).addExtension(Strippable())){it.addFor(player)}
 
         resetState()

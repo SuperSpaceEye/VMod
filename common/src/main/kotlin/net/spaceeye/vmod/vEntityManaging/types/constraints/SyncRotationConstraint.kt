@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.VEntity
 import net.spaceeye.vmod.vEntityManaging.util.*
@@ -40,8 +39,7 @@ class SyncRotationConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
-    override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> { return emptyList() }
-    override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> { return emptyList() }
+    override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> = emptyList()
 
     override fun iOnMakeVEntity(level: ServerLevel): Boolean {
         val maxForce = if (maxForce < 0) { Float.MAX_VALUE.toDouble() } else { maxForce.toDouble() }

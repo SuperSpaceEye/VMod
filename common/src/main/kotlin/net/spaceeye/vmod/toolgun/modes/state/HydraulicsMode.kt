@@ -9,7 +9,6 @@ import net.spaceeye.vmod.vEntityManaging.extensions.SignalActivator
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.vEntityManaging.types.constraints.HydraulicsConstraint
-import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.types.A2BRenderer
@@ -69,8 +68,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
             shipId1, shipId2,
             maxForce, stiffness, damping,
             minLength, minLength + extensionDistance,
-            extensionSpeed, channel, connectionMode,
-            listOf(prresult.blockPosition, rresult.blockPosition)
+            extensionSpeed, channel, connectionMode
         ).addExtension(RenderableExtension(A2BRenderer(
             ship1?.id ?: -1L,
             ship2?.id ?: -1L,
@@ -113,8 +111,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                                 shipId1, shipId2,
                                 it.maxForce, it.stiffness, it.damping,
                                 paDistanceFromBlock.toFloat(), paDistanceFromBlock.toFloat() + it.extensionDistance,
-                                it.extensionSpeed, it.channel, it.connectionMode,
-                                listOf(rresults.first.blockPosition, rresults.second.blockPosition),
+                                it.extensionSpeed, it.channel, it.connectionMode
                             ).addExtension(RenderableExtension(A2BRenderer(
                                 ship1?.id ?: -1L,
                                 ship2?.id ?: -1L,

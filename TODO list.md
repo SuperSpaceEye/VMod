@@ -20,6 +20,7 @@
 * Group rendering objects by types to elevate common operations and add shared data between rendering types
 * Fix rendering when i modify rendering transform of ships and player stands on the ship (VS2 moves camera when player stands on the ship) 
 * Redo how normal renderers and block renderers work
+* Redo ConeBlockRenderer into a more general version
 
 ## Constraint disabler
 * A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
@@ -56,7 +57,6 @@
     * Some other commands idk
 
 ## Schematic
-* Copy phys entities (not very important rn)
 * Right now schematic logic assumes default mc world height. Make it not do that
 
 ## Motor Constraint

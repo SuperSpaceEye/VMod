@@ -1,13 +1,11 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import net.minecraft.core.BlockPos
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.util.*
 import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.utils.*
-import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import kotlin.math.abs
 import kotlin.math.min
@@ -76,9 +74,7 @@ class HydraulicsConstraint(): TwoShipsMConstraint(), VEAutoSerializable, Tickabl
         channel: String,
 
         connectionMode: ConnectionMode,
-
-        attachmentPoints: List<BlockPos>,
-    ): this() {
+        ): this() {
         this.sPos1 = sPos1.copy()
         this.sPos2 = sPos2.copy()
 
@@ -102,8 +98,6 @@ class HydraulicsConstraint(): TwoShipsMConstraint(), VEAutoSerializable, Tickabl
         this.maxForce = maxForce
         this.stiffness = stiffness
         this.damping = damping
-
-        attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
     override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
@@ -114,8 +108,7 @@ class HydraulicsConstraint(): TwoShipsMConstraint(), VEAutoSerializable, Tickabl
             mapped[shipId1] ?: return null,
             mapped[shipId2] ?: return null,
             maxForce, stiffness, damping,
-            minLength, maxLength, extensionSpeed * 20f, channel, connectionMode,
-            copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
+            minLength, maxLength, extensionSpeed * 20f, channel, connectionMode
         )
     }
 

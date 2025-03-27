@@ -1,10 +1,10 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "valkyrien_mod:item/gun",
-		"1": "valkyrien_mod:item/paper",
-		"2": "valkyrien_mod:item/screen",
-		"particle": "valkyrien_mod:item/gun"
+		"0": "the_vmod:item/gun",
+		"1": "the_vmod:item/paper",
+		"2": "the_vmod:item/screen",
+		"particle": "the_vmod:item/gun"
 	},
 	"elements": [
 		{

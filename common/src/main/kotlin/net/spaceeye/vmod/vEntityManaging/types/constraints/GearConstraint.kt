@@ -49,8 +49,6 @@ class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
 
         maxForce: Float,
         gearRatio: Float,
-
-        attachmentPoints: List<BlockPos>,
     ): this() {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
@@ -66,8 +64,6 @@ class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
 
         this.maxForce = maxForce
         this.gearRatio = gearRatio
-
-        attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
     override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
@@ -77,15 +73,12 @@ class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
              sDir1, sDir2, sRot1, sRot2,
              mapped[shipId1] ?: return null,
              mapped[shipId2] ?: return null,
-             maxForce, gearRatio,
-             listOf()
-//             copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
+             maxForce, gearRatio
         )
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
     override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> { return emptyList() }
-    override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> { return emptyList() }
 
     override fun iOnMakeVEntity(level: ServerLevel): Boolean {
         TODO()

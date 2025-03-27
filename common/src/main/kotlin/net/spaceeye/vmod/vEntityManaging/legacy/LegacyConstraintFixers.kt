@@ -13,7 +13,6 @@ import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.deserializeBlockPositions
 import net.spaceeye.vmod.utils.getMyVector3d
 import net.spaceeye.vmod.utils.getQuatd
 import net.spaceeye.vmod.vEntityManaging.LEGACY_SAVE_TAG_NAME
@@ -63,8 +62,6 @@ object LegacyConstraintFixers {
 
     @OptIn(ExperimentalStdlibApi::class)
     @JvmStatic fun fixConnection(tag: CompoundTag, oldToNew: Map<ShipId, ShipId>): VEntity {
-        val attachmentPoints = deserializeBlockPositions(tag.get("attachmentPoints")!!)
-
         val main = tag.getCompound("Main")
         val mode = ConnectionConstraint.ConnectionModes.entries[main.getInt("mode")]
 
@@ -108,7 +105,7 @@ object LegacyConstraintFixers {
         val renderer = tryFixRenderer(tag)
 
         return ConnectionConstraint(
-            sPos1, sPos2, sDir1, sDir2, sRot1, sRot2, shipId1, shipId2, -1f, -1f, -1f, distance, mode, attachmentPoints
+            sPos1, sPos2, sDir1, sDir2, sRot1, sRot2, shipId1, shipId2, -1f, -1f, -1f, distance, mode
         )
             .addExtension(Strippable())
             .addExtension(ConvertedFromLegacy())
@@ -118,8 +115,6 @@ object LegacyConstraintFixers {
 
     @OptIn(ExperimentalStdlibApi::class)
     @JvmStatic fun fixHydraulics(tag: CompoundTag, oldToNew: Map<ShipId, ShipId>): VEntity {
-        val attachmentPoints = deserializeBlockPositions(tag.get("attachmentPoints")!!)
-
         val signalActivator = tag.getCompound("Extensions").getCompound("SignalActivator")
         val percentageNameReflection = signalActivator.getString("percentageNameReflection")
         val channelNameReflection = signalActivator.getString("channelNameReflection")
@@ -172,7 +167,7 @@ object LegacyConstraintFixers {
 
         return HydraulicsConstraint(
             sPos1, sPos2, sDir1, sDir2, sRot1, sRot2, shipId1, shipId2, -1f, -1f, -1f,
-            minDistance, maxDistance, extensionSpeed, channel, mode, attachmentPoints
+            minDistance, maxDistance, extensionSpeed, channel, mode
         )
             .also { it.extendedDist = extendedDist }
             .addExtension(Strippable())
@@ -183,8 +178,6 @@ object LegacyConstraintFixers {
     }
 
     @JvmStatic fun fixRope(tag: CompoundTag, oldToNew: Map<ShipId, ShipId>): VEntity {
-        val attachmentPoints = deserializeBlockPositions(tag.get("attachmentPoints")!!)
-
         val main = tag.getCompound("Main")
 
         val sPos1 = main.getMyVector3d("localPos0")
@@ -197,7 +190,7 @@ object LegacyConstraintFixers {
         val renderer = tryFixRenderer(tag)
 
         return RopeConstraint(
-            sPos1, sPos2, shipId1, shipId2, -1f, -1f, -1f, ropeLength, attachmentPoints
+            sPos1, sPos2, shipId1, shipId2, -1f, -1f, -1f, ropeLength
         )
             .addExtension(Strippable())
             .addExtension(ConvertedFromLegacy())
@@ -232,7 +225,6 @@ object LegacyConstraintFixers {
         val main = tag.getCompound("Main")
         val shipId = main.getLong("shipId").let { oldToNew[it] ?: it }
         val pos = main.getMyVector3d("pos")
-        val bpos = BlockPos.of(main.getLong("bpos"))
         val forceDir = main.getMyVector3d("forceDir")
         val channel = main.getString("channel")
         val force = main.getDouble("force")
@@ -240,7 +232,7 @@ object LegacyConstraintFixers {
         val renderer = tryFixRenderer(tag)
 
         return ThrusterVEntity(
-            shipId, pos, bpos, forceDir, force, channel
+            shipId, pos, forceDir, force, channel
         ).addExtension(Strippable())
             .addExtension(ConvertedFromLegacy())
             .addExtension(SignalActivator(channelNameReflection, percentageNameReflection))

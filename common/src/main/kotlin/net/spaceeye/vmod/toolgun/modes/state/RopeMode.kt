@@ -51,8 +51,7 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
         level.makeVEntity(RopeConstraint(
             spoint1, spoint2,
             shipId1, shipId2,
-            maxForce, stiffness, damping, dist,
-            listOf(prresult.blockPosition, rresult.blockPosition),
+            maxForce, stiffness, damping, dist
         ).addExtension(RenderableExtension(RopeRenderer(
             ship1?.id ?: -1L,
             ship2?.id ?: -1L,

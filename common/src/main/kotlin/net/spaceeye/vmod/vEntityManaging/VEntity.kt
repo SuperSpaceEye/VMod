@@ -34,7 +34,6 @@ interface VEntity {
      * By default (-1) should return all attachment positions
      * If given shipId, should only return positions belonging to that shipId
      */
-    fun getAttachmentPositions(shipId: Long = -1): List<BlockPos>
     fun getAttachmentPoints(shipId: Long = -1): List<Vector3d>
 
     // is called on ship splitting

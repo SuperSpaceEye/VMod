@@ -88,9 +88,9 @@
   "key.vmod.reset_constraint_mode": "重置约束模式",
   "vmod.keymappings_name": "VMod 工具枪",
 
-  "item.valkyrien_mod.toolgun": "工具枪",
+  "item.the_vmod.toolgun": "工具枪",
 
-  "block.valkyrien_mod.simple_messager": "简单的消息发送器",
+  "block.the_vmod.simple_messager": "简单的消息发送器",
 
-  "itemGroup.valkyrien_mod.vmod_tab": "VMod"
+  "itemGroup.the_vmod.vmod_tab": "VMod"
 }

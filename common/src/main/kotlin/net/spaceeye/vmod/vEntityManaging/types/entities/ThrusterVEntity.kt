@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.vEntityManaging.types.entities
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
@@ -11,7 +10,6 @@ import net.spaceeye.vmod.vEntityManaging.Tickable
 import net.spaceeye.vmod.vEntityManaging.util.ExtendableVEntity
 import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
 import net.spaceeye.vmod.vEntityManaging.util.TickableVEntityExtension
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.shipAttachments.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.getCenterPos
@@ -25,17 +23,15 @@ class ThrusterVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
 
     var shipId: ShipId by get(i++, -1)
     var pos: Vector3d by get(i++, Vector3d())
-    var bpos: BlockPos by get(i++, BlockPos(0, 0, 0))
     var forceDir: Vector3d by get(i++, Vector3d())
     var force: Double by get(i++, 1.0)
     var channel: String by get(i++, "")
     var thrusterId: Int by get(i++, -1)
     var percentage: Double = 0.0
 
-    constructor(shipId: ShipId, pos: Vector3d, bpos: BlockPos, forceDir: Vector3d, force: Double, channel: String): this() {
+    constructor(shipId: ShipId, pos: Vector3d, forceDir: Vector3d, force: Double, channel: String): this() {
         this.shipId = shipId
         this.pos = pos
-        this.bpos = bpos
         this.forceDir = forceDir
         this.force = force
         this.channel = channel
@@ -43,7 +39,6 @@ class ThrusterVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
 
     override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>) = allShips.contains(shipId)
     override fun iAttachedToShips(dimensionIds: Collection<ShipId>) = mutableListOf(shipId)
-    override fun iGetAttachmentPositions(qshipId: ShipId): List<BlockPos> = if (shipId == qshipId || qshipId == -1L) listOf(bpos) else emptyList()
     override fun iGetAttachmentPoints(qshipId: ShipId): List<Vector3d> = if (shipId == qshipId || qshipId == -1L) listOf(Vector3d(pos)) else emptyList()
 
 
@@ -66,9 +61,8 @@ class ThrusterVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         val nCentered = getCenterPos(nShip.transform.positionInShip.x().toInt(), nShip.transform.positionInShip.z().toInt())
 
         val nPos = pos - oCentered + nCentered
-        val nBPos = (Vector3d(bpos) - oCentered + nCentered).toBlockPos()
 
-        return ThrusterVEntity(nShip.id, nPos, nBPos, Vector3d(forceDir), force, channel)
+        return ThrusterVEntity(nShip.id, nPos, Vector3d(forceDir), force, channel)
     }
 
     override fun iOnMakeVEntity(level: ServerLevel): Boolean {

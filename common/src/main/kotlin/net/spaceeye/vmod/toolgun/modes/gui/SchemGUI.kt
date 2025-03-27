@@ -52,10 +52,13 @@ class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
 }
 
 interface SchemGUI: GUIBuilder, EGUIBuilder {
-    override val itemName get() = SCHEMATIC
+    //stupidity but there shouldn't be more than 1 GUI object anyway
+    companion object {
+        var itemsScroll: ScrollComponent? = null
+        lateinit var parentWindow: UIContainer
+    }
 
-    var itemsScroll: ScrollComponent?
-    var parentWindow: UIContainer
+    override val itemName get() = SCHEMATIC
 
     fun makeScroll() {
         this as SchemMode
@@ -117,7 +120,7 @@ interface SchemGUI: GUIBuilder, EGUIBuilder {
 
     override fun eMakeGUISettings(parentWindow: UIContainer) {
         this as SchemMode
-        this.parentWindow = parentWindow
+        Companion.parentWindow = parentWindow
 
         Button(Color.GRAY.brighter(), SAVE.get()) {
             SaveForm(this) childOf parentWindow

@@ -1,16 +1,16 @@
 package net.spaceeye.vmod.gui
 
-import com.mojang.blaze3d.vertex.PoseStack
 import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.WindowScreen
 import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
+import net.minecraft.client.gui.GuiGraphics
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
 
 
-class ScreenWindow private constructor(): WindowScreen(ElementaVersion.V5, drawDefaultBackground = false) {
+class ScreenWindow private constructor(): WindowScreen(ElementaVersion.V8, drawDefaultBackground = false) {
     private val linearExtensions = mutableListOf<ScreenWindowAddition>()
     private val _extensions = mutableSetOf<ScreenWindowAddition>()
     val extensions: Collection<ScreenWindowAddition> get() = _extensions
@@ -36,8 +36,8 @@ class ScreenWindow private constructor(): WindowScreen(ElementaVersion.V5, drawD
         height = 100.percent()
     } childOf window
 
-    fun onRenderHUD(stack: PoseStack, delta: Float) {
-        linearExtensions.forEach { it.onRenderHUD(stack, delta) }
+    fun onRenderHUD(stack: GuiGraphics, delta: Float) {
+        linearExtensions.forEach { it.onRenderHUD(stack.pose(), delta) }
 
         render(stack, 0, 0, delta)
     }

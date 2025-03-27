@@ -36,7 +36,7 @@ public abstract class TakeoffBearingMixin {
 
     @Inject(method = "load$lambda$1$lambda$0", at = @At(value = "INVOKE", target = "Lnet/takeoff/blockentity/BearingBlockEntity;createConstraints(Lorg/valkyrienskies/core/api/ships/ServerShip;)Z"), remap = false, cancellable = true)
     private static void vmodRedirect$loadLambda(BearingBlockEntity this$0, ShipObjectServer $otherShip, VSEvents.ShipLoadEvent handler, RegisteredHandler ship, CallbackInfo ci) {
-        this$0.createConstraints((ServerShip) $otherShip);
+        this$0.createConstraints($otherShip);
         ci.cancel();
     }
 }

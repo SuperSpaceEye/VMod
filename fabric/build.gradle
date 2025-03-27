@@ -61,8 +61,8 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21"
     api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
 
-    include (modImplementation("gg.essential:universalcraft-1.18.1-fabric:323"))
-    include (modImplementation("gg.essential:elementa-1.18.1-fabric:622"))
+    implementation(include("gg.essential:elementa:${rootProject.elementaVersion}"))
+    modImplementation(include("gg.essential:universalcraft-1.18.1-fabric:${rootProject.ucVersion}"))
 
     implementation 'com.electronwill.night-config:core:3.6.3'
     implementation 'com.electronwill.night-config:toml:3.6.3'
@@ -71,8 +71,6 @@ dependencies {
     modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
 
     modCompileOnlyApi(files("vs_jars/takeoff-fabric-1.0.0-beta1+308678c5c5.jar"))
-
-//    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.0-beta.2")))
 }
 
 processResources {

@@ -133,8 +133,8 @@ object ClientToolGunState : ClientClosable() {
             screen = temp
             temp
         }).onRenderHUD(stack, delta)
-        } catch (e: Exception) {
-        } catch (e: Error) {}
+        } catch (e: Exception) { ELOG("HUD rendering failed\n${e.stackTraceToString()}")
+        } catch (e: Error) { ELOG("HUD rendering failed\n${e.stackTraceToString()}") }
     }
 
     private lateinit var gui: MainToolgunGUIWindow

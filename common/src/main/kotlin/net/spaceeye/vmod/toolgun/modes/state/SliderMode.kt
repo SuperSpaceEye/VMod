@@ -77,9 +77,7 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
             Quaterniond(axisRes1.ship?.transform?.shipToWorldRotation ?: Quaterniond()),
             Quaterniond(shipRes1.ship?.transform?.shipToWorldRotation ?: Quaterniond()),
             axisRes1.shipId, shipRes1.shipId,
-            maxForce, connectionMode,
-            setOf(axisRes1.blockPosition, shipRes1.blockPosition,
-                  axisRes2.blockPosition, shipRes2.blockPosition).toList()
+            maxForce, connectionMode
         ).addExtension(Strippable())) {it.addFor(player)}
 
         sresetState(player)

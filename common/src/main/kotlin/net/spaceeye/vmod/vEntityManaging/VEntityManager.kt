@@ -256,7 +256,7 @@ class VEntityManager: SavedData() {
             entity.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipToVEntity.computeIfAbsent(it) { mutableListOf() }.add(entity) }
             idToVEntity[entity.mID] = entity
             if (entity is Tickable) { tickingVEntities.add(entity) }
-            entity.getAttachmentPositions().forEach { posToMId.addItemTo(entity.mID, it) }
+            entity.getAttachmentPoints().forEach { posToMId.addItemTo(entity.mID, it.toBlockPos()) }
 
             setDirty()
 
@@ -273,7 +273,7 @@ class VEntityManager: SavedData() {
         entity.onDeleteVEntity(level)
         idToVEntity.remove(id)
         if (entity is Tickable) { tickingVEntities.remove(entity) }
-        entity.getAttachmentPositions().forEach { posToMId.removeItemFromPos(entity.mID, it) }
+        entity.getAttachmentPoints().forEach { posToMId.removeItemFromPos(entity.mID, it.toBlockPos()) }
 
         setDirty()
         return true
@@ -297,16 +297,14 @@ class VEntityManager: SavedData() {
             if (idToVEntity.contains(entity.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING VEntity IN makeVEntityWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
             idToVEntity[entity.mID] = entity
             if (entity is Tickable) { tickingVEntities.add(entity) }
-            entity.getAttachmentPositions().forEach { posToMId.addItemTo(entity.mID, it) }
+            entity.getAttachmentPoints().forEach { posToMId.addItemTo(entity.mID, it.toBlockPos()) }
 
             setDirty()
             callback(entity.mID)
         }
     }
 
-    fun tryGetIdsOfPosition(pos: BlockPos): List<VEntityId>? {
-        return posToMId.getItemsAt(pos)
-    }
+    fun tryGetIdsOfPosition(pos: BlockPos): List<VEntityId>? = posToMId.getItemsAt(pos)
 
     fun disableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId, callback: (() -> Unit)? = null): Boolean {
         if (!level.shipObjectWorld.disableCollisionBetweenBodies(shipId1, shipId2)) { return false }

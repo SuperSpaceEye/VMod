@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
@@ -8,8 +7,6 @@ import net.spaceeye.vmod.vEntityManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.vEntityManaging.util.mc
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
-import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.tryMovePosition
 import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
 
@@ -35,8 +32,7 @@ class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         stiffness: Float,
         damping: Float,
 
-        ropeLength: Float,
-        attachmentPoints: List<BlockPos>,
+        ropeLength: Float
     ): this() {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
@@ -49,7 +45,6 @@ class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         this.damping = damping
 
         this.ropeLength = ropeLength
-        attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
     override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
@@ -58,9 +53,8 @@ class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
              tryMovePosition(sPos2, shipId2, level, mapped) ?: return null,
              mapped[shipId1] ?: return null,
              mapped[shipId2] ?: return null,
-             maxForce, stiffness, damping, ropeLength,
-             copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
-        )
+             maxForce, stiffness, damping, ropeLength
+         )
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {

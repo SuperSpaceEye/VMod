@@ -22,8 +22,6 @@ interface ExtendableVEntityIMethods {
 
     // positions to which VEntity is "attached" to the ship/world
     // is needed for strip tool, moving VEntities on ship splitting
-    fun iGetAttachmentPositions(shipId: Long): List<BlockPos>
-
     fun iGetAttachmentPoints(shipId: Long): List<Vector3d>
 
     // is called on ship splitting
@@ -65,10 +63,6 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
 
     final override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
         return iAttachedToShips(dimensionIds)
-    }
-
-    final override fun getAttachmentPositions(shipId: Long): List<BlockPos> {
-        return iGetAttachmentPositions(shipId)
     }
 
     final override fun getAttachmentPoints(shipId: Long): List<Vector3d> {

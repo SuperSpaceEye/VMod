@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
@@ -57,12 +56,9 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
 
         distance: Float,
         connectionMode: ConnectionModes,
-
-        attachmentPoints: List<BlockPos>,
         ): this() {
         this.distance = distance
         this.connectionMode = connectionMode
-        attachmentPoints_ = attachmentPoints.toMutableList()
         this.sPos1 = sPos1.copy()
         this.sPos2 = sPos2.copy()
 
@@ -87,8 +83,7 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
             sDir1, sDir2, sRot1, sRot2,
             mapped[shipId1] ?: return null,
             mapped[shipId2] ?: return null,
-            maxForce, stiffness, damping, distance, connectionMode,
-            copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
+            maxForce, stiffness, damping, distance, connectionMode
         )
         new.sDir1 = sDir1.copy()
         new.sDir2 = sDir2.copy()

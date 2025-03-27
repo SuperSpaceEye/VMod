@@ -16,7 +16,6 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 
 abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
     @JsonIgnore val cIDs = mutableListOf<VSJointId>() // should be used to store VS ids
-    @JsonIgnore var attachmentPoints_ = mutableListOf<BlockPos>() //TODO i should do smth about this
     @JsonIgnore protected var i = 0 // use in get for auto serialization TODO move it to ExtendableVEntity?
 
     abstract var shipId1: Long
@@ -43,13 +42,6 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
     }
 
     override fun getVSIds(): Set<VSJointId> = cIDs.toSet()
-    override fun iGetAttachmentPositions(shipId: ShipId): List<BlockPos> = if (shipId == -1L) attachmentPoints_ else {
-        when (shipId) {
-            shipId1 -> listOf(attachmentPoints_[0])
-            shipId2 -> listOf(attachmentPoints_[1])
-            else -> listOf()
-        }
-    }
     override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> =
         if (shipId == -1L) listOf(
             sPos1.copy(),
@@ -65,7 +57,6 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
     @NonExtendable
     override fun nbtSerialize(): CompoundTag? {
         val tag = super.nbtSerialize() ?: return null
-        tag.put("attachmentPoints", serializeBlockPositions(attachmentPoints_))
         tag.putMyVector3d("sPos1", sPos1)
         tag.putMyVector3d("sPos2", sPos2)
         tag.putLong("shipId1", shipId1)
@@ -75,7 +66,6 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
 
     @NonExtendable
     override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity? {
-        attachmentPoints_ = deserializeBlockPositions(tag.get("attachmentPoints")!!)
         sPos1 = tag.getMyVector3d("sPos1")
         sPos2 = tag.getMyVector3d("sPos2")
         shipId1 = tag.getLong("shipId1")

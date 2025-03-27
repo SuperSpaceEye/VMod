@@ -1,12 +1,10 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.VEntity
 import net.spaceeye.vmod.vEntityManaging.util.*
 import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.tryMovePosition
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -49,11 +47,8 @@ class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         maxForce: Float,
 
         connectionMode: ConnectionMode,
-
-        attachmentPoints: List<BlockPos>,
     ): this() {
         this.connectionMode = connectionMode
-        attachmentPoints_ = attachmentPoints.toMutableList()
         this.sPos1 = sPos1.copy()
         this.sPos2 = sPos2.copy()
 
@@ -67,8 +62,6 @@ class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         this.shipId2 = shipId2
 
         this.maxForce = maxForce
-
-        attachmentPoints_.addAll(attachmentPoints)
     }
 
     override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
@@ -78,8 +71,7 @@ class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
             sDir1, sDir2, sRot1, sRot2,
             mapped[shipId1] ?: return null,
             mapped[shipId2] ?: return null,
-            maxForce, connectionMode,
-            copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
+            maxForce, connectionMode
         )
     }
 

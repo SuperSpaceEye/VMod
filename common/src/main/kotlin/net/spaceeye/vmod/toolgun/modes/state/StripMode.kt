@@ -99,21 +99,19 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     }
 
     private fun stripInRadius(level: ServerLevel, raycastResult: RaycastFunctions.RaycastResult) {
-        val instance = VEntityManager.getInstance()
-
         val b = raycastResult.blockPosition
         val r = max(ceil(radius).toInt(), 1)
 
         for (x in b.x-r .. b.x+r) {
         for (y in b.y-r .. b.y+r) {
         for (z in b.z-r .. b.z+r) {
-            val list = instance.tryGetIdsOfPosition(BlockPos(x, y, z)) ?: continue
+            val list = level.getVEntityIdsOfPosition(BlockPos(x, y, z)) ?: continue
             val temp = mutableListOf<VEntityId>()
             temp.addAll(list)
             temp.forEach {const ->
                 val mc = level.getVEntity(const)
                 if (mc !is ExtendableVEntity || mc.getExtensionsOfType<Strippable>().isEmpty()) { return@forEach }
-                mc!!.getAttachmentPoints().forEach {
+                mc.getAttachmentPoints().forEach {
                     if ((it - raycastResult.globalHitPos!!).dist() <= radius) {
                         level.removeVEntity(const)
                     }

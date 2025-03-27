@@ -40,7 +40,6 @@ class DisabledCollisionConstraint(): ExtendableVEntity(), VEAutoSerializable {
         return toReturn
     }
 
-    override fun iGetAttachmentPositions(shipId: Long): List<BlockPos> = emptyList()
     override fun iGetAttachmentPoints(shipId: Long): List<Vector3d> = emptyList()
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
     override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? { return DisabledCollisionConstraint(mapped[shipId1] ?: return null, mapped[shipId2] ?: return null) }

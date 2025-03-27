@@ -14,7 +14,6 @@ import net.spaceeye.vmod.utils.getVector3d
 import net.spaceeye.vmod.utils.linspace
 import net.spaceeye.vmod.utils.putQuatd
 import net.spaceeye.vmod.utils.putVector3d
-import net.spaceeye.vmod.utils.vs.copyAttachmentPoints
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.tryMovePosition
 import net.spaceeye.vmod.vEntityManaging.VEntity
@@ -78,8 +77,6 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         massPerSegment: Double,
         radius: Double,
         angleLimit: Double,
-
-        attachmentPoints: List<BlockPos>,
         ): this() {
         this.sPos1 = sPos1.copy()
         this.sPos2 = sPos2.copy()
@@ -98,8 +95,6 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         this.massPerSegment = massPerSegment
         this.radius = radius
         this.angleLimit = angleLimit
-
-        attachmentPoints_ = attachmentPoints.toMutableList()
     }
 
     override fun iCopyVEntity(
@@ -113,8 +108,7 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
             mapped[shipId1] ?: return null,
             mapped[shipId2] ?: return null,
             stiffness, maxForce,
-            ropeLength, segments, massPerSegment, radius, angleLimit,
-            copyAttachmentPoints(sPos1, sPos2, shipId1, shipId2, attachmentPoints_, level, mapped),
+            ropeLength, segments, massPerSegment, radius, angleLimit
             ).also { con ->
             val ship = level.shipObjectWorld.allShips.getById(con.shipId1)!!
             con.data = this.data.zip(relState).map { (data, state) ->

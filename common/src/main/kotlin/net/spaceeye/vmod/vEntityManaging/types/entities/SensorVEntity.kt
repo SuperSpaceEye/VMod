@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.vEntityManaging.types.entities
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import net.minecraft.core.BlockPos
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.VEntity
@@ -27,7 +26,6 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
 
     var shipId: ShipId by get(i++, -1)
     var pos: Vector3d by get(i++, Vector3d())
-    var bpos: BlockPos by get(i++, BlockPos(0, 0, 0))
     var lookDir: Vector3d by get(i++, Vector3d())
     var maxDistance: Double by get(i++, 10.0)
     var channel: String by get(i++, "")
@@ -37,7 +35,6 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
 
     constructor(shipId: ShipId,
                 pos: Vector3d,
-                bpos: BlockPos,
                 lookDir: Vector3d,
                 distance: Double,
                 ignoreSelf: Boolean,
@@ -45,7 +42,6 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
                 channel: String): this() {
         this.shipId = shipId
         this.pos = pos
-        this.bpos = bpos
         this.channel = channel
         this.lookDir = lookDir
         this.maxDistance = distance
@@ -55,7 +51,6 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
 
     override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>) = allShips.contains(shipId)
     override fun iAttachedToShips(dimensionIds: Collection<ShipId>) = mutableListOf(shipId)
-    override fun iGetAttachmentPositions(qshipId: ShipId): List<BlockPos> = if (shipId == qshipId || qshipId == -1L) listOf(bpos) else emptyList()
     override fun iGetAttachmentPoints(qshipId: ShipId): List<Vector3d> = if (shipId == qshipId || qshipId == -1L) listOf(Vector3d(pos)) else emptyList()
 
 
@@ -72,9 +67,8 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         val nCentered = getCenterPos(nShip.transform.positionInShip.x().toInt(), nShip.transform.positionInShip.z().toInt())
 
         val nPos = pos - oCentered + nCentered
-        val nBPos = (Vector3d(bpos) - oCentered + nCentered).toBlockPos()
 
-        return SensorVEntity(nShip.id, nPos, nBPos, lookDir, maxDistance, ignoreSelf, scale, channel)
+        return SensorVEntity(nShip.id, nPos, lookDir, maxDistance, ignoreSelf, scale, channel)
     }
 
     override fun iOnMakeVEntity(level: ServerLevel): Boolean {

@@ -9,7 +9,6 @@ import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.SignalActivator
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.types.entities.ThrusterVEntity
-import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
 import net.spaceeye.vmod.toolgun.modes.gui.ThrusterGUI
@@ -50,7 +49,6 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
         level.makeVEntity(ThrusterVEntity(
             ship.id,
             basePos,
-            raycastResult.blockPosition,
             -raycastResult.globalNormalDirection!!,
             force, channel
         ).addExtension(RenderableExtension(ConeBlockRenderer(

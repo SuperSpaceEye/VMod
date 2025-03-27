@@ -73,8 +73,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
             sDir1, sDir2,
             shipId1, shipId2,
             stiffness, maxForce,
-            dist, segments, totalMass / segments, radius, Math.toRadians(angleLimit),
-            listOf(prresult.blockPosition, rresult.blockPosition),
+            dist, segments, totalMass / segments, radius, Math.toRadians(angleLimit)
         )   .also { it.addExtension(PhysRopeRenderable(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, up1, up2, right1, right2, Color(255, 255, 255), sides, fullbright, listOf()))) }
             .addExtension(Strippable())
             .also {level.makeVEntity(it) {it.addFor(player)} }

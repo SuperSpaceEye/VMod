@@ -57,7 +57,6 @@
     * Some other commands idk
 
 ## Schematic
-* Copy phys entities (not very important rn)
 * Right now schematic logic assumes default mc world height. Make it not do that
 
 ## Motor Constraint

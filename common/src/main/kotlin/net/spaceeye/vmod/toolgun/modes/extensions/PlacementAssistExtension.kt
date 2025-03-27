@@ -17,7 +17,6 @@ import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
-import net.spaceeye.vmod.networking.S2CSendTraversalInfo
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.toolgun.CELOG
@@ -38,6 +37,7 @@ import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistNetworking.S2CSendTraversalInfo
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -287,9 +287,11 @@ open class PlacementAssistNetworking(networkName: String): BaseNetworking<Extend
 
         obj.paCaughtShips!!.forEach {
             val ship = clientShipObjectWorld.allShips.getById(it)
-            ship?.transformProvider = CenteredAroundPlacementAssistTransformProvider(primaryTransform, ship!!)
+            ship?.transformProvider = CenteredAroundPlacementAssistTransformProvider(primaryTransform, ship)
         }
     }
+
+    data class S2CSendTraversalInfo(var data: LongArray): AutoSerializable
 }
 
 interface PlacementAssistServerPart {
@@ -369,7 +371,7 @@ interface PlacementAssistServerPart {
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return handleFailure(player)
         paFirstResult = raycastResult
         val traversed = traverseGetConnectedShips(ship.id).traversedShipIds
-        paNetworkingObject.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, S2CSendTraversalInfo(traversed))
+        paNetworkingObject.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, S2CSendTraversalInfo(traversed.toLongArray()))
     }
 
     private fun paFunctionSecond(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {

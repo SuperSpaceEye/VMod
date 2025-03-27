@@ -279,10 +279,7 @@ class VEntityManager: SavedData() {
         return true
     }
 
-    fun getAllVEntitiesIdOfId(shipId: ShipId): List<VEntityId> {
-        val ventities = shipToVEntity[shipId] ?: return listOf()
-        return ventities.map { it.mID }
-    }
+    fun getAllVEntitiesIdOfId(shipId: ShipId): List<VEntityId> = shipToVEntity[shipId]?.map { it.mID } ?: emptyList()
 
     @Internal
     fun makeVEntityWithId(level: ServerLevel, entity: VEntity, id: Int, callback: ((VEntityId?) -> Unit)) {

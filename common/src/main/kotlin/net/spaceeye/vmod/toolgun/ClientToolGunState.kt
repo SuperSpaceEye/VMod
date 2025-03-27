@@ -132,9 +132,9 @@ object ClientToolGunState : ClientClosable() {
             temp.init(minecraft, minecraft.window.guiScaledWidth, minecraft.window.guiScaledHeight)
             screen = temp
             temp
-        }).onRenderHUD(stack.pose(), delta)
-        } catch (e: Exception) {
-        } catch (e: Error) {}
+        }).onRenderHUD(stack, delta)
+        } catch (e: Exception) { ELOG("HUD rendering failed\n${e.stackTraceToString()}")
+        } catch (e: Error) { ELOG("HUD rendering failed\n${e.stackTraceToString()}") }
     }
 
     private lateinit var gui: MainToolgunGUIWindow

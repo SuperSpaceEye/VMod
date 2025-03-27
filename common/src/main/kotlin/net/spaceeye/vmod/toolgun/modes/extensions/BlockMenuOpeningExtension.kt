@@ -1,5 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.extensions
 
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
@@ -8,7 +9,7 @@ import net.spaceeye.vmod.translate.PRESS_R_TO_RESET_STATE
 import net.spaceeye.vmod.translate.get
 import org.lwjgl.glfw.GLFW
 
-class BlockMenuOpeningExtension<T: ExtendableToolgunMode>(val failMsg: String? = PRESS_R_TO_RESET_STATE.get(), var predicate: (inst: T) -> Boolean): ToolgunModeExtension {
+class BlockMenuOpeningExtension<T: ExtendableToolgunMode>(val failMsg: Component? = PRESS_R_TO_RESET_STATE, var predicate: (inst: T) -> Boolean): ToolgunModeExtension {
     lateinit var inst: ExtendableToolgunMode
 
     override fun onInit(inst: ExtendableToolgunMode, type: BaseNetworking.EnvType) {
@@ -22,7 +23,7 @@ class BlockMenuOpeningExtension<T: ExtendableToolgunMode>(val failMsg: String? =
         if (!keyPressed) {return false}
 
         val block = predicate(inst as T)
-        if (block && failMsg != null) { ClientToolGunState.addHUDError(failMsg) }
+        if (block && failMsg != null) { ClientToolGunState.addHUDError(failMsg.get()) }
         return block
     }
 }

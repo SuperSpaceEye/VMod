@@ -49,15 +49,18 @@ dependencies {
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
     modApi("org.valkyrienskies:valkyrienskies-120-fabric:${rootProject.vs2_version}") { transitive = false }
-    modCompileOnlyApi("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:api-game:${rootProject.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:util:${rootProject.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:impl:${rootProject.vs_core_version}") { transitive = false }
 
     // Kotlin
     modImplementation("net.fabricmc:fabric-language-kotlin:1.10.10+kotlin.1.9.10")
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21"
     api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
 
-    include (modImplementation("gg.essential:elementa-1.18.1-fabric:649"))
-    include (modImplementation("gg.essential:universalcraft-1.20.1-fabric:323"))
+    implementation(include("gg.essential:elementa:${rootProject.elementaVersion}"))
+    modImplementation(include("gg.essential:universalcraft-1.20.1-fabric:${rootProject.ucVersion}"))
 
     modApi "curse.maven:forge-config-api-port-fabric-547434:4583000"
 

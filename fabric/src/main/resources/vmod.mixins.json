@@ -3,7 +3,9 @@
   "minVersion": "0.8",
   "package": "net.spaceeye.vmod.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": [],
+  "mixins": [
+    "TakeoffBearingMixin"
+  ],
   "client": [
   ],
   "injectors": {

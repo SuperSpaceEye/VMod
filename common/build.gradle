@@ -28,7 +28,8 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21"
     api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
 
-    modImplementation("gg.essential:elementa-1.18.1-forge:622")
+    compileOnly("gg.essential:elementa:${rootProject.elementaVersion}")
+    modImplementation(include("gg.essential:universalcraft-1.20.1-fabric:${rootProject.ucVersion}"))
 
     modCompileOnlyApi(files("vs_jars/clockwork-1.18.2-0.1.16-fabric-a0682a9698.jar"))
     modCompileOnlyApi(files("vs_jars/trackwork-1.20.1-1.1.1b.jar"))

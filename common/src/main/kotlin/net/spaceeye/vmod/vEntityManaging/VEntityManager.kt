@@ -46,7 +46,7 @@ fun VEntityId?.addFor(player: Player): VEntityId? {
 }
 
 @Internal
-class VEntityManager: SavedData() {
+open class VEntityManager: SavedData() {
     // shipToVEntity and idToVEntity should share VEntity
     internal val shipToVEntity = mutableMapOf<ShipId, MutableList<VEntity>>()
     private val idToVEntity = mutableMapOf<VEntityId, VEntity>()
@@ -387,6 +387,7 @@ class VEntityManager: SavedData() {
         val oldToNew = lastDimensionIds.map { Pair(it.key, newDimensionIds[it.value]!!) }.toMap()
 
         val shipsTag = tag[LEGACY_SAVE_TAG_NAME]!! as CompoundTag
+        val ships = level!!.shipObjectWorld.allShips
 
         var count = 0
         var maxId = -1
@@ -400,6 +401,20 @@ class VEntityManager: SavedData() {
                     strType = ctag.getString("MConstraintType")
 
                     val vEntity = LegacyConstraintFixers.tryUpdateMConstraint(strType, ctag, oldToNew)
+                    for (shipId in vEntity.attachedToShips(emptyList())) {
+                        if (newDimensionIds.values.contains(shipId)) {
+                            vEntity.dimensionId = newDimensionIds.map {Pair(it.value, it.key)}.toMap()[shipId]
+                            break
+                        }
+
+                        val ship = ships.getById(shipId)
+                        if (ship != null) {
+                            vEntity.dimensionId = ship.chunkClaimDimension
+                        } else {
+                            vEntity.dimensionId = level!!.dimensionId
+                        }
+                        break
+                    }
 
                     maxId = max(maxId, vEntity.mID)
                     constraints.add(vEntity)
@@ -467,14 +482,25 @@ class VEntityManager: SavedData() {
             return VEntityManager()
         }
 
+
+        private class TempManager(): VEntityManager() { lateinit var tag: CompoundTag }
+        private fun legacyCreate(): TempManager {return TempManager()}
+        private fun legacyLoad(tag: CompoundTag): TempManager {
+            ELOG("IM LOADING HOLY SHIT!!!!!!!!!!!!!!!")
+            return legacyCreate().also { it.tag = tag }
+        }
+
         fun load(tag: CompoundTag): VEntityManager {
             val data = create()
 
-            if (tag.contains(LEGACY_SAVE_TAG_NAME)) {
-                data.tryLoadLegacyMConstraints(tag)
+            ELOG("IM HERE HOLY SHIT 1")
+            val legacyInstance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::legacyLoad, Companion::legacyCreate, "valkyrien_mod")
+            if (legacyInstance.tag.contains(LEGACY_SAVE_TAG_NAME)) {
+                ELOG("IM HERE HOLY SHIT 2")
+                data.tryLoadLegacyMConstraints(legacyInstance.tag)
             }
 
-            if (tag.contains(SAVE_TAG_NAME_STRING) || tag.contains(LEGACY_SAVE_TAG_NAME)) {
+            if (tag.contains(SAVE_TAG_NAME_STRING) || legacyInstance.tag.contains(LEGACY_SAVE_TAG_NAME)) {
                 data.load(tag)
             }
 

@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.rendering.types
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
@@ -69,12 +70,11 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
         val vBuffer = tesselator.builder
 
         vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
+        RenderSystem.setShaderTexture(0, RenderingUtils.whiteTexture)
 
         val color = if (timestamp < highlightTimestamp) Color(255, 0, 0, 255) else color
 
         val light = if (fullbright) LightTexture.FULL_BRIGHT else center.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
-
-        Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer()
 
         poseStack.pushPose()
 

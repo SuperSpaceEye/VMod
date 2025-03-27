@@ -20,7 +20,7 @@ object VMItems {
         "vmod_tab"
     ) {
         CreativeTabRegistry.create(
-            Component.translatable("itemGroup.valkyrien_mod.vmod_tab")
+            Component.translatable("itemGroup.the_vmod.vmod_tab")
         ) { ItemStack(LOGO.get()) }
     }
 

@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.vEntityManaging.legacy
 
 import io.netty.buffer.Unpooled
-import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.network.FriendlyByteBuf
@@ -9,8 +8,12 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.valkyrien_ship_schematics.containers.CompoundTagSerializable
 import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.reflectable.AutoSerializable
+import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingTypes
+import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.rendering.types.BaseRenderer
+import net.spaceeye.vmod.rendering.types.RopeRenderer
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getMyVector3d
@@ -37,6 +40,29 @@ import java.awt.Color
 import kotlin.math.max
 
 object LegacyConstraintFixers {
+    private class A2BRendererSchema(): AutoSerializable {
+        var shipId1: Long by get(0, -1L)
+        var shipId2: Long by get(1, -1L)
+        var point1: Vector3d by get(2, Vector3d())
+        var point2: Vector3d by get(3, Vector3d())
+        var color: Color by get(4, Color(0))
+        var width: Double by get(5, .2)
+
+        fun toNew() = A2BRenderer(shipId1, shipId2, point1, point2, color, width, false)
+    }
+
+    private class RopeRendererSchema(): AutoSerializable {
+        var shipId1: Long by get(0, -1L)
+        var shipId2: Long by get(1, -1L)
+        var point1: Vector3d by get(2, Vector3d())
+        var point2: Vector3d by get(3, Vector3d())
+        var length: Double by get(4, 0.0)
+        var width: Double by get(5, .2)
+        var segments: Int by get(6, 16)
+
+        fun toNew() = RopeRenderer(shipId1, shipId2, point1, point2, length, width, segments, false)
+    }
+
     @JvmStatic fun tryFixRenderer(tag: CompoundTag): BaseRenderer? {
         try {
             val extensions = tag.getCompound("Extensions")
@@ -44,8 +70,8 @@ object LegacyConstraintFixers {
             val rtag = extensions.getCompound("RenderableExtension")
             val strType = rtag.getString("rendererType")
             return when(strType) {
-                "RopeRenderer" -> RenderingTypes.strTypeToSupplier(strType).get().also { it.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(rtag.getByteArray("renderer")))) }
-                "A2BRenderer"  -> RenderingTypes.strTypeToSupplier(strType).get().also { it.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(rtag.getByteArray("renderer")))) }
+                "RopeRenderer" -> RopeRendererSchema().also { it.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(rtag.getByteArray("renderer")))) }.toNew()
+                "A2BRenderer"  -> A2BRendererSchema().also { it.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(rtag.getByteArray("renderer")))) }.toNew()
                 "ConeBlockRenderer" -> RenderingTypes.strTypeToSupplier(strType).get().also {
                     val byteArray = rtag.getByteArray("renderer").toMutableList()
 

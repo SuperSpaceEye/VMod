@@ -50,6 +50,7 @@ val THRUSTER = t("Thruster")
 val SENSOR = t("Sensor")
 val SHIP_REMOVER = t("Ship Remover")
 val MASS_CHANGER = t("Mass Changer")
+val COM_CHANGER = t("COM Changer")
 
 val DIMENSIONAL_GRAVITY = v("Dimensional Gravity")
 val PLAYER_ROLE_MANAGER = v("Player Role Manager")
@@ -153,9 +154,9 @@ val GRAV_CHANGER_HUD_1 = x("LMB - set gravity. RMB - reset gravity", "grav_chang
 val SYNC_ROTATION_HUD_1 = x("LMB to select first", "sync_rotation_hud_1")
 val SYNC_ROTATION_HUD_2 = x("LMB to select second ship", "sync_rotation_hud_2")
 
-val GEAR_HUD_1 = x("LMB on the other ship")
-
-val MASS_CHANGER_HUD_1 = x("LMB - change weight, RMB - reset to default")
+val GEAR_HUD_1 = x("LMB on the other ship", "gear_hud_1")
+val MASS_CHANGER_HUD_1 = x("LMB - change weight, RMB - reset to default", "mass_changer_hud_1")
+val COM_CHANGER_HUD_1 = x("LMB - concentrate mass to block, RMB - reset", "com_changer_hud_1")
 
 val YOU_DONT_HAVE_ACCESS_TO_THIS = x("You don't have access to this")
 val APPLY_NEW_GRAVITY_SETTINGS = x("Apply new Gravity Settings")
@@ -176,6 +177,6 @@ val YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN = x("You don't have the permission t
 val TOOLGUN_MODE_ACTIVATION_HAS_FAILED = x("Toolgun mode activation has failed")
 val SERVER_LIMITS_UPDATE_WAS_REJECTED = x("Server Limits update was rejected")
 val RENDERING_HAS_THROWN_AN_EXCEPTION = x("Rendering has thrown an exception")
-val SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_PLACED = x("Schematic had fatal error and couldn't be placed")
-val SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_COPIED = x("Schematic had fatal error and couldn't be copied")
+val SCHEMATIC_HAD_ERROR_DURING_PLACING = x("Schematic had error during placing")
+val SCHEMATIC_HAD_ERROR_DURING_COPYING = x("Schematic had error during copying")
 val SCHEMATIC_HAD_NONFATAL_ERRORS = x("Schematic had nonfatal errors")

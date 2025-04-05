@@ -30,8 +30,8 @@ import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.utils.BlockPos
 import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.translate.SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_COPIED
-import net.spaceeye.vmod.translate.SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_PLACED
+import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_COPYING
+import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_PLACING
 import net.spaceeye.vmod.translate.SCHEMATIC_HAD_NONFATAL_ERRORS
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
@@ -202,6 +202,8 @@ object SchematicActionsQueue: ServerClosable() {
                 schematicV1.entityData.forEach { (oldId, entities) ->
                     val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId]!!)!!
                     entities.forEach { (pos, tag) ->
+                        val tag = tag.copy()
+
                         val shipCenter = Vector3d(
                             newShip.chunkClaim.xMiddle*16-7,
                             level.yRange.center,
@@ -219,6 +221,7 @@ object SchematicActionsQueue: ServerClosable() {
                         tag.remove("UUID")
 
                         try {
+                            SchemCompatObj.onEntityPaste(level, oldToNewId, tag, Vector3d(newPos), shipCenter)
                             val entity = EntityType.create(tag, level).get()
                             entity.moveTo(newPos.x, newPos.y, newPos.z)
                             if (entity is Mob) {
@@ -390,7 +393,11 @@ object SchematicActionsQueue: ServerClosable() {
                     )
 
                     val pos = Vector3d(shipyardPos) - Vector3d(shipCenter)
-                    EntityItem(pos.toJomlVector3d(), CompoundTag().also { tag -> it.save(tag) })
+
+                    EntityItem(pos.toJomlVector3d(), CompoundTag().also {
+                        tag -> it.save(tag);
+                        SchemCompatObj.onEntityCopy(level, it, tag, pos, shipCenter)
+                    })
                 }
 
                 currentShip++
@@ -424,7 +431,7 @@ object SchematicActionsQueue: ServerClosable() {
                 }
 
                 val item = placeData[placeLastKeys[placeLastPosition]]
-                val result = try {item?.place(start, timeout)} catch (e: Exception) { SELOG("Failed to place item with exception:\n${e.stackTraceToString()}", item?.player, SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_PLACED); null}
+                val result = try {item?.place(start, timeout)} catch (e: Exception) { SELOG("Failed to place item with exception:\n${e.stackTraceToString()}", item?.player, SCHEMATIC_HAD_ERROR_DURING_PLACING); null}
                 if (result == null || result) {
                     item!!.postPlacementFn(item.createdShips)
                     placeData.remove(placeLastKeys[placeLastPosition])
@@ -446,7 +453,7 @@ object SchematicActionsQueue: ServerClosable() {
                 }
 
                 val item = saveData[saveLastKeys[saveLastPosition]]
-                val result = try {item?.save(start, timeout)} catch (e: Exception) {SELOG("Failed to copy item with exception:\n${e.stackTraceToString()}", item?.player, SCHEMATIC_HAD_FATAL_ERROR_AND_COULDNT_BE_COPIED); null}
+                val result = try {item?.save(start, timeout)} catch (e: Exception) {SELOG("Failed to copy item with exception:\n${e.stackTraceToString()}", item?.player, SCHEMATIC_HAD_ERROR_DURING_COPYING); null}
                 if (result == null || result) {
                     item!!.postCopyFn()
                     saveData.remove(saveLastKeys[saveLastPosition])

@@ -8,12 +8,12 @@ import net.spaceeye.vmod.vsStuff.VSJointsTracker;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import org.valkyrienskies.core.apigame.constraints.VSConstraint;
 import org.valkyrienskies.core.apigame.world.chunks.BlockType;
 import org.valkyrienskies.core.impl.game.ships.ShipData;
@@ -39,18 +39,59 @@ abstract public class ShipObjectServerWorldMixin {
         deletedShipObjects.forEach((data) -> AVSEvents.INSTANCE.getServerShipRemoveEvent().emit(new AVSEvents.ServerShipRemoveEvent(data)));
     }
 
-    @ModifyArgs(
+    @Unique int vmod$posX;
+    @Unique int vmod$posY;
+    @Unique int vmod$posZ;
+    @Unique String vmod$dimensionId;
+    @Unique BlockType vmod$oldBlockType;
+    @Unique BlockType vmod$newBlockType;
+    @Unique double vmod$oldBlockMass;
+    @Unique double vmod$newBlockMass;
+
+    @Inject(
             method = "onSetBlock",
             at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectWorld;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;DD)V"),
             remap = false
     )
-    void vmod$onSetBlock(Args args, int posX, int posY, int posZ, String dimensionId, BlockType oldBlockType, BlockType newBlockType, double oldBlockMass, double newBlockMass) {
-        Double mass = CustomBlockMassManager.INSTANCE.getCustomMass(dimensionId, posX, posY, posZ);
-        if (oldBlockType != newBlockType) {
-            CustomBlockMassManager.INSTANCE.removeCustomMass(dimensionId, posX, posY, posZ);
-        }
-        args.set(6, Objects.requireNonNullElse(mass, oldBlockMass));
+    void vmod$captureArgs(int posX, int posY, int posZ, String dimensionId, BlockType oldBlockType, BlockType newBlockType, double oldBlockMass, double newBlockMass, CallbackInfo ci) {
+        vmod$posX = posX;
+        vmod$posY = posY;
+        vmod$posZ = posZ;
+        vmod$dimensionId = dimensionId;
+        vmod$oldBlockType = oldBlockType;
+        vmod$newBlockType = newBlockType;
+        vmod$oldBlockMass = oldBlockMass;
+        vmod$newBlockMass = newBlockMass;
     }
+
+    @ModifyArg(
+            method = "onSetBlock",
+            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectWorld;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;DD)V"),
+            remap = false,
+            index = 6
+    )
+    double vmod$onSetBlock(double oldBlockMass) {
+        Double mass = CustomBlockMassManager.INSTANCE.getCustomMass(vmod$dimensionId, vmod$posX, vmod$posY, vmod$posZ);
+        if (vmod$oldBlockType != vmod$newBlockType) {
+            CustomBlockMassManager.INSTANCE.removeCustomMass(vmod$dimensionId, vmod$posX, vmod$posY, vmod$posZ);
+        }
+
+        return Objects.requireNonNullElse(mass, oldBlockMass);
+    }
+
+    //doesnt work on forge
+//    @ModifyArgs(
+//            method = "onSetBlock",
+//            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/game/ships/ShipObjectWorld;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;Lorg/valkyrienskies/core/apigame/world/chunks/BlockType;DD)V"),
+//            remap = false
+//    )
+//    void vmod$onSetBlock(Args args, int posX, int posY, int posZ, String dimensionId, BlockType oldBlockType, BlockType newBlockType, double oldBlockMass, double newBlockMass) {
+//        Double mass = CustomBlockMassManager.INSTANCE.getCustomMass(dimensionId, posX, posY, posZ);
+//        if (oldBlockType != newBlockType) {
+//            CustomBlockMassManager.INSTANCE.removeCustomMass(dimensionId, posX, posY, posZ);
+//        }
+//        args.set(6, Objects.requireNonNullElse(mass, oldBlockMass));
+//    }
 
     @Inject(method = "createNewConstraint", at = @At(value = "RETURN"), remap = false)
     void vmod$createNewConstraintTracker(VSConstraint vsJoint, CallbackInfoReturnable<Integer> cir) {

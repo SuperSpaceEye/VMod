@@ -67,7 +67,7 @@ repositories {
 }
 
 dependencies {
-    include modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.name:1.0")
+    include modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.name:1.0") {transitive false}
     forgeRuntimeLibrary include("org.jgrapht:jgrapht-core:1.5.2")
     forgeRuntimeLibrary include("org.apfloat:apfloat:1.14.0")
     forgeRuntimeLibrary include("org.jheaps:jheaps:0.14")
@@ -83,7 +83,7 @@ dependencies {
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
 
     modApi("org.valkyrienskies:valkyrienskies-118-forge:${rootProject.vs2_version}") { transitive = false }
-    implementation("org.valkyrienskies.core:api:${rootProject.vscore_version}")
+    implementation("org.valkyrienskies.core:api:${rootProject.vscore_version}") { transitive false }
 
     implementation 'thedarkcolour:kotlinforforge:3.12.0'
 
@@ -92,8 +92,8 @@ dependencies {
 
     // Create and its dependencies
     modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }
-    modCompileOnly("com.tterrag.registrate:Registrate:${registrate_forge_version}")
-    modCompileOnly("com.jozufozu.flywheel:flywheel-forge-${flywheel_forge_minecraft_version}:${flywheel_forge_version}")
+    modCompileOnly("com.tterrag.registrate:Registrate:${registrate_forge_version}") { transitive false }
+    modCompileOnly("com.jozufozu.flywheel:flywheel-forge-${flywheel_forge_minecraft_version}:${flywheel_forge_version}") { transitive false }
 
     modCompileOnlyApi(files("vs_jars/takeoff-forge-1.0.0-beta1+308678c5c5.jar"))
 }

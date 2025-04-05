@@ -201,6 +201,8 @@ object SchematicActionsQueue: ServerClosable() {
                 schematicV1.entityData.forEach { (oldId, entities) ->
                     val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId]!!)!!
                     entities.forEach { (pos, tag) ->
+                        val tag = tag.copy()
+
                         val shipCenter = Vector3d(
                             newShip.chunkClaim.xMiddle*16-7,
                             level.yRange.center,
@@ -218,6 +220,7 @@ object SchematicActionsQueue: ServerClosable() {
                         tag.remove("UUID")
 
                         try {
+                            SchemCompatObj.onEntityPaste(level, oldToNewId, tag, Vector3d(newPos), shipCenter)
                             val entity = EntityType.create(tag, level).get()
                             entity.moveTo(newPos.x, newPos.y, newPos.z)
                             if (entity is Mob) {
@@ -389,7 +392,11 @@ object SchematicActionsQueue: ServerClosable() {
                     )
 
                     val pos = Vector3d(shipyardPos) - Vector3d(shipCenter)
-                    EntityItem(pos.toJomlVector3d(), CompoundTag().also { tag -> it.save(tag) })
+
+                    EntityItem(pos.toJomlVector3d(), CompoundTag().also {
+                        tag -> it.save(tag);
+                        SchemCompatObj.onEntityCopy(level, it, tag, pos, shipCenter)
+                    })
                 }
 
                 currentShip++

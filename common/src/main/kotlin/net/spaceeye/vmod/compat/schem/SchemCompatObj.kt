@@ -4,14 +4,19 @@ import dev.architectury.platform.Platform
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.ServerShip
 
 interface SchemCompatItem {
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit)
     fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
+
+    fun onEntityCopy(level: ServerLevel, entity: Entity, tag: CompoundTag, pos: Vector3d, shipCenter: Vector3d) {}
+    fun onEntityPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: Vector3d, shipCenter: Vector3d) {}
 }
 
 object SchemCompatObj {
@@ -31,6 +36,8 @@ object SchemCompatObj {
         safeAdd("vs_clockwork") { ClockworkSchemCompat() }
         safeAdd("trackwork") { TrackworkSchemCompat() }
         safeAdd("takeoff") { TakeoffSchemCompat() }
+
+        safeAdd("create") { CreateContraptionsCompat() }
     }
 
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?): Boolean {
@@ -53,5 +60,22 @@ object SchemCompatObj {
         }
         if (callbacks.isEmpty()) {return null}
         return {be -> callbacks.forEach {it(be)}}
+    }
+
+    fun onEntityCopy(level: ServerLevel, entity: Entity, tag: CompoundTag, pos: Vector3d, shipCenter: Vector3d) {
+        items.forEach {
+            try {
+                it.onEntityCopy(level, entity, tag, pos, shipCenter)
+            } catch (e: Exception) { ELOG("Compat object $it has failed onEntityCopy with exception:\n${e.stackTraceToString()}")
+            } catch (e: Error) { ELOG("Compat object $it has failed onEntityCopy with error:\n${e.stackTraceToString()}") }
+        }
+    }
+    fun onEntityPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: Vector3d, shipCenter: Vector3d) {
+        items.forEach {
+            try {
+                it.onEntityPaste(level, oldToNewId, tag, pos, shipCenter)
+            } catch (e: Exception) { ELOG("Compat object $it has failed onEntityPaste with exception:\n${e.stackTraceToString()}")
+            } catch (e: Error) { ELOG("Compat object $it has failed onEntityPaste with error:\n${e.stackTraceToString()}") }
+        }
     }
 }

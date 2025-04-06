@@ -196,42 +196,37 @@ object SchematicActionsQueue: ServerClosable() {
                 if (getNow_ms() - start > timeout) { return false }
             }
 
-            currentShip = 0
-            while (currentShip < shipsToCreate.size) {
-                schematicV1.entityData.forEach { (oldId, entities) ->
-                    val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId]!!)!!
-                    entities.forEach { (pos, tag) ->
-                        val tag = tag.copy()
+            schematicV1.entityData.forEach { (oldId, entities) ->
+                val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId]!!)!!
+                entities.forEach { (pos, tag) ->
+                    val tag = tag.copy()
 
-                        val shipCenter = Vector3d(
-                            newShip.chunkClaim.xMiddle*16-7,
-                            level.yRange.center,
-                            newShip.chunkClaim.zMiddle*16-7,
-                        )
+                    val shipCenter = Vector3d(
+                        newShip.chunkClaim.xMiddle*16-7,
+                        level.yRange.center,
+                        newShip.chunkClaim.zMiddle*16-7,
+                    )
 
-                        val newPos = pos.add(shipCenter.toJomlVector3d(), org.joml.Vector3d())
+                    val newPos = pos.add(shipCenter.toJomlVector3d(), org.joml.Vector3d())
 
-                        val posTag = ListTag()
-                        posTag.add(DoubleTag.valueOf(newPos.x))
-                        posTag.add(DoubleTag.valueOf(newPos.y))
-                        posTag.add(DoubleTag.valueOf(newPos.z))
+                    val posTag = ListTag()
+                    posTag.add(DoubleTag.valueOf(newPos.x))
+                    posTag.add(DoubleTag.valueOf(newPos.y))
+                    posTag.add(DoubleTag.valueOf(newPos.z))
 
-                        tag.put("Pos", posTag)
-                        tag.remove("UUID")
+                    tag.put("Pos", posTag)
+                    tag.remove("UUID")
 
-                        try {
-                            SchemCompatObj.onEntityPaste(level, oldToNewId, tag, Vector3d(newPos), shipCenter)
-                            val entity = EntityType.create(tag, level).get()
-                            entity.moveTo(newPos.x, newPos.y, newPos.z)
-                            if (entity is Mob) {
-                                entity.finalizeSpawn(level, level.getCurrentDifficultyAt(BlockPos(newPos.toMinecraft())), MobSpawnType.STRUCTURE, null, tag)
-                            }
-                            level.addFreshEntityWithPassengers(entity)
-                        } catch (_: Exception) {}
-                    }
+                    try {
+                        SchemCompatObj.onEntityPaste(level, oldToNewId, tag, Vector3d(newPos), shipCenter)
+                        val entity = EntityType.create(tag, level).get()
+                        entity.moveTo(newPos.x, newPos.y, newPos.z)
+                        if (entity is Mob) {
+                            entity.finalizeSpawn(level, level.getCurrentDifficultyAt(BlockPos(newPos.toMinecraft())), MobSpawnType.STRUCTURE, null, tag)
+                        }
+                        level.addFreshEntityWithPassengers(entity)
+                    } catch (_: Exception) {}
                 }
-
-                currentShip++
             }
 
             if (hadNonfatalErrors) { player?.let { ServerToolGunState.sendErrorTo(it, SCHEMATIC_HAD_NONFATAL_ERRORS) } }

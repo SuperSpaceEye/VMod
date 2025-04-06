@@ -18,13 +18,14 @@ import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.toolgun.modes.gui.SensorGUI
+import net.spaceeye.vmod.toolgun.modes.hud.SensorHUD
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.getQuatFromDir
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color
 
 //TODO finish this mf
-class SensorMode: ExtendableToolgunMode(), SensorGUI {
+class SensorMode: ExtendableToolgunMode(), SensorGUI, SensorHUD {
     @JsonIgnore private var i = 0
 
     var maxDistance: Double by get(i++, 10.0) { ServerLimits.instance.maxDistance.get(it) }

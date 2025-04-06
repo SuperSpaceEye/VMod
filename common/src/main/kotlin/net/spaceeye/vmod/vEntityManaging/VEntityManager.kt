@@ -483,7 +483,7 @@ open class VEntityManager: SavedData() {
         }
 
 
-        private class TempManager(): VEntityManager() { lateinit var tag: CompoundTag }
+        private class TempManager(): VEntityManager() { var tag: CompoundTag? = null }
         private fun legacyCreate(): TempManager {return TempManager()}
         private fun legacyLoad(tag: CompoundTag): TempManager {
             return legacyCreate().also { it.tag = tag }
@@ -493,11 +493,11 @@ open class VEntityManager: SavedData() {
             val data = create()
 
             val legacyInstance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::legacyLoad, Companion::legacyCreate, "valkyrien_mod")
-            if (legacyInstance.tag.contains(LEGACY_SAVE_TAG_NAME)) {
-                data.tryLoadLegacyMConstraints(legacyInstance.tag)
+            if (legacyInstance.tag?.contains(LEGACY_SAVE_TAG_NAME) == true) {
+                data.tryLoadLegacyMConstraints(legacyInstance.tag!!)
             }
 
-            if (tag.contains(SAVE_TAG_NAME_STRING) || legacyInstance.tag.contains(LEGACY_SAVE_TAG_NAME)) {
+            if (tag.contains(SAVE_TAG_NAME_STRING) || legacyInstance.tag?.contains(LEGACY_SAVE_TAG_NAME) == true) {
                 data.load(tag)
             }
 

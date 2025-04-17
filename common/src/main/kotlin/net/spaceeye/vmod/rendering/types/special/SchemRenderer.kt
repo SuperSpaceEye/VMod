@@ -304,22 +304,6 @@ class SchemRenderer(
     val updateList: List<Int>
     val mySources = SchemMultiBufferSource()
 
-    // i can't explain this
-    fun makePose(poseStack: PoseStack, bpos: BlockPos, infoItem: IShipInfo, rotationQuat: Quaternion, invRotation: Quaternion) {
-        poseStack.translate(
-            bpos.x.toDouble() - infoItem.positionInShip.x,
-            bpos.y.toDouble() - infoItem.positionInShip.y,
-            bpos.z.toDouble() - infoItem.positionInShip.z,
-        )
-        poseStack.mulPose(invRotation)
-        poseStack.translate(
-            infoItem.relPositionToCenter.x,
-            infoItem.relPositionToCenter.y,
-            infoItem.relPositionToCenter.z,
-        )
-        poseStack.mulPose(rotationQuat)
-    }
-
     init {
         val info = schem.info!!.shipsInfo.associate { Pair(it.id, it) }
         val schem = schem as IShipSchematicDataV1
@@ -336,9 +320,15 @@ class SchemRenderer(
 
             val infoItem = info[shipId]!!
             val rotationQuat = infoItem.rotation.toMinecraft()
-            val invRotation = infoItem.rotation.invert(Quaterniond()).toMinecraft()
 
+            //should be in the rotated world frame
             poseStack.pushPose()
+            poseStack.translate(
+                infoItem.relPositionToCenter.x,
+                infoItem.relPositionToCenter.y,
+                infoItem.relPositionToCenter.z,
+            )
+            //now in the ship frame
             poseStack.mulPose(rotationQuat)
 
             var numRenderedBlocks = 0
@@ -347,7 +337,6 @@ class SchemRenderer(
                 val state = levelWrapper.getBlockState(bpos) ?: return@forEach
 
                 val type = if (state.fluidState.isEmpty) {
-//                    ItemBlockRenderTypes.getRenderType(state, true)
                     RenderType.translucent()
                 } else {
                     ItemBlockRenderTypes.getRenderLayer(state.fluidState)
@@ -365,16 +354,23 @@ class SchemRenderer(
                         return@forEach
                     }
 
-                    //precalculate pose stack
                     poseStack.pushPose()
-                    makePose(poseStack, bpos, infoItem, rotationQuat, invRotation)
+                    poseStack.translate(
+                        bpos.x.toDouble() - infoItem.positionInShip.x,
+                        bpos.y.toDouble() - infoItem.positionInShip.y,
+                        bpos.z.toDouble() - infoItem.positionInShip.z,
+                    )
 
                     mySources.shipIdAndPosToData.last().first = poseStack.last().pose()
 
                     poseStack.popPose()
                 } else {
                     poseStack.pushPose()
-                    makePose(poseStack, bpos, infoItem, rotationQuat, invRotation)
+                    poseStack.translate(
+                        bpos.x.toDouble() - infoItem.positionInShip.x,
+                        bpos.y.toDouble() - infoItem.positionInShip.y,
+                        bpos.z.toDouble() - infoItem.positionInShip.z,
+                    )
 
                     buffer.vertexPose = poseStack.last()
 

@@ -33,6 +33,7 @@ import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.constructor
+import net.spaceeye.vmod.rendering.types.special.SchemRenderer
 import net.spaceeye.vmod.schematic.VModShipSchematicV1
 import net.spaceeye.vmod.schematic.makeFrom
 import net.spaceeye.vmod.schematic.placeAt
@@ -326,11 +327,9 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
     var renderer: SchemOutlinesRenderer? = null
 
     private var rID = -1
-    private var shipInfo_: IShipSchematicInfo? = null
-    var shipInfo: IShipSchematicInfo?
-        get() = shipInfo_
+    var shipInfo: IShipSchematicInfo? = null
         set(info) {
-            shipInfo_ = info
+            field = info
             if (info == null) {
                 renderer = null
                 ClientRenderingData.removeClientsideRenderer(rID)
@@ -349,22 +348,34 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
                 ), it.shipAABB)
             }
 
-            renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectPos), rotationAngle, center, data)
+            DebugMap["rotationRef"] = rotationAngle
 
-            rID = ClientRenderingData.addClientsideRenderer(renderer!!)
+//            renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectPos), rotationAngle, center, data)
+//            rID = ClientRenderingData.addClientsideRenderer(renderer!!)
 
             refreshHUD()
         }
     private var schem_: IShipSchematic? = null
     var schem: IShipSchematic?
         get() = schem_
-        set(value) {schem_ = value; shipInfo = value?.info}
+        set(value) {
+            schem_ = value;
+            shipInfo = value?.info
+
+
+            SchemNetworking.s2cSendShipInfo.sendToClients(ServerLevelHolder.server!!.playerList.players, SchemNetworking.S2CSendShipInfo(value!!.info!!))
+            ClientRenderingData.removeClientsideRenderer(rID)
+            DebugMap["rotationRef"] = rotationAngle
+            rID = ClientRenderingData.addClientsideRenderer(SchemRenderer(value!!))
+            refreshHUD()
+        }
 
     var filename = ""
 
     var scrollAngle = Math.toRadians(10.0)
 
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult)  {
+        ClientRenderingData.removeClientsideRenderer(rID)
         if (raycastResult.state.isAir) {
             resetState();
             ServerPlayerSchematics.schematics.remove(player.uuid)
@@ -381,6 +392,11 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
         schem.makeFrom(player.level as ServerLevel, player, player.uuid, serverCaughtShip) {
             SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.info!!))
             ServerPlayerSchematics.schematics[player.uuid] = schem
+
+            ClientRenderingData.removeClientsideRenderer(rID)
+            DebugMap["rotationRef"] = rotationAngle
+            rID = ClientRenderingData.addClientsideRenderer(SchemRenderer(schem))
+            refreshHUD()
         }
     }
 

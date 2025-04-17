@@ -31,6 +31,7 @@ import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
 import net.spaceeye.vmod.vsStuff.VSGravityManager
+import net.spaceeye.vmod.vsStuff.VSMasslessShipProcessor
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -56,6 +57,7 @@ object VM {
         ServerToolGunState
         ServerPhysgunState
         SchemCompatObj
+        VSMasslessShipProcessor
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientToolGunState
             ClientPhysgunState

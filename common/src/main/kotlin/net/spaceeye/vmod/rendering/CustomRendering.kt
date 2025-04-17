@@ -150,9 +150,16 @@ private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlock
 }
 
 private fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
-    if (renderBlockRenderers) {return}
     val page = ClientRenderingData.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
+    try {
     for ((_, render) in page) {
-        render.renderData(poseStack, camera, timestamp)
+        when (render) {
+            is BlockRenderer -> if (renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
+            else -> if(!renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderData(poseStack, camera, timestamp)
+        }
     }
+    // let's hope that it never happens, but if it does, then do nothing
+    } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION);
+    } catch (e: Exception) { ELOG("Renderer raised exception:\n${e.stackTraceToString()}")
+    } catch (e: Error) { ELOG("Renderer raised error!!!\n${e.stackTraceToString()}") }
 }

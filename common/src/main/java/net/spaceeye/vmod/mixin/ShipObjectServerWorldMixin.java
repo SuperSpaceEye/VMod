@@ -1,10 +1,12 @@
 package net.spaceeye.vmod.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.spaceeye.vmod.events.AVSEvents;
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager;
 import net.spaceeye.vmod.vsStuff.VSJointsTracker;
+import net.spaceeye.vmod.vsStuff.VSMasslessShipProcessor;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -12,6 +14,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.valkyrienskies.core.apigame.constraints.VSConstraint;
@@ -37,6 +40,14 @@ abstract public class ShipObjectServerWorldMixin {
     void vmod_postTickMixin(CallbackInfo ci) {
         if (deletedShipObjects == null) {return;}
         deletedShipObjects.forEach((data) -> AVSEvents.INSTANCE.getServerShipRemoveEvent().emit(new AVSEvents.ServerShipRemoveEvent(data)));
+    }
+
+    @Redirect(
+            method = "postTick",
+            at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V"),
+            remap = false)
+    void redirectLogger(org.apache.logging.log4j.Logger instance, String s, @Local(ordinal = 0) long var38) {
+        VSMasslessShipProcessor.INSTANCE.process(var38);
     }
 
     @Unique int vmod$posX;

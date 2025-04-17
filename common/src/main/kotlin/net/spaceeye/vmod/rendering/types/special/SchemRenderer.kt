@@ -80,6 +80,36 @@ inline fun <T, Out>ChunkyBlockData<T>.mapNotNull(fn: (Int, Int, Int, T) -> Out?)
     return toReturn
 }
 
+fun maybeFasterVertexBuilder(buffer: VertexConsumer, x: Float, y: Float, z: Float, r: Byte, g: Byte, b: Byte, a: Byte, u: Float, v: Float, combinedOverlay: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
+    buffer as BufferBuilder
+    buffer as BufferBuilderAccessor
+
+    buffer.putFloat(0, x)
+    buffer.putFloat(4, y)
+    buffer.putFloat(8, z)
+    buffer.putByte(12, r)
+    buffer.putByte(13, g)
+    buffer.putByte(14, b)
+    buffer.putByte(15, a)
+    buffer.putFloat(16, u)
+    buffer.putFloat(20, v)
+    val i = if (buffer.`vmod$fullFormat`()) {
+        buffer.putShort(24, (combinedOverlay and 0xffff).toShort())
+        buffer.putShort(26, (combinedOverlay shr 16 and 0xffff).toShort())
+        28
+    } else { 24 }
+
+    buffer.putShort(i + 0, (lightmapUV and 0xffff).toShort())
+    buffer.putShort(i + 2, (lightmapUV shr 16 and 0xffff).toShort())
+    buffer.putByte(i + 4, BufferVertexConsumer.normalIntValue(normalX))
+    buffer.putByte(i + 5, BufferVertexConsumer.normalIntValue(normalY))
+    buffer.putByte(i + 6, BufferVertexConsumer.normalIntValue(normalZ))
+
+    buffer.`vmod$nextElementByte`(buffer.`vmod$nextElementByte`() + i + 8)
+
+    //not using endVertex to not call ensureCapacity
+    buffer.`vmod$vertices`(buffer.`vmod$vertices`() + 1)
+}
 
 class BlockAndTintGetterWrapper(val level: ClientLevel, val data: ChunkyBlockData<BlockItem>, val palette: IBlockStatePalette): Level(
     level.levelData, level.dimension(), level.dimensionTypeRegistration(), Supplier{level.profiler}, level.isClientSide, level.isDebug, 0L
@@ -136,12 +166,21 @@ class BlockAndTintGetterWrapper(val level: ClientLevel, val data: ChunkyBlockDat
 }
 
 class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
+    var transparency = 1f
+
+    val vertices = mutableListOf<Vertex>()
+    val bulkData = mutableListOf<BulkData>()
+
+    var defaultColor = Color(255, 255, 255, 255)
+
+    var vertexPose = PoseStack().also { it.setIdentity() }.last()!!
+
     data class Vertex(var x: Float, var y: Float, var z: Float, var red: Float, var green: Float, var blue: Float, var alpha: Float, var texU: Float, var texV: Float, var overlayUV: Int, var lightmapUV: Int, var normalX: Float, var normalY: Float, var normalZ: Float, var savedPose: PoseStack.Pose, var poseToApply: PoseStack.Pose) {
-        fun apply(buffer: VertexConsumer) {
+        fun apply(buffer: VertexConsumer, transparency: Float) {
             val pos = Vector4f(x, y, z, 1f)
             pos.transform(poseToApply.pose())
 
-            buffer.vertex(pos.x(), pos.y(), pos.z(), red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ)
+            maybeFasterVertexBuilder(buffer, pos.x(), pos.y(), pos.z(), (red*255).toInt().toByte(), (green*255).toInt().toByte(), (blue*255).toInt().toByte(), (alpha * transparency*255).toInt().toByte(), texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ)
         }
     }
 
@@ -154,41 +193,10 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
                         var combinedLights: IntArray,
                         var combinedOverlay: Int,
                         var mulColor: Boolean,
-                        var transparency: Byte
         ) {
-        fun vertex(buffer: VertexConsumer, x: Float, y: Float, z: Float, r: Float, g: Float, b: Float, u: Float, v: Float, combinedOverlay: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
-            buffer as BufferBuilder
-            buffer as BufferBuilderAccessor
-
-            buffer.putFloat(0, x)
-            buffer.putFloat(4, y)
-            buffer.putFloat(8, z)
-            buffer.putByte(12, r.toInt().toByte())
-            buffer.putByte(13, g.toInt().toByte())
-            buffer.putByte(14, b.toInt().toByte())
-            buffer.putByte(15, transparency)
-            buffer.putFloat(16, u)
-            buffer.putFloat(20, v)
-            val i = if (buffer.`vmod$fullFormat`()) {
-                buffer.putShort(24, (combinedOverlay and 0xffff).toShort())
-                buffer.putShort(26, (combinedOverlay shr 16 and 0xffff).toShort())
-                28
-            } else { 24 }
-
-            buffer.putShort(i + 0, (lightmapUV and 0xffff).toShort())
-            buffer.putShort(i + 2, (lightmapUV shr 16 and 0xffff).toShort())
-            buffer.putByte(i + 4, BufferVertexConsumer.normalIntValue(normalX))
-            buffer.putByte(i + 5, BufferVertexConsumer.normalIntValue(normalY))
-            buffer.putByte(i + 6, BufferVertexConsumer.normalIntValue(normalZ))
-
-            buffer.`vmod$nextElementByte`(buffer.`vmod$nextElementByte`() + i + 8)
-
-            //not using endVertex to not call ensureCapacity
-            buffer.`vmod$vertices`(buffer.`vmod$vertices`() + 1)
-        }
 
         //maybe better putBulkData
-        fun apply(buffer: VertexConsumer) {
+        fun apply(buffer: VertexConsumer, transparency: Byte) {
             val vertices = quad.vertices
             val intNormal = quad.direction.normal
             val normal = Vector3f(intNormal.x.toFloat(), intNormal.y.toFloat(), intNormal.z.toFloat())
@@ -211,9 +219,9 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
                 if (mulColor) {
                     val packedColor = vertices[3 + offset]
 
-                    r *= ((packedColor and 0xff    )       ).toFloat()
-                    g *= ((packedColor and 0xff00  ) shr 8 ).toFloat()
-                    b *= ((packedColor and 0xff0000) shr 16).toFloat()
+                    r *= ((packedColor and 0xff    )       )
+                    g *= ((packedColor and 0xff00  ) shr 8 )
+                    b *= ((packedColor and 0xff0000) shr 16)
                 }
 
                 val u = java.lang.Float.intBitsToFloat(vertices[4 + offset])
@@ -222,78 +230,15 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
                 val pos = Vector4f(x, y, z, 1f)
                 pos.transform(poseEntry.pose())
 
-                vertex(buffer, pos.x(), pos.y(), pos.z(), r, g, b, u, v, combinedOverlay, combinedLights[vertexNum], normal.x(), normal.y(), normal.z())
+                maybeFasterVertexBuilder(buffer, pos.x(), pos.y(), pos.z(), r.toInt().toByte(), g.toInt().toByte(), b.toInt().toByte(), transparency, u, v, combinedOverlay, combinedLights[vertexNum], normal.x(), normal.y(), normal.z())
 
                 vertexNum++
             }
         }
     }
 
-    val vertices = mutableListOf<Vertex>()
-    val bulkData = mutableListOf<BulkData>()
-
-    var defaultColor = Color(255, 255, 255, 255)
-    lateinit var temp: Vertex
-
-    var vertexPose = PoseStack().also { it.setIdentity() }.last()
-
     override fun vertex(x: Float, y: Float, z: Float, red: Float, green: Float, blue: Float, alpha: Float, texU: Float, texV: Float, overlayUV: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
         vertices.add(Vertex(x, y, z, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ, vertexPose, vertexPose))
-    }
-
-    override fun vertex(
-        x: Double,
-        y: Double,
-        z: Double
-    ): VertexConsumer? {
-        temp = Vertex(x.toFloat(), y.toFloat(), z.toFloat(),
-            defaultColor.red  .toFloat() / 255f,
-            defaultColor.green.toFloat() / 255f,
-            defaultColor.blue .toFloat() / 255f,
-            defaultColor.alpha.toFloat() / 255f,
-            1f, 1f, 0, 0, 1f, 1f, 1f, vertexPose, vertexPose
-        )
-        return this
-    }
-
-    override fun color(
-        red: Int,
-        green: Int,
-        blue: Int,
-        alpha: Int
-    ): VertexConsumer? {
-        temp.red   = red  .toFloat() / 255f
-        temp.green = green.toFloat() / 255f
-        temp.blue  = blue .toFloat() / 255f
-        temp.alpha = alpha.toFloat() / 255f
-        return this
-    }
-
-    override fun uv(u: Float, v: Float): VertexConsumer? {
-        temp.texU = u
-        temp.texV = v
-        return this
-    }
-
-    override fun overlayCoords(u: Int, v: Int): VertexConsumer? {
-        temp.overlayUV = (u shl 16) or (v and 0xFFFF)
-        return this
-    }
-
-    override fun uv2(u: Int, v: Int): VertexConsumer? {
-        temp.lightmapUV = (u shl 16) or (v and 0xFFFF)
-        return this
-    }
-
-    override fun normal(x: Float, y: Float, z: Float): VertexConsumer? {
-        temp.normalX = x
-        temp.normalY = y
-        temp.normalZ = z
-        return this
-    }
-
-    override fun endVertex() {
-        vertices.add(temp)
     }
 
     override fun putBulkData(
@@ -307,17 +252,9 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
         combinedOverlay: Int,
         mulColor: Boolean
     ) {
-        val data = BulkData(poseEntry, quad, colorMuls, red, green, blue, combinedLights, combinedOverlay, mulColor, 127.toByte())
+        val data = BulkData(poseEntry, quad, colorMuls, red, green, blue, combinedLights, combinedOverlay, mulColor)
         source.shipIdAndPosToData.last().second.add(data)
         bulkData.add(data)
-    }
-
-    override fun defaultColor(defaultR: Int, defaultG: Int, defaultB: Int, defaultA: Int) {
-        defaultColor = Color(defaultR, defaultG, defaultB, defaultA)
-    }
-
-    override fun unsetDefaultColor() {
-        defaultColor = Color(255, 255, 255, 255)
     }
 
     fun clear() {
@@ -327,9 +264,22 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
     }
 
     fun apply(buffer: VertexConsumer) {
-        vertices.forEach { item-> item.apply(buffer) }
-        bulkData.forEach { item -> item.apply(buffer) }
+        vertices.forEach { item-> item.apply(buffer, transparency) }
+        val transparency = (255 * transparency).toInt().toByte()
+        bulkData.forEach { item -> item.apply(buffer, transparency) }
     }
+
+    // i don't think it's ever used but just in case
+    lateinit var temp: Vertex
+    override fun vertex(x: Double, y: Double, z: Double): VertexConsumer? {temp = Vertex(x.toFloat(), y.toFloat(), z.toFloat(), defaultColor.red  .toFloat() / 255f, defaultColor.green.toFloat() / 255f, defaultColor.blue .toFloat() / 255f, defaultColor.alpha.toFloat() / 255f, 1f, 1f, 0, 0, 1f, 1f, 1f, vertexPose, vertexPose);return this}
+    override fun color(red: Int, green: Int, blue: Int, alpha: Int): VertexConsumer? { temp.red   = red  .toFloat() / 255f;temp.green = green.toFloat() / 255f;temp.blue  = blue .toFloat() / 255f;temp.alpha = alpha.toFloat() / 255f;return this; }
+    override fun uv(u: Float, v: Float): VertexConsumer? { temp.texU = u;temp.texV = v;return this; }
+    override fun overlayCoords(u: Int, v: Int): VertexConsumer? { temp.overlayUV = (u shl 16) or (v and 0xFFFF);return this; }
+    override fun uv2(u: Int, v: Int): VertexConsumer? { temp.lightmapUV = (u shl 16) or (v and 0xFFFF);return this; }
+    override fun normal(x: Float, y: Float, z: Float): VertexConsumer? { temp.normalX = x;temp.normalY = y;temp.normalZ = z;return this; }
+    override fun endVertex() { vertices.add(temp) }
+    override fun defaultColor(defaultR: Int, defaultG: Int, defaultB: Int, defaultA: Int) { defaultColor = Color(defaultR, defaultG, defaultB, defaultA) }
+    override fun unsetDefaultColor() { defaultColor = Color(255, 255, 255, 255) }
 }
 
 class SchemMultiBufferSource: MultiBufferSource {
@@ -349,9 +299,12 @@ class SchemMultiBufferSource: MultiBufferSource {
 class SchemRenderer(
     val schem: IShipSchematic
 ): BlockRenderer() {
+    val transparency = 0.5f
+
     val updateList: List<Int>
     val mySources = SchemMultiBufferSource()
 
+    // i can't explain this
     fun makePose(poseStack: PoseStack, bpos: BlockPos, infoItem: IShipInfo, rotationQuat: Quaternion, invRotation: Quaternion) {
         poseStack.translate(
             bpos.x.toDouble() - infoItem.positionInShip.x,
@@ -401,6 +354,7 @@ class SchemRenderer(
                 }
 
                 val buffer = mySources.getBuffer(type)
+                buffer.transparency = transparency
                 mySources.shipIdAndPosToData.add(MPair(dummyMatrix, mutableListOf()))
 
                 if (state.fluidState.isEmpty) {

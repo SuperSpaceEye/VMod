@@ -1,12 +1,15 @@
 package net.spaceeye.vmod.rendering.types.special
 
+import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.BufferBuilder
 import com.mojang.blaze3d.vertex.BufferVertexConsumer
 import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.blaze3d.vertex.VertexBuffer
 import com.mojang.blaze3d.vertex.VertexConsumer
 import com.mojang.math.Matrix4f
 import com.mojang.math.Vector3f
 import com.mojang.math.Vector4f
+import io.netty.buffer.ByteBuf
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
@@ -62,9 +65,11 @@ import org.joml.Quaterniond
 import org.joml.Vector3i
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.impl.shadow.bu
 import org.valkyrienskies.mod.common.util.toJOML
 import org.valkyrienskies.mod.common.util.toMinecraft
 import java.awt.Color
+import java.nio.ByteBuffer
 import java.util.Random
 import java.util.function.Supplier
 
@@ -169,8 +174,13 @@ class BlockAndTintGetterWrapper(val level: ClientLevel, val data: ChunkyBlockDat
     override fun players(): List<Player?>? { throw AssertionError("Shouldn't be called")  }
 }
 
-class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
-    val vertices = mutableListOf<Vertex>()
+class FakeBufferBuilder(val source: SchemMultiBufferSource, val renderType: RenderType): VertexConsumer {
+//    val vertices = mutableListOf<Vertex>()
+
+    val buffer = BufferBuilder(renderType.format().vertexSize)
+    val vertexBuffer = VertexBuffer()
+    val positions = mutableListOf<Float>()
+    val matrixIndexes = mutableListOf<Int>()
 
     var defaultColor = Color(255, 255, 255, 255)
     var transparency = 0.5f
@@ -178,6 +188,10 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
     var vertexPose = PoseStack().also { it.setIdentity() }.last()!!
     var vertexOffset = org.joml.Vector3f(0f, 0f, 0f)
     var vertexMatrixIndex = 0
+
+    init {
+        buffer.begin(renderType.mode(), renderType.format())
+    }
 
     data class Vertex(var x: Float, var y: Float, var z: Float, var red: Float, var green: Float, var blue: Float, var alpha: Float, var texU: Float, var texV: Float, var overlayUV: Int, var lightmapUV: Int, var normalX: Float, var normalY: Float, var normalZ: Float, var matrixIndex: Int) {
         fun apply(buffer: VertexConsumer, transparency: Float, matrices: List<org.joml.Matrix4f>) {
@@ -191,91 +205,74 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
         }
     }
 
-    data class BulkData(var poseEntry: PoseStack.Pose,
-                        var quad: BakedQuad,
-                        var colorMuls: FloatArray,
-                        var red: Float,
-                        var green: Float,
-                        var blue: Float,
-                        var combinedLights: IntArray,
-                        var combinedOverlay: Int,
-                        var mulColor: Boolean,
-        ) {
-
-        //maybe better putBulkData
-        fun apply(buffer: VertexConsumer, transparency: Byte) {
-            val vertices = quad.vertices
-            val intNormal = quad.direction.normal
-            val normal = Vector3f(intNormal.x.toFloat(), intNormal.y.toFloat(), intNormal.z.toFloat())
-            normal.transform(poseEntry.normal())
-
-            val numVertices = vertices.size / 8
-            var vertexNum = 0
-
-            while (vertexNum < numVertices) {
-                val offset = vertexNum * 8
-
-                val x = java.lang.Float.intBitsToFloat(vertices[0 + offset])
-                val y = java.lang.Float.intBitsToFloat(vertices[1 + offset])
-                val z = java.lang.Float.intBitsToFloat(vertices[2 + offset])
-
-                var r: Float = red   * colorMuls[vertexNum]
-                var g: Float = green * colorMuls[vertexNum]
-                var b: Float = blue  * colorMuls[vertexNum]
-
-                if (mulColor) {
-                    val packedColor = vertices[3 + offset]
-
-                    r *= ((packedColor and 0xff    )       )
-                    g *= ((packedColor and 0xff00  ) shr 8 )
-                    b *= ((packedColor and 0xff0000) shr 16)
-                }
-
-                val u = java.lang.Float.intBitsToFloat(vertices[4 + offset])
-                val v = java.lang.Float.intBitsToFloat(vertices[5 + offset])
-
-                val pos = Vector4f(x, y, z, 1f)
-                pos.transform(poseEntry.pose())
-
-                buffer.vertex(pos.x(), pos.y(), pos.z(), r/255f, g/255f, b/255f, transparency/255f, u, v, combinedOverlay, combinedLights[vertexNum], normal.x(), normal.y(), normal.z())
-//                maybeFasterVertexBuilder(buffer, pos.x(), pos.y(), pos.z(), r.toInt().toByte(), g.toInt().toByte(), b.toInt().toByte(), transparency, u, v, combinedOverlay, combinedLights[vertexNum], normal.x(), normal.y(), normal.z())
-
-                vertexNum++
-            }
-        }
-    }
-
     override fun vertex(x: Float, y: Float, z: Float, red: Float, green: Float, blue: Float, alpha: Float, texU: Float, texV: Float, overlayUV: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
-        vertices.add(Vertex(x + vertexOffset.x, y + vertexOffset.y, z + vertexOffset.z, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ, vertexMatrixIndex))
-    }
+        val x = x + vertexOffset.x
+        val y = y + vertexOffset.y
+        val z = z + vertexOffset.z
 
-    override fun putBulkData(
-        poseEntry: PoseStack.Pose,
-        quad: BakedQuad,
-        colorMuls: FloatArray,
-        red: Float,
-        green: Float,
-        blue: Float,
-        combinedLights: IntArray,
-        combinedOverlay: Int,
-        mulColor: Boolean
-    ) {
-        val data = BulkData(poseEntry, quad, colorMuls, red, green, blue, combinedLights, combinedOverlay, mulColor)
-        data.apply(this, (transparency*255).toInt().toByte())
+        positions.add(x)
+        positions.add(y)
+        positions.add(z)
+
+        matrixIndexes.add(vertexMatrixIndex)
+
+        //vertex positions will be overwritten
+        buffer.vertex(x, y, z, red, green, blue, alpha * transparency, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ)
+//        vertices.add(Vertex(x + vertexOffset.x, y + vertexOffset.y, z + vertexOffset.z, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ, vertexMatrixIndex))
     }
 
     fun clear() {
-        vertices.clear()
+//        vertices.clear()
         unsetDefaultColor()
     }
 
-    fun apply(buffer: VertexConsumer, matrices: List<org.joml.Matrix4f>) {
+    fun apply(unused: VertexConsumer, matrices: List<org.joml.Matrix4f>, poseStack: PoseStack) {
+        //java.lang.Float.intBitsToFloat
+        val bufferBuilder = buffer as BufferBuilderAccessor
+        val byteBuffer = bufferBuilder.`vmod$getBuffer`()
+
+
         var i = 0
-        val size = vertices.size
+        val size = matrixIndexes.size
+
         while (i < size) {
-            vertices[i].apply(buffer, transparency, matrices)
+            val posOffset = i * 3
+            val vertexOffset = i * renderType.format().vertexSize
+
+            val matrix = matrices[matrixIndexes[i]]
+            var x = positions[0 + posOffset]
+            var y = positions[1 + posOffset]
+            var z = positions[2 + posOffset]
+
+            var x_ = matrix.m00() * x + matrix.m10() * y + matrix.m20() * z + matrix.m30()
+            var y_ = matrix.m01() * x + matrix.m11() * y + matrix.m21() * z + matrix.m31()
+            var z_ = matrix.m02() * x + matrix.m12() * y + matrix.m22() * z + matrix.m32()
+
+            byteBuffer.putFloat(0 + vertexOffset, x_)
+            byteBuffer.putFloat(4 + vertexOffset, y_)
+            byteBuffer.putFloat(8 + vertexOffset, z_)
+
             i++
         }
+
+        val matrixView = RenderSystem.getModelViewMatrix().copy()
+        matrixView.multiply(poseStack.last().pose())
+
+        renderType.setupRenderState()
+//        RenderSystem.disableDepthTest()
+
+        vertexBuffer.bind()
+        vertexBuffer.drawWithShader(matrixView, RenderSystem.getProjectionMatrix(), RenderSystem.getShader()!!)
+
+//        RenderSystem.enableDepthTest()
+        renderType.clearRenderState()
+
+//        var i = 0
+//        val size = vertices.size
+//        while (i < size) {
+//            vertices[i].apply(buffer, transparency, matrices)
+//            i++
+//        }
     }
 
     //liquid renderer uses this
@@ -303,7 +300,7 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
     override fun overlayCoords(u: Int, v: Int): VertexConsumer? { temp.overlayUV = (u shl 16) or (v and 0xFFFF);return this; }
     override fun uv2(u: Int, v: Int): VertexConsumer? { temp.lightmapUV = (u shl 16) or (v and 0xFFFF);return this; }
     override fun normal(x: Float, y: Float, z: Float): VertexConsumer? { temp.normalX = x;temp.normalY = y;temp.normalZ = z;return this; }
-    override fun endVertex() { vertices.add(temp) }
+    override fun endVertex() { with(temp) { buffer.vertex(x, y, z, red, green, blue, alpha * transparency, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ) } }
     override fun defaultColor(defaultR: Int, defaultG: Int, defaultB: Int, defaultA: Int) { defaultColor = Color(defaultR, defaultG, defaultB, defaultA) }
     override fun unsetDefaultColor() { defaultColor = Color(255, 255, 255, 255) }
 }
@@ -312,7 +309,7 @@ class SchemMultiBufferSource: MultiBufferSource {
     val buffers = mutableMapOf<RenderType,  FakeBufferBuilder>()
 
     override fun getBuffer(renderType: RenderType): FakeBufferBuilder {
-        val buf = buffers.getOrPut(renderType) { FakeBufferBuilder(this) }
+        val buf = buffers.getOrPut(renderType) { FakeBufferBuilder(this, renderType) }
         return buf
     }
 
@@ -389,6 +386,11 @@ class SchemRenderer(
             matrixIndex++
             poseStack.last().pose().also { poseStack.popPose() }
         }
+
+        mySources.buffers.forEach {
+            it.value.buffer.end()
+            it.value.vertexBuffer.upload(it.value.buffer)
+        }
     }
 
     fun applyBuffers(sources: MultiBufferSource, poseStack: PoseStack) {
@@ -400,13 +402,13 @@ class SchemRenderer(
 
         mySources.buffers.forEach { (type, buf) ->
             val actualBuffer = sources.getBuffer(type)
-            actualBuffer as BufferBuilderAccessor
+//            actualBuffer as BufferBuilderAccessor
 
-            val vertexSize = (actualBuffer as BufferBuilderAccessor).`vmod$getVertexFormat`().vertexSize
-            var size = buf.vertices.size * vertexSize
-            (actualBuffer as BufferBuilderAccessor).`vmod$ensureCapacity`(size)
+//            val vertexSize = (actualBuffer as BufferBuilderAccessor).`vmod$getVertexFormat`().vertexSize
+//            var size = buf.vertices.size * vertexSize
+//            (actualBuffer as BufferBuilderAccessor).`vmod$ensureCapacity`(size)
 
-            buf.apply(actualBuffer, matrices)
+            buf.apply(actualBuffer, matrices, poseStack)
         }
     }
 

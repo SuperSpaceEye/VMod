@@ -317,7 +317,8 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
 }
 
 class SchemRenderer(
-    val schem: IShipSchematic
+    val schem: IShipSchematic,
+    val rotationAngle: Ref<Double>
 ): BlockRenderer() {
     val transparency = 0.5f
     var renderer: SchematicRenderer? = null
@@ -333,7 +334,6 @@ class SchemRenderer(
         if (mode !is SchemMode) {return}
         if (!ToolgunItem.playerIsUsingToolgun()) {return}
         val level = Minecraft.getInstance().level!!
-        val rotationAngle = DebugMap["rotationRef"] as Ref<Double>
 
         val raycastResult = RaycastFunctions.renderRaycast(
             level,

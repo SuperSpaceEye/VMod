@@ -5,15 +5,12 @@ import com.mojang.blaze3d.vertex.BufferVertexConsumer
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
 import com.mojang.math.Matrix4f
-import com.mojang.math.Vector3f
-import com.mojang.math.Vector4f
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.renderer.ItemBlockRenderTypes
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.RenderType
-import net.minecraft.client.renderer.block.model.BakedQuad
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.Holder
@@ -68,25 +65,10 @@ import java.awt.Color
 import java.util.Random
 import java.util.function.Supplier
 
-//TODO add some methods to ChunkyBlockData
-inline fun <T, Out>ChunkyBlockData<T>.mapNotNull(fn: (Int, Int, Int, T) -> Out?): MutableList<Out> {
-    val toReturn = mutableListOf<Out>()
-    this.forEach {x, y, z, item ->
-        toReturn.add(fn(x, y, z, item) ?: return@forEach)
-    }
-    return toReturn
-}
-
-//TODO plan
-// applying shit to buffer may not be the fastest thing, so instead of doing that i want to create buffer, then
-// only change xyz positions of vertices each frame.
-
+//TODO optimize more
 fun maybeFasterVertexBuilder(buffer: VertexConsumer, x: Float, y: Float, z: Float, r: Byte, g: Byte, b: Byte, a: Byte, u: Float, v: Float, combinedOverlay: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
     buffer as BufferBuilder
     buffer as BufferBuilderAccessor
-
-    //just check vertex size, xyz are first
-//    println(buffer.`vmod$nextElementByte`() % 32 == 0)
 
     buffer.putFloat(0, x)
     buffer.putFloat(4, y)
@@ -191,77 +173,8 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
         }
     }
 
-    data class BulkData(var poseEntry: PoseStack.Pose,
-                        var quad: BakedQuad,
-                        var colorMuls: FloatArray,
-                        var red: Float,
-                        var green: Float,
-                        var blue: Float,
-                        var combinedLights: IntArray,
-                        var combinedOverlay: Int,
-                        var mulColor: Boolean,
-        ) {
-
-        //maybe better putBulkData
-        fun apply(buffer: VertexConsumer, transparency: Byte) {
-            val vertices = quad.vertices
-            val intNormal = quad.direction.normal
-            val normal = Vector3f(intNormal.x.toFloat(), intNormal.y.toFloat(), intNormal.z.toFloat())
-            normal.transform(poseEntry.normal())
-
-            val numVertices = vertices.size / 8
-            var vertexNum = 0
-
-            while (vertexNum < numVertices) {
-                val offset = vertexNum * 8
-
-                val x = java.lang.Float.intBitsToFloat(vertices[0 + offset])
-                val y = java.lang.Float.intBitsToFloat(vertices[1 + offset])
-                val z = java.lang.Float.intBitsToFloat(vertices[2 + offset])
-
-                var r: Float = red   * colorMuls[vertexNum]
-                var g: Float = green * colorMuls[vertexNum]
-                var b: Float = blue  * colorMuls[vertexNum]
-
-                if (mulColor) {
-                    val packedColor = vertices[3 + offset]
-
-                    r *= ((packedColor and 0xff    )       )
-                    g *= ((packedColor and 0xff00  ) shr 8 )
-                    b *= ((packedColor and 0xff0000) shr 16)
-                }
-
-                val u = java.lang.Float.intBitsToFloat(vertices[4 + offset])
-                val v = java.lang.Float.intBitsToFloat(vertices[5 + offset])
-
-                val pos = Vector4f(x, y, z, 1f)
-                pos.transform(poseEntry.pose())
-
-                buffer.vertex(pos.x(), pos.y(), pos.z(), r/255f, g/255f, b/255f, transparency/255f, u, v, combinedOverlay, combinedLights[vertexNum], normal.x(), normal.y(), normal.z())
-//                maybeFasterVertexBuilder(buffer, pos.x(), pos.y(), pos.z(), r.toInt().toByte(), g.toInt().toByte(), b.toInt().toByte(), transparency, u, v, combinedOverlay, combinedLights[vertexNum], normal.x(), normal.y(), normal.z())
-
-                vertexNum++
-            }
-        }
-    }
-
     override fun vertex(x: Float, y: Float, z: Float, red: Float, green: Float, blue: Float, alpha: Float, texU: Float, texV: Float, overlayUV: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
         vertices.add(Vertex(x + vertexOffset.x, y + vertexOffset.y, z + vertexOffset.z, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ, vertexMatrixIndex))
-    }
-
-    override fun putBulkData(
-        poseEntry: PoseStack.Pose,
-        quad: BakedQuad,
-        colorMuls: FloatArray,
-        red: Float,
-        green: Float,
-        blue: Float,
-        combinedLights: IntArray,
-        combinedOverlay: Int,
-        mulColor: Boolean
-    ) {
-        val data = BulkData(poseEntry, quad, colorMuls, red, green, blue, combinedLights, combinedOverlay, mulColor)
-        data.apply(this, (transparency*255).toInt().toByte())
     }
 
     fun clear() {
@@ -315,17 +228,9 @@ class SchemMultiBufferSource: MultiBufferSource {
         val buf = buffers.getOrPut(renderType) { FakeBufferBuilder(this) }
         return buf
     }
-
-    fun clear() {
-        buffers.forEach { (_, buf) -> buf.clear() }
-    }
 }
 
-class SchemRenderer(
-    val schem: IShipSchematic
-): BlockRenderer() {
-    val transparency = 0.5f
-
+class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
     val matrixList: List<Matrix4f>
     val mySources = SchemMultiBufferSource()
 
@@ -391,7 +296,7 @@ class SchemRenderer(
         }
     }
 
-    fun applyBuffers(sources: MultiBufferSource, poseStack: PoseStack) {
+    fun render(sources: MultiBufferSource, poseStack: PoseStack) {
         val matrices = matrixList.map {
             poseStack.pushPose()
             poseStack.mulPoseMatrix(it)
@@ -408,6 +313,19 @@ class SchemRenderer(
 
             buf.apply(actualBuffer, matrices)
         }
+    }
+}
+
+class SchemRenderer(
+    val schem: IShipSchematic
+): BlockRenderer() {
+    val transparency = 0.5f
+    var renderer: SchematicRenderer? = null
+
+    init {
+        Thread {
+            renderer = SchematicRenderer(schem, transparency)
+        }.start()
     }
 
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, sources: MultiBufferSource, timestamp: Long) {
@@ -438,7 +356,7 @@ class SchemRenderer(
         poseStack.translate(pos.x, pos.y, pos.z)
         poseStack.mulPose(rotation.toMinecraft())
 
-        applyBuffers(sources, poseStack)
+        renderer?.render(sources, poseStack)
 
         poseStack.popPose()
     }

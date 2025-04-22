@@ -2,6 +2,7 @@ package net.spaceeye.vmod.vEntityManaging.extensions
 
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.rendering.types.PhysRopeRenderer
+import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.vEntityManaging.types.constraints.PhysRopeConstraint
 import net.spaceeye.vmod.vEntityManaging.util.ExtendableVEntity
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -12,8 +13,8 @@ class PhysRopeRenderable(): RenderableExtension() {
         this.renderer = renderer
     }
 
-    override fun onAfterCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableVEntity) {
-        val newRenderer = renderer.copy(mapped.map {(k, v) -> Pair(k, level.shipObjectWorld.allShips.getById(v)!!) }.toMap()) ?: return
+    override fun onAfterCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>, new: ExtendableVEntity) {
+        val newRenderer = renderer.copy(mapped.map { (k, v) -> Pair(k, level.shipObjectWorld.allShips.getById(v)!!) }.toMap(), centerPositions) ?: return
         new.addExtension(PhysRopeRenderable(newRenderer as PhysRopeRenderer))
     }
 

@@ -1,19 +1,15 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import com.fasterxml.jackson.annotation.JsonIgnore
-import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
 import net.spaceeye.vmod.vEntityManaging.util.TwoShipsMConstraint
-import net.spaceeye.vmod.vEntityManaging.util.mc
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
 //import org.valkyrienskies.core.apigame.joints.VSJointPose
-import net.spaceeye.vmod.reflectable.ReflectableItem.get
-import net.spaceeye.vmod.utils.getHingeRotation
 import net.spaceeye.vmod.utils.vs.tryMovePosition
+
 //import org.valkyrienskies.core.apigame.joints.VSGearJoint
 //import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
 
@@ -66,10 +62,10 @@ class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         this.gearRatio = gearRatio
     }
 
-    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
+    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity? {
          return GearConstraint(
-             tryMovePosition(sPos1, shipId1, level, mapped) ?: return null,
-             tryMovePosition(sPos2, shipId2, level, mapped) ?: return null,
+             tryMovePosition(sPos1, shipId1, centerPositions) ?: return null,
+             tryMovePosition(sPos2, shipId2, centerPositions) ?: return null,
              sDir1, sDir2, sRot1, sRot2,
              mapped[shipId1] ?: return null,
              mapped[shipId2] ?: return null,

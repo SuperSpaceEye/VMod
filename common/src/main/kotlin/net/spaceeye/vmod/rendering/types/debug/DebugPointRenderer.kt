@@ -17,7 +17,6 @@ import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawQuad
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
-import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
@@ -83,7 +82,7 @@ class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer {
         RenderSystem.enableDepthTest()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? {
         return null
     }
 

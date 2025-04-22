@@ -2,7 +2,6 @@ package net.spaceeye.vmod.rendering.types
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
@@ -137,6 +136,6 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
         RenderTypes.clearPCRendering()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? = throw AssertionError("shouldn't be copied")
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = throw AssertionError("shouldn't be copied")
     override fun scaleBy(by: Double) = throw AssertionError("shouldn't be scaled")
 }

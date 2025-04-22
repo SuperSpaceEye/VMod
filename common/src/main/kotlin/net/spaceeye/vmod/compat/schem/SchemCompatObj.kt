@@ -8,12 +8,13 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.ServerShip
 
 interface SchemCompatItem {
-    fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit)
-    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
+    fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, centerPositions: Map<Long, JVector3d>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit)
+    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit)
 
     fun onEntityCopy(level: ServerLevel, entity: Entity, tag: CompoundTag, pos: Vector3d, shipCenter: Vector3d) {}
     fun onEntityPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: Vector3d, shipCenter: Vector3d) {}
@@ -40,21 +41,21 @@ object SchemCompatObj {
         safeAdd("create") { CreateContraptionsCompat() }
     }
 
-    fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?): Boolean {
+    fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, centerPositions: Map<Long, JVector3d>, be: BlockEntity?, tag: CompoundTag?): Boolean {
         var cancel = false
         items.forEach {
             try {
-                it.onCopy(level, pos, state, ships, be, tag) { cancel = true }
+                it.onCopy(level, pos, state, ships, centerPositions, be, tag) { cancel = true }
             } catch (e: Exception) { ELOG("Compat object $it has failed onCopy with exception:\n${e.stackTraceToString()}")
             } catch (e: Error) { ELOG("Compat object $it has failed onCopy with error:\n${e.stackTraceToString()}") }
         }
         return cancel
     }
-    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit): ((BlockEntity?) -> Unit)? {
+    fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit): ((BlockEntity?) -> Unit)? {
         val callbacks = mutableListOf<(BlockEntity?) -> Unit>()
         items.forEach {
             try {
-                it.onPaste(level, oldToNewId, tag, pos, state, delayLoading) { cb -> callbacks.add(cb) }
+                it.onPaste(level, oldToNewId, centerPositions, tag, pos, state, delayLoading) { cb -> callbacks.add(cb) }
             } catch (e: Exception) { ELOG("Compat object $it has failed onPaste with exception:\n${e.stackTraceToString()}")
             } catch (e: Error) { ELOG("Compat object $it has failed onPaste with error:\n${e.stackTraceToString()}") }
         }

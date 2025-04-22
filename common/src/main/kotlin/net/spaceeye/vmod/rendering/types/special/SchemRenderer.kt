@@ -49,7 +49,7 @@ import net.spaceeye.vmod.rendering.types.BlockRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
-import net.spaceeye.vmod.utils.DebugMap
+import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Ref
 import net.spaceeye.vmod.utils.Vector3d
@@ -64,6 +64,7 @@ import org.valkyrienskies.mod.common.util.toMinecraft
 import java.awt.Color
 import java.util.Random
 import java.util.function.Supplier
+import kotlin.math.roundToInt
 
 //TODO optimize more
 fun maybeFasterVertexBuilder(buffer: VertexConsumer, x: Float, y: Float, z: Float, r: Byte, g: Byte, b: Byte, a: Byte, u: Float, v: Float, combinedOverlay: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
@@ -271,15 +272,17 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
                     ItemBlockRenderTypes.getRenderLayer(state.fluidState)
                 }
 
+                val offset = infoItem.previousCenterPosition.let { it.sub(it.x.roundToInt().toDouble(), it.y.roundToInt().toDouble(), it.z.roundToInt().toDouble(), JVector3d()) }
+
                 val buffer = mySources.getBuffer(type)
                 buffer.transparency = transparency
 
                 buffer.vertexMatrixIndex = matrixIndex
                 buffer.vertexPose = poseStack.last()
                 buffer.vertexOffset.set(
-                    bpos.x.toDouble() - infoItem.positionInShip.x,
-                    bpos.y.toDouble() - infoItem.positionInShip.y,
-                    bpos.z.toDouble() - infoItem.positionInShip.z,
+                    bpos.x.toDouble() + offset.x,
+                    bpos.y.toDouble() + offset.y,
+                    bpos.z.toDouble() + offset.z,
                 )
 
                 if (state.fluidState.isEmpty) {
@@ -364,6 +367,6 @@ class SchemRenderer(
     // only for internal use on client
     override fun serialize(): FriendlyByteBuf { throw AssertionError("Shouldn't be serialized") }
     override fun deserialize(buf: FriendlyByteBuf) { throw AssertionError("Shouldn't be deserialized") }
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
     override fun scaleBy(by: Double) { throw AssertionError("Shouldn't be scaled") }
 }

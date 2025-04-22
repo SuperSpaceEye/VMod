@@ -31,8 +31,8 @@ open class RenderableExtension(): VEntityExtension {
         this.obj = obj
     }
 
-    override fun onAfterCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableVEntity) {
-        val newRenderer = renderer.copy(mapped.map {(k, v) -> Pair(k, level.shipObjectWorld.allShips.getById(v)!!) }.toMap()) ?: return
+    override fun onAfterCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>, new: ExtendableVEntity) {
+        val newRenderer = renderer.copy(mapped.map { (k, v) -> Pair(k, level.shipObjectWorld.allShips.getById(v)!!) }.toMap(), centerPositions) ?: return
         new.addExtension(RenderableExtension(newRenderer))
     }
 

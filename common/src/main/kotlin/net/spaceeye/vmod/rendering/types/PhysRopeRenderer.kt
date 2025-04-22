@@ -182,12 +182,12 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
 
     private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse)
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? {
         return PhysRopeRenderer(
             oldToNew[shipId1]?.id ?: -1,
             oldToNew[shipId2]?.id ?: -1,
-            oldToNew[shipId1]?.let { updatePosition(point1, it) } ?: point1,
-            oldToNew[shipId2]?.let { updatePosition(point2, it) } ?: point2,
+            centerPositions[shipId1]?.let { (old, new) -> updatePosition(point1, old, new) } ?: point1,
+            centerPositions[shipId2]?.let { (old, new) -> updatePosition(point2, old, new) } ?: point2,
             up1.copy(), up2.copy(), right1.copy(), right2.copy(),
             color, sides, fullbright, listOf()
         )

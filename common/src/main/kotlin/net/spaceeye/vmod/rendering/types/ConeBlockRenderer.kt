@@ -100,8 +100,8 @@ class ConeBlockRenderer(): BlockRenderer(), AutoSerializable {
         poseStack.popPose()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
-        val spoint = updatePosition(pos, oldToNew[shipId]!!)
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? {
+        val spoint = centerPositions[shipId]!!.let { (old, new) -> updatePosition(pos, old, new)}
         return ConeBlockRenderer(spoint, Quaterniond(rot), scale, oldToNew[shipId]!!.id, color, fullbright)
     }
 

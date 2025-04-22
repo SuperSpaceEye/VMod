@@ -106,9 +106,9 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
         }
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
-        val spoint1 = if (shipId1 != -1L) {updatePosition(point1, oldToNew[shipId1]!!)} else {Vector3d(point1)}
-        val spoint2 = if (shipId2 != -1L) {updatePosition(point2, oldToNew[shipId2]!!)} else {Vector3d(point2)}
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? {
+        val spoint1 = if (shipId1 != -1L) {centerPositions[shipId1]!!.let { (old, new) -> updatePosition(point1, old, new)} } else {Vector3d(point1)}
+        val spoint2 = if (shipId2 != -1L) {centerPositions[shipId2]!!.let { (old, new) -> updatePosition(point2, old, new)} } else {Vector3d(point2)}
 
         val newId1 = if (shipId1 != -1L) {oldToNew[shipId1]!!.id} else {-1}
         val newId2 = if (shipId2 != -1L) {oldToNew[shipId2]!!.id} else {-1}

@@ -12,7 +12,7 @@ abstract class BaseRenderer: Serializable {
     var renderingTick = -1L
 
     abstract fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long)
-    abstract fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer?
+    abstract fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer?
     abstract fun scaleBy(by: Double)
     open fun highlightUntil(until: Long) {}
 }

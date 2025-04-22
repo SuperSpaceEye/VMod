@@ -30,13 +30,14 @@ import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.constructor
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.special.SchemRenderer
-import net.spaceeye.vmod.schematic.VModShipSchematicV1
+import net.spaceeye.vmod.schematic.VModShipSchematicV2
 import net.spaceeye.vmod.schematic.makeFrom
 import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics.SendLoadRequest
+import net.spaceeye.vmod.translate.COULDNT_LOAD_VMODSCHEM_V1
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
@@ -52,30 +53,29 @@ import kotlin.math.sign
 
 const val SCHEM_EXTENSION = "vschem"
 
-//TODO redo everything
-//TODO remove
-//probably works? and if it doesn't, oh well
 private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
-    if (bytes[3].toInt() == 1) {
-        val inst = VModShipSchematicV1()
-
-        val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
-        buf.readInt()
-
-        inst.deserialize(buf)
-        return inst
-    } else {
-        try {
-            val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
-            buf.readUtf()
-            val type = buf.readUtf()
-            if (type == "VModShipSchematicV1") {
-                return VModShipSchematicV1().also { it.deserialize(buf) }
+    val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
+    return if (bytes[3].toInt() == 1) {
+        if (Minecraft.getInstance()?.player != null) {
+            ClientToolGunState.closeGUI()
+            ClientToolGunState.addHUDError("Couldn't load schematic")
+            Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
+        }
+        null
+    } else if (buf.readUtf() == "vschem") {
+        when (buf.readUtf()) {
+            "VModShipSchematicV1" -> {
+                if (Minecraft.getInstance()?.player != null) {
+                    ClientToolGunState.closeGUI()
+                    ClientToolGunState.addHUDError("Couldn't load schematic")
+                    Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
+                }
+                null
             }
-        } catch (e: Exception) {
-        } catch (e: Error) {}
-
-        return ShipSchematic.getSchematicFromBytes(bytes)
+            else -> ShipSchematic.getSchematicFromBytes(bytes)
+        }
+    } else {
+        ShipSchematic.getSchematicFromBytes(bytes)
     }
 }
 
@@ -357,7 +357,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             SchemNetworking.s2cSendSchem.sendToClient(player, EmptyPacket())
             null
         } ?: return
-        val schem = VModShipSchematicV1()
+        val schem = VModShipSchematicV2()
         schem.makeFrom(player.level as ServerLevel, player, player.uuid, serverCaughtShip) {
             ServerPlayerSchematics.schematics[player.uuid] = schem
             SchemNetworking.s2cSendSchem.sendToClient(player, EmptyPacket())
@@ -372,8 +372,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
 
         val info = schem.info!!
 
-        val hitPos = raycastResult.worldHitPos!!
-        val pos = hitPos + (raycastResult.worldNormalDirection!! * info.maxObjectPos.y)
+        val pos = raycastResult.worldHitPos!! + (raycastResult.worldNormalDirection!! * info.maxObjectPos.y) // + (raycastResult.worldNormalDirection!! * 0.5)
 
         val rotation = Quaterniond()
             .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))

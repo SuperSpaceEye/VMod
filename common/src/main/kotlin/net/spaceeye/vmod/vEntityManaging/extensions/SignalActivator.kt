@@ -9,6 +9,7 @@ import net.spaceeye.vmod.vEntityManaging.util.TickableVEntityExtension
 import net.spaceeye.vmod.network.Message
 import net.spaceeye.vmod.network.MessagingNetwork
 import net.spaceeye.vmod.network.Signal
+import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.lang.reflect.Field
 import kotlin.math.max
@@ -60,7 +61,7 @@ class SignalActivator(): VEntityExtension, TickableVEntityExtension {
         percentageField.isAccessible = true
     }
 
-    override fun onAfterCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, new: ExtendableVEntity) {
+    override fun onAfterCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>, new: ExtendableVEntity) {
         new.addExtension(SignalActivator(channelNameReflection, percentageNameReflection))
     }
 

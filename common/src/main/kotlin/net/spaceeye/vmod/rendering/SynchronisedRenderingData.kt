@@ -120,6 +120,7 @@ class ServerSynchronisedRenderingData:
 
     fun removeRenderer(id: Int): Boolean = lock {
         val pageIds = idToPages[id] ?: return false
+        idToPages.remove(id)
         return pageIds.map { pageId -> remove(pageId, id) }.any { it }
     }
 

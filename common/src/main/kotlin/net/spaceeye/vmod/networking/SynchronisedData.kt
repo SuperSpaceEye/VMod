@@ -57,6 +57,7 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
         }
     }
 
+    //TODO those should probably be protected or smth
     fun get(page: Long): Map<Int, T>? = data[page]
 
     fun add(page: Long, item: T): Int = lock {

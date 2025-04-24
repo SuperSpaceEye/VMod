@@ -25,10 +25,12 @@ import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.utils.vs.posShipToWorld
+import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
+import org.valkyrienskies.core.util.toAABBd
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.UUID
@@ -64,11 +66,12 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid
         createdShips.zip(newTransforms).forEach { (it, transform) ->
             val b = it.shipAABB!!
             // transform holds previousCenterPosition cuz why not
-            val offset = MVector3d(it.transform.positionInModel) - MVector3d(
+            var offset = MVector3d(it.transform.positionInModel) - MVector3d(
                 (b.maxX() - b.minX()) / 2.0 + b.minX(),
                 (b.maxY() - b.minY()) / 2.0 + b.minY(),
                 (b.maxZ() - b.minZ()) / 2.0 + b.minZ(),
             )
+            offset = transformDirectionShipToWorld(it, offset)
             val toPos = MVector3d(transform.position) + MVector3d(pos) + offset
             level.shipObjectWorld.teleportShip(it, ShipTeleportDataImpl(
                 toPos.toJomlVector3d(),
@@ -78,7 +81,6 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid
         }
 
         postPlaceFn(createdShips)
-//        uuid; createdShips;
         SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, createdShips, 10)
     }
 
@@ -103,12 +105,12 @@ private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vecto
         val newTransform = ShipTransformImpl(temp.position, it.previousCenterPosition, temp.rotation, JVector3d(it.shipScale, it.shipScale, it.shipScale))
         newTransforms.add(newTransform)
 
-        //TODO this is probably wrong?
         val toPos = MVector3d(newTransform.position) + MVector3d(pos)
 
         val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(), false, it.shipScale, level.dimensionId)
         newShip.isStatic = true
 
+        //TODO idk if i can calculate final position correctly, so maybe just teleport it to idk 100000000 100000000 100000000 while it's being created?
         level.shipObjectWorld.teleportShip(newShip, ShipTeleportDataImpl(
             toPos.toJomlVector3d(),
             newTransform.rotation,
@@ -154,12 +156,16 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uui
     return true
 }
 
-private fun getWorldAABB(it: ServerShip, newTransform: BodyTransform): AABBd = it.worldAABB.transform(it.worldToShip, AABBd()).transform(newTransform.toWorld)
 
-// it will save ship data with origin ship unrotated
+private fun getWorldAABB(it: ServerShip, newTransform: BodyTransform): AABBd = it.shipAABB?.toAABBd(AABBd())?.transform(newTransform.toWorld) ?: AABBd(it.worldAABB)
+
 fun IShipSchematic.saveShipData(ships: List<ServerShip>, originShip: ServerShip): AABBd {
-    val invRotation = originShip.transform.shipToWorldRotation.invert(Quaterniond())
-    val newTransforms = ships.map { rotateAroundCenter(originShip.transform, it.transform, invRotation) }
+    //TODO i kinda don't want to do this but idk what i want to do with this
+//    val invRotation = originShip.transform.shipToWorldRotation.invert(Quaterniond())
+    val newTransforms = ships.map {
+//        rotateAroundCenter(originShip.transform, it.transform, invRotation)
+        it.transform
+    }
 
     val objectAABB = getWorldAABB(ships[0], newTransforms[0])
     ships.zip(newTransforms).forEach {(it, newTransform) ->
@@ -175,7 +181,7 @@ fun IShipSchematic.saveShipData(ships: List<ServerShip>, originShip: ServerShip)
     val minPos = MVector3d(objectAABB.minX, objectAABB.minY, objectAABB.minZ)
     val maxPos = MVector3d(objectAABB.maxX, objectAABB.maxY, objectAABB.maxZ)
 
-    val normalizedMaxObjectPos = (maxPos - minPos) / 2
+    val normalizedMaxObjectPos = (maxPos - minPos) / 2.0
     val objectCenterInWorld = normalizedMaxObjectPos + minPos
 
     val sinfo = ships.zip(newTransforms).map {(it, newTransform ) ->

@@ -15,22 +15,29 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.Holder
 import net.minecraft.core.RegistryAccess
+import net.minecraft.core.SectionPos
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.crafting.RecipeManager
+import net.minecraft.world.level.BlockGetter
+import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.ColorResolver
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.LightLayer
 import net.minecraft.world.level.biome.Biome
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.ChunkSource
+import net.minecraft.world.level.chunk.DataLayer
+import net.minecraft.world.level.chunk.LightChunkGetter
 import net.minecraft.world.level.entity.LevelEntityGetter
 import net.minecraft.world.level.gameevent.GameEvent
+import net.minecraft.world.level.lighting.LayerLightEventListener
 import net.minecraft.world.level.lighting.LevelLightEngine
 import net.minecraft.world.level.material.Fluid
 import net.minecraft.world.level.material.FluidState
@@ -98,6 +105,40 @@ fun maybeFasterVertexBuilder(buffer: VertexConsumer, x: Float, y: Float, z: Floa
     buffer.`vmod$vertices`(buffer.`vmod$vertices`() + 1)
 }
 
+class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
+    override fun getChunkForLighting(chunkX: Int, chunkZ: Int): BlockGetter? = null
+    override fun getLevel(): BlockGetter? = null
+}, false, false) {
+    class SchemLayerListener(): LayerLightEventListener {
+        override fun getLightValue(levelPos: BlockPos): Int = 15
+
+        override fun getDataLayerData(sectionPos: SectionPos): DataLayer? = null
+        override fun checkBlock(pos: BlockPos) {}
+        override fun onBlockEmissionIncrease(pos: BlockPos, emissionLevel: Int) {}
+        override fun hasLightWork(): Boolean = false
+        override fun runUpdates(pos: Int, isQueueEmpty: Boolean, updateBlockLight: Boolean): Int = pos
+        override fun updateSectionStatus(pos: SectionPos, isQueueEmpty: Boolean) {}
+        override fun enableLightSources(chunkPos: ChunkPos, isQueueEmpty: Boolean) {}
+    }
+    val layerListener = SchemLayerListener()
+
+    override fun getRawBrightness(blockPos: BlockPos, amount: Int): Int = 15
+    override fun getLightSectionCount(): Int = 2000000
+    override fun getMinLightSection(): Int = -1000000
+    override fun getMaxLightSection(): Int = 1000000
+
+    override fun checkBlock(pos: BlockPos) {}
+    override fun onBlockEmissionIncrease(pos: BlockPos, emissionLevel: Int) {}
+    override fun hasLightWork(): Boolean = false
+    override fun runUpdates(pos: Int, isQueueEmpty: Boolean, updateBlockLight: Boolean): Int = pos
+    override fun updateSectionStatus(pos: SectionPos, isQueueEmpty: Boolean) {}
+    override fun enableLightSources(chunkPos: ChunkPos, isQueueEmpty: Boolean) {}
+    override fun getLayerListener(type: LightLayer): LayerLightEventListener? = layerListener
+    override fun getDebugData(lightLayer: LightLayer, sectionPos: SectionPos): String? = "n/a"
+    override fun queueSectionData(type: LightLayer, pos: SectionPos, array: DataLayer?, bl: Boolean) {}
+    override fun retainData(pos: ChunkPos, retain: Boolean) {}
+}
+
 class BlockAndTintGetterWrapper(val level: ClientLevel, val data: ChunkyBlockData<BlockItem>, val palette: IBlockStatePalette): Level(
     level.levelData, level.dimension(), level.dimensionTypeRegistration(), Supplier{level.profiler}, level.isClientSide, level.isDebug, 0L
 ) {
@@ -105,10 +146,7 @@ class BlockAndTintGetterWrapper(val level: ClientLevel, val data: ChunkyBlockDat
     val defaultFluidState = Fluids.EMPTY.defaultFluidState()
     var offset = Vector3i(0, 0, 0)
 
-    override fun getShade(direction: Direction, shade: Boolean): Float {
-        return 1f
-        return level.getShade(direction, shade)
-    }
+    override fun getShade(direction: Direction, shade: Boolean): Float = 1f
 
     override fun getBlockTint(
         blockPos: BlockPos,
@@ -126,9 +164,11 @@ class BlockAndTintGetterWrapper(val level: ClientLevel, val data: ChunkyBlockDat
         val pos = BlockPos(pos.x + offset.x, pos.y + offset.y, pos.z + offset.z)
         return data.blocks.get(BlockPos(pos.x shr 4, 0, pos.z shr 4))?.get(BlockPos(pos.x and 15, pos.y, pos.z and 15))?.let { palette.fromId(it.paletteId) }?.fluidState ?: defaultFluidState
     }
-    override fun getLightEngine(): LevelLightEngine? = level.lightEngine
-    override fun getHeight(): Int = level.height
-    override fun getMinBuildHeight(): Int = level.minBuildHeight
+
+    private val dummyLightEngine = SchemLightEngine()
+    override fun getLightEngine(): LevelLightEngine? = dummyLightEngine
+    override fun getHeight(): Int = 2000000
+    override fun getMinBuildHeight(): Int = -1000000
 
     override fun getUncachedNoiseBiome(x: Int, y: Int, z: Int): Holder<Biome?>? { throw AssertionError("Shouldn't be called") }
     override fun playSound(player: Player?, x: Double, y: Double, z: Double, sound: SoundEvent, category: SoundSource, volume: Float, pitch: Float) { throw AssertionError("Shouldn't be called")  }

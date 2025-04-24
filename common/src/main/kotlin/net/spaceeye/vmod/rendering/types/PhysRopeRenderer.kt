@@ -13,6 +13,7 @@ import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawPolygonTube
@@ -28,7 +29,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
 //TODO redo
-class PhysRopeRenderer(): BaseRenderer() {
+class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
     class Data: AutoSerializable {
         @JsonIgnore
         private var i = 0
@@ -52,6 +53,7 @@ class PhysRopeRenderer(): BaseRenderer() {
         var shipIds: LongArray by get(i++, longArrayOf())
     }
     var data = Data()
+    override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 

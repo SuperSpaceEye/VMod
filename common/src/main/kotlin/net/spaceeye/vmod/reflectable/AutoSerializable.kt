@@ -58,7 +58,7 @@ import kotlin.reflect.jvm.jvmErasure
  * }
  * ```
  */
-interface AutoSerializable: Serializable, ReflectableItems {
+interface AutoSerializable: Serializable, ReflectableObject {
     @JsonIgnore
     @NonExtendable
     override fun serialize() = getBuffer().also { buf ->

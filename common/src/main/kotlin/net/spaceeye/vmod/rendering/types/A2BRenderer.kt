@@ -11,6 +11,7 @@ import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
@@ -21,7 +22,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-open class A2BRenderer(): BaseRenderer() {
+open class A2BRenderer(): BaseRenderer(), ReflectableObject {
     private class Data: AutoSerializable {
         @JsonIgnore private var i = 0
 
@@ -37,6 +38,7 @@ open class A2BRenderer(): BaseRenderer() {
         var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
     }
     private var data = Data()
+    override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 

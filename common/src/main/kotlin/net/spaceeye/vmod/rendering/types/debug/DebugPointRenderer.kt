@@ -15,6 +15,7 @@ import net.spaceeye.vmod.rendering.types.BaseRenderer
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawQuad
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -22,7 +23,7 @@ import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer {
+class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer, ReflectableObject {
     private class Data: AutoSerializable {
         @JsonIgnore
         private var i = 0
@@ -31,6 +32,7 @@ class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer {
         var sPos: Vector3d by get(i++, Vector3d())
     }
     private var data = Data()
+    override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 

@@ -13,6 +13,7 @@ import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
@@ -22,7 +23,7 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class RopeRenderer(): BaseRenderer() {
+class RopeRenderer(): BaseRenderer(), ReflectableObject {
     private class Data: AutoSerializable {
         @JsonIgnore
         private var i = 0
@@ -40,6 +41,7 @@ class RopeRenderer(): BaseRenderer() {
         var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
     }
     private var data = Data()
+    override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 

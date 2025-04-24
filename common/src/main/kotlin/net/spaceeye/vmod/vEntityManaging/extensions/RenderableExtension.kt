@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.vEntityManaging.util.ExtendableVEntity
 import net.spaceeye.vmod.vEntityManaging.util.VEntityExtension
-import net.spaceeye.vmod.reflectable.ReflectableItems
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.reflectable.tDeserialize
 import net.spaceeye.vmod.reflectable.tSerialize
 import net.spaceeye.vmod.rendering.RenderingTypes
@@ -45,7 +45,7 @@ open class RenderableExtension(): VEntityExtension {
         val tag = CompoundTag()
         try {
             tag.putString("rendererType", renderer.getType())
-            tag.put("renderer", (renderer as ReflectableItems).tSerialize())
+            tag.put("renderer", (renderer as ReflectableObject).tSerialize())
         } catch (e: Exception) { ELOG("FAILED TO SERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}"); return null
         } catch (e: Error) { ELOG("FAILED TO SERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}"); return null }
         return tag
@@ -56,7 +56,7 @@ open class RenderableExtension(): VEntityExtension {
         try {
             val type = tag.getString("rendererType")
             renderer = RenderingTypes.strTypeToSupplier(type).get()
-            (renderer as ReflectableItems).tDeserialize(tag.getCompound("renderer"))
+            (renderer as ReflectableObject).tDeserialize(tag.getCompound("renderer"))
         } catch (e: Exception) { ELOG("FAILED TO DESERIALIZE RENDERER WITH EXCEPTION\n${e.stackTraceToString()}"); return false
         } catch (e: Error) { ELOG("FAILED TO DESERIALIZE RENDERER WITH ERROR\n${e.stackTraceToString()}"); return false}
 

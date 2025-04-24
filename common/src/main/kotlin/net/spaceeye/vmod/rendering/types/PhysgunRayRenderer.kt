@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.LightTexture
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -29,7 +30,7 @@ fun closestPointOnALineToAnotherPoint(originPoint: Vector3d, linePoint1: Vector3
     return linePoint1 + wdir * t
 }
 
-class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRenderer {
+class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRenderer, ReflectableObject {
     class Data: AutoSerializable {
         @JsonIgnore
         private var i = 0
@@ -41,6 +42,7 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
         var activeFor_ms: Long by get(i++, Long.MAX_VALUE)
     }
     var data = Data()
+    override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
     override var timestampOfBeginning: Long get() = data.timestampOfBeginning; set(value) {data.timestampOfBeginning = value}

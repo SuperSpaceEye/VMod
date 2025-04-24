@@ -15,6 +15,7 @@ import net.spaceeye.vmod.VMBlocks
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderingStuff
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -33,7 +34,7 @@ object A {
     val testState = VMBlocks.CONE_THRUSTER.get().defaultBlockState()
 }
 
-class ConeBlockRenderer(): BlockRenderer() {
+class ConeBlockRenderer(): BlockRenderer(), ReflectableObject {
     private class Data: AutoSerializable {
         @JsonIgnore
         private var i = 0
@@ -46,6 +47,7 @@ class ConeBlockRenderer(): BlockRenderer() {
         var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
     }
     private var data = Data()
+    override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 

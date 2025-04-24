@@ -12,6 +12,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import org.lwjgl.opengl.GL11
@@ -19,7 +20,7 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
-class TimedA2BRenderer(): BaseRenderer(), TimedRenderer, PositionDependentRenderer {
+class TimedA2BRenderer(): BaseRenderer(), TimedRenderer, PositionDependentRenderer, ReflectableObject {
     private class Data: AutoSerializable {
         @JsonIgnore
         private var i = 0
@@ -36,6 +37,7 @@ class TimedA2BRenderer(): BaseRenderer(), TimedRenderer, PositionDependentRender
         var renderingPosition: Vector3d by get(i++, Vector3d())
     }
     private var data = Data()
+    override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
     override var timestampOfBeginning: Long get() = data.timestampOfBeginning; set(value) {data.timestampOfBeginning = value}

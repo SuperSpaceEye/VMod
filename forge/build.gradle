@@ -67,7 +67,7 @@ repositories {
 }
 
 dependencies {
-    include modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.name:1.18.2-1.0") {transitive false}
+    include modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.name:1.18.2-1.1") {transitive false}
     forgeRuntimeLibrary include("org.jgrapht:jgrapht-core:1.5.2")
     forgeRuntimeLibrary include("org.apfloat:apfloat:1.14.0")
     forgeRuntimeLibrary include("org.jheaps:jheaps:0.14")

@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.LightTexture
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
@@ -21,20 +22,26 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-class RopeRenderer(): BaseRenderer(), AutoSerializable {
-    @JsonIgnore private var i = 0
+class RopeRenderer(): BaseRenderer() {
+    private class Data: AutoSerializable {
+        @JsonIgnore
+        private var i = 0
 
-    var shipId1: Long by get(i++, -1L)
-    var shipId2: Long by get(i++, -1L)
+        var shipId1: Long by get(i++, -1L)
+        var shipId2: Long by get(i++, -1L)
 
-    var point1: Vector3d by get(i++, Vector3d())
-    var point2: Vector3d by get(i++, Vector3d())
+        var point1: Vector3d by get(i++, Vector3d())
+        var point2: Vector3d by get(i++, Vector3d())
 
-    var length: Double by get(i++, 0.0)
+        var length: Double by get(i++, 0.0)
 
-    var width: Double by get(i++, .2, true) { ClientLimits.instance.ropeRendererWidth.get(it) }
-    var segments: Int by get(i++, 16, true) { ClientLimits.instance.ropeRendererSegments.get(it) }
-    var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
+        var width: Double by get(i++, .2, true) { ClientLimits.instance.ropeRendererWidth.get(it) }
+        var segments: Int by get(i++, 16, true) { ClientLimits.instance.ropeRendererSegments.get(it) }
+        var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
+    }
+    private var data = Data()
+    override fun serialize() = data.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 
     constructor(
         shipId1: Long,
@@ -45,7 +52,7 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
         width: Double,
         segments: Int,
         fullbright: Boolean,
-    ): this() {
+    ): this() { with(data) {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
         this.point1 = point1
@@ -54,14 +61,14 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
         this.width = width
         this.segments = segments
         this.fullbright = fullbright
-    }
+    } }
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {
         if (until > highlightTimestamp) highlightTimestamp = until
     }
 
-    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) = with(data) {
         val level = Minecraft.getInstance().level!!
 
         val ship1 = if (shipId1 != -1L) { level.shipObjectWorld.loadedShips.getById(shipId1) ?: return } else null
@@ -106,7 +113,7 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
         }
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? {
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = with(data) {
         val spoint1 = if (shipId1 != -1L) {centerPositions[shipId1]!!.let { (old, new) -> updatePosition(point1, old, new)} } else {Vector3d(point1)}
         val spoint2 = if (shipId2 != -1L) {centerPositions[shipId2]!!.let { (old, new) -> updatePosition(point2, old, new)} } else {Vector3d(point2)}
 
@@ -116,7 +123,7 @@ class RopeRenderer(): BaseRenderer(), AutoSerializable {
         return RopeRenderer(newId1, newId2, spoint1, spoint2, length, width, segments, fullbright)
     }
 
-    override fun scaleBy(by: Double) {
+    override fun scaleBy(by: Double) = with(data) {
         width *= by
         length *= by
     }

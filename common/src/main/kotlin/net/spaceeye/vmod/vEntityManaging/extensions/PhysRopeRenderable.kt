@@ -22,7 +22,7 @@ class PhysRopeRenderable(): RenderableExtension() {
         val obj = obj as PhysRopeConstraint
         val renderer = this.renderer as PhysRopeRenderer
 
-        renderer.shipIds = obj.entities.map { it.id }.toLongArray()
+        renderer.data.shipIds = obj.entities.map { it.id }.toLongArray()
         this.renderer = renderer
 
         super.onMakeVEntity(level)

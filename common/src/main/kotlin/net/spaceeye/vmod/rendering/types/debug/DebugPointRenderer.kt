@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
+import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import org.valkyrienskies.core.api.ships.Ship
@@ -22,21 +23,27 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
 class DebugPointRenderer(): BaseRenderer(), AutoSerializable, DebugRenderer {
-    @JsonIgnore private var i = 0
+    private class Data: AutoSerializable {
+        @JsonIgnore
+        private var i = 0
 
-    var shipId: Long by get(i++, -1L)
-    var sPos: Vector3d by get(i++, Vector3d())
+        var shipId: Long by get(i++, -1L)
+        var sPos: Vector3d by get(i++, Vector3d())
+    }
+    private var data = Data()
+    override fun serialize() = data.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 
-    constructor(shipId: ShipId, sPos: Vector3d): this() {
+    constructor(shipId: ShipId, sPos: Vector3d): this() { with(data) {
         this.shipId = shipId
         this.sPos = sPos
-    }
+    } }
 
     override fun renderData(
         poseStack: PoseStack,
         camera: Camera,
         timestamp: Long
-    ) {
+    ) = with(data) {
         val level = Minecraft.getInstance().level!!
 
         val rPos = level.shipObjectWorld.loadedShips.getById(shipId)?.let { posShipToWorldRender(it, sPos) }

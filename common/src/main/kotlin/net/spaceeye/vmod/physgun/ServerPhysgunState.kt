@@ -254,7 +254,7 @@ object ServerPhysgunState: ServerClosable() {
                 val pageId = ReservedRenderingPages.TimedRenderingObjects
                 if (state.rID == -1) {
                     val renderer = PhysgunRayRenderer()
-                    renderer.player = uuid
+                    renderer.data.player = uuid
                     state.rID = ServerRenderingData.addRenderer(listOf(pageId), renderer)
                 }
 
@@ -284,9 +284,9 @@ object ServerPhysgunState: ServerClosable() {
                 controller.sharedState = state
 
                 val renderer = (ServerRenderingData.getRenderer(state.rID) ?: return@forEach) as PhysgunRayRenderer
-                renderer.player = uuid
-                renderer.shipId = state.mainShipId
-                renderer.hitPosInShipyard = result.globalHitPos!!
+                renderer.data.player = uuid
+                renderer.data.shipId = state.mainShipId
+                renderer.data.hitPosInShipyard = result.globalHitPos!!
                 ServerRenderingData.setRenderer(listOf(pageId), state.rID, renderer)
 
                 toRemove.add(uuid)

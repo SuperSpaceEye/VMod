@@ -19,6 +19,7 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.jvmErasure
 
 /**
+ * WARNING!!!! IF CLASS USES CLIENT ONLY CLASSES THEN YOU CAN'T DIRECTLY USE THIS AS REFLECTION WILL TRY TO LOAD EVERYTHING.
  * An interface that will add functionality for semi-automatic serialization/deserialization
  *
  * ### If added to a normal class:

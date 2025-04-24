@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.renderer.GameRenderer
+import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
@@ -18,20 +19,28 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
 
-class TimedA2BRenderer(): BaseRenderer(), TimedRenderer, PositionDependentRenderer, AutoSerializable {
-    @JsonIgnore private var i = 0
+class TimedA2BRenderer(): BaseRenderer(), TimedRenderer, PositionDependentRenderer {
+    private class Data: AutoSerializable {
+        @JsonIgnore
+        private var i = 0
 
-    var point1: Vector3d by get(i++, Vector3d())
-    var point2: Vector3d by get(i++, Vector3d())
+        var point1: Vector3d by get(i++, Vector3d())
+        var point2: Vector3d by get(i++, Vector3d())
 
-    var color: Color by get(i++, Color(0))
+        var color: Color by get(i++, Color(0))
 
-    var width: Double by get(i++, .2) { ClientLimits.instance.lineRendererWidth.get(it) }
+        var width: Double by get(i++, .2) { ClientLimits.instance.lineRendererWidth.get(it) }
 
-    override var timestampOfBeginning: Long by get(i++, -1)
-    override var activeFor_ms: Long by get(i++, -1)
-    override var renderingPosition: Vector3d by get(i++, Vector3d())
-
+        var timestampOfBeginning: Long by get(i++, -1)
+        var activeFor_ms: Long by get(i++, -1)
+        var renderingPosition: Vector3d by get(i++, Vector3d())
+    }
+    private var data = Data()
+    override fun serialize() = data.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
+    override var timestampOfBeginning: Long get() = data.timestampOfBeginning; set(value) {data.timestampOfBeginning = value}
+    override val activeFor_ms: Long get() = data.activeFor_ms
+    override val renderingPosition: Vector3d get() = data.renderingPosition
 
     override var wasActivated: Boolean = false
 
@@ -43,7 +52,7 @@ class TimedA2BRenderer(): BaseRenderer(), TimedRenderer, PositionDependentRender
                 timestampOfBeginning: Long,
                 activeFor_ms: Long,
                 renderingPosition: Vector3d
-    ): this() {
+    ): this() { with(data) {
         this.point1 = point1
         this.point2 = point2
         this.color = color
@@ -52,9 +61,9 @@ class TimedA2BRenderer(): BaseRenderer(), TimedRenderer, PositionDependentRender
         this.timestampOfBeginning = timestampOfBeginning
         this.activeFor_ms = activeFor_ms
         this.renderingPosition = renderingPosition
-    }
+    } }
 
-    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) = with(data) {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 

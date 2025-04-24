@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.LightTexture
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
@@ -27,26 +28,32 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
 //TODO redo
-class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
-    @JsonIgnore private var i = 0
+class PhysRopeRenderer(): BaseRenderer() {
+    class Data: AutoSerializable {
+        @JsonIgnore
+        private var i = 0
 
-    var shipId1: Long by get(i++, -1L)
-    var shipId2: Long by get(i++, -1)
+        var shipId1: Long by get(i++, -1L)
+        var shipId2: Long by get(i++, -1)
 
-    var point1: Vector3d by get(i++, Vector3d())
-    var point2: Vector3d by get(i++, Vector3d())
+        var point1: Vector3d by get(i++, Vector3d())
+        var point2: Vector3d by get(i++, Vector3d())
 
-    var up1: Vector3d by get(i++, Vector3d())
-    var up2: Vector3d by get(i++, Vector3d())
+        var up1: Vector3d by get(i++, Vector3d())
+        var up2: Vector3d by get(i++, Vector3d())
 
-    var right1: Vector3d by get(i++, Vector3d())
-    var right2: Vector3d by get(i++, Vector3d())
+        var right1: Vector3d by get(i++, Vector3d())
+        var right2: Vector3d by get(i++, Vector3d())
 
-    var color: Color by get(i++, Color(0))
-    var sides: Int by get(i++, 8, true) { ClientLimits.instance.physRopeSides.get(it) }
-    var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
+        var color: Color by get(i++, Color(0))
+        var sides: Int by get(i++, 8, true) { ClientLimits.instance.physRopeSides.get(it) }
+        var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
 
-    var shipIds: LongArray by get(i++, longArrayOf())
+        var shipIds: LongArray by get(i++, longArrayOf())
+    }
+    var data = Data()
+    override fun serialize() = data.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 
     constructor(
         shipId1: ShipId,
@@ -60,7 +67,7 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
         color: Color, sides: Int,
         fullbright: Boolean,
         shipIds: List<Long>
-    ): this() {
+    ): this() { with(data) {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
 
@@ -79,14 +86,14 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
         this.fullbright = fullbright
 
         this.shipIds = shipIds.toLongArray()
-    }
+    } }
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {
         if (until > highlightTimestamp) highlightTimestamp = until
     }
 
-    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) = with(data) {
         val level = Minecraft.getInstance().level!!
         val sides = sides
         val fullbright = fullbright
@@ -180,9 +187,9 @@ class PhysRopeRenderer(): BaseRenderer(), AutoSerializable {
         RenderTypes.clearFullRendering()
     }
 
-    private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse)
+    private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = with(data) { return@with makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse) }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? {
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = with(data) {
         return PhysRopeRenderer(
             oldToNew[shipId1]?.id ?: -1,
             oldToNew[shipId2]?.id ?: -1,

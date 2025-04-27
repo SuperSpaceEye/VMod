@@ -58,14 +58,10 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid
 
     if (!verifyBlockDataIsValid(shipInitializers.map { it.second }, player)) { return false }
 
-    SchematicActionsQueue.queueShipsCreationEvent(level, player, uuid, shipInitializers, this) { ships, centerPositions ->
-        ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, centerPositions, extraData.toMap())
-        LegacyConstraintFixers.tryLoadLegacyVModSchemData(level, ships, centerPositions.map { Pair(it.key, it.value.let { (first, second) -> Pair(MVector3d(first), MVector3d(second)) }) }.toMap(), extraData.toMap()) //TODO Remove
-
+    SchematicActionsQueue.queueShipsCreationEvent(level, player, uuid, shipInitializers, this) { ships, centerPositions, entityCreationFn ->
         val createdShips = ships.map { it.first }
         createdShips.zip(newTransforms).forEach { (it, transform) ->
             val b = it.shipAABB!!
-            // transform holds previousCenterPosition cuz why not
             var offset = MVector3d(it.transform.positionInModel) - MVector3d(
                 (b.maxX() - b.minX()) / 2.0 + b.minX(),
                 (b.maxY() - b.minY()) / 2.0 + b.minY(),
@@ -80,6 +76,9 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid
             ))
         }
 
+        entityCreationFn()
+        ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, centerPositions, extraData.toMap())
+        LegacyConstraintFixers.tryLoadLegacyVModSchemData(level, ships, centerPositions.map { Pair(it.key, it.value.let { (first, second) -> Pair(MVector3d(first), MVector3d(second)) }) }.toMap(), extraData.toMap()) //TODO Remove
         postPlaceFn(createdShips)
         SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, createdShips, 10)
     }
@@ -105,7 +104,10 @@ private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vecto
         val newTransform = ShipTransformImpl(temp.position, it.previousCenterPosition, temp.rotation, JVector3d(it.shipScale, it.shipScale, it.shipScale))
         newTransforms.add(newTransform)
 
-        val toPos = MVector3d(newTransform.position) + MVector3d(pos)
+        //this is pointless and doesnt actually work
+        var offset = MVector3d(it.previousCOMPosition) - MVector3d(it.previousCenterPosition)
+        offset = transformDirectionShipToWorld(newTransform, offset)
+        val toPos = MVector3d(newTransform.position) + MVector3d(pos) + offset
 
         val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(), false, it.shipScale, level.dimensionId)
         newShip.isStatic = true
@@ -184,7 +186,7 @@ fun IShipSchematic.saveShipData(ships: List<ServerShip>, originShip: ServerShip)
     val normalizedMaxObjectPos = (maxPos - minPos) / 2.0
     val objectCenterInWorld = normalizedMaxObjectPos + minPos
 
-    val sinfo = ships.zip(newTransforms).map {(it, newTransform ) ->
+    val sinfo = ships.zip(newTransforms).map {(it, newTransform) ->
         val b = it.shipAABB!!
         val cX = (b.maxX() - b.minX()) / 2.0 + b.minX()
         val cY = (b.maxY() - b.minY()) / 2.0 + b.minY()
@@ -201,6 +203,7 @@ fun IShipSchematic.saveShipData(ships: List<ServerShip>, originShip: ServerShip)
             (posShipToWorld(it, chunkCenter) - objectCenterInWorld).toJomlVector3d(),
             shipAABB,
             chunkCenter.toJomlVector3d(),
+            it.transform.positionInModel.get(Vector3d()),
             MVector3d(newTransform.scaling).avg(),
             Quaterniond(newTransform.rotation)
         )

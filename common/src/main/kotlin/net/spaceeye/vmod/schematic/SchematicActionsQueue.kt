@@ -74,7 +74,7 @@ object SchematicActionsQueue: ServerClosable() {
 
     fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
 
-    fun queueShipsCreationEvent(level: ServerLevel, player: ServerPlayer?, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: (ships: List<Pair<ServerShip, Long>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>) -> Unit) {
+    fun queueShipsCreationEvent(level: ServerLevel, player: ServerPlayer?, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: (ships: List<Pair<ServerShip, Long>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit) {
         placeData[uuid] = SchemPlacementItem(level, player, schematicV1, ships, postPlacementFn)
     }
 
@@ -83,7 +83,7 @@ object SchematicActionsQueue: ServerClosable() {
         val player: ServerPlayer?,
         val schematicV1: IShipSchematicDataV1,
         val shipsToCreate: List<Pair<() -> ServerShip, Long>>,
-        val postPlacementFn: (ships: List<Pair<ServerShip, Long>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>) -> Unit
+        val postPlacementFn: (ships: List<Pair<ServerShip, Long>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit
     ) {
         var currentShip = 0
         var currentChunk = 0
@@ -95,6 +95,7 @@ object SchematicActionsQueue: ServerClosable() {
         var delayedBlockEntityLoading = ChunkyBlockData<() -> Unit>()
 
         var hadNonfatalErrors = false
+        lateinit var entityCreationFn: () -> Unit
 
         private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: ChunkyBlockData<BlockItem>, blockPalette: IBlockStatePalette, flatTagData: List<CompoundTag>, offset: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
@@ -226,7 +227,7 @@ object SchematicActionsQueue: ServerClosable() {
                 if (getNow_ms() - start > timeout) { return false }
             }
 
-            //TODO VS transforms positions of entities before ships are teleported to correct coordinates
+            entityCreationFn = {
             schematicV1.entityData.forEach { (oldId, entities) ->
                 val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId]!!)!!
                 entities.forEach { (pos, tag) ->
@@ -260,6 +261,7 @@ object SchematicActionsQueue: ServerClosable() {
                         level.addFreshEntityWithPassengers(entity)
                     } catch (_: Exception) {}
                 }
+            }
             }
 
             if (hadNonfatalErrors) { player?.let { ServerToolGunState.sendErrorTo(it, SCHEMATIC_HAD_NONFATAL_ERRORS) } }
@@ -474,7 +476,7 @@ object SchematicActionsQueue: ServerClosable() {
                     SessionEvents.serverOnTick.on { (server), unsubscribe ->
                         tick++
                         if (tick > 1) {
-                            item!!.postPlacementFn(item.createdShips, item.centerPositions)
+                            item!!.postPlacementFn(item.createdShips, item.centerPositions, item.entityCreationFn)
                             unsubscribe()
                         }
                     }

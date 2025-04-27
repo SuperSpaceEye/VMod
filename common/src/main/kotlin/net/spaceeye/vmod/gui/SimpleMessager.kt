@@ -1,17 +1,12 @@
 package net.spaceeye.vmod.gui
 
-import dev.architectury.event.EventResult
-import dev.architectury.event.events.client.ClientRawInputEvent
 import dev.architectury.event.events.common.TickEvent
-import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.WindowScreen
 import gg.essential.elementa.components.ScrollComponent
 import gg.essential.elementa.components.UIBlock
-import gg.essential.elementa.components.UIText
 import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.constraints.ChildBasedSizeConstraint
-import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.constraints.animation.Animations
 import gg.essential.elementa.dsl.*
 import net.minecraft.client.Minecraft
@@ -20,7 +15,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.blockentities.SimpleMessagerBlockEntity
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.*
@@ -275,7 +270,7 @@ object SimpleMessagerGUI: ClientClosable() {
             open = false
         }
 
-        RandomEvents.keyPress.on {
+        PersistentEvents.keyPress.on {
                 (keyCode, scanCode, action, modifiers), _ ->
             if (gui != null && Minecraft.getInstance().screen == gui) {
                 if (action == GLFW.GLFW_PRESS && (ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {

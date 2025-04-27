@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.rendering
 
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
@@ -14,7 +13,7 @@ import net.minecraft.world.level.block.RenderShape
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.mixin.BlockRenderDispatcherAccessor
 import net.spaceeye.vmod.rendering.types.BlockRenderer
 import net.spaceeye.vmod.rendering.types.PositionDependentRenderer
@@ -93,7 +92,7 @@ private var renderTick = 0L
 // because of poseStack but idk
 fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft, renderBlockRenderers: Boolean) {
     val now = getNow_ms()
-    RandomEvents.clientPreRender.emit(RandomEvents.ClientPreRender(now))
+    PersistentEvents.clientPreRender.emit(PersistentEvents.ClientPreRender(now))
 
     minecraft.profiler.push("vmod_rendering_ship_objects")
     renderShipObjects(poseStack, camera, renderBlockRenderers, now, renderTick++)

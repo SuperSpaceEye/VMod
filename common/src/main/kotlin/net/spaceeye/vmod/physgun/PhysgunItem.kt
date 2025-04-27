@@ -7,7 +7,7 @@ import net.fabricmc.api.EnvType
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.spaceeye.vmod.VMItems
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.PersistentEvents
 
 class PhysgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
     companion object {
@@ -19,7 +19,7 @@ class PhysgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
 
         @JvmStatic
         fun makeEvents() {
-            RandomEvents.keyPress.on {
+            PersistentEvents.keyPress.on {
                 (keyCode, scanCode, action, modifiers), _ ->
                 if (!playerIsUsingPhysgun()) {return@on false}
                 if (Minecraft.getInstance().screen != null) {return@on false}
@@ -27,7 +27,7 @@ class PhysgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
                 return@on ClientPhysgunState.handleKeyEvent(keyCode, scanCode, action, modifiers)
             }
 
-            RandomEvents.mouseMove.on {
+            PersistentEvents.mouseMove.on {
                 pos, _ ->
                 if (!playerIsUsingPhysgun()) {return@on false}
                 if (Minecraft.getInstance().screen != null) {return@on false}

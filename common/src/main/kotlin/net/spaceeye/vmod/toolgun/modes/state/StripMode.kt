@@ -10,7 +10,7 @@ import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.util.ExtendableVEntity
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.toolgun.modes.gui.StripGUI
@@ -32,7 +32,7 @@ import kotlin.math.max
 //TODO redo highlighting logic because it feels too complex and convoluted
 class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     init {
-        RandomEvents.clientPreRender.on {(timestamp), _ ->
+        PersistentEvents.clientPreRender.on { (timestamp), _ ->
             if (!render) {return@on}
             if (!ToolgunItem.playerIsUsingToolgun()) {return@on}
 

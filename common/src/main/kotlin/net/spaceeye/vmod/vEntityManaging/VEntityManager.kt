@@ -15,7 +15,7 @@ import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.vEntityManaging.VEntityTypes.getType
 import net.spaceeye.vmod.events.AVSEvents
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.utils.PosMapList
 import net.spaceeye.vmod.utils.ServerLevelHolder
@@ -225,18 +225,18 @@ open class VEntityManager: SavedData() {
 
     private fun tryMakeVEntity(entity: VEntity, level: ServerLevel, onFailure: () -> Unit, rest: () -> Unit) {
         for (i in 0 until 10) {
-            if (entity.onMakeVEntity(level)) {return rest()}
+            if (try {entity.onMakeVEntity(level)} catch (e: Throwable) {ELOG(e.stackTraceToString()); false}) {return rest()}
         }
 
         var attempts = 0
         val maxAttempts = VMConfig.SERVER.CONSTRAINT_CREATION_ATTEMPTS
-        RandomEvents.serverOnTick.on { _, unsubscribe ->
+        SessionEvents.serverOnTick.on { _, unsubscribe ->
             if (attempts > maxAttempts) {
                 onFailure()
                 return@on unsubscribe()
             }
 
-            if (entity.onMakeVEntity(level)) {
+            if (try {entity.onMakeVEntity(level)} catch (e: Throwable) {ELOG(e.stackTraceToString()); false}) {
                 rest()
                 return@on unsubscribe()
             }

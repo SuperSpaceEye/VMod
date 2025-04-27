@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.rendering.Effects
 import net.spaceeye.vmod.toolgun.PlayerToolgunState
 import net.spaceeye.vmod.toolgun.SELOG
@@ -33,7 +33,7 @@ fun <T: BaseMode> BaseMode.serverTryActivate(
         serverMode.mode.deserialize(buf)
         serverMode.mode.serverSideVerifyLimits()
 
-        RandomEvents.serverAfterTick.on { _, unsubscribe ->
+        SessionEvents.serverAfterTick.on { _, unsubscribe ->
             unsubscribe()
             try {
                 fn(serverMode.mode as T, player.level as ServerLevel, player)

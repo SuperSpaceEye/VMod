@@ -10,7 +10,8 @@ import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.vEntityManaging.VEntityManager
 import net.spaceeye.vmod.vEntityManaging.VEntityTypes
 import net.spaceeye.vmod.vEntityManaging.VEExtensionTypes
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.PersistentEvents
+import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.MessageTypes
@@ -88,7 +89,8 @@ object VM {
 
     @JvmStatic
     fun makeEvents() {
-        RandomEvents
+        PersistentEvents
+        SessionEvents
         SchematicActionsQueue
 
         LifecycleEvent.SERVER_LEVEL_SAVE.register {

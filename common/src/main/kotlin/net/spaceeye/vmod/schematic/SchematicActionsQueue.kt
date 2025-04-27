@@ -28,7 +28,7 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.translate.ONE_OF_THE_SHIPS_IS_TOO_TALL
@@ -226,6 +226,7 @@ object SchematicActionsQueue: ServerClosable() {
                 if (getNow_ms() - start > timeout) { return false }
             }
 
+            //TODO VS transforms positions of entities before ships are teleported to correct coordinates
             schematicV1.entityData.forEach { (oldId, entities) ->
                 val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId]!!)!!
                 entities.forEach { (pos, tag) ->
@@ -408,11 +409,14 @@ object SchematicActionsQueue: ServerClosable() {
                 currentShip++
             }
             currentShip = 0
+            val savedEntities = mutableSetOf<UUID>()
             while (currentShip < ships.size) {
                 val ship = ships[currentShip]
                 val aabb = ship.shipAABB!!.toAABBd(AABBd())
                 val worldEntities = level.getEntitiesOfClass(Entity::class.java, AABB(aabb.minX(), aabb.minY(), aabb.minZ(), aabb.maxX(), aabb.maxY(), aabb.maxZ())) { it !is Player }
-                schematicV1.entityData[ship.id] = worldEntities.map {
+                schematicV1.entityData[ship.id] = worldEntities.mapNotNull {
+                    if (savedEntities.contains(it.uuid)) {return@mapNotNull null }
+                    savedEntities.add(it.uuid)
                     val entityPos = it.position()
                     val shipyardPos = if (level.isBlockInShipyard(entityPos)) {entityPos.toJOML()} else {ship.transform.worldToShip.transformPosition(entityPos.toJOML())}
 
@@ -467,7 +471,7 @@ object SchematicActionsQueue: ServerClosable() {
                     placeData.remove(placeLastKeys[placeLastPosition])
                 } else if (result) {
                     var tick = 0
-                    RandomEvents.serverOnTick.on { (server), unsubscribe ->
+                    SessionEvents.serverOnTick.on { (server), unsubscribe ->
                         tick++
                         if (tick > 1) {
                             item!!.postPlacementFn(item.createdShips, item.centerPositions)

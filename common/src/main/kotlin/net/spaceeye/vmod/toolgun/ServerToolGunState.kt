@@ -7,7 +7,7 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.vEntityManaging.VEntityId
 import net.spaceeye.vmod.vEntityManaging.removeVEntity
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.registerSerializationEnum
@@ -39,7 +39,7 @@ object ServerToolGunState: ServerClosable() {
     data class S2CErrorHappened(var errorStr: String, var translatable: Boolean = true, var closeGUI: Boolean = false): AutoSerializable
 
     val s2cErrorHappened = regS2C<S2CErrorHappened>("error_happened_reset_toolgun", "server_toolgun") { (errorStr, translate, closeGUI) ->
-        RandomEvents.clientOnTick.on { _, unsub -> unsub.invoke()
+        SessionEvents.clientOnTick.on { _, unsub -> unsub.invoke()
             ClientToolGunState.currentMode?.resetState()
             ClientToolGunState.currentMode?.refreshHUD()
             ClientToolGunState.addHUDError(if (translate) errorStr.translate() else errorStr)
@@ -48,7 +48,7 @@ object ServerToolGunState: ServerClosable() {
     }
 
     val s2cToolgunWasReset = regS2C<EmptyPacket>("toolgun_was_reset", "server_toolgun") {
-        RandomEvents.clientOnTick.on { _, unsub -> unsub.invoke()
+        SessionEvents.clientOnTick.on { _, unsub -> unsub.invoke()
             ClientToolGunState.currentMode?.resetState()
             ClientToolGunState.currentMode?.refreshHUD()
         }
@@ -104,7 +104,7 @@ object ServerToolGunState: ServerClosable() {
 
         val level = player.level as ServerLevel
 
-        RandomEvents.serverOnTick.on {
+        SessionEvents.serverOnTick.on {
                 _, unsubscribe ->
             unsubscribe()
             // if VEntity wasn't already removed, then remove it

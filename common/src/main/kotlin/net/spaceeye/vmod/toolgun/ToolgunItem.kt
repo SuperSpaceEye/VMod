@@ -10,7 +10,7 @@ import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.spaceeye.vmod.VMItems
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.PersistentEvents
 import org.lwjgl.glfw.GLFW
 
 class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
@@ -30,7 +30,7 @@ class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
                 ClientToolGunState.onRenderHUD(stack, delta)
             }
 
-            RandomEvents.keyPress.on {
+            PersistentEvents.keyPress.on {
                 (keyCode, scanCode, action, modifiers), _ ->
                 if (!playerIsUsingToolgun()) {return@on false}
                 if (ClientToolGunState.otherGuiIsOpened()) {return@on false}

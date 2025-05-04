@@ -29,9 +29,7 @@ import java.util.Objects;
 @Mixin(ShipObjectServerWorld.class)
 abstract public class ShipObjectServerWorldMixin {
     //first instance, can be double-checked by finding deleteShip fn
-    @Final
-    @Shadow
-    private List<ShipData> deletedShipObjects; // deletedShipObjects
+    @Final @Shadow(remap = false) private List<ShipData> deletedShipObjects; // deletedShipObjects
 
 
     // it's called before they get deleted

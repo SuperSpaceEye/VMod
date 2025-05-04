@@ -12,10 +12,7 @@ import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld;
 
 @Mixin(ShipObjectClientWorld.class)
 abstract public class ShipObjectClientWorldMixin {
-    @Final
-    @Shadow
-
-    private MutableQueryableShipData _loadedShips;
+    @Final @Shadow(remap = false) private MutableQueryableShipData _loadedShips;
 
     // when ship is unloaded on client, it just gets removed
     @Inject(method = "removeShip", at = @At("HEAD"), remap = false)

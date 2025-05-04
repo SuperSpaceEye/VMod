@@ -6,7 +6,7 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
-inline fun updatePosition(old: Vector3d, oldCenter: Vector3d, newCenter: Vector3d): Vector3d = old - oldCenter + newCenter
+fun updatePosition(old: Vector3d, oldCenter: Vector3d, newCenter: Vector3d): Vector3d = old - oldCenter + newCenter
 
 fun tryMovePosition(pos: Vector3d, shipId: Long, mapped: Map<ShipId, Pair<Vector3d, Vector3d>>): Vector3d? {
     val (oldCenter, newCenter) = mapped[shipId] ?: return null

@@ -189,7 +189,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         RenderTypes.clearFullRendering()
     }
 
-    private inline fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = with(data) { return@with makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse) }
+    private fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = with(data) { return@with makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse) }
 
     override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = with(data) {
         return PhysRopeRenderer(

@@ -151,7 +151,7 @@ object ByteSerializableItem {
         registerSerializationItem(DoubleArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeDouble(it)}}) {buf -> buf.readCollection({mutableListOf<Double>()}) {buf.readDouble()}.toDoubleArray()}
     }
 
-    private inline fun makeByteSerDeser(noinline verification: ((it: Nothing) -> Any), noinline ser: ByteSerializeFn, noinline deser: ByteDeserializeFn<Any>): MutableMap<String, Any> = mutableMapOf(
+    private fun makeByteSerDeser(verification: ((it: Nothing) -> Any), ser: ByteSerializeFn, deser: ByteDeserializeFn<Any>): MutableMap<String, Any> = mutableMapOf(
         Pair("verification", verification),
         Pair("byteSerialize", ser),
         Pair("byteDeserialize", deser)

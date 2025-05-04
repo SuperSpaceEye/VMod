@@ -20,7 +20,7 @@ object VMBlockEntities {
     private infix fun <T: BlockEntity, TT: Block> RegistrySupplier<TT>.makePair(blockEntity: (BlockPos, BlockState) -> T) = Pair(this, { bp: BlockPos, bs: BlockState -> blockEntity(bp, bs)})
     private infix fun <T: BlockEntity, TT: Block> Pair<RegistrySupplier<TT>, (BlockPos, BlockState) -> T>.byName(name: String): RegistrySupplier<BlockEntityType<T>> =
         BLOCKENTITIES.register(name) {
-            val type = Util.fetchChoiceType(References.BLOCK_ENTITY, name)
+            val type = Util.fetchChoiceType(References.BLOCK_ENTITY, name)!!
 
             BlockEntityType.Builder.of(
                 this.second,

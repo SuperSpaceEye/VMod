@@ -15,26 +15,26 @@ data class MyTranslatableComponent(val enTranslation: String, val key: String) {
     fun asMC() = TranslatableComponent(key)
 }
 
-private inline fun makeComponent(default: String, key: String) = MyTranslatableComponent(default, key).asMC()
-inline fun TranslatableComponent.get(): String = I18n.get(this.key)
-inline fun TranslatableComponent.getTranslationKey(): String = this.key
-inline fun String.translate(): String = I18n.get(this)
-inline fun Component.get(): String = if (this is TranslatableComponent) {this.get()} else { ELOG(".get() WAS CALLED ON A NOT TRANSLATABLE COMPONENT");"Not a translatable component."}
-inline fun makeFake(s: String) = TranslatableComponent(s)
+private fun makeComponent(default: String, key: String) = MyTranslatableComponent(default, key).asMC()
+fun TranslatableComponent.get(): String = I18n.get(this.key)
+fun TranslatableComponent.getTranslationKey(): String = this.key
+fun String.translate(): String = I18n.get(this)
+fun Component.get(): String = if (this is TranslatableComponent) {this.get()} else { ELOG(".get() WAS CALLED ON A NOT TRANSLATABLE COMPONENT");"Not a translatable component."}
+fun makeFake(s: String) = TranslatableComponent(s)
 
 private const val path = "vmod.gui."
-private inline fun t(default: String) = makeComponent(default, path                  +default.lowercase().replace(" ", "_").replace("'", ""))
-private inline fun s(default: String) = makeComponent(default, path+"setting."       +default.lowercase().replace(" ", "_").replace("'", ""))
-private inline fun x(default: String) = makeComponent(default, path+"text."          +default.lowercase().replace(" ", "_").replace("'", ""))
-private inline fun v(default: String) = makeComponent(default, path+"server_setting."+default.lowercase().replace(" ", "_").replace("'", ""))
-private inline fun a(default: String) = makeComponent(default, path+"tabs."          +default.lowercase().replace(" ", "_").replace("'", ""))
-private inline fun p(default: String) = makeComponent(default, path+"popup."         +default.lowercase().replace(" ", "_").replace("'", ""))
+private fun t(default: String) = makeComponent(default, path                  +default.lowercase().replace(" ", "_").replace("'", ""))
+private fun s(default: String) = makeComponent(default, path+"setting."       +default.lowercase().replace(" ", "_").replace("'", ""))
+private fun x(default: String) = makeComponent(default, path+"text."          +default.lowercase().replace(" ", "_").replace("'", ""))
+private fun v(default: String) = makeComponent(default, path+"server_setting."+default.lowercase().replace(" ", "_").replace("'", ""))
+private fun a(default: String) = makeComponent(default, path+"tabs."          +default.lowercase().replace(" ", "_").replace("'", ""))
+private fun p(default: String) = makeComponent(default, path+"popup."         +default.lowercase().replace(" ", "_").replace("'", ""))
 
-private inline fun t(default: String, key: String) = makeComponent(default, path+key)
-private inline fun s(default: String, key: String) = makeComponent(default, path+"setting."+key)
-private inline fun x(default: String, key: String) = makeComponent(default, path+"text."+key)
-private inline fun v(default: String, key: String) = makeComponent(default, path+"server_setting."+key)
-private inline fun a(default: String, key: String) = makeComponent(default, path+"tabs."+key)
+private fun t(default: String, key: String) = makeComponent(default, path+key)
+private fun s(default: String, key: String) = makeComponent(default, path+"setting."+key)
+private fun x(default: String, key: String) = makeComponent(default, path+"text."+key)
+private fun v(default: String, key: String) = makeComponent(default, path+"server_setting."+key)
+private fun a(default: String, key: String) = makeComponent(default, path+"tabs."+key)
 
 
 val CONNECTION = t("Connection")

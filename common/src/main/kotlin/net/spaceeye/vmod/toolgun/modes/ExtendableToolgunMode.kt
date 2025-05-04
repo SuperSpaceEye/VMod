@@ -50,7 +50,7 @@ abstract class ExtendableToolgunMode: BaseMode, EBase, EGUIBuilder, EHUDBuilder,
         return extensions.filterIsInstance<T>()
     }
 
-    inline fun <T: ToolgunModeExtension> getExtensionsOfType(type: Class<T>): Collection<T> {
+    fun <T: ToolgunModeExtension> getExtensionsOfType(type: Class<T>): Collection<T> {
         return extensions.filterIsInstance(type)
     }
 
@@ -59,7 +59,7 @@ abstract class ExtendableToolgunMode: BaseMode, EBase, EGUIBuilder, EHUDBuilder,
         throw AssertionError("No instance of type ${T::class.java.name}")
     }
 
-    inline fun <T: ToolgunModeExtension> getExtensionOfType(type: Class<T>): T {
+    fun <T: ToolgunModeExtension> getExtensionOfType(type: Class<T>): T {
         for (it in getExtensionsOfType(type)) { return it }
         throw AssertionError("No instance of type ${type.name}")
     }

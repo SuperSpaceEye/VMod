@@ -9,7 +9,7 @@ import java.awt.Color
 
 object Effects {
     @JvmStatic
-    inline fun rad(deg:Double) = deg * 0.017453292519943295
+    fun rad(deg:Double) = deg * 0.017453292519943295
 
     //this looks "fine" from client that casted ray, but from another view it'll look like the ray originated
     // from player's head

@@ -50,6 +50,11 @@ class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
                     }
                 }
 
+                if (!guiIsOpened && isPressed && ClientToolGunState.TOOLGUN_TOGGLE_HUD_KEY.matches(keyCode, scanCode)) {
+                    ClientToolGunState.renderHud = !ClientToolGunState.renderHud
+                    return@on true
+                }
+
                 if (guiIsOpened && isPressed && (ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
                     ClientToolGunState.closeGUI()
                     return@on true

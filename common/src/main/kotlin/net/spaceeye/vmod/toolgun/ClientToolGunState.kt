@@ -81,6 +81,15 @@ object ClientToolGunState : ClientClosable() {
         )
     )
 
+    val TOOLGUN_TOGGLE_HUD_KEY = register(
+        KeyMapping(
+            "key.vmod.toggle_hud",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_H,
+            "vmod.keymappings_name"
+        )
+    )
+
     fun openGUI() {
         gui.onGUIOpen()
         Minecraft.getInstance().setScreen(gui)
@@ -124,7 +133,10 @@ object ClientToolGunState : ClientClosable() {
         screen?.getExtensionOfType<ErrorAddition>()?.addError(str)
     }
 
+    var renderHud = true
+
     internal fun onRenderHUD(stack: PoseStack, delta: Float) {
+        if (!renderHud) {return}
         try {
         (screen ?: run {
             val temp = ScreenWindow.makeScreen()

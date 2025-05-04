@@ -133,7 +133,6 @@ object ClientToolGunState : ClientClosable() {
         screen?.getExtensionOfType<ErrorAddition>()?.addError(str)
     }
 
-    internal fun onRenderHUD(stack: GuiGraphics, delta: Float) {
     var renderHud = true
 
     internal fun onRenderHUD(stack: GuiGraphics, delta: Float) {

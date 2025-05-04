@@ -59,7 +59,7 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
         if (Minecraft.getInstance()?.player != null) {
             ClientToolGunState.closeGUI()
             ClientToolGunState.addHUDError("Couldn't load schematic")
-            Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
+            Minecraft.getInstance().player!!.sendSystemMessage(COULDNT_LOAD_VMODSCHEM_V1)
         }
         null
     } else if (buf.readUtf() == "vschem") {
@@ -68,7 +68,7 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
                 if (Minecraft.getInstance()?.player != null) {
                     ClientToolGunState.closeGUI()
                     ClientToolGunState.addHUDError("Couldn't load schematic")
-                    Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
+                    Minecraft.getInstance().player!!.sendSystemMessage(COULDNT_LOAD_VMODSCHEM_V1)
                 }
                 null
             }

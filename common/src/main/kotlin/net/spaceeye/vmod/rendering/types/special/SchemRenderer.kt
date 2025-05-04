@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.BufferBuilder
 import com.mojang.blaze3d.vertex.BufferVertexConsumer
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
-import com.mojang.math.Matrix4f
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
@@ -19,8 +18,10 @@ import net.minecraft.core.SectionPos
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundSource
+import net.minecraft.util.RandomSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.flag.FeatureFlagSet
 import net.minecraft.world.item.crafting.RecipeManager
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.ChunkPos
@@ -34,6 +35,7 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.ChunkSource
 import net.minecraft.world.level.chunk.DataLayer
+import net.minecraft.world.level.chunk.LightChunk
 import net.minecraft.world.level.chunk.LightChunkGetter
 import net.minecraft.world.level.entity.LevelEntityGetter
 import net.minecraft.world.level.gameevent.GameEvent
@@ -43,6 +45,7 @@ import net.minecraft.world.level.material.Fluid
 import net.minecraft.world.level.material.FluidState
 import net.minecraft.world.level.material.Fluids
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData
+import net.minecraft.world.phys.Vec3
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.ticks.LevelTickAccess
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.BlockItem
@@ -62,7 +65,9 @@ import net.spaceeye.vmod.utils.Ref
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getQuatFromDir
 import org.joml.AxisAngle4d
+import org.joml.Matrix4f
 import org.joml.Quaterniond
+import org.joml.Quaternionf
 import org.joml.Vector3i
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -106,7 +111,7 @@ fun maybeFasterVertexBuilder(buffer: VertexConsumer, x: Float, y: Float, z: Floa
 }
 
 class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
-    override fun getChunkForLighting(chunkX: Int, chunkZ: Int): BlockGetter? = null
+    override fun getChunkForLighting(chunkX: Int, chunkZ: Int): LightChunk? = null
     override fun getLevel(): BlockGetter? = null
 }, false, false) {
     class SchemLayerListener(): LayerLightEventListener {
@@ -114,11 +119,11 @@ class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
 
         override fun getDataLayerData(sectionPos: SectionPos): DataLayer? = null
         override fun checkBlock(pos: BlockPos) {}
-        override fun onBlockEmissionIncrease(pos: BlockPos, emissionLevel: Int) {}
         override fun hasLightWork(): Boolean = false
-        override fun runUpdates(pos: Int, isQueueEmpty: Boolean, updateBlockLight: Boolean): Int = pos
+        override fun runLightUpdates(): Int = 0
         override fun updateSectionStatus(pos: SectionPos, isQueueEmpty: Boolean) {}
-        override fun enableLightSources(chunkPos: ChunkPos, isQueueEmpty: Boolean) {}
+        override fun setLightEnabled(chunkPos: ChunkPos, lightEnabled: Boolean) {}
+        override fun propagateLightSources(chunkPos: ChunkPos) {}
     }
     val layerListener = SchemLayerListener()
 
@@ -128,19 +133,15 @@ class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
     override fun getMaxLightSection(): Int = 1000000
 
     override fun checkBlock(pos: BlockPos) {}
-    override fun onBlockEmissionIncrease(pos: BlockPos, emissionLevel: Int) {}
     override fun hasLightWork(): Boolean = false
-    override fun runUpdates(pos: Int, isQueueEmpty: Boolean, updateBlockLight: Boolean): Int = pos
     override fun updateSectionStatus(pos: SectionPos, isQueueEmpty: Boolean) {}
-    override fun enableLightSources(chunkPos: ChunkPos, isQueueEmpty: Boolean) {}
     override fun getLayerListener(type: LightLayer): LayerLightEventListener? = layerListener
     override fun getDebugData(lightLayer: LightLayer, sectionPos: SectionPos): String? = "n/a"
-    override fun queueSectionData(type: LightLayer, pos: SectionPos, array: DataLayer?, bl: Boolean) {}
     override fun retainData(pos: ChunkPos, retain: Boolean) {}
 }
 
 class BlockAndTintGetterWrapper(val level: ClientLevel, val data: ChunkyBlockData<BlockItem>, val palette: IBlockStatePalette): Level(
-    level.levelData, level.dimension(), level.dimensionTypeRegistration(), Supplier{level.profiler}, level.isClientSide, level.isDebug, 0L
+    level.levelData, level.dimension(), level.registryAccess(), level.dimensionTypeRegistration(), Supplier{level.profiler}, level.isClientSide, level.isDebug, 0L, 0
 ) {
     val defaultState = Blocks.AIR.defaultBlockState()
     val defaultFluidState = Fluids.EMPTY.defaultFluidState()
@@ -165,6 +166,9 @@ class BlockAndTintGetterWrapper(val level: ClientLevel, val data: ChunkyBlockDat
         return data.blocks.get(BlockPos(pos.x shr 4, 0, pos.z shr 4))?.get(BlockPos(pos.x and 15, pos.y, pos.z and 15))?.let { palette.fromId(it.paletteId) }?.fluidState ?: defaultFluidState
     }
 
+    override fun playSeededSound(player: Player?, x: Double, y: Double, z: Double, sound: Holder<SoundEvent?>, source: SoundSource, volume: Float, pitch: Float, seed: Long) {}
+    override fun playSeededSound(player: Player?, entity: Entity, sound: Holder<SoundEvent?>, category: SoundSource, volume: Float, pitch: Float, seed: Long) {}
+
     private val dummyLightEngine = SchemLightEngine()
     override fun getLightEngine(): LevelLightEngine? = dummyLightEngine
     override fun getHeight(): Int = 2000000
@@ -187,8 +191,11 @@ class BlockAndTintGetterWrapper(val level: ClientLevel, val data: ChunkyBlockDat
     override fun getFluidTicks(): LevelTickAccess<Fluid?>? { throw AssertionError("Shouldn't be called")  }
     override fun getChunkSource(): ChunkSource? { throw AssertionError("Shouldn't be called")  }
     override fun levelEvent(player: Player?, type: Int, pos: BlockPos, data: Int) { throw AssertionError("Shouldn't be called")  }
+    override fun gameEvent(event: GameEvent, position: Vec3, context: GameEvent.Context) {}
     override fun gameEvent(entity: Entity?, event: GameEvent, pos: BlockPos) { throw AssertionError("Shouldn't be called")  }
     override fun registryAccess(): RegistryAccess? { throw AssertionError("Shouldn't be called")  }
+    override fun enabledFeatures(): FeatureFlagSet? {return null}
+
     override fun players(): List<Player?>? { throw AssertionError("Shouldn't be called")  }
 }
 
@@ -280,7 +287,7 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
         val schem = schem as IShipSchematicDataV1
 
         //unpack data without positional info
-        val random = Random(42)
+        val random = RandomSource.create()
         val level = Minecraft.getInstance().level!!
         val poseStack = PoseStack()
         val blockRenderer = Minecraft.getInstance().blockRenderer
@@ -290,7 +297,7 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
             val levelWrapper = BlockAndTintGetterWrapper(level, data, schem.blockPalette)
 
             val infoItem = info[shipId]!!
-            val rotationQuat = infoItem.rotation.toMinecraft()
+            val rotationQuat = infoItem.rotation.get(Quaternionf())
 
             //should be in the rotated world frame
             poseStack.pushPose()
@@ -343,7 +350,7 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
         val matrices = matrixList.map {
             poseStack.pushPose()
             poseStack.mulPoseMatrix(it)
-            org.joml.Matrix4f(poseStack.last().pose().toJOML()).also { poseStack.popPose() }
+            Matrix4f(poseStack.last().pose()).also { poseStack.popPose() }
         }
 
         mySources.buffers.forEach { (type, buf) ->
@@ -393,11 +400,12 @@ class SchemRenderer(
             .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))
             .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
             .normalize()
+            .get(Quaternionf())
 
         poseStack.pushPose()
         poseStack.translate(-camera.position.x, -camera.position.y, -camera.position.z)
         poseStack.translate(pos.x, pos.y, pos.z)
-        poseStack.mulPose(rotation.toMinecraft())
+        poseStack.mulPose(rotation)
 
         renderer?.render(sources, poseStack)
 

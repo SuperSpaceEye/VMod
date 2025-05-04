@@ -301,6 +301,9 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
 
     var rotationAngle: Ref<Double> by get(i++, Ref(0.0), {it}, customSerialize = { it, buf -> buf.writeDouble((it).it)}, customDeserialize = { buf -> val rotationAngle = Ref(0.0) ; rotationAngle.it = buf.readDouble(); rotationAngle})
 
+    //TODO doesn't matter right now, but when i will add setting presets i will need a way to get this value
+    var transparency: Float = 0.5f
+
     override fun eInit(type: BaseNetworking.EnvType) {
         SchemNetworking.init(this, type)
     }
@@ -331,7 +334,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
                 return
             }
 
-            renderer = SchemRenderer(value, rotationAngle)
+            renderer = SchemRenderer(value, rotationAngle, transparency)
             rID = ClientRenderingData.addClientsideRenderer(renderer!!)
             refreshHUD()
         }

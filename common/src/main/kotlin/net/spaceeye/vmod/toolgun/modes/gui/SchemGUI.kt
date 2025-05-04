@@ -7,6 +7,7 @@ import gg.essential.elementa.dsl.*
 import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.guiElements.makeTextEntry
+import net.spaceeye.vmod.limits.FloatLimit
 import net.spaceeye.vmod.limits.StrLimit
 import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
@@ -120,13 +121,15 @@ interface SchemGUI: GUIBuilder, EGUIBuilder {
 
     override fun eMakeGUISettings(parentWindow: UIContainer) {
         this as SchemMode
+        makeTextEntry(TRANSPARENCY.get(), ::transparency, 2f, 2f, parentWindow, FloatLimit(0f, 1f))
+
         Companion.parentWindow = parentWindow
 
         Button(Color.GRAY.brighter(), SAVE.get()) {
             SaveForm(this) childOf parentWindow
         }.constrain {
             x = 2.pixels()
-            y = 2.pixels()
+            y = SiblingConstraint() + 2.pixels()
         } childOf parentWindow
 
         makeScroll()

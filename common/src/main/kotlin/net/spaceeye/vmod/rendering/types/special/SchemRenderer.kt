@@ -361,9 +361,9 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
 
 class SchemRenderer(
     val schem: IShipSchematic,
-    val rotationAngle: Ref<Double>
+    val rotationAngle: Ref<Double>,
+    var transparency: Float = 0.5f
 ): BlockRenderer() {
-    val transparency = 0.5f
     var renderer: SchematicRenderer? = null
 
     init {

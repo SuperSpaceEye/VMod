@@ -13,7 +13,6 @@ import net.minecraft.world.entity.Mob
 import net.minecraft.world.entity.MobSpawnType
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.Blocks
-import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.chunk.LevelChunk
 import net.minecraft.world.phys.AABB
 import net.spaceeye.valkyrien_ship_schematics.SchematicRegistry
@@ -24,6 +23,7 @@ import net.spaceeye.valkyrien_ship_schematics.containers.v1.EntityItem
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
 import net.spaceeye.valkyrien_ship_schematics.interfaces.ICopyableBlock
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
+import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
@@ -97,9 +97,9 @@ object SchematicActionsQueue: ServerClosable() {
         var hadNonfatalErrors = false
         lateinit var entityCreationFn: () -> Unit
 
-        private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: ChunkyBlockData<BlockItem>, blockPalette: IBlockStatePalette, flatTagData: List<CompoundTag>, offset: MVector3d) {
+        private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: ChunkyBlockData<BlockItem>, blockPalette: IBlockStatePalette, flatTagData: List<CompoundTag>, shipCenter: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
-                val pos = BlockPos(x + offset.x, y + offset.y, z + offset.z)
+                val pos = BlockPos(x + shipCenter.x, y + shipCenter.y, z + shipCenter.z)
                 val state = blockPalette.fromId(it.paletteId) ?: run {
                     ELOG("State under ID ${it.paletteId} is null.")
                     hadNonfatalErrors = true
@@ -109,55 +109,53 @@ object SchematicActionsQueue: ServerClosable() {
                 val block = state.block
 
                 level.getChunkAt(pos).setBlockState(pos, state, false)
-                if (block is ICopyableBlock) block.onPasteNoTag(level, pos, state, oldToNewId)
                 if (it.extraDataId != -1) {
                     val tag = flatTagData[it.extraDataId]
                     tag.putInt("x", pos.x)
                     tag.putInt("y", pos.y)
                     tag.putInt("z", pos.z)
 
-                    var delayLoading = true
                     var callback: ((CompoundTag?) -> CompoundTag?)? = null
-                    var bcb: ((BlockEntity?) -> Unit)? = null
-                    val cb = SchemCompatObj.onPaste(level, oldToNewId, centerPositions, tag, pos, state) { delay, fn -> delayLoading = delay; callback = fn }
-                    if (block is ICopyableBlock) block.onPaste(level, pos, state, oldToNewId, centerPositions, tag, {delay, fn -> delayLoading = delay; callback = fn }) { bcb = it }
+                    val cb = SchemCompatObj.onPaste(level, oldToNewId, centerPositions, tag, pos, state) { delay, fn -> callback = fn }
 
-                    val fn = {
+                    delayedBlockEntityLoading.add(pos.x, pos.y, pos.z) {
+                        val tag =
+                            if(block is ICopyableBlock) {block.onPaste(level, pos, state, oldToNewId, centerPositions, tag)} else {null}
+                            ?: callback?.invoke(tag)
+                            ?: tag
+
                         val be = level.getChunkAt(pos).getBlockEntity(pos)
-                        be?.load(callback?.invoke(tag) ?: tag) ?: run {
-                            ELOG("$pos is not a block entity while data says otherwise. It can cause problems.")
-                            hadNonfatalErrors = true
-                        }
-                        cb?.let  { afterPasteCallbacks.add { it(be) } }
-                        bcb?.let { afterPasteCallbacks.add { it(be) } }
-                        Unit
+                        be?.load(tag)
+                        cb?.let { afterPasteCallbacks.add { it(be) } }
                     }
-
-                    if (delayLoading) delayedBlockEntityLoading.add(pos.x, pos.y, pos.z, fn) else fn()
                 }
             }
         }
 
-        private fun updateChunk(level: ServerLevel, currentChunkData: ChunkyBlockData<BlockItem>, offset: MVector3d) {
+        private fun updateChunk(level: ServerLevel, currentChunkData: ChunkyBlockData<BlockItem>, shipCenter: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
-                val pos = BlockPos(x + offset.x, y + offset.y, z + offset.z)
+                val pos = BlockPos(x + shipCenter.x, y + shipCenter.y, z + shipCenter.z)
                 level.chunkSource.blockChanged(pos)
             }
         }
 
-        fun place(start: Long, timeout: Long): Boolean? {
-            val info = schematicV1 as IShipSchematic
-            val shipsInfo = info.info!!.shipsInfo.associate { Pair(it.id, it) }
+        private var shipsInfo: Map<Long, IShipInfo>? = null
+        var createdAllBlocks = false
 
-            shipsInfo.forEach {
-                val bounds = it.value.centeredShipAABB
-                if (bounds.maxY() - bounds.minY() > level.yRange.size) {
-                    player?.let { ServerToolGunState.sendErrorTo(it, ONE_OF_THE_SHIPS_IS_TOO_TALL) }
-                    return null
-                }
+        fun place(start: Long, timeout: Long): Boolean? {
+            val shipsInfo = shipsInfo ?: let {
+                val info = schematicV1 as IShipSchematic
+                info.info!!.shipsInfo
+                    .associate { Pair(it.id, it) }
+                    .also { it.forEach {
+                        val bounds = it.value.centeredShipAABB
+                        if (bounds.maxY() - bounds.minY() > level.yRange.size) {
+                            player?.let { ServerToolGunState.sendErrorTo(it, ONE_OF_THE_SHIPS_IS_TOO_TALL) }
+                            return null
+                    } } }
             }
 
-            while (currentShip < shipsToCreate.size) {
+            while (!createdAllBlocks && currentShip < shipsToCreate.size) {
                 if (createdShips.size - 1 < currentShip) {
                     createdShips.add(shipsToCreate[currentShip].let { Pair(it.first.invoke(), it.second) })
                     createdShips.last().also { (ship, shipId) -> //old ship id
@@ -183,14 +181,14 @@ object SchematicActionsQueue: ServerClosable() {
                 oldToNewId.putAll(createdShips.associate { Pair(it.second, it.first.id) })
                 currentBlockData.updateKeys()
 
-                val offset = MVector3d(
+                val shipCenter = MVector3d(
                     ship.chunkClaim.xMiddle * 16 - 7,
                     level.yRange.center,
                     ship.chunkClaim.zMiddle * 16 - 7
                 )
 
                 while (currentChunk < currentBlockData.sortedChunkKeys.size) {
-                    placeChunk(level, oldToNewId, currentBlockData, blockPalette, flatExtraData, offset)
+                    placeChunk(level, oldToNewId, currentBlockData, blockPalette, flatExtraData, shipCenter)
                     currentChunk++
 
                     if (getNow_ms() - start > timeout) { return false }
@@ -200,23 +198,29 @@ object SchematicActionsQueue: ServerClosable() {
                 currentShip++
                 if (getNow_ms() - start > timeout) { return false }
             }
-            delayedBlockEntityLoading.forEach { _, _, _, it -> it() }
-            afterPasteCallbacks.forEach { it() }
-            currentShip = 0
-            currentChunk = 0
+            if (!createdAllBlocks) {
+                // loading all block entities and ICopyableBlock's
+                delayedBlockEntityLoading.forEach { _, _, _, it -> it() }
+                afterPasteCallbacks.forEach { it() }
+                currentShip = 0
+                currentChunk = 0
+            }
+            createdAllBlocks = true
+
+            //Updating all blocks
             while (currentShip < shipsToCreate.size) {
                 val ship = createdShips[currentShip].first
                 val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("Block data is null")
                 currentBlockData.updateKeys()
 
-                val offset = MVector3d(
+                val shipCenter = MVector3d(
                     ship.chunkClaim.xStart * 16 - 7,
                     level.yRange.center,
                     ship.chunkClaim.zStart * 16 - 7
                 )
 
                 while (currentChunk < currentBlockData.sortedChunkKeys.size) {
-                    updateChunk(level, currentBlockData, offset)
+                    updateChunk(level, currentBlockData, shipCenter)
                     currentChunk++
 
                     if (getNow_ms() - start > timeout) { return false }
@@ -261,8 +265,7 @@ object SchematicActionsQueue: ServerClosable() {
                         level.addFreshEntityWithPassengers(entity)
                     } catch (_: Exception) {}
                 }
-            }
-            }
+            } }
 
             if (hadNonfatalErrors) { player?.let { ServerToolGunState.sendErrorTo(it, SCHEMATIC_HAD_NONFATAL_ERRORS) } }
 
@@ -306,7 +309,7 @@ object SchematicActionsQueue: ServerClosable() {
 
         private fun saveChunk(level: ServerLevel, chunk: LevelChunk, ships: List<ServerShip>,
                               data: ChunkyBlockData<BlockItem>, flatExtraData: MutableList<CompoundTag>, blockPalette: IBlockStatePalette,
-                              chunkMin: BlockPos, cX: Int, cZ: Int,
+                              shipCenter: BlockPos, cX: Int, cZ: Int,
                               minX: Int, maxX: Int, minZ: Int, maxZ: Int, minY: Int, maxY: Int) {
             for (y in minY until maxY) {
             for (x in minX until maxX) {
@@ -320,8 +323,9 @@ object SchematicActionsQueue: ServerClosable() {
                 val be = chunk.getBlockEntity(bePos)
 
                 var tag: CompoundTag? = if (block is ICopyableBlock) {block.onCopy(level, cpos, state, be, ships, centerPositions!!)} else {null}
-                val fed = if (be == null) {-1} else {
-                    if (tag == null) {tag = be.saveWithFullMetadata()!!}
+                if (tag == null) {tag = be?.saveWithFullMetadata()}
+
+                val fed = if (tag == null) {-1} else {
                     flatExtraData.add(tag)
                     flatExtraData.size - 1
                 }
@@ -334,9 +338,9 @@ object SchematicActionsQueue: ServerClosable() {
 
                 val id = blockPalette.toId(state)
                 data.add(
-                    x + cX * 16 - chunkMin.x,
-                    y           - chunkMin.y,
-                    z + cZ * 16 - chunkMin.z,
+                    x + cX * 16 - shipCenter.x,
+                    y           - shipCenter.y,
+                    z + cZ * 16 - shipCenter.z,
                     BlockItem(id, fed)
                 )
             } } }
@@ -367,7 +371,7 @@ object SchematicActionsQueue: ServerClosable() {
                 val b = AABBi(ship.shipAABB!!)
                 if (padBoundary) { b.expand(1, b) }
 
-                val chunkCenter = BlockPos(
+                val shipCenter = BlockPos(
                     (b.maxX() - b.minX()) / 2 + b.minX(),
                     (b.maxY() - b.minY()) / 2 + b.minY(),
                     (b.maxZ() - b.minZ()) / 2 + b.minZ()
@@ -399,7 +403,7 @@ object SchematicActionsQueue: ServerClosable() {
                         if (cz == minCx) {minZ = b.minZ() and 15}
                         if (cz == maxCx) {maxZ = b.maxZ() and 15}
 
-                        saveChunk(level, level.getChunk(cx, cz), ships, data, fed, blockPalette, chunkCenter, cx, cz, minX, maxX, minZ, maxZ, b.minY, b.maxY)
+                        saveChunk(level, level.getChunk(cx, cz), ships, data, fed, blockPalette, shipCenter, cx, cz, minX, maxX, minZ, maxZ, b.minY, b.maxY)
                         cz++
                         if (getNow_ms() - start > timeout) { return false }
                     }

@@ -14,7 +14,7 @@ import static net.spaceeye.vmod.rendering.CustomRenderingKt.renderInWorld;
 
 @Mixin(net.minecraft.client.renderer.LevelRenderer.class)
 public class LevelRendererMixin {
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;shouldShowEntityOutlines()Z"))
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;checkPoseStack(Lcom/mojang/blaze3d/vertex/PoseStack;)V", ordinal = 1))
     void vmod$rendering(PoseStack poseStack, float partialTick, long finishNanoTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f projectionMatrix, CallbackInfo ci) {
         var minecraft = gameRenderer.getMinecraft();
 

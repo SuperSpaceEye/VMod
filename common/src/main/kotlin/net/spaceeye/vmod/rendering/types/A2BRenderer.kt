@@ -6,10 +6,12 @@ import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.LightTexture
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
@@ -20,7 +22,26 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-open class A2BRenderer(): BaseRenderer(), AutoSerializable {
+open class A2BRenderer(): BaseRenderer(), ReflectableObject {
+    private class Data: AutoSerializable {
+        @JsonIgnore private var i = 0
+
+        var shipId1: Long by get(i++, -1L)
+        var shipId2: Long by get(i++, -1L)
+
+        var point1: Vector3d by get(i++, Vector3d())
+        var point2: Vector3d by get(i++, Vector3d())
+
+        var color: Color by get(i++, Color(0))
+
+        var width: Double by get(i++, .2, true) { ClientLimits.instance.lineRendererWidth.get(it) }
+        var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
+    }
+    private var data = Data()
+    override val reflectObjectOverride: ReflectableObject? get() = data
+    override fun serialize() = data.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
+
     constructor(
         shipId1: Long,
         shipId2: Long,
@@ -29,7 +50,7 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
         color: Color,
         width: Double,
         fullbright: Boolean
-    ): this() {
+    ): this() { with(data) {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
         this.point1 = point1
@@ -37,26 +58,14 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
         this.color = color
         this.width = width
         this.fullbright = fullbright
-    }
-    @JsonIgnore private var i = 0
-
-    var shipId1: Long by get(i++, -1L)
-    var shipId2: Long by get(i++, -1L)
-
-    var point1: Vector3d by get(i++, Vector3d())
-    var point2: Vector3d by get(i++, Vector3d())
-
-    var color: Color by get(i++, Color(0))
-
-    var width: Double by get(i++, .2, true) { ClientLimits.instance.lineRendererWidth.get(it) }
-    var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
+    } }
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {
         if (until > highlightTimestamp) highlightTimestamp = until
     }
 
-    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) = with(data) {
         val level = Minecraft.getInstance().level!!
 
         val ship1 = if (shipId1 != -1L) { level.shipObjectWorld.loadedShips.getById(shipId1) ?: return } else null
@@ -96,9 +105,9 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
         RenderTypes.clearFullRendering()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? {
-        val spoint1 = if (shipId1 != -1L) {updatePosition(point1, oldToNew[shipId1]!!)} else {Vector3d(point1)}
-        val spoint2 = if (shipId2 != -1L) {updatePosition(point2, oldToNew[shipId2]!!)} else {Vector3d(point2)}
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = with(data) {
+        val spoint1 = if (shipId1 != -1L) {centerPositions[shipId1]!!.let { (old, new) -> updatePosition(point1, old, new)} } else {Vector3d(point1)}
+        val spoint2 = if (shipId2 != -1L) {centerPositions[shipId2]!!.let { (old, new) -> updatePosition(point2, old, new)} } else {Vector3d(point2)}
 
         val newId1 = if (shipId1 != -1L) {oldToNew[shipId1]!!.id} else {-1}
         val newId2 = if (shipId2 != -1L) {oldToNew[shipId2]!!.id} else {-1}
@@ -106,7 +115,7 @@ open class A2BRenderer(): BaseRenderer(), AutoSerializable {
         return A2BRenderer(newId1, newId2, spoint1, spoint2, color, width, fullbright)
     }
 
-    override fun scaleBy(by: Double) {
+    override fun scaleBy(by: Double) = with(data) {
         width *= by
     }
 }

@@ -80,26 +80,26 @@ object RaycastFunctions {
         return normal
     }
 
-    inline fun renderRaycast(level: Level, source: Source, maxDistance: Double = 100.0, skipShipId: ShipId? = null,
-                noinline transformShipToWorld: (ship: Ship, dir: Vector3d) -> Vector3d = {ship, dir -> transformDirectionShipToWorldRenderNoScaling(ship as ClientShip, dir) },
-                noinline transformWorldToShip: (ship: Ship, dir: Vector3d) -> Vector3d = {ship, dir -> transformDirectionWorldToShipRenderNoScaling(ship as ClientShip, dir) },
-                noinline posShipToWorld: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },
-                noinline posWorldToShip: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = {ship, pos, transform -> posWorldToShipRender(ship as ClientShip, pos, transform) }
+    fun renderRaycast(level: Level, source: Source, maxDistance: Double = 100.0, skipShipId: ShipId? = null,
+                transformShipToWorld: (ship: Ship, dir: Vector3d) -> Vector3d = {ship, dir -> transformDirectionShipToWorldRenderNoScaling(ship as ClientShip, dir) },
+                transformWorldToShip: (ship: Ship, dir: Vector3d) -> Vector3d = {ship, dir -> transformDirectionWorldToShipRenderNoScaling(ship as ClientShip, dir) },
+                posShipToWorld: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },
+                posWorldToShip: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = {ship, pos, transform -> posWorldToShipRender(ship as ClientShip, pos, transform) }
     ): RaycastResult = raycast(level, source, maxDistance, if (skipShipId != null) setOf(skipShipId) else null, transformShipToWorld, transformWorldToShip, posShipToWorld, posWorldToShip)
 
 
-    inline fun renderRaycast(level: Level, source: Source, maxDistance: Double = 100.0, skipShipId: Set<ShipId>?,
-                noinline transformShipToWorld: (ship: Ship, dir: Vector3d) -> Vector3d = {ship, dir -> transformDirectionShipToWorldRenderNoScaling(ship as ClientShip, dir) },
-                noinline transformWorldToShip: (ship: Ship, dir: Vector3d) -> Vector3d = {ship, dir -> transformDirectionWorldToShipRenderNoScaling(ship as ClientShip, dir) },
-                noinline posShipToWorld: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },
-                noinline posWorldToShip: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = {ship, pos, transform -> posWorldToShipRender(ship as ClientShip, pos, transform) }
+    fun renderRaycast(level: Level, source: Source, maxDistance: Double = 100.0, skipShipId: Set<ShipId>?,
+                transformShipToWorld: (ship: Ship, dir: Vector3d) -> Vector3d = {ship, dir -> transformDirectionShipToWorldRenderNoScaling(ship as ClientShip, dir) },
+                transformWorldToShip: (ship: Ship, dir: Vector3d) -> Vector3d = {ship, dir -> transformDirectionWorldToShipRenderNoScaling(ship as ClientShip, dir) },
+                posShipToWorld: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = {ship, pos, transform -> posShipToWorldRender(ship as ClientShip, pos, transform) },
+                posWorldToShip: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = {ship, pos, transform -> posWorldToShipRender(ship as ClientShip, pos, transform) }
     ): RaycastResult = raycast(level, source, maxDistance, skipShipId, transformShipToWorld, transformWorldToShip, posShipToWorld, posWorldToShip)
 
-    inline fun raycast(level: Level, source: Source, maxDistance: Double = 100.0, skipShipId: ShipId? = null,
-                noinline transformShipToWorld: (ship: Ship, dir: Vector3d) -> Vector3d = ::transformDirectionShipToWorldNoScaling,
-                noinline transformWorldToShip: (ship: Ship, dir: Vector3d) -> Vector3d = ::transformDirectionWorldToShipNoScaling,
-                noinline posShipToWorld: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posShipToWorld,
-                noinline posWorldToShip: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posWorldToShip
+    fun raycast(level: Level, source: Source, maxDistance: Double = 100.0, skipShipId: ShipId? = null,
+                transformShipToWorld: (ship: Ship, dir: Vector3d) -> Vector3d = ::transformDirectionShipToWorldNoScaling,
+                transformWorldToShip: (ship: Ship, dir: Vector3d) -> Vector3d = ::transformDirectionWorldToShipNoScaling,
+                posShipToWorld: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posShipToWorld,
+                posWorldToShip: (ship: Ship?, pos: Vector3d, transform: ShipTransform?) -> Vector3d = ::posWorldToShip
     ): RaycastResult = raycast(level, source, maxDistance, if (skipShipId != null) setOf(skipShipId) else null, transformShipToWorld, transformWorldToShip, posShipToWorld, posWorldToShip)
 
 

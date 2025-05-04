@@ -5,8 +5,6 @@ import net.minecraft.network.FriendlyByteBuf
 import kotlin.math.max
 import kotlin.math.min
 
-//typealias MCVector3d = com.mojang.math.Vector3d
-//typealias MCVector3f = com.mojang.math.Vector3f
 typealias JVector3d  = org.joml.Vector3d
 typealias JVector3f  = org.joml.Vector3f
 typealias JVector3dc = org.joml.Vector3dc
@@ -36,44 +34,41 @@ class Vector3d(x:Number, y:Number, z:Number) {
     constructor(o: Vector3d): this(o.x, o.y, o.z)
     constructor(o: JVector3d): this(o.x, o.y, o.z)
     constructor(o: JVector3f): this(o.x, o.y, o.z)
-//    constructor(o: MCVector3d): this(o.x, o.y, o.z)
-//    constructor(o: MCVector3f): this(o.x(), o.y(), o.z())
     constructor(o: JVector3dc): this(o.x(), o.y(), o.z())
     constructor(o: BlockPos): this(o.x, o.y, o.z)
     constructor(o: MCVec3): this(o.x, o.y, o.z)
 
-    inline fun toD(x:Number, y: Number, z: Number): Array<Double> {return arrayOf(x.toDouble(), y.toDouble(), z.toDouble())}
+    fun toD(x:Number, y: Number, z: Number): Array<Double> {return arrayOf(x.toDouble(), y.toDouble(), z.toDouble())}
 
-//    inline fun toMCVector3d(): MCVector3d {return MCVector3d(x, y, z) }
-    inline fun toJomlVector3d(): JVector3d {return JVector3d(x, y, z) }
-    inline fun toJomlVector3i(): JVector3i {return JVector3i(x.toInt(), y.toInt(), z.toInt()) }
-    inline fun toArray(): Array<Double> {return arrayOf(x, y, z) }
-    inline fun toBlockPos(): BlockPos {return BlockPos(x.toInt(), y.toInt(), z.toInt()) }
-    inline fun toMCVec3(): MCVec3 {return MCVec3(x, y, z)}
+    fun toJomlVector3d(): JVector3d {return JVector3d(x, y, z) }
+    fun toJomlVector3i(): JVector3i {return JVector3i(x.toInt(), y.toInt(), z.toInt()) }
+    fun toArray(): Array<Double> {return arrayOf(x, y, z) }
+    fun toBlockPos(): BlockPos {return BlockPos(x.toInt(), y.toInt(), z.toInt()) }
+    fun toMCVec3(): MCVec3 {return MCVec3(x, y, z)}
 
-    inline fun copy() = Vector3d(x, y, z)
+    fun copy() = Vector3d(x, y, z)
 
-    inline override fun toString(): String = "{${x} ${y} ${z}}"
+    override fun toString(): String = "{${x} ${y} ${z}}"
 
-    inline fun abs  (dest: Vector3d): Vector3d {dest.x = kotlin.math.abs(x)  ; dest.y = kotlin.math.abs(y)  ; dest.z = kotlin.math.abs(z)  ; return dest}
-    inline fun floor(dest: Vector3d): Vector3d {dest.x = kotlin.math.floor(x); dest.y = kotlin.math.floor(y); dest.z = kotlin.math.floor(z); return dest}
+    fun abs  (dest: Vector3d): Vector3d {dest.x = kotlin.math.abs(x)  ; dest.y = kotlin.math.abs(y)  ; dest.z = kotlin.math.abs(z)  ; return dest}
+    fun floor(dest: Vector3d): Vector3d {dest.x = kotlin.math.floor(x); dest.y = kotlin.math.floor(y); dest.z = kotlin.math.floor(z); return dest}
 
-    inline fun abs  (): Vector3d {return abs  (Vector3d())}
-    inline fun floor(): Vector3d {return floor(Vector3d())}
+    fun abs  (): Vector3d {return abs  (Vector3d())}
+    fun floor(): Vector3d {return floor(Vector3d())}
 
-    inline fun sabs  (): Vector3d {return abs  (this)}
-    inline fun sfloor(): Vector3d {return floor(this)}
+    fun sabs  (): Vector3d {return abs  (this)}
+    fun sfloor(): Vector3d {return floor(this)}
 
-    inline fun set(x: Double, y: Double, z: Double) {this.x = x; this.y = y; this.z = z}
-    inline fun set(x: Number, y: Number, z: Number) {this.x = x.toDouble(); this.y = y.toDouble(); this.z = z.toDouble()}
+    fun set(x: Double, y: Double, z: Double) {this.x = x; this.y = y; this.z = z}
+    fun set(x: Number, y: Number, z: Number) {this.x = x.toDouble(); this.y = y.toDouble(); this.z = z.toDouble()}
 
-    inline fun floorCompare(other: Vector3d): Boolean {
+    fun floorCompare(other: Vector3d): Boolean {
         return     kotlin.math.floor(x) == kotlin.math.floor(other.x)
                 && kotlin.math.floor(y) == kotlin.math.floor(other.y)
                 && kotlin.math.floor(z) == kotlin.math.floor(other.z)
     }
 
-    inline fun scross(x: Number, y: Number, z: Number): Vector3d {
+    fun scross(x: Number, y: Number, z: Number): Vector3d {
         val (x,y,z) = toD(x,y,z)
         val rx = Math.fma(this.y, z, -this.z * y)
         val ry = Math.fma(this.z, x, -this.x * z)
@@ -84,22 +79,22 @@ class Vector3d(x:Number, y:Number, z:Number) {
         return this
     }
 
-    inline fun cross(x: Number, y: Number, z: Number): Vector3d { return Vector3d(this).scross(x, y, z) }
+    fun cross(x: Number, y: Number, z: Number): Vector3d { return Vector3d(this).scross(x, y, z) }
 
-    inline fun scross(v: Vector3d): Vector3d { return scross(v.x, v.y, v.z) }
-    inline fun cross(v: Vector3d): Vector3d { return cross(v.x, v.y, v.z)}
+    fun scross(v: Vector3d): Vector3d { return scross(v.x, v.y, v.z) }
+    fun cross(v: Vector3d): Vector3d { return cross(v.x, v.y, v.z)}
 
-    inline fun sqrDist(): Double {return x*x + y*y + z*z}
-    inline fun dist(): Double {return Math.sqrt(x*x + y*y + z*z)}
+    fun sqrDist(): Double {return x*x + y*y + z*z}
+    fun dist(): Double {return Math.sqrt(x*x + y*y + z*z)}
 
-    inline fun sign(): Vector3d {
+    fun sign(): Vector3d {
         return Vector3d(
         if (x < 0) {-1.0} else {1.0},
         if (y < 0) {-1.0} else {1.0},
         if (z < 0) {-1.0} else {1.0})
     }
 
-    inline fun normalize(length: Number, dest: Vector3d): Vector3d {
+    fun normalize(length: Number, dest: Vector3d): Vector3d {
         val length = length.toDouble()
         val invLength = 1.0/Math.sqrt(Math.fma(x, x, Math.fma(y, y, z * z))) * length
         dest.x = x * invLength
@@ -108,54 +103,54 @@ class Vector3d(x:Number, y:Number, z:Number) {
         return dest
     }
 
-    inline fun normalize(length: Number):Vector3d  { return normalize(length, Vector3d()) }
-    inline fun snormalize(length: Number):Vector3d { return normalize(length, this) }
+    fun normalize(length: Number):Vector3d  { return normalize(length, Vector3d()) }
+    fun snormalize(length: Number):Vector3d { return normalize(length, this) }
 
-    inline fun normalize(): Vector3d {return normalize(1)}
-    inline fun snormalize(): Vector3d {return snormalize(1)}
-    inline fun normalize(dest: Vector3d): Vector3d {return normalize(1, dest)}
+    fun normalize(): Vector3d {return normalize(1)}
+    fun snormalize(): Vector3d {return snormalize(1)}
+    fun normalize(dest: Vector3d): Vector3d {return normalize(1, dest)}
 
-    inline fun sclamp(min_: Double, max_: Double): Vector3d {
+    fun sclamp(min_: Double, max_: Double): Vector3d {
         x = max(min(x, max_), min_)
         y = max(min(y, max_), min_)
         z = max(min(z, max_), min_)
         return this
     }
 
-    inline fun dot(x: Double, y: Double, z: Double): Double {return Math.fma(this.x, x, Math.fma(this.y, y, this.z * z)); }
-    inline fun dot(other: Vector3d): Double {return dot(other.x, other.y, other.z)}
+    fun dot(x: Double, y: Double, z: Double): Double {return Math.fma(this.x, x, Math.fma(this.y, y, this.z * z)); }
+    fun dot(other: Vector3d): Double {return dot(other.x, other.y, other.z)}
 
-    inline fun avg(): Double { return (x + y + z)/3.0 }
+    fun avg(): Double { return (x + y + z)/3.0 }
 
-    inline fun add(other: Vector3d, dest: Vector3d): Vector3d {
+    fun add(other: Vector3d, dest: Vector3d): Vector3d {
         dest.x = x + other.x
         dest.y = y + other.y
         dest.z = z + other.z
         return dest
     }
 
-    inline fun sub(other: Vector3d, dest: Vector3d): Vector3d {
+    fun sub(other: Vector3d, dest: Vector3d): Vector3d {
         dest.x = x - other.x
         dest.y = y - other.y
         dest.z = z - other.z
         return dest
     }
 
-    inline fun div(other: Vector3d, dest: Vector3d): Vector3d {
+    fun div(other: Vector3d, dest: Vector3d): Vector3d {
         dest.x = x / other.x
         dest.y = y / other.y
         dest.z = z / other.z
         return dest
     }
 
-    inline fun mul(other: Vector3d, dest: Vector3d): Vector3d {
+    fun mul(other: Vector3d, dest: Vector3d): Vector3d {
         dest.x = x * other.x
         dest.y = y * other.y
         dest.z = z * other.z
         return dest
     }
 
-    inline fun rem(other: Vector3d, dest: Vector3d): Vector3d {
+    fun rem(other: Vector3d, dest: Vector3d): Vector3d {
         dest.x = x % other.x
         dest.y = y % other.y
         dest.z = z % other.z
@@ -163,94 +158,94 @@ class Vector3d(x:Number, y:Number, z:Number) {
     }
 
 
-    inline fun add(other: Double, dest: Vector3d): Vector3d {
+    fun add(other: Double, dest: Vector3d): Vector3d {
         dest.x = x + other
         dest.y = y + other
         dest.z = z + other
         return dest
     }
 
-    inline fun sub(other: Double, dest: Vector3d): Vector3d {
+    fun sub(other: Double, dest: Vector3d): Vector3d {
         dest.x = x - other
         dest.y = y - other
         dest.z = z - other
         return dest
     }
 
-    inline fun div(other: Double, dest: Vector3d): Vector3d {
+    fun div(other: Double, dest: Vector3d): Vector3d {
         dest.x = x / other
         dest.y = y / other
         dest.z = z / other
         return dest
     }
 
-    inline fun mul(other: Double, dest: Vector3d): Vector3d {
+    fun mul(other: Double, dest: Vector3d): Vector3d {
         dest.x = x * other
         dest.y = y * other
         dest.z = z * other
         return dest
     }
 
-    inline fun rem(other: Double, dest: Vector3d): Vector3d {
+    fun rem(other: Double, dest: Vector3d): Vector3d {
         dest.x = x % other
         dest.y = y % other
         dest.z = z % other
         return dest
     }
 
-    inline fun sadd(x:Number, y: Number, z: Number): Vector3d {return add(Vector3d(x,y,z), this)}
-    inline fun ssub(x:Number, y: Number, z: Number): Vector3d {return sub(Vector3d(x,y,z), this)}
-    inline fun smul(x:Number, y: Number, z: Number): Vector3d {return mul(Vector3d(x,y,z), this)}
-    inline fun sdiv(x:Number, y: Number, z: Number): Vector3d {return div(Vector3d(x,y,z), this)}
-    inline fun srem(x:Number, y: Number, z: Number): Vector3d {return rem(Vector3d(x,y,z), this)}
+    fun sadd(x:Number, y: Number, z: Number): Vector3d {return add(Vector3d(x,y,z), this)}
+    fun ssub(x:Number, y: Number, z: Number): Vector3d {return sub(Vector3d(x,y,z), this)}
+    fun smul(x:Number, y: Number, z: Number): Vector3d {return mul(Vector3d(x,y,z), this)}
+    fun sdiv(x:Number, y: Number, z: Number): Vector3d {return div(Vector3d(x,y,z), this)}
+    fun srem(x:Number, y: Number, z: Number): Vector3d {return rem(Vector3d(x,y,z), this)}
 
-    inline fun sadd(other:Number): Vector3d {return add(Vector3d(other,other,other), this)}
-    inline fun ssub(other:Number): Vector3d {return sub(Vector3d(other,other,other), this)}
-    inline fun smul(other:Number): Vector3d {return mul(Vector3d(other,other,other), this)}
-    inline fun sdiv(other:Number): Vector3d {return div(Vector3d(other,other,other), this)}
-    inline fun srem(other:Number): Vector3d {return rem(Vector3d(other,other,other), this)}
+    fun sadd(other:Number): Vector3d {return add(Vector3d(other,other,other), this)}
+    fun ssub(other:Number): Vector3d {return sub(Vector3d(other,other,other), this)}
+    fun smul(other:Number): Vector3d {return mul(Vector3d(other,other,other), this)}
+    fun sdiv(other:Number): Vector3d {return div(Vector3d(other,other,other), this)}
+    fun srem(other:Number): Vector3d {return rem(Vector3d(other,other,other), this)}
 
-    inline fun add(x:Number, y: Number, z: Number): Vector3d {return add(Vector3d(x,y,z), Vector3d())}
-    inline fun sub(x:Number, y: Number, z: Number): Vector3d {return sub(Vector3d(x,y,z), Vector3d())}
-    inline fun mul(x:Number, y: Number, z: Number): Vector3d {return mul(Vector3d(x,y,z), Vector3d())}
-    inline fun div(x:Number, y: Number, z: Number): Vector3d {return div(Vector3d(x,y,z), Vector3d())}
-    inline fun rem(x:Number, y: Number, z: Number): Vector3d {return rem(Vector3d(x,y,z), Vector3d())}
+    fun add(x:Number, y: Number, z: Number): Vector3d {return add(Vector3d(x,y,z), Vector3d())}
+    fun sub(x:Number, y: Number, z: Number): Vector3d {return sub(Vector3d(x,y,z), Vector3d())}
+    fun mul(x:Number, y: Number, z: Number): Vector3d {return mul(Vector3d(x,y,z), Vector3d())}
+    fun div(x:Number, y: Number, z: Number): Vector3d {return div(Vector3d(x,y,z), Vector3d())}
+    fun rem(x:Number, y: Number, z: Number): Vector3d {return rem(Vector3d(x,y,z), Vector3d())}
 
-    inline fun rdiv(other: Vector3d, dest: Vector3d): Vector3d {return other.div(this, dest)}
-    inline fun rdiv(other: Double, dest: Vector3d):   Vector3d {return Vector3d(other, other, other).div(this, dest)}
-    inline fun rdiv(x:Number, y: Number, z: Number):  Vector3d {return rdiv(Vector3d(x,y,z), Vector3d())}
-    inline fun rdiv(other:Double): Vector3d {return rdiv(other, Vector3d())}
+    fun rdiv(other: Vector3d, dest: Vector3d): Vector3d {return other.div(this, dest)}
+    fun rdiv(other: Double, dest: Vector3d):   Vector3d {return Vector3d(other, other, other).div(this, dest)}
+    fun rdiv(x:Number, y: Number, z: Number):  Vector3d {return rdiv(Vector3d(x,y,z), Vector3d())}
+    fun rdiv(other:Double): Vector3d {return rdiv(other, Vector3d())}
 
-    inline fun srdiv(x:Number, y: Number, z: Number):  Vector3d {return rdiv(Vector3d(x,y,z), this)}
-    inline fun srdiv(other:Double): Vector3d {return rdiv(other, this)}
+    fun srdiv(x:Number, y: Number, z: Number):  Vector3d {return rdiv(Vector3d(x,y,z), this)}
+    fun srdiv(other:Double): Vector3d {return rdiv(other, this)}
 
-    inline operator fun unaryPlus():  Vector3d {return this}
-    inline operator fun unaryMinus(): Vector3d {return Vector3d(-x, -y, -z)}
-    inline operator fun inc(): Vector3d {x++; y++; z++; return this}
-    inline operator fun dec(): Vector3d {x--; y--; z--; return this}
-
-
+    operator fun unaryPlus():  Vector3d {return this}
+    operator fun unaryMinus(): Vector3d {return Vector3d(-x, -y, -z)}
+    operator fun inc(): Vector3d {x++; y++; z++; return this}
+    operator fun dec(): Vector3d {x--; y--; z--; return this}
 
 
-    inline operator fun plus (other: Vector3d): Vector3d { return add(other, Vector3d()) }
-    inline operator fun minus(other: Vector3d): Vector3d { return sub(other, Vector3d()) }
-    inline operator fun times(other: Vector3d): Vector3d { return mul(other, Vector3d()) }
-    inline operator fun div  (other: Vector3d): Vector3d { return div(other, Vector3d()) }
-    inline operator fun rem  (other: Vector3d): Vector3d { return rem(other, Vector3d()) }
-    inline operator fun plusAssign (other: Vector3d) {add(other, this)}
-    inline operator fun minusAssign(other: Vector3d) {sub(other, this)}
-    inline operator fun timesAssign(other: Vector3d) {mul(other, this)}
-    inline operator fun divAssign  (other: Vector3d) {div(other, this)}
-    inline operator fun remAssign  (other: Vector3d) {rem(other, this)}
 
-    inline operator fun plus (other: Number): Vector3d { return add(other.toDouble(), Vector3d())}
-    inline operator fun minus(other: Number): Vector3d { return sub(other.toDouble(), Vector3d())}
-    inline operator fun times(other: Number): Vector3d { return mul(other.toDouble(), Vector3d())}
-    inline operator fun div  (other: Number): Vector3d { return div(other.toDouble(), Vector3d())}
-    inline operator fun rem  (other: Number): Vector3d { return rem(other.toDouble(), Vector3d())}
-    inline operator fun plusAssign (other: Number) { add(other.toDouble(), this)}
-    inline operator fun minusAssign(other: Number) { sub(other.toDouble(), this)}
-    inline operator fun timesAssign(other: Number) { mul(other.toDouble(), this)}
-    inline operator fun divAssign  (other: Number) { div(other.toDouble(), this)}
-    inline operator fun remAssign  (other: Number) { rem(other.toDouble(), this)}
+
+    operator fun plus (other: Vector3d): Vector3d { return add(other, Vector3d()) }
+    operator fun minus(other: Vector3d): Vector3d { return sub(other, Vector3d()) }
+    operator fun times(other: Vector3d): Vector3d { return mul(other, Vector3d()) }
+    operator fun div  (other: Vector3d): Vector3d { return div(other, Vector3d()) }
+    operator fun rem  (other: Vector3d): Vector3d { return rem(other, Vector3d()) }
+    operator fun plusAssign (other: Vector3d) {add(other, this)}
+    operator fun minusAssign(other: Vector3d) {sub(other, this)}
+    operator fun timesAssign(other: Vector3d) {mul(other, this)}
+    operator fun divAssign  (other: Vector3d) {div(other, this)}
+    operator fun remAssign  (other: Vector3d) {rem(other, this)}
+
+    operator fun plus (other: Number): Vector3d { return add(other.toDouble(), Vector3d())}
+    operator fun minus(other: Number): Vector3d { return sub(other.toDouble(), Vector3d())}
+    operator fun times(other: Number): Vector3d { return mul(other.toDouble(), Vector3d())}
+    operator fun div  (other: Number): Vector3d { return div(other.toDouble(), Vector3d())}
+    operator fun rem  (other: Number): Vector3d { return rem(other.toDouble(), Vector3d())}
+    operator fun plusAssign (other: Number) { add(other.toDouble(), this)}
+    operator fun minusAssign(other: Number) { sub(other.toDouble(), this)}
+    operator fun timesAssign(other: Number) { mul(other.toDouble(), this)}
+    operator fun divAssign  (other: Number) { div(other.toDouble(), this)}
+    operator fun remAssign  (other: Number) { rem(other.toDouble(), this)}
 }

@@ -56,9 +56,6 @@
     * Set limit for total mconstraints of acc level.
     * Some other commands idk
 
-## Schematic
-* Right now schematic logic assumes default mc world height. Make it not do that
-
 ## Motor Constraint
 
 ## Pulley

@@ -32,7 +32,7 @@ class PrecisePlacementAssistRenderer(var precisePlacementAssistSideNum: Int): Ba
         val raycastResult = RaycastFunctions.renderRaycast(level,
             RaycastFunctions.Source(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
-                Vector3d(Minecraft.getInstance().player!!.eyePosition)
+                Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.position)
             ),
             20.0
         )
@@ -107,6 +107,6 @@ class PrecisePlacementAssistRenderer(var precisePlacementAssistSideNum: Int): Ba
 
     override fun serialize(): FriendlyByteBuf { throw AssertionError("Shouldn't be serialized") }
     override fun deserialize(buf: FriendlyByteBuf) { throw AssertionError("Shouldn't be deserialized") }
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
     override fun scaleBy(by: Double) { throw AssertionError("Shouldn't be scaled") }
 }

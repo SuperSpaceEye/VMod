@@ -289,7 +289,7 @@ object LegacyConstraintFixers {
         }
     }
 
-    @JvmStatic fun tryLoadLegacyVModSchemData(level: ServerLevel, ships: List<Pair<ServerShip, Long>>, data: Map<String, ISerializable>) {
+    @JvmStatic fun tryLoadLegacyVModSchemData(level: ServerLevel, ships: List<Pair<ServerShip, Long>>, centerPositions: Map<Long, Pair<Vector3d, Vector3d>>, data: Map<String, ISerializable>) {
         val str = "VMod Constraint Manager"
 
         val file = CompoundTagSerializable(CompoundTag())
@@ -337,7 +337,7 @@ object LegacyConstraintFixers {
 
         val changedIds = mutableMapOf<Int, Int>()
         for (it in toInitConstraints) {
-            level.makeVEntity(it.copyVEntity(level, mapped) ?: continue) {newId ->
+            level.makeVEntity(it.copyVEntity(level, mapped, centerPositions) ?: continue) { newId ->
                 changedIds[it.mID] = newId ?: return@makeVEntity
             }
         }

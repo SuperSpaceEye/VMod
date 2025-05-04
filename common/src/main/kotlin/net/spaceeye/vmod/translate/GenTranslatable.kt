@@ -18,6 +18,7 @@ fun main() {
   "key.vmod.gui_open_or_close": "Open or Close Toolgun GUI",
   "key.vmod.remove_top_ventity": "Remove Top VEntity",
   "key.vmod.reset_ventity_mode": "Reset VEntity Mode",
+  "key.vmod.toggle_hud": "Toggle HUD",
   "vmod.keymappings_name": "VMod Toolgun",
   
   "item.the_vmod.toolgun": "Toolgun",

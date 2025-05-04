@@ -19,6 +19,7 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.jvmErasure
 
 /**
+ * WARNING!!!! IF CLASS USES CLIENT ONLY CLASSES THEN YOU CAN'T DIRECTLY USE THIS AS REFLECTION WILL TRY TO LOAD EVERYTHING.
  * An interface that will add functionality for semi-automatic serialization/deserialization
  *
  * ### If added to a normal class:
@@ -57,7 +58,7 @@ import kotlin.reflect.jvm.jvmErasure
  * }
  * ```
  */
-interface AutoSerializable: Serializable, ReflectableItems {
+interface AutoSerializable: Serializable, ReflectableObject {
     @JsonIgnore
     @NonExtendable
     override fun serialize() = getBuffer().also { buf ->
@@ -150,7 +151,7 @@ object ByteSerializableItem {
         registerSerializationItem(DoubleArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeDouble(it)}}) {buf -> buf.readCollection({mutableListOf<Double>()}) {buf.readDouble()}.toDoubleArray()}
     }
 
-    private inline fun makeByteSerDeser(noinline verification: ((it: Nothing) -> Any), noinline ser: ByteSerializeFn, noinline deser: ByteDeserializeFn<Any>): MutableMap<String, Any> = mutableMapOf(
+    private fun makeByteSerDeser(verification: ((it: Nothing) -> Any), ser: ByteSerializeFn, deser: ByteDeserializeFn<Any>): MutableMap<String, Any> = mutableMapOf(
         Pair("verification", verification),
         Pair("byteSerialize", ser),
         Pair("byteDeserialize", deser)

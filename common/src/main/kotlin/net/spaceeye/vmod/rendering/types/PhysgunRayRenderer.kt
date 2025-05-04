@@ -2,7 +2,6 @@ package net.spaceeye.vmod.rendering.types
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
@@ -10,8 +9,10 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.renderer.LightTexture
+import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderTypes
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -29,17 +30,26 @@ fun closestPointOnALineToAnotherPoint(originPoint: Vector3d, linePoint1: Vector3
     return linePoint1 + wdir * t
 }
 
-class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRenderer, AutoSerializable {
-    @JsonIgnore private var i = 0
+class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRenderer, ReflectableObject {
+    class Data: AutoSerializable {
+        @JsonIgnore
+        private var i = 0
 
-    var player: UUID by get(i++, UUID(0L, 0L))
-    var shipId: Long by get(i++, -1L)
-    var hitPosInShipyard: Vector3d by get(i++, Vector3d())
-    override var timestampOfBeginning: Long by get(i++, -1)
-    override var activeFor_ms: Long by get(i++, Long.MAX_VALUE)
+        var player: UUID by get(i++, UUID(0L, 0L))
+        var shipId: Long by get(i++, -1L)
+        var hitPosInShipyard: Vector3d by get(i++, Vector3d())
+        var timestampOfBeginning: Long by get(i++, -1)
+        var activeFor_ms: Long by get(i++, Long.MAX_VALUE)
+    }
+    var data = Data()
+    override val reflectObjectOverride: ReflectableObject? get() = data
+    override fun serialize() = data.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
+    override var timestampOfBeginning: Long get() = data.timestampOfBeginning; set(value) {data.timestampOfBeginning = value}
+    override val activeFor_ms: Long get() = data.activeFor_ms
 
     override val renderingPosition: Vector3d
-        get() {
+        get() = with(data) {
             val player = Minecraft.getInstance().level!!.getPlayerByUUID(player) ?: return Vector3d(999999999, 999999999, 999999999)
             return Vector3d(player.eyePosition)
         }
@@ -55,7 +65,7 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
         return c
     }
 
-    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
+    override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) = with(data) {
         val selfPlayer = Minecraft.getInstance().player
         val player = Minecraft.getInstance().level!!.getPlayerByUUID(player) ?: return
 
@@ -137,6 +147,6 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
         RenderTypes.clearPCRendering()
     }
 
-    override fun copy(oldToNew: Map<ShipId, Ship>): BaseRenderer? = throw AssertionError("shouldn't be copied")
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = throw AssertionError("shouldn't be copied")
     override fun scaleBy(by: Double) = throw AssertionError("shouldn't be scaled")
 }

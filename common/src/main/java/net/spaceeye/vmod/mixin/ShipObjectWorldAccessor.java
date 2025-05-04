@@ -12,7 +12,7 @@ import java.util.Set;
 
 @Mixin(ShipObjectServerWorld.class)
 public interface ShipObjectWorldAccessor {
-    @Accessor("constraints") @NotNull Map<Integer, VSConstraint> getConstraints();
-    @Accessor("shipIdToConstraints") @NotNull Map<Long, Set<Integer>> getShipIdToConstraints();
-    @Accessor("_loadedPhysicsEntities") @NotNull Map<Long, PhysicsEntityServer> getShipIdToPhysEntity();
+    @Accessor(value = "constraints", remap = false) @NotNull Map<Integer, VSConstraint> getConstraints();
+    @Accessor(value = "shipIdToConstraints", remap = false) @NotNull Map<Long, Set<Integer>> getShipIdToConstraints();
+    @Accessor(value = "_loadedPhysicsEntities", remap = false) @NotNull Map<Long, PhysicsEntityServer> getShipIdToPhysEntity();
 }

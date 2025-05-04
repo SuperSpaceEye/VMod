@@ -5,10 +5,9 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.getMapper
 import net.spaceeye.vmod.utils.vs.tryMovePosition
-import net.spaceeye.vmod.utils.vs.updatePosition
 import org.valkyrienskies.clockwork.ClockworkBlocks
 import org.valkyrienskies.clockwork.content.contraptions.phys.bearing.PhysBearingBlockEntity
 import org.valkyrienskies.clockwork.content.contraptions.phys.bearing.data.PhysBearingCreateData
@@ -21,7 +20,7 @@ import org.valkyrienskies.mod.common.getShipObjectManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class ClockworkSchemCompat(): SchemCompatItem {
-    override fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit) {
+    override fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, centerPositions: Map<Long, JVector3d>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit) {
         if (state.block != ClockworkBlocks.PHYS_BEARING.get()) {return}
         if (be !is PhysBearingBlockEntity) {return}
 
@@ -31,30 +30,31 @@ class ClockworkSchemCompat(): SchemCompatItem {
 
         val data = controller.bearingData[bearingId] ?: return
 
-        tag.putByteArray("vmod_schem_compat", getMapper().writeValueAsBytes(data))
+        tag.putLong("vmod schem compat bearingShipId", level.getShipObjectManagingPos(pos)!!.id)
+        tag.putByteArray("vmod schem compat", getMapper().writeValueAsBytes(data))
     }
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (state.block != ClockworkBlocks.PHYS_BEARING.get()) {return}
         delayLoading(true) { tag ->
             val id = tag!!.getLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID)
             val mapped = oldToNewId[id] ?: return@delayLoading tag
             val ship = level.shipObjectWorld.loadedShips.getById(mapped) ?: return@delayLoading tag
-            if (!tag.contains("vmod_schem_compat")) {return@delayLoading tag}
-            val data = getMapper().readValue(tag.getByteArray("vmod_schem_compat"), PhysBearingData::class.java)
-            val beShip = level.getShipObjectManagingPos(pos)!!
+            if (!tag.contains("vmod schem compat")) {return@delayLoading tag}
+            val data = getMapper().readValue(tag.getByteArray("vmod schem compat"), PhysBearingData::class.java)
+            val beShipId = tag.getLong("vmod schem compat bearingShipId")
 
             val controller = BearingController.getOrCreate(ship)!!
 
             val bearingId = controller.addPhysBearing(PhysBearingCreateData(
-                updatePosition(Vector3d(data.bearingPosition!!), beShip).toJomlVector3d(),
+                tryMovePosition(data.bearingPosition!!, beShipId, centerPositions)!!,
                 data.bearingAxis!!, data.bearingAngle, data.bearingRPM, data.locked, mapped,
                 VSConstraintAndId(-1, data.attachConstraint!!.let { it.copy(
                     oldToNewId[it.shipId0]!!,
                     oldToNewId[it.shipId1]!!,
                     it.compliance,
-                    tryMovePosition(Vector3d(it.localPos0), it.shipId0, level, oldToNewId)!!.toJomlVector3d(),
-                    tryMovePosition(Vector3d(it.localPos1), it.shipId1, level, oldToNewId)!!.toJomlVector3d(),
+                    tryMovePosition(it.localPos0, it.shipId0, centerPositions)!!,
+                    tryMovePosition(it.localPos1, it.shipId1, centerPositions)!!,
                     ) }),
                 VSConstraintAndId(-1, data.hingeConstraint!!.let { it.copy(oldToNewId[it.shipId0]!!, oldToNewId[it.shipId1]!!) }),
                 null, null,
@@ -62,8 +62,8 @@ class ClockworkSchemCompat(): SchemCompatItem {
                     oldToNewId[it.shipId0]!!,
                     oldToNewId[it.shipId1]!!,
                     it.compliance,
-                    tryMovePosition(Vector3d(it.localPos0), it.shipId0, level, oldToNewId)!!.toJomlVector3d(),
-                    tryMovePosition(Vector3d(it.localPos1), it.shipId1, level, oldToNewId)!!.toJomlVector3d(),
+                    tryMovePosition(it.localPos0, it.shipId0, centerPositions)!!,
+                    tryMovePosition(it.localPos1, it.shipId1, centerPositions)!!,
                 ) ) }
             ))
 

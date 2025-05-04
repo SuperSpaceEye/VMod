@@ -24,6 +24,7 @@ interface TagSerializable {
 }
 
 /**
+ * WARNING!!!! IF CLASS USES CLIENT ONLY CLASSES THEN YOU CAN'T DIRECTLY USE THIS AS REFLECTION WILL TRY TO LOAD EVERYTHING.
  * An interface that will add functionality for semi-automatic serialization/deserialization
  *
  * ### If added to a normal class:
@@ -60,7 +61,7 @@ interface TagSerializable {
  * }
  * ```
  */
-interface TagAutoSerializable: TagSerializable, ReflectableItems {
+interface TagAutoSerializable: TagSerializable, ReflectableObject {
     @JsonIgnore
     @NonExtendable
     override fun tSerialize() = tGetBuffer().also { buf ->
@@ -88,14 +89,14 @@ interface TagAutoSerializable: TagSerializable, ReflectableItems {
 }
 
 //TODO you can't define custom ser/deser
-fun ReflectableItems.tSerialize() = CompoundTag().also { buf ->
+fun ReflectableObject.tSerialize() = CompoundTag().also { buf ->
     getAllReflectableItems().forEach {
         typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf, it.cachedName) }
             ?: throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
     }
 }
 
-fun ReflectableItems.tDeserialize(tag: CompoundTag) {
+fun ReflectableObject.tDeserialize(tag: CompoundTag) {
     getReflectableItemsWithoutDataclassConstructorItems().forEach {
         it.setValue(null, null,
             typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(tag, it.cachedName) }

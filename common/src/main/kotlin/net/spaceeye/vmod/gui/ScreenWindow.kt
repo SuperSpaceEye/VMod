@@ -24,7 +24,7 @@ class ScreenWindow private constructor(): WindowScreen(ElementaVersion.V8, drawD
         return extensions.filterIsInstance<T>().first()
     }
 
-    inline fun <T: ScreenWindowAddition> getExtensionOfType(type: Class<T>): T {
+    fun <T: ScreenWindowAddition> getExtensionOfType(type: Class<T>): T {
         return extensions.filterIsInstance(type).first()
     }
 

@@ -34,7 +34,7 @@ class SyncRotationConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         this.maxForce = maxForce
     }
 
-    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
+    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity? {
         return SyncRotationConstraint(Quaterniond(sRot1), Quaterniond(sRot2), shipId1, shipId2, maxForce)
     }
 

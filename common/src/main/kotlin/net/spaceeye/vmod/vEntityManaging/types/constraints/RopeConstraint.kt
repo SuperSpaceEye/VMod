@@ -47,10 +47,10 @@ class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         this.ropeLength = ropeLength
     }
 
-    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
+    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity? {
          return RopeConstraint(
-             tryMovePosition(sPos1, shipId1, level, mapped) ?: return null,
-             tryMovePosition(sPos2, shipId2, level, mapped) ?: return null,
+             tryMovePosition(sPos1, shipId1, centerPositions) ?: return null,
+             tryMovePosition(sPos2, shipId2, centerPositions) ?: return null,
              mapped[shipId1] ?: return null,
              mapped[shipId2] ?: return null,
              maxForce, stiffness, damping, ropeLength

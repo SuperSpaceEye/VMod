@@ -9,7 +9,8 @@ import net.spaceeye.vmod.utils.Registry
 import kotlin.reflect.KClass
 
 object RenderingTypes: Registry<BaseRenderer>(false) {
-    private inline fun register(clazz: KClass<*>) = register(clazz, Platform.getEnvironment() == Env.CLIENT)
+    private fun register(clazz: KClass<*>) = register(clazz, Platform.getEnvironment() == Env.CLIENT)
+
     init {
         register(RopeRenderer::class)
         register(A2BRenderer::class)
@@ -21,5 +22,5 @@ object RenderingTypes: Registry<BaseRenderer>(false) {
 
         register(DebugPointRenderer::class)
     }
-    @JvmStatic inline fun BaseRenderer.getType() = typeToString(this::class.java)
+    @JvmStatic fun BaseRenderer.getType() = typeToString(this::class.java)
 }

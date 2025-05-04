@@ -10,7 +10,6 @@ import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
 import net.spaceeye.vmod.network.MessagingNetwork
 import net.spaceeye.vmod.network.Signal
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -58,15 +57,12 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         maxDistance *= scaleBy
     }
 
-    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
+    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity? {
         val nId = mapped[shipId] ?: return null
-
+        val (oldCenter, newCenter) = centerPositions[shipId] ?: return null
         val nShip = level.shipObjectWorld.loadedShips.getById(nId) ?: level.shipObjectWorld.allShips.getById(nId) ?: return null
 
-        val oCentered = getCenterPos(pos.x.toInt(), pos.z.toInt())
-        val nCentered = getCenterPos(nShip.transform.positionInShip.x().toInt(), nShip.transform.positionInShip.z().toInt())
-
-        val nPos = pos - oCentered + nCentered
+        val nPos = pos - oldCenter + newCenter
 
         return SensorVEntity(nShip.id, nPos, lookDir, maxDistance, ignoreSelf, scale, channel)
     }

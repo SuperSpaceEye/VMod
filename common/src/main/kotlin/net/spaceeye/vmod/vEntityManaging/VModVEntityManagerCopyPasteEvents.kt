@@ -7,16 +7,20 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.valkyrien_ship_schematics.containers.CompoundTagSerializable
 import net.spaceeye.valkyrien_ship_schematics.interfaces.ISchematicEvent
 import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
+import net.spaceeye.vmod.utils.JVector3d
+import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.vEntityManaging.VEntityManager.Companion.dimensionToGroundBodyIdImmutable
 import net.spaceeye.vmod.vEntityManaging.VEntityManager.Companion.getInstance
 import org.valkyrienskies.core.api.ships.ServerShip
+import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.function.Supplier
 
 class VModVEntityManagerCopyPasteEvents: ISchematicEvent {
     override fun onCopy(
         level: ServerLevel,
-        shipsToBeSaved: List<ServerShip>
+        shipsToBeSaved: List<ServerShip>,
+        centerPositions: Map<ShipId, JVector3d>,
     ): ISerializable? {
         val instance = getInstance()
 
@@ -36,15 +40,18 @@ class VModVEntityManagerCopyPasteEvents: ISchematicEvent {
         level: ServerLevel,
         maybeLoadedShips: List<Pair<ServerShip, Long>>,
         emptyShip: Pair<ServerShip, Long>,
+        centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>,
         data: Supplier<FriendlyByteBuf>?
     ) {}
 
     override fun onPasteAfterBlocksAreLoaded(
         level: ServerLevel,
         loadedShips: List<Pair<ServerShip, Long>>,
+        centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>,
         data: Supplier<FriendlyByteBuf>?
     ) {
         if (data == null) {return}
+        val centerPositions = centerPositions.map { Pair(it.key, Pair(Vector3d(it.value.first), Vector3d(it.value.second))) }.toMap()
         val instance = getInstance()
 
         val tag = CompoundTagSerializable(CompoundTag()).also { it.deserialize(data.get()) }.tag!!
@@ -61,7 +68,7 @@ class VModVEntityManagerCopyPasteEvents: ISchematicEvent {
 
         val changedIds = mutableMapOf<Int, Int>()
         for (it in toInitVEntities) {
-            level.makeVEntity(it.copyVEntity(level, mapped) ?: continue) { newId ->
+            level.makeVEntity(it.copyVEntity(level, mapped, centerPositions) ?: continue) { newId ->
                 changedIds[it.mID] = newId ?: return@makeVEntity
             }
         }

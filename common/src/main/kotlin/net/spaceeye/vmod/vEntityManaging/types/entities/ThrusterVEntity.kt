@@ -12,7 +12,6 @@ import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
 import net.spaceeye.vmod.vEntityManaging.util.TickableVEntityExtension
 import net.spaceeye.vmod.shipAttachments.ThrustersController
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.utils.vs.getCenterPos
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -52,15 +51,12 @@ class ThrusterVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         controller.updateThruster(thrusterId, thruster.copy(force = thruster.force * scaleBy * scaleBy * scaleBy))
     }
 
-    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>): VEntity? {
+    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity? {
         val nId = mapped[shipId] ?: return null
-
+        val (oldCenter, newCenter) = centerPositions[shipId] ?: return null
         val nShip = level.shipObjectWorld.loadedShips.getById(nId) ?: level.shipObjectWorld.allShips.getById(nId) ?: return null
 
-        val oCentered = getCenterPos(pos.x.toInt(), pos.z.toInt())
-        val nCentered = getCenterPos(nShip.transform.positionInShip.x().toInt(), nShip.transform.positionInShip.z().toInt())
-
-        val nPos = pos - oCentered + nCentered
+        val nPos = pos - oldCenter + newCenter
 
         return ThrusterVEntity(nShip.id, nPos, Vector3d(forceDir), force, channel)
     }

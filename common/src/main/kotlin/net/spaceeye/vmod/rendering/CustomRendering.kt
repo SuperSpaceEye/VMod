@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.rendering
 
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
@@ -16,7 +15,7 @@ import net.minecraft.world.level.block.RenderShape
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.mixin.BlockRenderDispatcherAccessor
 import net.spaceeye.vmod.rendering.types.BlockRenderer
 import net.spaceeye.vmod.rendering.types.PositionDependentRenderer
@@ -95,7 +94,7 @@ private var renderTick = 0L
 // because of poseStack but idk
 fun renderInWorld(poseStack: PoseStack, camera: Camera, minecraft: Minecraft, renderBlockRenderers: Boolean) {
     val now = getNow_ms()
-    RandomEvents.clientPreRender.emit(RandomEvents.ClientPreRender(now))
+    PersistentEvents.clientPreRender.emit(PersistentEvents.ClientPreRender(now))
 
     minecraft.profiler.push("vmod_rendering_ship_objects")
     renderShipObjects(poseStack, camera, renderBlockRenderers, now, renderTick++)
@@ -152,9 +151,16 @@ private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlock
 }
 
 private fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
-    if (renderBlockRenderers) {return}
     val page = ClientRenderingData.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
+    try {
     for ((_, render) in page) {
-        render.renderData(poseStack, camera, timestamp)
+        when (render) {
+            is BlockRenderer -> if (renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
+            else -> if(!renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderData(poseStack, camera, timestamp)
+        }
     }
+    // let's hope that it never happens, but if it does, then do nothing
+    } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION);
+    } catch (e: Exception) { ELOG("Renderer raised exception:\n${e.stackTraceToString()}")
+    } catch (e: Error) { ELOG("Renderer raised error!!!\n${e.stackTraceToString()}") }
 }

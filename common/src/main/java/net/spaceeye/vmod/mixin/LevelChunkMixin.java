@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.spaceeye.vmod.events.RandomEvents;
+import net.spaceeye.vmod.events.PersistentEvents;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,6 +20,6 @@ abstract class LevelChunkMixin {
     void vmod$setBlockState(BlockPos pos, BlockState state, boolean isMoving, CallbackInfoReturnable<BlockState> cir) {
         var level = getLevel();
         if (level.isClientSide()) {return;}
-        RandomEvents.INSTANCE.getOnBlockStateChange().emit(new RandomEvents.OnBlockStateChange((ServerLevel)level, pos, state, isMoving));
+        PersistentEvents.INSTANCE.getOnBlockStateChange().emit(new PersistentEvents.OnBlockStateChange((ServerLevel)level, pos, state, isMoving));
     }
 }

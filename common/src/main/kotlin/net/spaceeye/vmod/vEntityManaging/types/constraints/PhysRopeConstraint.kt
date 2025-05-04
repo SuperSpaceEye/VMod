@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
-import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
@@ -97,13 +96,10 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         this.angleLimit = angleLimit
     }
 
-    override fun iCopyVEntity(
-        level: ServerLevel,
-        mapped: Map<ShipId, ShipId>
-    ): VEntity? {
+    override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity? {
         return PhysRopeConstraint(
-            tryMovePosition(sPos1, shipId1, level, mapped) ?: return null,
-            tryMovePosition(sPos2, shipId2, level, mapped) ?: return null,
+            tryMovePosition(sPos1, shipId1, centerPositions) ?: return null,
+            tryMovePosition(sPos2, shipId2, centerPositions) ?: return null,
             sPos1.copy(), sPos2.copy(),
             mapped[shipId1] ?: return null,
             mapped[shipId2] ?: return null,

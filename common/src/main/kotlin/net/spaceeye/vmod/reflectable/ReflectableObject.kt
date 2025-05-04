@@ -31,10 +31,17 @@ open class ReflectableItemDelegate <T : Any>(
 }
 
 
-interface ReflectableItems {
+interface ReflectableObject {
+    /**
+     * If you can't directly serialize some class, make main class inherit ReflectableObject, and override this fn so that it returns state instance
+     */
+    val reflectObjectOverride: ReflectableObject? get() = null
+
     @JsonIgnore
     @ApiStatus.NonExtendable
     fun getAllReflectableItems(): List<ReflectableItemDelegate<*>> {
+        reflectObjectOverride?.also { return it.getAllReflectableItems() }
+
         val toReturn = mutableListOf<ReflectableItemDelegate<*>>()
 
         val constructorItems: MutableSet<String> = mutableSetOf()
@@ -68,6 +75,8 @@ interface ReflectableItems {
     @JsonIgnore
     @ApiStatus.NonExtendable
     fun getReflectableItemsWithoutDataclassConstructorItems(): List<ReflectableItemDelegate<*>> {
+        reflectObjectOverride?.also { return it.getAllReflectableItems() }
+
         val constructorItems = (if (this::class.isData) this::class.primaryConstructor?.parameters?.map { it.name }?.toSet() else null) ?: setOf()
         return this::class.memberProperties.filter {
             !constructorItems.contains(it.name)

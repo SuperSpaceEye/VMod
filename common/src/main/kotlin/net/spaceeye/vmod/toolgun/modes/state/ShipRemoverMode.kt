@@ -7,6 +7,8 @@ import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.util.SimpleHUD
 import net.spaceeye.vmod.translate.SHIP_REMOVER
+import net.spaceeye.vmod.translate.SHIP_REMOVER_HUD_1
+import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.RaycastFunctions
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -19,7 +21,9 @@ class ShipRemoverMode: ExtendableToolgunMode(), SimpleHUD {
 
     override val itemName = SHIP_REMOVER
 
-    override fun makeSubText(makeText: (String) -> Unit) {}
+    override fun makeSubText(makeText: (String) -> Unit) {
+        makeText(SHIP_REMOVER_HUD_1.get())
+    }
 
     companion object {
         init {

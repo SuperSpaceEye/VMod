@@ -12,6 +12,7 @@
   ],
   "client": [
     "BlockRenderDispatcherAccessor",
+    "BufferBuilderAccessor",
     "GameRendererMixin",
     "KeyboardHandlerMixin",
     "LevelRendererMixin",

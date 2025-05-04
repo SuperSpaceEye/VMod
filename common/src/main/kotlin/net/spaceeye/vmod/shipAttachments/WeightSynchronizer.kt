@@ -3,7 +3,7 @@ package net.spaceeye.vmod.shipAttachments
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.utils.ServerLevelHolder
 import net.spaceeye.vmod.utils.Tuple
 import net.spaceeye.vmod.utils.Tuple3
@@ -72,7 +72,7 @@ class WeightSynchronizer: ShipForcesInducer, ServerTickListener {
 
     companion object {
         init {
-            RandomEvents.onBlockStateChange.on { (level, pos, newState, isMoving), _ ->
+            PersistentEvents.onBlockStateChange.on { (level, pos, newState, isMoving), _ ->
                 val ship = level.getShipObjectManagingPos(pos) ?: return@on
                 val atch = ship.getAttachment<WeightSynchronizer>() ?: return@on
                 atch.updateWeights = true

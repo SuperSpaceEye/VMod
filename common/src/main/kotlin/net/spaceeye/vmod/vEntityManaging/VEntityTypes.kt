@@ -18,5 +18,5 @@ object VEntityTypes: Registry<VEntity>(false) {
         register(ThrusterVEntity::class)
         register(SensorVEntity::class)
     }
-    @JvmStatic inline fun VEntity.getType() = typeToString(this::class.java)
+    @JvmStatic fun VEntity.getType() = typeToString(this::class.java)
 }

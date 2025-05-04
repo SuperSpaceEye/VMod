@@ -4,17 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import dev.architectury.event.EventResult
 import dev.architectury.event.events.common.PlayerEvent
 import dev.architectury.networking.NetworkManager
-import gg.essential.elementa.components.ScrollComponent
-import gg.essential.elementa.components.UIContainer
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
+import net.minecraft.client.Minecraft
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.entity.player.Player
 import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
-import net.spaceeye.valkyrien_ship_schematics.containers.v1.ShipInfo
-import net.spaceeye.valkyrien_ship_schematics.containers.v1.ShipSchematicInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematicInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
@@ -23,7 +19,6 @@ import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.rendering.ClientRenderingData
-import net.spaceeye.vmod.rendering.types.special.SchemOutlinesRenderer
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
@@ -33,21 +28,19 @@ import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.constructor
-import net.spaceeye.vmod.schematic.VModShipSchematicV1
+import net.spaceeye.vmod.rendering.types.BaseRenderer
+import net.spaceeye.vmod.rendering.types.special.SchemRenderer
+import net.spaceeye.vmod.schematic.VModShipSchematicV2
 import net.spaceeye.vmod.schematic.makeFrom
 import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics.SendLoadRequest
+import net.spaceeye.vmod.translate.COULDNT_LOAD_VMODSCHEM_V1
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
-import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
-import org.valkyrienskies.core.util.readAABBi
-import org.valkyrienskies.core.util.readQuatd
-import org.valkyrienskies.core.util.writeAABBi
-import org.valkyrienskies.core.util.writeQuatd
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.io.IOException
 import java.nio.file.Files
@@ -60,29 +53,29 @@ import kotlin.math.sign
 
 const val SCHEM_EXTENSION = "vschem"
 
-//TODO remove
-//probably works? and if it doesn't, oh well
 private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
-    if (bytes[3].toInt() == 1) {
-        val inst = VModShipSchematicV1()
-
-        val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
-        buf.readInt()
-
-        inst.deserialize(buf)
-        return inst
-    } else {
-        try {
-            val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
-            buf.readUtf()
-            val type = buf.readUtf()
-            if (type == "VModShipSchematicV1") {
-                return VModShipSchematicV1().also { it.deserialize(buf) }
+    val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
+    return if (bytes[3].toInt() == 1) {
+        if (Minecraft.getInstance()?.player != null) {
+            ClientToolGunState.closeGUI()
+            ClientToolGunState.addHUDError("Couldn't load schematic")
+            Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
+        }
+        null
+    } else if (buf.readUtf() == "vschem") {
+        when (buf.readUtf()) {
+            "VModShipSchematicV1" -> {
+                if (Minecraft.getInstance()?.player != null) {
+                    ClientToolGunState.closeGUI()
+                    ClientToolGunState.addHUDError("Couldn't load schematic")
+                    Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
+                }
+                null
             }
-        } catch (e: Exception) {
-        } catch (e: Error) {}
-
-        return ShipSchematic.getSchematicFromBytes(bytes)
+            else -> ShipSchematic.getSchematicFromBytes(bytes)
+        }
+    } else {
+        ShipSchematic.getSchematicFromBytes(bytes)
     }
 }
 
@@ -106,6 +99,25 @@ object ClientPlayerSchematics {
                 it.schem = bcGetSchematicFromBytes(data!!.data.array())
                 it.saveSchem(listSchematics())
                 it.reloadScrollItems()
+            }
+        }
+    }
+
+    var getSchemStream = object : DataStream<SendSchemRequest, SchemHolder>(
+        "get_schem_stream",
+        NetworkManager.Side.S2C,
+        NetworkManager.Side.C2S,
+    ) {
+        override val partByteAmount: Int get() = 0
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendSchemRequest::class.constructor(buf)
+        override fun dataPacketConstructor() = SchemHolder()
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) {  }
+        override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
+
+        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
+            ClientToolGunState.currentMode?.let {
+                if (it !is SchemMode) {return@let}
+                it.schem = bcGetSchematicFromBytes(data!!.data.array())
             }
         }
     }
@@ -203,6 +215,24 @@ object ServerPlayerSchematics: ServerClosable() {
         }
     }
 
+    var getSchemStream = object : DataStream<ClientPlayerSchematics.SendSchemRequest, SchemHolder>(
+        "get_schem_stream",
+        NetworkManager.Side.S2C,
+        NetworkManager.Side.S2C,
+    ) {
+        override val partByteAmount: Int get() = VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
+        override fun requestPacketConstructor(buf: FriendlyByteBuf) = ClientPlayerSchematics.SendSchemRequest::class.constructor(buf)
+        override fun dataPacketConstructor() = SchemHolder()
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Get Schem Transmission Failed") }
+        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
+        override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerLevelHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
+
+        override fun transmitterRequestProcessor(req: ClientPlayerSchematics.SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
+            val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
+            return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
+        }
+    }
+
     var loadSchemStream = object : DataStream<SendLoadRequest, SchemHolder>(
         "load_schem_stream",
         NetworkManager.Side.C2S,
@@ -257,50 +287,12 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
         ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(SendLoadRequest(player.uuid), FakePacketContext(player))
     }
 
-    val s2cSendShipInfo = regS2C<S2CSendShipInfo>("send_ship_info", networkName) {pkt ->
-        val mode = ClientToolGunState.currentMode ?: return@regS2C
-        if (mode !is SchemMode) { return@regS2C }
-        mode.shipInfo = pkt.shipInfo
-    }
-
-    class S2CSendShipInfo(): Serializable {
-        lateinit var shipInfo: IShipSchematicInfo
-
-        constructor(info: IShipSchematicInfo): this() {shipInfo = info}
-        constructor(buf: FriendlyByteBuf): this() {deserialize(buf)}
-
-        override fun serialize(): FriendlyByteBuf {
-            val buf = getBuffer()
-
-            buf.writeVector3d(Vector3d(shipInfo.maxObjectPos))
-            buf.writeCollection(shipInfo.shipsInfo) { buf, item ->
-                buf.writeVector3d(Vector3d(item.relPositionToCenter))
-                buf.writeAABBi(item.shipAABB)
-                buf.writeVector3d(Vector3d(item.positionInShip))
-                buf.writeDouble(item.shipScale)
-                buf.writeQuatd(item.rotation)
-            }
-
-            return buf
+    val s2cSendSchem = regS2C<EmptyPacket>("send_schem", networkName) {pkt ->
+        ClientToolGunState.currentMode?.let {
+            if (it !is SchemMode) {return@let}
+            it.schem = null
         }
-
-        override fun deserialize(buf: FriendlyByteBuf) {
-            val maxObjectEdge = buf.readVector3d().toJomlVector3d()
-            val data = buf.readCollection({mutableListOf<ShipInfo>()}) {
-                val relPositionToCenter = buf.readVector3d().toJomlVector3d()
-                val shipBounds = buf.readAABBi()
-                val posInShip = buf.readVector3d().toJomlVector3d()
-                val shipScale = buf.readDouble()
-                val rotation = buf.readQuatd()
-
-                ShipInfo(0, relPositionToCenter, shipBounds, posInShip, shipScale, rotation)
-            }
-
-            shipInfo = ShipSchematicInfo(
-                maxObjectEdge,
-                data
-            )
-        }
+        ClientPlayerSchematics.getSchemStream.r2tRequestData.transmitData(ClientPlayerSchematics.SendSchemRequest(Minecraft.getInstance().player!!.uuid))
     }
 }
 
@@ -308,6 +300,9 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
     @JsonIgnore private var i = 0
 
     var rotationAngle: Ref<Double> by get(i++, Ref(0.0), {it}, customSerialize = { it, buf -> buf.writeDouble((it).it)}, customDeserialize = { buf -> val rotationAngle = Ref(0.0) ; rotationAngle.it = buf.readDouble(); rotationAngle})
+
+    //TODO doesn't matter right now, but when i will add setting presets i will need a way to get this value
+    var transparency: Float = 0.5f
 
     override fun eInit(type: BaseNetworking.EnvType) {
         SchemNetworking.init(this, type)
@@ -323,64 +318,52 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
         ClientPlayerSchematics.saveSchematic(name, schem!!)
     }
 
-    var renderer: SchemOutlinesRenderer? = null
+    var renderer: BaseRenderer? = null
 
     private var rID = -1
-    private var shipInfo_: IShipSchematicInfo? = null
-    var shipInfo: IShipSchematicInfo?
-        get() = shipInfo_
-        set(info) {
-            shipInfo_ = info
-            if (info == null) {
+    var shipInfo: IShipSchematicInfo? = null
+    var schem: IShipSchematic? = null
+        set(value) {
+            field = value;
+            shipInfo = value?.info
+
+            if (value == null) {
                 renderer = null
                 ClientRenderingData.removeClientsideRenderer(rID)
+                refreshHUD()
                 return
             }
 
-
-            val center = ShipTransformImpl.create(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
-
-            val data = info.shipsInfo.map {
-                Pair(ShipTransformImpl.create(
-                    it.relPositionToCenter,
-                    it.positionInShip,
-                    it.rotation,
-                    JVector3d(it.shipScale, it.shipScale, it.shipScale)
-                ), it.shipAABB)
-            }
-
-            renderer = SchemOutlinesRenderer(Vector3d(info.maxObjectPos), rotationAngle, center, data)
-
+            renderer = SchemRenderer(value, rotationAngle, transparency)
             rID = ClientRenderingData.addClientsideRenderer(renderer!!)
-
             refreshHUD()
         }
-    private var schem_: IShipSchematic? = null
-    var schem: IShipSchematic?
-        get() = schem_
-        set(value) {schem_ = value; shipInfo = value?.info}
 
     var filename = ""
 
     var scrollAngle = Math.toRadians(10.0)
 
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult)  {
+        ClientRenderingData.removeClientsideRenderer(rID)
         if (raycastResult.state.isAir) {
             resetState();
             ServerPlayerSchematics.schematics.remove(player.uuid)
-            return}
+            SchemNetworking.s2cSendSchem.sendToClient(player, EmptyPacket())
+            return
+        }
         // TODO
         if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}
 
         val serverCaughtShip = level.getShipManagingPos(raycastResult.blockPosition) ?: run {
             resetState();
             ServerPlayerSchematics.schematics.remove(player.uuid)
+            SchemNetworking.s2cSendSchem.sendToClient(player, EmptyPacket())
             null
         } ?: return
-        val schem = VModShipSchematicV1()
+        val schem = VModShipSchematicV2()
         schem.makeFrom(player.level() as ServerLevel, player, player.uuid, serverCaughtShip) {
-            SchemNetworking.s2cSendShipInfo.sendToClient(player, SchemNetworking.S2CSendShipInfo(schem.info!!))
             ServerPlayerSchematics.schematics[player.uuid] = schem
+            SchemNetworking.s2cSendSchem.sendToClient(player, EmptyPacket())
         }
     }
 
@@ -392,8 +375,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
 
         val info = schem.info!!
 
-        val hitPos = raycastResult.worldHitPos!!
-        val pos = hitPos + (raycastResult.worldNormalDirection!! * info.maxObjectPos.y)
+        val pos = raycastResult.worldHitPos!! + (raycastResult.worldNormalDirection!! * info.maxObjectPos.y) // + (raycastResult.worldNormalDirection!! * 0.5)
 
         val rotation = Quaterniond()
             .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))
@@ -404,8 +386,6 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
     }
 
     override fun eResetState() {
-//        schem = null
-//        shipInfo = null
         rotationAngle.it = 0.0
     }
 

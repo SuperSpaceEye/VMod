@@ -10,7 +10,7 @@ import dev.architectury.utils.EnvExecutor
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.spaceeye.vmod.VMItems
-import net.spaceeye.vmod.events.RandomEvents
+import net.spaceeye.vmod.events.PersistentEvents
 import org.lwjgl.glfw.GLFW
 
 class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
@@ -30,7 +30,7 @@ class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
                 ClientToolGunState.onRenderHUD(stack, delta)
             }
 
-            RandomEvents.keyPress.on {
+            PersistentEvents.keyPress.on {
                 (keyCode, scanCode, action, modifiers), _ ->
                 if (!playerIsUsingToolgun()) {return@on false}
                 if (ClientToolGunState.otherGuiIsOpened()) {return@on false}
@@ -48,6 +48,11 @@ class ToolgunItem: Item(Properties().stacksTo(1).`arch$tab`(VMItems.TAB)) {
                         ClientToolGunState.openGUI()
                         return@on true
                     }
+                }
+
+                if (!guiIsOpened && isPressed && ClientToolGunState.TOOLGUN_TOGGLE_HUD_KEY.matches(keyCode, scanCode)) {
+                    ClientToolGunState.renderHud = !ClientToolGunState.renderHud
+                    return@on true
                 }
 
                 if (guiIsOpened && isPressed && (ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {

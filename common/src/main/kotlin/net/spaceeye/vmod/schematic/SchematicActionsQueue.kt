@@ -45,6 +45,7 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.util.expand
 import org.valkyrienskies.core.util.toAABBd
+import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.isBlockInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.mod.common.util.toJOML
@@ -422,6 +423,9 @@ object SchematicActionsQueue: ServerClosable() {
                 val worldEntities = level.getEntitiesOfClass(Entity::class.java, AABB(aabb.minX(), aabb.minY(), aabb.minZ(), aabb.maxX(), aabb.maxY(), aabb.maxZ())) { it !is Player }
                 schematicV1.entityData[ship.id] = worldEntities.mapNotNull {
                     if (savedEntities.contains(it.uuid)) {return@mapNotNull null }
+                    val epos = it.position()
+                    //idk why but getEntitiesOfClass also gets shipyard entities of other ships
+                    if (level.isBlockInShipyard(epos.x, epos.y, epos.z) && level.getShipManagingPos(epos.x, epos.y, epos.z)?.id != ship.id) {return@mapNotNull null}
                     savedEntities.add(it.uuid)
                     val entityPos = it.position()
                     val shipyardPos = if (level.isBlockInShipyard(entityPos)) {entityPos.toJOML()} else {ship.transform.worldToShip.transformPosition(entityPos.toJOML())}

@@ -61,29 +61,31 @@ import kotlin.reflect.jvm.jvmErasure
 interface AutoSerializable: Serializable, ReflectableObject {
     @JsonIgnore
     @NonExtendable
-    override fun serialize() = getBuffer().also { buf ->
-            getAllReflectableItems().forEach {
-                (it.metadata["byteSerialize"] as? ByteSerializeFn)?.invoke(it.it!!, buf)
-                ?: typeToSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf) }
-                ?: throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
-            }
-        }
+    override fun serialize() = (this as ReflectableObject).serialize()
 
     @JsonIgnore
     @NonExtendable
-    override fun deserialize(buf: FriendlyByteBuf) {
-        getReflectableItemsWithoutDataclassConstructorItems().forEach {
-            it.setValue(null, null,
-                (it.metadata["byteDeserialize"] as? ByteDeserializeFn<Any>)?.invoke(buf)
-                ?: typeToSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(buf) }
-                ?: throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
-            )
-        }
-    }
+    override fun deserialize(buf: FriendlyByteBuf) = (this as ReflectableObject).deserialize(buf)
 
     @JsonIgnore
-    override fun getBuffer(): FriendlyByteBuf {
-        return super.getBuffer()
+    override fun getBuffer(): FriendlyByteBuf { return super.getBuffer() }
+}
+
+fun ReflectableObject.serialize() = FriendlyByteBuf(Unpooled.buffer(64)).also { buf ->
+    getAllReflectableItems().forEach {
+        (it.metadata["byteSerialize"] as? ByteSerializeFn)?.invoke(it.it!!, buf)
+            ?: typeToSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf) }
+            ?: throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
+    }
+}
+
+fun ReflectableObject.deserialize(buf: FriendlyByteBuf) {
+    getReflectableItemsWithoutDataclassConstructorItems().forEach {
+        it.setValue(null, null,
+            (it.metadata["byteDeserialize"] as? ByteDeserializeFn<Any>)?.invoke(buf)
+                ?: typeToSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(buf) }
+                ?: throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
+        )
     }
 }
 

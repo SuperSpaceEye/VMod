@@ -3,12 +3,15 @@ package net.spaceeye.vmod.limits
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import dev.architectury.event.events.common.LifecycleEvent
+import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.*
-import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
+import net.spaceeye.vmod.reflectable.deserialize
+import net.spaceeye.vmod.reflectable.serialize
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.translate.SERVER_LIMITS_UPDATE_WAS_REJECTED
 import net.spaceeye.vmod.utils.EmptyPacket
@@ -42,7 +45,7 @@ data class StrLimit   (var sizeLimit:Int = Int.MAX_VALUE) {
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class ServerLimitsInstance: AutoSerializable {
+open class ServerLimitsInstance: ReflectableObject {
     @JsonIgnore private var i = 0
 
     val maxForce : FloatLimit by get(i++, FloatLimit())
@@ -71,6 +74,18 @@ class ServerLimitsInstance: AutoSerializable {
 
     val thrusterScale: DoubleLimit by get(i++, DoubleLimit(0.001, 10.0))
     val sensorScale: DoubleLimit by get(i++, DoubleLimit(0.001, 10.0))
+
+    fun toPacket() = ServerLimitsPacket(this)
+}
+
+//why? jackson fails to get FriendlyByteBuf class in release for some reason and crashes, so i need to do this
+class ServerLimitsPacket(): Serializable {
+    constructor(instance: ServerLimitsInstance): this() {
+        this.instance = instance
+    }
+    var instance: ServerLimitsInstance = ServerLimitsInstance()
+    override fun serialize(): FriendlyByteBuf = instance.serialize()
+    override fun deserialize(buf: FriendlyByteBuf) = instance.deserialize(buf)
 }
 
 object ServerLimits {
@@ -118,18 +133,18 @@ object ServerLimits {
     }
 
     fun updateFromServer() { c2sRequestServerLimits.sendToServer(EmptyPacket()) }
-    fun tryUpdateToServer() { c2sSendUpdatedServerLimits.sendToServer(instance) }
+    fun tryUpdateToServer() { c2sSendUpdatedServerLimits.sendToServer(instance.toPacket()) }
 
     private val c2sRequestServerLimits = regC2S<EmptyPacket>("request_server_limits", "server_limits") {pkt, player ->
-        s2cSendCurrentServerLimits.sendToClient(player, instance)
+        s2cSendCurrentServerLimits.sendToClient(player, instance.toPacket())
     }
 
-    private val s2cSendCurrentServerLimits = regS2C<ServerLimitsInstance>("send_current_server_limits", "server_limits") {
-        instance = it
+    private val s2cSendCurrentServerLimits = regS2C<ServerLimitsPacket>("send_current_server_limits", "server_limits") {
+        instance = it.instance
     }
 
-    private val c2sSendUpdatedServerLimits = regC2S<ServerLimitsInstance>("send_updated_server_limits", "server_limits",
+    private val c2sSendUpdatedServerLimits = regC2S<ServerLimitsPacket>("send_updated_server_limits", "server_limits",
         {it.hasPermissions(4)}, { ServerToolGunState.sendErrorTo(it, SERVER_LIMITS_UPDATE_WAS_REJECTED) }) { pkt, player ->
-        instance = pkt
+        instance = pkt.instance
     }
 }

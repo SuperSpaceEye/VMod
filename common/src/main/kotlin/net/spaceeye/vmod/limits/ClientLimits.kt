@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.config.ExternalDataUtil
-import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.utils.getMapper
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 
-class ClientLimitsInstance: AutoSerializable {
+class ClientLimitsInstance: ReflectableObject {
     @JsonIgnore private var i = 0
 
     var lineRendererWidth    : DoubleLimit by get(i++, DoubleLimit(0.0, 5.0))

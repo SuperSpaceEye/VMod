@@ -11,14 +11,14 @@ import java.nio.ByteBuffer;
 
 @Mixin(BufferBuilder.class)
 public interface BufferBuilderAccessor {
-    @Invoker("ensureCapacity") void vmod$ensureCapacity(int increaseAmount);
-    @Accessor("format") @NotNull VertexFormat vmod$getVertexFormat();
-    @Accessor("buffer") @NotNull ByteBuffer vmod$getBuffer();
-    @Accessor("fullFormat") boolean vmod$fullFormat();
-
-    @Accessor("nextElementByte") int vmod$nextElementByte();
-    @Accessor("nextElementByte") void vmod$nextElementByte(int value);
-
-    @Accessor("vertices") int vmod$vertices();
-    @Accessor("vertices") void vmod$vertices(int value);
+//    @Invoker("ensureCapacity") void vmod$ensureCapacity(int increaseAmount);
+//    @Accessor("format") @NotNull VertexFormat vmod$getVertexFormat();
+//    @Accessor("buffer") @NotNull ByteBuffer vmod$getBuffer();
+//    @Accessor("fullFormat") boolean vmod$fullFormat();
+//
+//    @Accessor("nextElementByte") int vmod$nextElementByte();
+//    @Accessor("nextElementByte") void vmod$nextElementByte(int value);
+//
+//    @Accessor("vertices") int vmod$vertices();
+//    @Accessor("vertices") void vmod$vertices(int value);
 }

@@ -53,7 +53,6 @@ import net.spaceeye.valkyrien_ship_schematics.containers.v1.ChunkyBlockData
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
-import net.spaceeye.vmod.mixin.BufferBuilderAccessor
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.BlockRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
@@ -79,36 +78,37 @@ import java.util.function.Supplier
 import kotlin.math.roundToInt
 
 //TODO optimize more
-fun maybeFasterVertexBuilder(buffer: VertexConsumer, x: Float, y: Float, z: Float, r: Byte, g: Byte, b: Byte, a: Byte, u: Float, v: Float, combinedOverlay: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
-    buffer as BufferBuilder
-    buffer as BufferBuilderAccessor
-
-    buffer.putFloat(0, x)
-    buffer.putFloat(4, y)
-    buffer.putFloat(8, z)
-    buffer.putByte(12, r)
-    buffer.putByte(13, g)
-    buffer.putByte(14, b)
-    buffer.putByte(15, a)
-    buffer.putFloat(16, u)
-    buffer.putFloat(20, v)
-    val i = if (buffer.`vmod$fullFormat`()) {
-        buffer.putShort(24, (combinedOverlay and 0xffff).toShort())
-        buffer.putShort(26, (combinedOverlay shr 16 and 0xffff).toShort())
-        28
-    } else { 24 }
-
-    buffer.putShort(i + 0, (lightmapUV and 0xffff).toShort())
-    buffer.putShort(i + 2, (lightmapUV shr 16 and 0xffff).toShort())
-    buffer.putByte(i + 4, BufferVertexConsumer.normalIntValue(normalX))
-    buffer.putByte(i + 5, BufferVertexConsumer.normalIntValue(normalY))
-    buffer.putByte(i + 6, BufferVertexConsumer.normalIntValue(normalZ))
-
-    buffer.`vmod$nextElementByte`(buffer.`vmod$nextElementByte`() + i + 8)
-
-    //not using endVertex to not call ensureCapacity
-    buffer.`vmod$vertices`(buffer.`vmod$vertices`() + 1)
-}
+//TODO won't work with sodium cuz it uses it's own buffer builder
+//fun maybeFasterVertexBuilder(buffer: VertexConsumer, x: Float, y: Float, z: Float, r: Byte, g: Byte, b: Byte, a: Byte, u: Float, v: Float, combinedOverlay: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
+//    buffer as BufferBuilder
+//    buffer as BufferBuilderAccessor
+//
+//    buffer.putFloat(0, x)
+//    buffer.putFloat(4, y)
+//    buffer.putFloat(8, z)
+//    buffer.putByte(12, r)
+//    buffer.putByte(13, g)
+//    buffer.putByte(14, b)
+//    buffer.putByte(15, a)
+//    buffer.putFloat(16, u)
+//    buffer.putFloat(20, v)
+//    val i = if (buffer.`vmod$fullFormat`()) {
+//        buffer.putShort(24, (combinedOverlay and 0xffff).toShort())
+//        buffer.putShort(26, (combinedOverlay shr 16 and 0xffff).toShort())
+//        28
+//    } else { 24 }
+//
+//    buffer.putShort(i + 0, (lightmapUV and 0xffff).toShort())
+//    buffer.putShort(i + 2, (lightmapUV shr 16 and 0xffff).toShort())
+//    buffer.putByte(i + 4, BufferVertexConsumer.normalIntValue(normalX))
+//    buffer.putByte(i + 5, BufferVertexConsumer.normalIntValue(normalY))
+//    buffer.putByte(i + 6, BufferVertexConsumer.normalIntValue(normalZ))
+//
+//    buffer.`vmod$nextElementByte`(buffer.`vmod$nextElementByte`() + i + 8)
+//
+//    //not using endVertex to not call ensureCapacity
+//    buffer.`vmod$vertices`(buffer.`vmod$vertices`() + 1)
+//}
 
 class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
     override fun getChunkForLighting(chunkX: Int, chunkZ: Int): LightChunk? = null
@@ -217,7 +217,7 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
             var y_ = matrix.m01() * x + matrix.m11() * y + matrix.m21() * z + matrix.m31()
             var z_ = matrix.m02() * x + matrix.m12() * y + matrix.m22() * z + matrix.m32()
 
-            maybeFasterVertexBuilder(buffer, x_, y_, z_, (red*255).toInt().toByte(), (green*255).toInt().toByte(), (blue*255).toInt().toByte(), (alpha * transparency*255).toInt().toByte(), texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ)
+            buffer.vertex(x_, y_, z_, red, green, blue, alpha * transparency, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ)
         }
     }
 
@@ -355,11 +355,11 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
 
         mySources.buffers.forEach { (type, buf) ->
             val actualBuffer = sources.getBuffer(type)
-            actualBuffer as BufferBuilderAccessor
-
-            val vertexSize = (actualBuffer as BufferBuilderAccessor).`vmod$getVertexFormat`().vertexSize
-            var size = buf.vertices.size * vertexSize
-            (actualBuffer as BufferBuilderAccessor).`vmod$ensureCapacity`(size)
+//            actualBuffer as BufferBuilderAccessor
+//
+//            val vertexSize = (actualBuffer as BufferBuilderAccessor).`vmod$getVertexFormat`().vertexSize
+//            var size = buf.vertices.size * vertexSize
+//            (actualBuffer as BufferBuilderAccessor).`vmod$ensureCapacity`(size)
 
             buf.apply(actualBuffer, matrices)
         }

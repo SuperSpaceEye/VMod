@@ -16,7 +16,6 @@ import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
 import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
-import net.spaceeye.vmod.vEntityManaging.legacy.LegacyConstraintFixers
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.joml.Vector3d
@@ -78,7 +77,6 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid
 
         entityCreationFn()
         ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, centerPositions, extraData.toMap())
-        LegacyConstraintFixers.tryLoadLegacyVModSchemData(level, ships, centerPositions.map { Pair(it.key, it.value.let { (first, second) -> Pair(MVector3d(first), MVector3d(second)) }) }.toMap(), extraData.toMap()) //TODO Remove
         postPlaceFn(createdShips)
         SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, createdShips, 10)
     }

@@ -8,6 +8,7 @@ import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
+import net.spaceeye.vmod.gui.additions.VEntityChangerWorldMenu
 
 
 class ScreenWindow private constructor(): WindowScreen(ElementaVersion.V8, drawDefaultBackground = false) {
@@ -56,6 +57,7 @@ class ScreenWindow private constructor(): WindowScreen(ElementaVersion.V8, drawD
         init {
             addScreenAddition { HUDAddition() }
             addScreenAddition { ErrorAddition() }
+            addScreenAddition { VEntityChangerWorldMenu }
         }
     }
 }

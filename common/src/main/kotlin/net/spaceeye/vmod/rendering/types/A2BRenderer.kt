@@ -65,6 +65,11 @@ open class A2BRenderer(): BaseRenderer(), ReflectableObject {
         if (until > highlightTimestamp) highlightTimestamp = until
     }
 
+    private var highlightTick = 0L
+    override fun highlightUntilRenderingTicks(until: Long) {
+        if (until > highlightTick) highlightTick = until
+    }
+
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) = with(data) {
         val level = Minecraft.getInstance().level!!
 
@@ -81,7 +86,7 @@ open class A2BRenderer(): BaseRenderer(), ReflectableObject {
         vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
         RenderSystem.setShaderTexture(0, RenderingUtils.whiteTexture)
 
-        val color = if (timestamp < highlightTimestamp) Color(255, 0, 0, 255) else color
+        val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else color
 
         val light = if (fullbright) LightTexture.FULL_BRIGHT else center.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
 

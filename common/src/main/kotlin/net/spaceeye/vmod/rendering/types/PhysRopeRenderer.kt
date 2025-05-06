@@ -95,6 +95,11 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         if (until > highlightTimestamp) highlightTimestamp = until
     }
 
+    private var highlightTick = 0L
+    override fun highlightUntilRenderingTicks(until: Long) {
+        if (until > highlightTick) highlightTick = until
+    }
+
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) = with(data) {
         val level = Minecraft.getInstance().level!!
         val sides = sides
@@ -106,9 +111,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
-        if (timestamp < highlightTimestamp) {
-            RenderSystem.setShaderColor(0f, 1f, 0f, 0.5f)
-        }
+        val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else Color(255, 255, 255, 255)
 
         RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
         vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
@@ -181,10 +184,6 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
 
         tesselator.end()
         poseStack.popPose()
-
-        if (timestamp < highlightTimestamp) {
-            RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
-        }
 
         RenderTypes.clearFullRendering()
     }

@@ -14,7 +14,8 @@ abstract class BaseRenderer: Serializable {
     abstract fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long)
     abstract fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer?
     abstract fun scaleBy(by: Double)
-    open fun highlightUntil(until: Long) {}
+    open fun highlightUntil(until: Long) { throw NotImplementedError() }
+    open fun highlightUntilRenderingTicks(until: Long) { throw NotImplementedError() }
 }
 
 abstract class BlockRenderer: BaseRenderer() {

@@ -16,7 +16,7 @@ import net.spaceeye.vmod.translate.SERVER_SETTINGS
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
-class MainToolgunGUIWindow(): WindowScreen(ElementaVersion.V5) {
+class MainToolgunGUIWindow(): WindowScreen(ElementaVersion.V8) {
     class ButtonsXConstraint(
         val mainWindow: UIBlock,
     ): XConstraint {

@@ -19,6 +19,7 @@ import net.spaceeye.vmod.toolgun.gui.ToolgunWindow
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.state.VEntityChangerGui
 import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.EmptyPacket
@@ -151,8 +152,9 @@ object ClientToolGunState : ClientClosable() {
 
     private lateinit var gui: MainToolgunGUIWindow
 
-    internal fun guiIsOpened() = Minecraft.getInstance().screen == gui
-    internal fun otherGuiIsOpened() = Minecraft.getInstance().screen != null && Minecraft.getInstance().screen != gui
+    //TODO redo this
+    internal fun guiIsOpened() = Minecraft.getInstance().screen.let { it == gui || it is VEntityChangerGui }
+    internal fun otherGuiIsOpened() = Minecraft.getInstance().screen.let { it != null && it != gui && it !is VEntityChangerGui }
 
     private val externalWindows = mutableListOf<Pair<TranslatableComponent, (UIBlock) -> ToolgunWindow>>()
 

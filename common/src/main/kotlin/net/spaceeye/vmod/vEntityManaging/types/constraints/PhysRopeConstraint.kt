@@ -33,10 +33,10 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import kotlin.math.PI
 
 class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
-    override var shipId1: Long = -1
-    override var shipId2: Long = -1
-    override lateinit var sPos1: Vector3d
-    override lateinit var sPos2: Vector3d
+    override var sPos1: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }
+    override var sPos2: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }
+    override var shipId1: Long by get(i++, -1L).also { it.metadata["NoTagSerialization"] = true }
+    override var shipId2: Long by get(i++, -1L).also { it.metadata["NoTagSerialization"] = true }
 
     var sDir1: Vector3d by get(i++, Vector3d())
     var sDir2: Vector3d by get(i++, Vector3d())

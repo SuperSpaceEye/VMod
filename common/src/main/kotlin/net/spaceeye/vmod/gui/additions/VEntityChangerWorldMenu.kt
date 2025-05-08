@@ -55,7 +55,7 @@ object VEntityChangerWorldMenu: ScreenWindowAddition {
 
     val lastIds = mutableSetOf<Int>()
     var lastCursorPos = 0
-    var maxNumItemsDisplayed = 9
+    var maxNumItemsDisplayed = 10
 
     val allowedSpace get() = maxNumItemsDisplayed - 1
 

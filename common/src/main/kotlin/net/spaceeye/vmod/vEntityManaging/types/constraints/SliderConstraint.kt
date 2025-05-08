@@ -17,10 +17,10 @@ class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         FREE_ORIENTATION
     }
 
-    override lateinit var sPos1: Vector3d
-    override lateinit var sPos2: Vector3d
-    override var shipId1: Long = -1
-    override var shipId2: Long = -1
+    override var sPos1: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }
+    override var sPos2: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }
+    override var shipId1: Long by get(i++, -1L).also { it.metadata["NoTagSerialization"] = true }
+    override var shipId2: Long by get(i++, -1L).also { it.metadata["NoTagSerialization"] = true }
 
     var connectionMode: ConnectionMode by get(i++, ConnectionMode.FIXED_ORIENTATION)
     var maxForce: Float by get(i++, -1f)

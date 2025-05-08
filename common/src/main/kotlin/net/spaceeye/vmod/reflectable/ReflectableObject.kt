@@ -15,7 +15,7 @@ open class ReflectableItemDelegate <T : Any>(
     val getWrapper: ((value: T) -> T)? = null
 ) {
     lateinit var cachedName: String
-    open operator fun getValue(thisRef: Any?, property: KProperty<*>):T {
+    open operator fun getValue(thisRef: Any?, property: KProperty<*>?):T {
         return getWrapper?.invoke(it!!) ?: it!!
     }
 

@@ -2,6 +2,7 @@ package net.spaceeye.vmod.vEntityManaging
 
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
 fun ServerLevel.makeVEntity(ventity: VEntity, callback: ((VEntityId?) -> Unit) = {}) = VEntityManager.getInstance().makeVEntity(this, ventity, callback)
@@ -15,4 +16,4 @@ fun ServerLevel.disableCollisionBetween(shipId1: ShipId, shipId2: ShipId, callba
 fun ServerLevel.enableCollisionBetween(shipId1: ShipId, shipId2: ShipId)  = VEntityManager.getInstance().enableCollisionBetween(this, shipId1, shipId2)
 fun ServerLevel.getAllDisabledCollisionsOfId(shipId: ShipId) = VEntityManager.getInstance().getAllDisabledCollisionsOfId(shipId)
 
-internal fun ServerLevel.makeVEntityWithId(ventity: VEntity, id: Int, callback: ((VEntityId?) -> Unit)) = VEntityManager.getInstance().makeVEntityWithId(this, ventity, id, callback)
+@Internal fun ServerLevel.makeVEntityWithId(ventity: VEntity, id: Int, callback: ((VEntityId?) -> Unit)) = VEntityManager.getInstance().makeVEntityWithId(this, ventity, id, callback)

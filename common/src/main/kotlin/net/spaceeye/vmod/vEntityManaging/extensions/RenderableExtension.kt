@@ -17,10 +17,9 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 open class RenderableExtension(): VEntityExtension {
-    protected lateinit var renderer: BaseRenderer
+    lateinit var renderer: BaseRenderer
     var rID = -1
         protected set
-        public get
     protected lateinit var obj: ExtendableVEntity
 
     constructor(renderer: BaseRenderer): this() {

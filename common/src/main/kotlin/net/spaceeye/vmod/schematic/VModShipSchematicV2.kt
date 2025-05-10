@@ -137,7 +137,7 @@ fun IShipSchematicDataV1.verifyBlockDataIsValid(
 fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
     val traversed = traverseGetAllTouchingShips(level, originShip.id)
 
-    // this is needed so that schem doesn't try copying phys entities (TODO)
+    // this is needed so that schem doesn't try copying phys entities
     val ships = traversed.mapNotNull { level.shipObjectWorld.allShips.getById(it) }
 
     extraData = ShipSchematic.onCopy(level, ships,

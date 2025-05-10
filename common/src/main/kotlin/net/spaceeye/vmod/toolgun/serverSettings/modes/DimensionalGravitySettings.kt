@@ -55,7 +55,6 @@ class DimensionalGravitySettings: ServerSettingsGUIBuilder {
         var vectorData: MutableList<Pair<String, Vector3d>> = mutableListOf()
         var callback: (() -> Unit)? = null
 
-        //TODO is this fine?
         class S2CSendGravityVectors(): Serializable {
             override fun serialize(): FriendlyByteBuf {
                 val buf = getBuffer()

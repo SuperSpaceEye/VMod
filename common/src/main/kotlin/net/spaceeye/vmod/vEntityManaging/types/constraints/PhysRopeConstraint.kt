@@ -49,7 +49,6 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     var angleLimit: Double by get(i++, 0.0)
     var massPerSegment: Double by get(i++, 0.0)
 
-    //TODO do i really need to keep it?
     var data = mutableListOf<PhysicsEntityData>()
 
     /** only accurate right after deserialization */
@@ -275,7 +274,6 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
 
     override fun iNbtSerialize(): CompoundTag? {
         val tag = super.iNbtSerialize() ?: return null
-        // TODO stupidity but idk a better way to do this rn
         val sow = ServerLevelHolder.shipObjectWorld ?: return null
         val ship = sow.allShips.getById(shipId1)
         tag.put("data", ListTag().also {

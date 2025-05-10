@@ -28,7 +28,6 @@ import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 
-//TODO redo
 class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
     class Data: AutoSerializable {
         @JsonIgnore
@@ -151,7 +150,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         var rPoints: List<Vector3d>
         var lPoints = makePolygon(sides, shape.radius, up, right, ppos)
 
-        var scale = 0.75f //TODO sus
+        var scale = 0.75f
 
         for (entity in entities) {
             shape = entity.collisionShapeData as VSCapsuleCollisionShapeData

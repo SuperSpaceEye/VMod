@@ -65,6 +65,7 @@ object VSJointsTracker {
     fun onCreateNewConstraint(joint: VSJoint) {
         val shipId1 = screenShipId(joint.shipId0) ?: return
         val shipId2 = screenShipId(joint.shipId1) ?: return
+        if (shipId1 == shipId2) {return}
         val pair = setOf(shipId1, shipId2)
 
         var count = edgeInfo.getOrPut(pair) { 0 }

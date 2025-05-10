@@ -149,7 +149,7 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
         val ventities = level.getAllVEntityIdsOfShipId(ship.id)
 
         val data = ventities.mapNotNull { (level.getVEntity(it) as? ReflectableObject as? VEntity)?.let {
-            Pair(it, if (it is ExtendableVEntity) {it.getExtensionsOfType<RenderableExtension>().first().rID} else {-1})
+            Pair(it, if (it is ExtendableVEntity) {it.getExtensionsOfType<RenderableExtension>().let {if (it.isNotEmpty()) {it.first().rID} else {-1}}} else {-1})
         } }.toMutableList()
         s2cSendVEntities.sendToClient(player, S2CSendVEntities(data))
     }

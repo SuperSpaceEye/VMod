@@ -6,7 +6,7 @@ import org.valkyrienskies.core.apigame.world.ServerShipWorldCore
 import org.valkyrienskies.mod.common.dimensionId
 
 //this is incredibly stupid lmao
-object ServerLevelHolder {
+object ServerObjectsHolder {
     //overworld server level
     var overworldServerLevel: ServerLevel? = null
     var server: MinecraftServer? = null

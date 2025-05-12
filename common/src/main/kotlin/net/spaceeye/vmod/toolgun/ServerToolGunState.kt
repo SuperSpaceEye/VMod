@@ -90,6 +90,8 @@ object ServerToolGunState: ServerClosable() {
         fn()
     }
 
+    @JvmStatic fun playerHasPermission(player: ServerPlayer, clazz: Class<BaseMode>): Boolean = PlayerAccessManager.hasPermission(player, clazz.getPermission())
+
     override fun close() {
         playersStates.clear()
         playersVEntitiesStack.clear()

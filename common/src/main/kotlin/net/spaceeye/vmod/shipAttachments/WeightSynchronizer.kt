@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.events.PersistentEvents
-import net.spaceeye.vmod.utils.ServerLevelHolder
+import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.Tuple
 import net.spaceeye.vmod.utils.Tuple3
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager
@@ -57,7 +57,7 @@ class WeightSynchronizer: ShipForcesInducer, ServerTickListener {
 
     override fun onServerTick() {
         if (lastDimensionId != dimensionId) {
-            level = ServerLevelHolder.getLevelById(dimensionId)
+            level = ServerObjectsHolder.getLevelById(dimensionId)
             lastDimensionId = dimensionId
         }
         if (!updateWeights) {return}

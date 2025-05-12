@@ -129,7 +129,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         data class CS2QueryStrippableRendererIds(var shipId: Long): AutoSerializable
         private val c2sQueryStrippableRendererIds = regC2S<CS2QueryStrippableRendererIds>("query_strippable_renderer_ids", "strip_mode", {ServerToolGunState.playerHasAccess(it)}, {}) {
             pkt, player ->
-            val level = ServerLevelHolder.overworldServerLevel!!
+            val level = ServerObjectsHolder.overworldServerLevel!!
             val ventities = level
                 .getAllVEntityIdsOfShipId(pkt.shipId)
                 .mapNotNull {

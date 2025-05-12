@@ -47,6 +47,7 @@ import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.reflectable.ReflectableItemDelegate
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.VEntityChangerGUI
 import net.spaceeye.vmod.toolgun.modes.hud.VEntityChangerHUD
 import net.spaceeye.vmod.translate.YOU_DONT_HAVE_ACCESS_TO_THIS
@@ -232,7 +233,7 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
             }
         }
         val c2sSendUpdate = regC2S<C2SSendUpdate>("send_update", "ventity_changer",
-            { it.hasPermissions(4) },
+            { ServerToolGunState.playerHasPermission(it, VEntityChanger::class.java as Class<BaseMode>) },
             { ServerToolGunState.s2cErrorHappened.sendToClient(it, ServerToolGunState.S2CErrorHappened(
                 YOU_DONT_HAVE_ACCESS_TO_THIS.key, true, true)) }
         ) { pkt, player ->

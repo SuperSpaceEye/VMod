@@ -5,7 +5,7 @@ import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.compat.vsBackwardsCompat.rotation
 import net.spaceeye.vmod.compat.vsBackwardsCompat.scaling
-import net.spaceeye.vmod.utils.ServerLevelHolder
+import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getHingeRotation
 import net.spaceeye.vmod.utils.getQuatd
@@ -272,10 +272,10 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         return true
     }
 
+    //TODO it won't work well with VEntity Changer. Changes to main values won't reflect already compiled phys data
     override fun iNbtSerialize(): CompoundTag? {
         val tag = super.iNbtSerialize() ?: return null
-        val sow = ServerLevelHolder.shipObjectWorld ?: return null
-        val ship = sow.allShips.getById(shipId1)
+        val ship = ServerObjectsHolder.shipObjectWorld?.allShips?.getById(shipId1)
         tag.put("data", ListTag().also {
             it.addAll(entities.map { entity -> CompoundTag().also {
                 val shape = entity.collisionShapeData as VSCapsuleCollisionShapeData
@@ -289,6 +289,8 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
                 it.putVector3d("linearVelocity", entity.linearVelocity)
                 it.putVector3d("angularVelocity", entity.angularVelocity)
 
+                //TODO this is needed for iCopyVEntity. Positions of block entities do not get saved as phys entities are not saved in general,
+                // so schematic doesn't know about them, so it saves position and rotation in relation to the first ship
                 it.putVector3d("posRelToShip1",
                     entity.shipTransform.positionInWorld
                         .let { pos -> ship?.worldToShip?.transformPosition(pos, org.joml.Vector3d()) ?: pos })

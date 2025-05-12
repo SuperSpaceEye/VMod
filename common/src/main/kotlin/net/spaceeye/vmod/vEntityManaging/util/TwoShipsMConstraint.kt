@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.vEntityManaging.util
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.VEntity
@@ -71,9 +70,10 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
         shipId1 = tag.getLong("shipId1")
         shipId2 = tag.getLong("shipId2")
 
-        val map = ServerLevelHolder.shipObjectWorld!!.dimensionToGroundBodyIdImmutable
-        shipId1 = map[lastDimensionIds[shipId1]] ?: shipId1
-        shipId2 = map[lastDimensionIds[shipId2]] ?: shipId2
+        ServerObjectsHolder.shipObjectWorld?.dimensionToGroundBodyIdImmutable?.let { map ->
+            shipId1 = map[lastDimensionIds[shipId1]] ?: shipId1
+            shipId2 = map[lastDimensionIds[shipId2]] ?: shipId2
+        }
 
         return super.nbtDeserialize(tag, lastDimensionIds)
     }

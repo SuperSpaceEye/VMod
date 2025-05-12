@@ -28,7 +28,7 @@ import net.spaceeye.vmod.toolgun.*
 import net.spaceeye.vmod.toolgun.clientSettings.ClientSettingsTypes
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsTypes
-import net.spaceeye.vmod.utils.ServerLevelHolder
+import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
 import net.spaceeye.vmod.vsStuff.VSGravityManager
@@ -94,7 +94,7 @@ object VM {
         SchematicActionsQueue
 
         LifecycleEvent.SERVER_LEVEL_SAVE.register {
-            if (it != ServerLevelHolder.overworldServerLevel) {return@register}
+            if (it != ServerObjectsHolder.overworldServerLevel) {return@register}
             VEntityManager.setDirty()
         }
 
@@ -109,9 +109,9 @@ object VM {
         LifecycleEvent.SERVER_STARTED.register {
             server ->
             serverStopping = false
-            ServerLevelHolder.server = server
-            ServerLevelHolder.overworldServerLevel = server.overworld()
-            ServerLevelHolder.shipObjectWorld = server.shipObjectWorld
+            ServerObjectsHolder.server = server
+            ServerObjectsHolder.overworldServerLevel = server.overworld()
+            ServerObjectsHolder.shipObjectWorld = server.shipObjectWorld
             VEntityManager.initNewInstance()
 
             VSGravityManager

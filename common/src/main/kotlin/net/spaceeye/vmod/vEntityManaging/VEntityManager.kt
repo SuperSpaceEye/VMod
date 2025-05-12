@@ -18,7 +18,7 @@ import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.utils.PosMapList
-import net.spaceeye.vmod.utils.ServerLevelHolder
+import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.addCustomServerClosable
 import org.apache.commons.lang3.tuple.MutablePair
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -176,7 +176,7 @@ open class VEntityManager: SavedData() {
 
     private fun groupLoadedData() {
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values
-        val levels = ServerLevelHolder.server!!.allLevels.associate { Pair(it.dimensionId, it) }
+        val levels = ServerObjectsHolder.server!!.allLevels.associate { Pair(it.dimensionId, it) }
 
         val groups = mutableMapOf<MutableSet<Long>, MutableList<VEntity>>()
 
@@ -409,19 +409,19 @@ open class VEntityManager: SavedData() {
 
         fun getInstance(): VEntityManager {
             if (instance != null) {return instance!!}
-            level = ServerLevelHolder.overworldServerLevel!!
+            level = ServerObjectsHolder.overworldServerLevel!!
 
-            instance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VM.MOD_ID)
+            instance = ServerObjectsHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VM.MOD_ID)
             return instance!!
         }
 
         fun initNewInstance(): VEntityManager {
-            level = ServerLevelHolder.overworldServerLevel!!
+            level = ServerObjectsHolder.overworldServerLevel!!
 
             dimensionToGroundBodyIdImmutable = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable
             allShips = level!!.shipObjectWorld.allShips
 
-            instance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VM.MOD_ID)
+            instance = ServerObjectsHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VM.MOD_ID)
             return instance!!
         }
 

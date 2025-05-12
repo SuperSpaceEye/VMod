@@ -35,7 +35,7 @@ interface ReflectableObject {
     /**
      * If you can't directly serialize some class, make main class inherit ReflectableObject, and override this fn so that it returns state instance
      */
-    val reflectObjectOverride: ReflectableObject? get() = null
+    @get:JsonIgnore val reflectObjectOverride: ReflectableObject? get() = null
 
     @JsonIgnore
     @ApiStatus.NonExtendable

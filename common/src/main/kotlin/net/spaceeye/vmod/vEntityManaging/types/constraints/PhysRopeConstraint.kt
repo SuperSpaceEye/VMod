@@ -5,6 +5,7 @@ import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.compat.vsBackwardsCompat.rotation
 import net.spaceeye.vmod.compat.vsBackwardsCompat.scaling
+import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getHingeRotation
@@ -180,6 +181,14 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         return inertiaTensor
     }
 
+    private fun makeActualRadius(radius: Double, length: Double): Double {
+        var radius = radius
+        var length = length * 0.5
+        if (length < radius) { radius = length / 2 }
+        if (length > radius * 4) { radius = length / 4 }
+        return radius
+    }
+
     private fun makeData(level: ServerLevel): Boolean {
         val dimensionIds = level.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
@@ -199,10 +208,8 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         val yLin = linspace(startDir.y, stopDir.y, segments)
         val zLin = linspace(startDir.z, stopDir.z, segments)
 
-        var radius = radius
-        var length = segmentLength * 0.5
-        if (length < radius) { radius = length / 2 }
-        if (length > radius * 4) { radius = length / 4 }
+        val length = segmentLength * 0.5
+        val radius = makeActualRadius(radius, length)
 
         val linkLength = length - radius
         val tensor = makeInertiaTensor(linkLength, radius, massPerSegment)
@@ -272,22 +279,19 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         return true
     }
 
-    //TODO it won't work well with VEntity Changer. Changes to main values won't reflect already compiled phys data
     override fun iNbtSerialize(): CompoundTag? {
         val tag = super.iNbtSerialize() ?: return null
         val ship = ServerObjectsHolder.shipObjectWorld?.allShips?.getById(shipId1)
+
+        tag.putVector3d("scaling", JVector3d(1.0, 1.0, 1.0))
+
         tag.put("data", ListTag().also {
             it.addAll(entities.map { entity -> CompoundTag().also {
-                val shape = entity.collisionShapeData as VSCapsuleCollisionShapeData
+                tag.putVector3d("scaling", entity.shipTransform.scaling) //a bit dumb but whatever
+
                 it.putLong("shipId", entity.id)
                 it.putVector3d("positionInWorld", entity.shipTransform.positionInWorld)
                 it.putQuatd("rotation", entity.shipTransform.rotation)
-                it.putVector3d("scaling", entity.shipTransform.scaling)
-                it.putDouble("mass", entity.inertiaData.mass)
-                it.putDouble("length", shape.length)
-                it.putDouble("radius", shape.radius)
-                it.putVector3d("linearVelocity", entity.linearVelocity)
-                it.putVector3d("angularVelocity", entity.angularVelocity)
 
                 //TODO this is needed for iCopyVEntity. Positions of block entities do not get saved as phys entities are not saved in general,
                 // so schematic doesn't know about them, so it saves position and rotation in relation to the first ship
@@ -303,7 +307,17 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity? {
         val entity = super.iNbtDeserialize(tag, lastDimensionIds) ?: return null
         entity as PhysRopeConstraint
-        entity.data = (tag.get("data") as ListTag).map { tag -> tag as CompoundTag
+
+        val dataTag = (tag.get("data") as ListTag)
+        if (dataTag.size != entity.segments) {return this}
+
+        val length = (ropeLength / segments.toDouble()) * 0.5
+        val radius = makeActualRadius(radius, length)
+        val linkLength = length - radius
+
+        val scaling = tag.getVector3d("scaling") ?: JVector3d(1.0, 1.0, 1.0)
+
+        entity.data = dataTag.map { tag -> tag as CompoundTag
             // i can reduce size of item by merging them with positionInWorld and rotation, but do i want to?
             relState.add(Pair(
                 tag.getVector3d("posRelToShip1")!!,
@@ -311,19 +325,24 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
             ))
             PhysicsEntityData(
                 tag.getLong("shipId"),
-                ShipTransformImpl(tag.getVector3d("positionInWorld")!!, org.joml.Vector3d(), tag.getQuatd("rotation")!!, tag.getVector3d("scaling")!!),
-                ShipInertiaDataImpl(org.joml.Vector3d(), tag.getDouble("mass"), makeInertiaTensor(tag.getDouble("length"), tag.getDouble("radius"), tag.getDouble("mass"))),
-                tag.getVector3d("linearVelocity")!!,
-                tag.getVector3d("angularVelocity")!!,
-                VSCapsuleCollisionShapeData(tag.getDouble("radius"), tag.getDouble("length"))
+                ShipTransformImpl(tag.getVector3d("positionInWorld")!!, org.joml.Vector3d(), tag.getQuatd("rotation")!!, scaling),
+                ShipInertiaDataImpl(org.joml.Vector3d(), massPerSegment, makeInertiaTensor(linkLength, radius, massPerSegment)),
+                JVector3d(),
+                JVector3d(),
+                VSCapsuleCollisionShapeData(radius, linkLength)
             )
         }.toMutableList()
         return entity
     }
 
+    private fun shipIdCheck(level: ServerLevel, data: PhysicsEntityData): PhysicsEntityData {
+        if (!level.shipObjectWorld.allShips.contains(data.shipId)) { return data }
+        return data.copy(shipId = level.shipObjectWorld.allocateShipId(level.dimensionId))
+    }
+
     override fun iOnMakeVEntity(level: ServerLevel): Boolean {
         if (data.isEmpty()) { if (!makeData(level)) return false }
-        entities = data.map { level.shipObjectWorld.createPhysicsEntity(it, level.dimensionId) }.toMutableList()
+        entities = data.map { level.shipObjectWorld.createPhysicsEntity(shipIdCheck(level, it), level.dimensionId) }.toMutableList()
         return makeConstraints(level)
     }
 

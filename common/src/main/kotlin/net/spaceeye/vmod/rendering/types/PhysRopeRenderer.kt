@@ -110,7 +110,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
-        val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else Color(255, 255, 255, 255)
+        val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else color
 
         RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
         vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())

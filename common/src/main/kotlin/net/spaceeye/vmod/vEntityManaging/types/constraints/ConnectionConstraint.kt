@@ -20,10 +20,10 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         HINGE_ORIENTATION,
         FREE_ORIENTATION
     }
-    override lateinit var sPos1: Vector3d
-    override lateinit var sPos2: Vector3d
-    override var shipId1: Long = -1
-    override var shipId2: Long = -1
+    override var sPos1: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }
+    override var sPos2: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }
+    override var shipId1: Long by get(i++, -1L).also { it.metadata["NoTagSerialization"] = true }
+    override var shipId2: Long by get(i++, -1L).also { it.metadata["NoTagSerialization"] = true }
 
     var connectionMode: ConnectionModes by get(i++, ConnectionModes.FIXED_ORIENTATION)
     var distance: Float by get(i++, 0f)
@@ -103,6 +103,12 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         val maxForce = if (maxForce < 0) { Float.MAX_VALUE.toDouble() } else { maxForce.toDouble() }
         val compliance = if (stiffness <= 0f) { Float.MIN_VALUE.toDouble() } else { (1f / stiffness).toDouble() }
 
+        if (connectionMode == ConnectionModes.FREE_ORIENTATION) {
+            val c1 = VSAttachmentConstraint(shipId1, shipId2, compliance, sPos1.toJomlVector3d(), sPos2.toJomlVector3d(), maxForce, distance.toDouble())
+            mc(c1, cIDs, level) { return false }
+            return true
+        }
+
         val p11 = sPos1.toJomlVector3d()
         val p21 = (sPos2 - sDir2 * distance).toJomlVector3d()
         val p12 = (sPos1 + sDir1 * distance).toJomlVector3d()
@@ -112,7 +118,6 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         val a2 = VSAttachmentConstraint(shipId1, shipId2, compliance, p12, p22, maxForce, 0.0)
 
         mc(a1, cIDs, level) {return false}
-        if (connectionMode == ConnectionModes.FREE_ORIENTATION) {return true}
         mc(a2, cIDs, level) {return false}
 
         val r1 = when (connectionMode) {

@@ -35,7 +35,6 @@ import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.translate.ONE_OF_THE_SHIPS_IS_TOO_TALL
 import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_COPYING
 import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_PLACING
-import net.spaceeye.vmod.translate.SCHEMATIC_HAD_NONFATAL_ERRORS
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
@@ -80,6 +79,14 @@ object SchematicActionsQueue: ServerClosable() {
         placeData[uuid] = SchemPlacementItem(level, player, schematicV1, ships, postPlacementFn)
     }
 
+    private inline fun <T> logThrowables(onError: () -> Unit = {}, fn: () -> T): T? {
+        return try { fn() } catch (e: Throwable) {
+            ELOG(e.stackTraceToString())
+            onError()
+            null
+        }
+    }
+
     class SchemPlacementItem(
         val level: ServerLevel,
         val player: ServerPlayer?,
@@ -96,15 +103,15 @@ object SchematicActionsQueue: ServerClosable() {
         var afterPasteCallbacks = mutableListOf<() -> Unit>()
         var delayedBlockEntityLoading = ChunkyBlockData<() -> Unit>()
 
-        var hadNonfatalErrors = false
+        var hadNonfatalErrors = 0
         lateinit var entityCreationFn: () -> Unit
 
         private fun placeChunk(level: ServerLevel, oldToNewId: Map<Long, Long>, currentChunkData: ChunkyBlockData<BlockItem>, blockPalette: IBlockStatePalette, flatTagData: List<CompoundTag>, shipCenter: MVector3d) {
-            currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
+            currentChunkData.chunkForEach(currentChunk) { x, y, z, it -> logThrowables({hadNonfatalErrors++}) {
                 val pos = BlockPos(x + shipCenter.x, y + shipCenter.y, z + shipCenter.z)
                 val state = blockPalette.fromId(it.paletteId) ?: run {
                     ELOG("State under ID ${it.paletteId} is null.")
-                    hadNonfatalErrors = true
+                    hadNonfatalErrors++
                     Blocks.AIR.defaultBlockState()
                 }
                 if (state.isAir) {return@chunkForEach}
@@ -131,14 +138,14 @@ object SchematicActionsQueue: ServerClosable() {
                         cb?.let { afterPasteCallbacks.add { it(be) } }
                     }
                 }
-            }
+            } }
         }
 
         private fun updateChunk(level: ServerLevel, currentChunkData: ChunkyBlockData<BlockItem>, shipCenter: MVector3d) {
-            currentChunkData.chunkForEach(currentChunk) { x, y, z, it ->
+            currentChunkData.chunkForEach(currentChunk) { x, y, z, it -> logThrowables({hadNonfatalErrors++}) {
                 val pos = BlockPos(x + shipCenter.x, y + shipCenter.y, z + shipCenter.z)
                 level.chunkSource.blockChanged(pos)
-            }
+            } }
         }
 
         private var shipsInfo: Map<Long, IShipInfo>? = null
@@ -202,8 +209,8 @@ object SchematicActionsQueue: ServerClosable() {
             }
             if (!createdAllBlocks) {
                 // loading all block entities and ICopyableBlock's
-                delayedBlockEntityLoading.forEach { _, _, _, it -> it() }
-                afterPasteCallbacks.forEach { it() }
+                delayedBlockEntityLoading.forEach { _, _, _, it -> logThrowables({hadNonfatalErrors++}) { it() } }
+                afterPasteCallbacks.forEach { logThrowables({hadNonfatalErrors++}) { it() } }
                 currentShip = 0
                 currentChunk = 0
             }
@@ -236,7 +243,7 @@ object SchematicActionsQueue: ServerClosable() {
             entityCreationFn = {
             schematicV1.entityData.forEach { (oldId, entities) ->
                 val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId]!!)!!
-                entities.forEach { (pos, tag) ->
+                entities.forEach { (pos, tag) -> logThrowables({hadNonfatalErrors++}) {
                     val tag = tag.copy()
 
                     val info = shipsInfo[oldId]!!
@@ -257,19 +264,18 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.put("Pos", posTag)
                     tag.remove("UUID")
 
-                    try {
-                        SchemCompatObj.onEntityPaste(level, oldToNewId, tag, Vector3d(newPos), shipCenter)
-                        val entity = EntityType.create(tag, level).get()
-                        entity.moveTo(newPos.x, newPos.y, newPos.z)
-                        if (entity is Mob) {
-                            entity.finalizeSpawn(level, level.getCurrentDifficultyAt(BlockPos(newPos.x.toInt(), newPos.y.toInt(), newPos.z.toInt())), MobSpawnType.STRUCTURE, null, tag)
-                        }
-                        level.addFreshEntityWithPassengers(entity)
-                    } catch (_: Exception) {}
-                }
+                    SchemCompatObj.onEntityPaste(level, oldToNewId, tag, Vector3d(newPos), shipCenter)
+                    val entity = EntityType.create(tag, level).get()
+                    entity.moveTo(newPos.x, newPos.y, newPos.z)
+                    if (entity is Mob) {
+                        entity.finalizeSpawn(level, level.getCurrentDifficultyAt(BlockPos(newPos.x.toInt(), newPos.y.toInt(), newPos.z.toInt())), MobSpawnType.STRUCTURE, null, tag)
+                    }
+                    level.addFreshEntityWithPassengers(entity)
+                } }
             } }
 
-            if (hadNonfatalErrors) { player?.let { ServerToolGunState.sendErrorTo(it, SCHEMATIC_HAD_NONFATAL_ERRORS) } }
+            //TODO think of a way to make str into translatable
+            if (hadNonfatalErrors > 0) { player?.let { ServerToolGunState.sendErrorTo(it, "Schematic had $hadNonfatalErrors nonfatal errors") } }
 
             return true
         }

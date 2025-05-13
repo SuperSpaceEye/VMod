@@ -58,12 +58,14 @@ class BasicConnectionExtension<T: ExtendableToolgunMode>(
     }
 
     private fun trySendButtonPress(inst: T, block: (T) -> Boolean, callback: ((T) -> Unit)?, conn: C2SConnection<T>?): EventResult {
-        if (conn == null) { return EventResult.pass() }
-        if (!block(inst)) {
+        return if ((conn != null || callback != null) && !block(inst)) {
             callback?.invoke(inst)
-            conn.sendToServer(inst)
+            conn?.sendToServer(inst)
+
+            EventResult.interruptFalse()
+        } else {
+            EventResult.pass()
         }
-        return EventResult.interruptFalse()
     }
 
     override fun eOnMouseButtonEvent(button: Int, action: Int, mods: Int): EventResult {

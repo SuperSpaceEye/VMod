@@ -15,6 +15,7 @@ import net.spaceeye.vmod.translate.APPLY_NEW_SERVER_LIMITS
 import net.spaceeye.vmod.translate.SERVER_LIMITS
 import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.FakeKProperty
+import net.spaceeye.vmod.utils.separateTypeName
 import java.awt.Color
 import java.util.*
 
@@ -32,10 +33,7 @@ class ServerLimitsSettings: ServerSettingsGUIBuilder {
         } childOf parentWindow
 
         for (item in ServerLimits.instance.getAllReflectableItems()) {
-            val separated = item.cachedName.split(Regex("(?=[A-Z])")).toMutableList()
-            separated[0] = separated[0].replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-            val name = separated.reduce { acc, s -> acc + " " + s.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}
-
+            val name = separateTypeName(item.cachedName)
             when(val limit = item.it) {
                 is DoubleLimit -> {
                     makeTextEntry("Min \"$name\"", FakeKProperty({limit.minValue}) {limit.minValue = it}, 2f, 2f, parentWindow)

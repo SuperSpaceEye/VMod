@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.VEntityManager
 import net.spaceeye.vmod.vEntityManaging.VSJointUser
 import net.spaceeye.vmod.vsStuff.VSJointsTracker
-import net.spaceeye.vmod.utils.ServerLevelHolder
+import net.spaceeye.vmod.utils.ServerObjectsHolder
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.valkyrienskies.mod.common.getShipsIntersecting
@@ -47,10 +47,9 @@ fun traverseGetAllTouchingShips(level: ServerLevel, shipId: ShipId, blacklist: S
     return traversedShips
 }
 
-//TODO i should redo this
 fun traverseGetConnectedShips(shipId: ShipId, blacklist: Set<ShipId> = setOf(), withJointInfo: Boolean = false): TraversedData {
     val instance = VEntityManager.getInstance()
-    val dimensionIds = ServerLevelHolder.server!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
+    val dimensionIds = ServerObjectsHolder.server!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
     val stack = mutableListOf<ShipId>(shipId)
     val traversedShips = mutableSetOf<ShipId>()

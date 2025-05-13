@@ -51,6 +51,6 @@ class DefaultHUD: HUDBuilder {
             Unit
         }
 
-        makeText(DEFAULT_HUD_GUI.get().replace("==GUI_MENU_OPEN_OR_CLOSE==", ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.translatedKeyMessage.get()))
+        makeText(DEFAULT_HUD_GUI.get().replace("==GUI_MENU_OPEN_OR_CLOSE==", ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.translatedKeyMessage.string))
     }
 }

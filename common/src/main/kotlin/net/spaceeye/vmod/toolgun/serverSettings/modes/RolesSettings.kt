@@ -232,7 +232,6 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
                 val schema = state!!.allPermissionsList.mapIndexed { i, item -> Pair(item, i) }.associate { it }
                 buf.writeCollection(rolesPermissions.toList()) { buf, it ->
                     buf.writeUtf(it.first)
-                    //TODO not optimal but do i care about it?
                     buf.writeCollection(it.second) { buf, it -> buf.writeVarInt(schema[it]!!)}
                 }
 

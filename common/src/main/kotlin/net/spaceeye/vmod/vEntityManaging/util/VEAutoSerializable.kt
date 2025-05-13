@@ -12,5 +12,9 @@ import net.spaceeye.vmod.reflectable.ReflectableItem
 interface VEAutoSerializable: VEntity, TagAutoSerializable, ExtendableVEntityIMethods {
     override fun iNbtSerialize(): CompoundTag? = tSerialize()
     override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity? = tDeserialize(tag).let { this }
+
+    /**
+     * set "NoTagSerialization" of metadata to true if you don't want for value to get serialized with tSerialize
+     */
     fun <T: Any> get(pos: Int, default: T) = ReflectableItem.get(pos, default)
 }

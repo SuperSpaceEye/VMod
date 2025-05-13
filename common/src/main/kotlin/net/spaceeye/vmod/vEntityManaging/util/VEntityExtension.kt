@@ -35,7 +35,7 @@ interface VEntityExtension {
     fun onDeleteVEntity(level: ServerLevel)
 
     companion object {
-        fun fromType(type: String) = VEExtensionTypes.strTypeToSupplier(type)!!.get()
-        fun VEntityExtension.toType() = VEExtensionTypes.typeToString(this::class.java)!!
+        fun fromType(type: String) = VEExtensionTypes.strTypeToSupplier(type).get()
+        fun VEntityExtension.toType() = VEExtensionTypes.typeToString(this::class.java)
     }
 }

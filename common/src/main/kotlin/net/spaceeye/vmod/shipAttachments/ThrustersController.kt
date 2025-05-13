@@ -49,7 +49,6 @@ data class ThrusterData(
     }
 }
 
-//TODO rework this maybe?
 @JsonAutoDetect(
     fieldVisibility = JsonAutoDetect.Visibility.ANY,
     getterVisibility = JsonAutoDetect.Visibility.NONE,

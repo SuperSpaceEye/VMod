@@ -4,8 +4,6 @@
 
 # Maybe
 
-* Rework schems?
-
 * Mode to change COM (set mass of all blocks to 0 and set mass of target block to total mass)
 * Mode to disable collisions for certain blocks (will need to mixin into shipAABB cuz blocks without collisions don't contribute to) (set type to type of air)
 * Think of smth to use blockless ships that have collision (set type to smth that is not air)

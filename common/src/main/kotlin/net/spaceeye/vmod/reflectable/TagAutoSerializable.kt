@@ -66,6 +66,7 @@ interface TagAutoSerializable: TagSerializable, ReflectableObject {
     @NonExtendable
     override fun tSerialize() = tGetBuffer().also { buf ->
         getAllReflectableItems().forEach {
+            if (it.metadata.contains("NoTagSerialization")) {return@forEach}
             typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf, it.cachedName) }
             ?: throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
         }
@@ -75,6 +76,7 @@ interface TagAutoSerializable: TagSerializable, ReflectableObject {
     @NonExtendable
     override fun tDeserialize(tag: CompoundTag) {
         getReflectableItemsWithoutDataclassConstructorItems().forEach {
+            if (it.metadata.contains("NoTagSerialization")) {return@forEach}
             it.setValue(null, null,
                 typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(tag, it.cachedName) }
                 ?: throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")

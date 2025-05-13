@@ -73,6 +73,11 @@ class ConeBlockRenderer(): BlockRenderer(), ReflectableObject {
         if (until > highlightTimestamp) highlightTimestamp = until
     }
 
+    private var highlightTick = 0L
+    override fun highlightUntilRenderingTicks(until: Long) {
+        if (until > highlightTick) highlightTick = until
+    }
+
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource, timestamp: Long) = with(data) {
         val level = Minecraft.getInstance().level!!
         val scale = scale
@@ -105,7 +110,7 @@ class ConeBlockRenderer(): BlockRenderer(), ReflectableObject {
         val light = if (fullbright) LightTexture.FULL_BRIGHT else rpoint.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
         val combinedOverlayIn = OverlayTexture.NO_OVERLAY
 
-        RenderingStuff.renderSingleBlock(A.testState, poseStack, buffer, light, combinedOverlayIn, if (timestamp < highlightTimestamp) Color(255, 0, 0) else color)
+        RenderingStuff.renderSingleBlock(A.testState, poseStack, buffer, light, combinedOverlayIn, if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0) else color)
 
         poseStack.popPose()
     }

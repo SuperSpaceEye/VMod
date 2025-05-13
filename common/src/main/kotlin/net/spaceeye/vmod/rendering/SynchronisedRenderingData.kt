@@ -96,7 +96,7 @@ class ServerSynchronisedRenderingData:
     }
 
     private var idToPages = mutableMapOf<Int, Set<Long>>()
-    private val groundIds: Collection<Long> get() = ServerLevelHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
+    private val groundIds: Collection<Long> get() = ServerObjectsHolder.overworldServerLevel!!.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
 
     fun setUpdated(id: Int, renderer: BaseRenderer): Boolean = lock {
         val pages = idToPages[id] ?: return@lock false

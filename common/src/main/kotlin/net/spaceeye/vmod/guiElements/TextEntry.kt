@@ -2,6 +2,7 @@ package net.spaceeye.vmod.guiElements
 
 import gg.essential.elementa.UIComponent
 import gg.essential.elementa.components.UIBlock
+import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.components.UIText
 import gg.essential.elementa.components.input.UITextInput
 import gg.essential.elementa.constraints.*
@@ -60,74 +61,19 @@ class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String
     }
 }
 
-//TODO turn this into generic or smth
-fun makeTextEntry(name: String,
-                  value: KMutableProperty0<Double>,
-                  xPadding: Float,
-                  yPadding: Float,
-                  makeChildOf: UIComponent,
-                  limits: DoubleLimit = DoubleLimit()): TextEntry {
-    val entry = TextEntry(name) {
-        str, entry ->
-
-        val parsedValue = str.toDoubleOrNull()
-
-        if (parsedValue == null || (parsedValue < limits.minValue || parsedValue > limits.maxValue)) {
-            entry.textHolder.setColor(Color(230, 0, 0))
-            return@TextEntry
-        }
-        entry.textHolder.setColor(Color(170, 170, 170))
-
-        value.set(parsedValue)
-    }.constrain {
-        x = xPadding.pixels()
-        y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
-        width = 100.percent() - (xPadding * 2).pixels()
-    } childOf makeChildOf
-    entry.textArea.setText(value.get().toString())
-    return entry
-}
-
-fun makeTextEntry(name: String,
-                  value: KMutableProperty0<Float>,
-                  xPadding: Float,
-                  yPadding: Float,
-                  makeChildOf: UIComponent,
-                  limits: FloatLimit = FloatLimit()): TextEntry {
-    val entry = TextEntry(name) {
-            str, entry ->
-
-        val parsedValue = str.toFloatOrNull()
-
-        if (parsedValue == null || (parsedValue < limits.minValue || parsedValue > limits.maxValue)) {
-            entry.textHolder.setColor(Color(230, 0, 0))
-            return@TextEntry
-        }
-        entry.textHolder.setColor(Color(170, 170, 170))
-
-        value.set(parsedValue)
-    }.constrain {
-        x = xPadding.pixels()
-        y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
-        width = 100.percent() - (xPadding * 2).pixels()
-    } childOf makeChildOf
-    entry.textArea.setText(value.get().toString())
-    return entry
-}
-
-fun makeTextEntry(name: String,
-                  value: KMutableProperty0<Int>,
-                  xPadding: Float,
-                  yPadding: Float,
-                  makeChildOf: UIComponent,
-                  limits: IntLimit = IntLimit()
+fun <T> makeTextEntryBase(
+    name: String,
+    value: KMutableProperty0<T>,
+    xPadding: Float,
+    yPadding: Float,
+    makeChildOf: UIComponent,
+    strToValue: (String) -> T?,
+    blockValue: (T) -> Boolean,
 ): TextEntry {
-    val entry = TextEntry(name) {
-            str, entry ->
+    val entry = TextEntry(name) { str, entry ->
+        val parsedValue = strToValue(str)
 
-        val parsedValue = str.toIntOrNull()
-
-        if (parsedValue == null || (parsedValue < limits.minValue || parsedValue > limits.maxValue)) {
+        if (parsedValue == null || blockValue(parsedValue)) {
             entry.textHolder.setColor(Color(230, 0, 0))
             return@TextEntry
         }
@@ -143,26 +89,53 @@ fun makeTextEntry(name: String,
     return entry
 }
 
-fun makeTextEntry(name: String,
-                  value: KMutableProperty0<String>,
-                  xPadding: Float,
-                  yPadding: Float,
-                  makeChildOf: UIComponent,
-                  limit: StrLimit): TextEntry {
-    val entry = TextEntry(name) {
-            str, entry ->
-        if (limit.sizeLimit < str.length) {
-            entry.textHolder.setColor(Color(230, 0, 0))
-            return@TextEntry
-        }
-        entry.textHolder.setColor(Color(170, 170, 170))
+fun makeTextEntry(name: String, value: KMutableProperty0<Double>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent, limits: DoubleLimit = DoubleLimit()): TextEntry {
+    return makeTextEntryBase(name, value, xPadding, yPadding, makeChildOf, {it.toDoubleOrNull()}) { (it < limits.minValue || it > limits.maxValue) }
+}
 
-        value.set(str)
-    }.constrain {
+fun makeTextEntry(name: String, value: KMutableProperty0<Float>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent, limits: FloatLimit = FloatLimit()): TextEntry {
+    return makeTextEntryBase(name, value, xPadding, yPadding, makeChildOf, {it.toFloatOrNull()}) { (it < limits.minValue || it > limits.maxValue) }
+}
+
+fun makeTextEntry(name: String, value: KMutableProperty0<Long>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent): TextEntry {
+    return makeTextEntryBase(name, value, xPadding, yPadding, makeChildOf, {it.toLongOrNull()}) { false }
+}
+
+fun makeTextEntry(name: String, value: KMutableProperty0<Int>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent, limits: IntLimit = IntLimit()): TextEntry {
+    return makeTextEntryBase(name, value, xPadding, yPadding, makeChildOf, {it.toIntOrNull()}) { (it < limits.minValue || it > limits.maxValue) }
+}
+
+fun makeTextEntry(name: String, value: KMutableProperty0<String>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent, limit: StrLimit = StrLimit()): TextEntry {
+    return makeTextEntryBase(name, value, xPadding, yPadding, makeChildOf, {it}) { (it.length > limit.sizeLimit) }
+}
+
+fun makeTextEntries(name: String, names: List<String>, values: List<KMutableProperty0<*>>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent): UIContainer {
+    val storage = UIContainer().constrain {
         x = xPadding.pixels()
-        y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
+        y = SiblingConstraint(yPadding/2)
         width = 100.percent() - (xPadding * 2).pixels()
+        height = ChildBasedMaxSizeConstraint()
     } childOf makeChildOf
-    entry.textArea.setText(value.get())
-    return entry
+
+    val text = UIText(name, false) constrain {
+        y = CenterConstraint()
+        x = SiblingConstraint(1f) + 1f.pixels
+        color = Color.BLACK.toConstraint()
+    } childOf storage
+
+    names.zip(values).forEach { (name, value) ->
+        when (value.get()) {
+            is Double -> makeTextEntry(name, value as KMutableProperty0<Double>, 2f, 2f, storage)
+            is Float  -> makeTextEntry(name, value as KMutableProperty0<Float>,  2f, 2f, storage)
+            is Long   -> makeTextEntry(name, value as KMutableProperty0<Long>,   2f, 2f, storage)
+            is Int    -> makeTextEntry(name, value as KMutableProperty0<Int>,    2f, 2f, storage)
+            is String -> makeTextEntry(name, value as KMutableProperty0<String>, 2f, 2f, storage)
+            else -> throw NotImplementedError()
+        }.constrain {
+            width = ((100.percent - text.getWidth().pixels) / names.size) - (names.size * 1f).pixels
+            y = CenterConstraint()
+            x = SiblingConstraint(1f) + 1f.pixels
+        }
+    }
+    return storage
 }

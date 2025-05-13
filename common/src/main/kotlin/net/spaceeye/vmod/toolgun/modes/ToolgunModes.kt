@@ -26,6 +26,7 @@ object ToolgunModes: Registry<BaseMode>() {
         register(ShipRemoverMode::class)
         register(MassChangerMode::class)
 //        register(COMChangerMode::class)
+        register(VEntityChanger::class)
         if (Platform.isDevelopmentEnvironment()) {
             register(TestMode::class)
         }

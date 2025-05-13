@@ -22,6 +22,7 @@ import net.spaceeye.vmod.utils.vs.updatePosition
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.awt.Color
 
 class RopeRenderer(): BaseRenderer(), ReflectableObject {
     private class Data: AutoSerializable {
@@ -70,6 +71,11 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         if (until > highlightTimestamp) highlightTimestamp = until
     }
 
+    private var highlightTick = 0L
+    override fun highlightUntilRenderingTicks(until: Long) {
+        if (until > highlightTick) highlightTick = until
+    }
+
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) = with(data) {
         val level = Minecraft.getInstance().level!!
 
@@ -82,9 +88,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
-        if (timestamp < highlightTimestamp) {
-            RenderSystem.setShaderColor(1f, 0f, 0f, 1f)
-        }
+        val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else Color(255, 255, 255, 255)
 
         RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
         vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
@@ -99,7 +103,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         val matrix = poseStack.last().pose()
         RenderingUtils.Quad.drawRope(
             vBuffer, matrix,
-            255, 255, 255, 255,
+            color.red, color.green, color.blue, color.alpha,
             width, segments, length,
             tpos1, tpos2,
             if (fullbright) { { LightTexture.FULL_BRIGHT} } else { pos -> (pos + cameraPos).toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) } }
@@ -109,10 +113,6 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         poseStack.popPose()
 
         RenderTypes.clearFullRendering()
-
-        if (timestamp < highlightTimestamp) {
-            RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
-        }
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = with(data) {

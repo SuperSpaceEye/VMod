@@ -51,6 +51,7 @@ val SENSOR = t("Sensor")
 val SHIP_REMOVER = t("Ship Remover")
 val MASS_CHANGER = t("Mass Changer")
 val COM_CHANGER = t("COM Changer")
+val VENTITY_CHANGER = t("VEntity Changer")
 
 val DIMENSIONAL_GRAVITY = v("Dimensional Gravity")
 val PLAYER_ROLE_MANAGER = v("Player Role Manager")
@@ -133,8 +134,8 @@ val DIMENSIONAL_GRAVITY_UPDATE_WAS_REJECTED = p("Dimensional Gravity update was 
 
 val COMMON_HUD_1 = x("LMB - main mode, RMB - secondary mode, MMB - join mode", "common_hud_1")
 val COMMON_HUD_2 = x("LMB on the other ship or the ground", "common_hud_2")
-val COMMON_HUD_3 = x("look at the target and press LMB again", "common_hud_3")
-val COMMON_HUD_4 = x("configure rotation with mouse wheel, press LMB to confirm", "common_hud_4")
+val COMMON_HUD_3 = x("Look at the target and press RMB again", "common_hud_3")
+val COMMON_HUD_4 = x("Configure rotation with mouse wheel, press RMB to confirm", "common_hud_4")
 val COMMON_HUD_5 = x("LMB - main mode", "common_hud_5")
 
 val DISABLE_COLLISIONS_HUD_1 = x("LMB to disable collisions, RMB to enable all collisions", "disable_collisions_hud_1")
@@ -154,6 +155,9 @@ val GRAV_CHANGER_HUD_1 = x("LMB - set gravity. RMB - reset gravity", "grav_chang
 
 val SYNC_ROTATION_HUD_1 = x("LMB to select first", "sync_rotation_hud_1")
 val SYNC_ROTATION_HUD_2 = x("LMB to select second ship", "sync_rotation_hud_2")
+
+val VENTITY_CHANGER_HUD_1 = x("LMB - Select ship for viewing", "ventity_changer_hud_1")
+val VENTITY_CHANGER_HUD_2 = x("LMB - Select ship for viewing or ground to reset\nMouse Scroll - Choose VEntity to change\nRMB - Confirm selection", "ventity_changer_hud_2")
 
 val GEAR_HUD_1 = x("LMB on the other ship", "gear_hud_1")
 val MASS_CHANGER_HUD_1 = x("LMB - change weight, RMB - reset to default", "mass_changer_hud_1")
@@ -183,6 +187,5 @@ val SERVER_LIMITS_UPDATE_WAS_REJECTED = x("Server Limits update was rejected")
 val RENDERING_HAS_THROWN_AN_EXCEPTION = x("Rendering has thrown an exception")
 val SCHEMATIC_HAD_ERROR_DURING_PLACING = x("Schematic had error during placing")
 val SCHEMATIC_HAD_ERROR_DURING_COPYING = x("Schematic had error during copying")
-val SCHEMATIC_HAD_NONFATAL_ERRORS = x("Schematic had nonfatal errors")
 val ONE_OF_THE_SHIPS_IS_TOO_TALL = x("One of the ships in the schematic is too tall for this dimension. Schematic cannot be placed", "one_of_the_ships_is_too_tall")
 val COULDNT_LOAD_VMODSCHEM_V1 = x("VMod can't load this schematic. Install VMod 0.1.3 (or 1.0.0 if that's when schematic was created), place schematic, run \\\"/vmod op clear-vmod-attachments\\\", immediately leave, load mc with newest VMod, and make new schematic.", "couldnt_load_vmodschem_v1")

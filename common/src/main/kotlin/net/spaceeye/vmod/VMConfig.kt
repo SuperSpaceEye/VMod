@@ -14,7 +14,6 @@ object VMConfig {
     class Client: ConfigSubDirectory() {
         val TOOLGUN = ClientToolgunSettings()
         val RENDERING = ClientRenderingSettings()
-        val INTERNAL_DATA = InternalData()
 
         class ClientToolgunSettings: ConfigSubDirectory() {
             var MAX_RAYCAST_DISTANCE: Double by CDouble(100.0, "", Pair(1.0, Double.MAX_VALUE))
@@ -24,10 +23,6 @@ object VMConfig {
 
         class ClientRenderingSettings: ConfigSubDirectory() {
             val MAX_RENDERING_DISTANCE: Double by CDouble(200.0, "Max distance in blocks some renderers are able to render. Reload the game for change to take the effect.", Pair(1.0, Double.MAX_VALUE))
-        }
-
-        class InternalData: ConfigSubDirectory() {
-
         }
     }
     class Common: ConfigSubDirectory()

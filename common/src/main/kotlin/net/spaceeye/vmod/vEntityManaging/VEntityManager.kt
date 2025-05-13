@@ -18,9 +18,8 @@ import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.utils.PosMapList
-import net.spaceeye.vmod.utils.ServerLevelHolder
+import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.addCustomServerClosable
-import net.spaceeye.vmod.vEntityManaging.legacy.LegacyConstraintFixers
 import org.apache.commons.lang3.tuple.MutablePair
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.QueryableShipData
@@ -36,7 +35,6 @@ import java.util.*
 import kotlin.math.max
 
 internal const val SAVE_TAG_NAME_STRING = "vmod_VEntities"
-internal const val LEGACY_SAVE_TAG_NAME = "vmod_ships_constraints" //TODO REMOVE EVENTUALLY
 
 typealias VEntityId = Int
 
@@ -178,7 +176,7 @@ open class VEntityManager: SavedData() {
 
     private fun groupLoadedData() {
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values
-        val levels = ServerLevelHolder.server!!.allLevels.associate { Pair(it.dimensionId, it) }
+        val levels = ServerObjectsHolder.server!!.allLevels.associate { Pair(it.dimensionId, it) }
 
         val groups = mutableMapOf<MutableSet<Long>, MutableList<VEntity>>()
 
@@ -378,57 +376,6 @@ open class VEntityManager: SavedData() {
         }
     }
 
-    // TODO REMOVE EVENTUALLY
-    // ==============================================================================================
-
-    fun tryLoadLegacyMConstraints(tag: CompoundTag) {
-        val lastDimensionIds = loadDimensionIds(tag)
-        val newDimensionIds = ServerLevelHolder.shipObjectWorld!!.dimensionToGroundBodyIdImmutable
-        val oldToNew = lastDimensionIds.map { Pair(it.key, newDimensionIds[it.value]!!) }.toMap()
-
-        val shipsTag = tag[LEGACY_SAVE_TAG_NAME]!! as CompoundTag
-        val ships = level!!.shipObjectWorld.allShips
-
-        var count = 0
-        var maxId = -1
-        for (shipId in shipsTag.allKeys) {
-            val shipConstraintsTag = shipsTag[shipId]!! as ListTag
-            val constraints = mutableListOf<VEntity>()
-            var strType = "None"
-            for (ctag in shipConstraintsTag) {
-                try {
-                    ctag as CompoundTag
-                    strType = ctag.getString("MConstraintType")
-
-                    val vEntity = LegacyConstraintFixers.tryUpdateMConstraint(strType, ctag, oldToNew)
-                    for (shipId in vEntity.attachedToShips(emptyList())) {
-                        if (newDimensionIds.values.contains(shipId)) {
-                            vEntity.dimensionId = newDimensionIds.map {Pair(it.value, it.key)}.toMap()[shipId]
-                            break
-                        }
-
-                        val ship = ships.getById(shipId)
-                        if (ship != null) {
-                            vEntity.dimensionId = ship.chunkClaimDimension
-                        } else {
-                            vEntity.dimensionId = level!!.dimensionId
-                        }
-                        break
-                    }
-
-                    maxId = max(maxId, vEntity.mID)
-                    constraints.add(vEntity)
-                    count++
-                } catch (e: Exception) { ELOG("Failed to update constraint of type $strType\n${e.stackTraceToString()}")
-                } catch (e: Error    ) { ELOG("Failed to update constraint of type $strType\n${e.stackTraceToString()}")}
-            }
-            toLoadVEntities.addAll(constraints)
-        }
-        vEntityIdCounter = maxId + 1
-        WLOG("Updated $count constraints")
-    }
-    // ==============================================================================================
-
     companion object {
         private var instance: VEntityManager? = null
         private var level: ServerLevel? = null
@@ -462,19 +409,19 @@ open class VEntityManager: SavedData() {
 
         fun getInstance(): VEntityManager {
             if (instance != null) {return instance!!}
-            level = ServerLevelHolder.overworldServerLevel!!
+            level = ServerObjectsHolder.overworldServerLevel!!
 
-            instance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VM.MOD_ID)
+            instance = ServerObjectsHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VM.MOD_ID)
             return instance!!
         }
 
         fun initNewInstance(): VEntityManager {
-            level = ServerLevelHolder.overworldServerLevel!!
+            level = ServerObjectsHolder.overworldServerLevel!!
 
             dimensionToGroundBodyIdImmutable = level!!.shipObjectWorld.dimensionToGroundBodyIdImmutable
             allShips = level!!.shipObjectWorld.allShips
 
-            instance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VM.MOD_ID)
+            instance = ServerObjectsHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::load, Companion::create, VM.MOD_ID)
             return instance!!
         }
 
@@ -482,22 +429,10 @@ open class VEntityManager: SavedData() {
             return VEntityManager()
         }
 
-
-        private class TempManager(): VEntityManager() { var tag: CompoundTag? = null }
-        private fun legacyCreate(): TempManager {return TempManager()}
-        private fun legacyLoad(tag: CompoundTag): TempManager {
-            return legacyCreate().also { it.tag = tag }
-        }
-
         fun load(tag: CompoundTag): VEntityManager {
             val data = create()
 
-            val legacyInstance = ServerLevelHolder.overworldServerLevel!!.dataStorage.computeIfAbsent(Companion::legacyLoad, Companion::legacyCreate, "valkyrien_mod")
-            if (legacyInstance.tag?.contains(LEGACY_SAVE_TAG_NAME) == true) {
-                data.tryLoadLegacyMConstraints(legacyInstance.tag!!)
-            }
-
-            if (tag.contains(SAVE_TAG_NAME_STRING) || legacyInstance.tag?.contains(LEGACY_SAVE_TAG_NAME) == true) {
+            if (tag.contains(SAVE_TAG_NAME_STRING)) {
                 data.load(tag)
             }
 

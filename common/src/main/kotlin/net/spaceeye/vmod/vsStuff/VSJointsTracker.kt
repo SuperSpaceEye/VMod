@@ -5,7 +5,7 @@ import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.mixin.ShipObjectWorldAccessor
 import net.spaceeye.vmod.utils.MyConnectivityInspector
 import net.spaceeye.vmod.utils.SafeEventEmitter
-import net.spaceeye.vmod.utils.ServerLevelHolder
+import net.spaceeye.vmod.utils.ServerObjectsHolder
 import org.jetbrains.annotations.ApiStatus
 import org.jgrapht.graph.DefaultEdge
 import org.jgrapht.graph.DefaultListenableGraph
@@ -37,13 +37,13 @@ object VSJointsTracker {
 
     @JvmStatic
     fun getVSJoints(ids: List<VSJointId>): List<Pair<VSJointId, VSJoint?>> {
-        val acc = ServerLevelHolder.server!!.shipObjectWorld as ShipObjectWorldAccessor
+        val acc = ServerObjectsHolder.server!!.shipObjectWorld as ShipObjectWorldAccessor
         return ids.map { Pair(it, acc.constraints[it]) }
     }
 
     @JvmStatic
     fun getIdsOfShip(shipId: ShipId): Set<Int> {
-        return (ServerLevelHolder.shipObjectWorld!! as ShipObjectWorldAccessor).shipIdToConstraints.getOrDefault(shipId, setOf())
+        return (ServerObjectsHolder.shipObjectWorld!! as ShipObjectWorldAccessor).shipIdToConstraints.getOrDefault(shipId, setOf())
     }
 
     @JvmStatic
@@ -56,7 +56,7 @@ object VSJointsTracker {
 
     @JvmStatic
     private fun screenShipId(shipId: ShipId?): ShipId? {
-        if (shipId == null || ServerLevelHolder.shipObjectWorld!!.dimensionToGroundBodyIdImmutable.values.contains(shipId)) {return null}
+        if (shipId == null || ServerObjectsHolder.shipObjectWorld!!.dimensionToGroundBodyIdImmutable.values.contains(shipId)) {return null}
         return shipId
     }
 
@@ -65,6 +65,7 @@ object VSJointsTracker {
     fun onCreateNewConstraint(joint: VSJoint) {
         val shipId1 = screenShipId(joint.shipId0) ?: return
         val shipId2 = screenShipId(joint.shipId1) ?: return
+        if (shipId1 == shipId2) {return}
         val pair = setOf(shipId1, shipId2)
 
         var count = edgeInfo.getOrPut(pair) { 0 }

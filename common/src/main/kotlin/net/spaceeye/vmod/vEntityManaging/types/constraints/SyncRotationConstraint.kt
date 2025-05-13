@@ -12,8 +12,8 @@ import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
 class SyncRotationConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override var sPos1: Vector3d get() = Vector3d(); set(_) {}
     override var sPos2: Vector3d get() = Vector3d(); set(_) {}
-    override var shipId1: Long = -1
-    override var shipId2: Long = -1
+    override var shipId1: Long by get(i++, -1L).also { it.metadata["NoTagSerialization"] = true }
+    override var shipId2: Long by get(i++, -1L).also { it.metadata["NoTagSerialization"] = true }
 
     var sRot1: Quaterniond by get(i++, Quaterniond())
     var sRot2: Quaterniond by get(i++, Quaterniond())

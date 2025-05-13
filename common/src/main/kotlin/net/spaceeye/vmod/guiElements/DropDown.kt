@@ -6,6 +6,7 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
 import gg.essential.elementa.dsl.*
 import java.awt.Color
+import kotlin.reflect.KMutableProperty0
 
 data class DItem(val name: String, val highlight: Boolean, val fnToApply: () -> Unit)
 
@@ -130,4 +131,16 @@ fun makeDropDown(name: String,
     } childOf makeChildOf
 
     return dropDown
+}
+
+fun makeDropDown(name: String,
+                 value: KMutableProperty0<Enum<*>>,
+                 xPadding: Float,
+                 yPadding: Float,
+                 makeChildOf: UIComponent): DropDown {
+    val enumItem = value.get()
+    val items = enumItem.declaringJavaClass.enumConstants.map {
+        DItem(it.name, it == enumItem) {value.set(it)}
+    }
+    return makeDropDown(name, makeChildOf, xPadding, yPadding, items)
 }

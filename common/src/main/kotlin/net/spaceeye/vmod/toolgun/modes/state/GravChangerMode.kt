@@ -25,7 +25,7 @@ class GravChangerMode: ExtendableToolgunMode(), GravChangerHUD, GravChangerGUI {
     }
     @JsonIgnore private var i = 0
 
-    var gravityVector: Vector3d by get(i++, Vector3d(0, -10, 0)) //TODO ?
+    var gravityVector: Vector3d by get(i++, Vector3d(0, -10, 0))
     var mode: Mode by get(i++, Mode.Individual)
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {

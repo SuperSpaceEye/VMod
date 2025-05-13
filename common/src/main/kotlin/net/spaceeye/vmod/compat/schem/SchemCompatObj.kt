@@ -39,6 +39,7 @@ object SchemCompatObj {
         safeAdd("takeoff") { TakeoffSchemCompat() }
 
         safeAdd("create") { CreateContraptionsCompat() }
+        safeAdd("create") { CreateBlockOverride() }
     }
 
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, centerPositions: Map<Long, JVector3d>, be: BlockEntity?, tag: CompoundTag?): Boolean {

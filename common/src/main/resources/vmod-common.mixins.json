@@ -8,7 +8,7 @@
     "ShipObjectClientWorldMixin",
     "ShipObjectServerWorldMixin",
     "ShipObjectWorldAccessor",
-    "VSCommandsMixin"
+    "SmartBlockEntityAccessor"
   ],
   "client": [
     "BlockRenderDispatcherAccessor",

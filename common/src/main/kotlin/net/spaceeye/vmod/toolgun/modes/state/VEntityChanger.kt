@@ -50,7 +50,9 @@ import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.VEntityChangerGUI
 import net.spaceeye.vmod.toolgun.modes.hud.VEntityChangerHUD
+import net.spaceeye.vmod.translate.APPLY_CHANGES
 import net.spaceeye.vmod.translate.YOU_DONT_HAVE_ACCESS_TO_THIS
+import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.FakeKProperty
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.vEntityManaging.makeVEntityWithId
@@ -81,7 +83,7 @@ class VEntityChangerGui(val constraint: VEntity): WindowScreen(ElementaVersion.V
     fun <T> fp(get: () -> T, set: (T) -> Unit) = FakeKProperty<T>(get, set)
 
     init {
-        Button(Color(140, 140, 140), "Apply Changes") {
+        Button(Color(140, 140, 140), APPLY_CHANGES.get()) {
             VEntityChanger.c2sSendUpdate.sendToServer(VEntityChanger.Companion.C2SSendUpdate(constraint))
         }.constrain {
             x = 2.pixels

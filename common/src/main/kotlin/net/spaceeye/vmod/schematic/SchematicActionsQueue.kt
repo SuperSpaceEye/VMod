@@ -79,11 +79,7 @@ object SchematicActionsQueue: ServerClosable() {
     }
 
     private inline fun <T> logThrowables(onError: () -> Unit = {}, fn: () -> T): T? {
-        return try { fn() } catch (e: Throwable) {
-            ELOG(e.stackTraceToString())
-            onError()
-            null
-        }
+        return try { fn() } catch (e: Throwable) {ELOG(e.stackTraceToString()); onError(); null}
     }
 
     class SchemPlacementItem(

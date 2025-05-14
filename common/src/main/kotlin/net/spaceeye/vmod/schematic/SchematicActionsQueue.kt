@@ -13,6 +13,7 @@ import net.minecraft.world.entity.Mob
 import net.minecraft.world.entity.MobSpawnType
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.chunk.LevelChunk
 import net.minecraft.world.phys.AABB
 import net.spaceeye.valkyrien_ship_schematics.SchematicRegistry
@@ -119,16 +120,27 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.putInt("y", pos.y)
                     tag.putInt("z", pos.z)
 
-                    var callback: ((CompoundTag?) -> CompoundTag?)? = null
-                    val cb = SchemCompatObj.onPaste(level, oldToNewId, centerPositions, tag, pos, state) { delay, fn -> callback = fn }
+                    var callbacks = mutableListOf<((CompoundTag?) -> CompoundTag?)>()
+                    val cb = SchemCompatObj.onPaste(level, oldToNewId, centerPositions, tag, pos, state) { delay, fn -> fn?.let{callbacks.add(it)} }
 
                     delayedBlockEntityLoading.add(pos.x, pos.y, pos.z) {
-                        val tag =
-                            if(block is ICopyableBlock) {block.onPaste(level, pos, state, oldToNewId, centerPositions, tag)} else {null}
-                            ?: callback?.invoke(tag)
-                            ?: tag
+                        //refreshing block entities as a long time may pass between its creation and fn call
+                        val be = if (state.hasBlockEntity()) {
+                            val newBe = (state.block as EntityBlock).newBlockEntity(pos, state)
+                            val chunk = level.getChunkAt(pos)
 
-                        val be = level.getChunkAt(pos).getBlockEntity(pos)
+                            chunk.removeBlockEntity(pos)
+                            newBe?.also{ chunk.addAndRegisterBlockEntity(it) }
+                        } else null
+
+                        val tag =
+                            if (block is ICopyableBlock) {block.onPaste(level, pos, state, oldToNewId, centerPositions, tag)} else {null}
+                            ?: callbacks.let {
+                                var ret: CompoundTag? = null
+                                for (it in it) { ret = it(tag); if (ret != null) {break} }
+                                ret
+                            } ?: tag
+
                         be?.load(tag)
                         cb?.let { afterPasteCallbacks.add { it(be) } }
                     }
@@ -139,7 +151,12 @@ object SchematicActionsQueue: ServerClosable() {
         private fun updateChunk(level: ServerLevel, currentChunkData: ChunkyBlockData<BlockItem>, shipCenter: MVector3d) {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it -> logThrowables({hadNonfatalErrors++}) {
                 val pos = BlockPos(x + shipCenter.x, y + shipCenter.y, z + shipCenter.z)
+                val state = level.getBlockState(pos)
+
                 level.chunkSource.blockChanged(pos)
+                level.setBlocksDirty(pos, state, state)
+                level.blockUpdated(pos, state.block)
+                level.updateNeighbourForOutputSignal(pos, state.block)
             } }
         }
 
@@ -208,8 +225,8 @@ object SchematicActionsQueue: ServerClosable() {
                 afterPasteCallbacks.forEach { logThrowables({hadNonfatalErrors++}) { it() } }
                 currentShip = 0
                 currentChunk = 0
+                createdAllBlocks = true
             }
-            createdAllBlocks = true
 
             //Updating all blocks
             while (currentShip < shipsToCreate.size) {
@@ -218,9 +235,9 @@ object SchematicActionsQueue: ServerClosable() {
                 currentBlockData.updateKeys()
 
                 val shipCenter = MVector3d(
-                    ship.chunkClaim.xStart * 16 - 7,
+                    ship.chunkClaim.xMiddle * 16 - 7,
                     level.yRange.center,
-                    ship.chunkClaim.zStart * 16 - 7
+                    ship.chunkClaim.zMiddle * 16 - 7
                 )
 
                 while (currentChunk < currentBlockData.sortedChunkKeys.size) {

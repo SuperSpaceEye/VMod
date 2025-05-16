@@ -114,7 +114,10 @@ object SchematicActionsQueue: ServerClosable() {
                 if (state.isAir) {return@chunkForEach}
                 val block = state.block
 
-                level.getChunkAt(pos).setBlockState(pos, state, false)
+                level.getChunkAt(pos).also {
+                    it.setBlockState(pos, state, false)
+                    it.removeBlockEntity(pos)
+                }
                 if (it.extraDataId != -1) {
                     val tag = flatTagData[it.extraDataId]
                     tag.putInt("x", pos.x)
@@ -128,10 +131,7 @@ object SchematicActionsQueue: ServerClosable() {
                         //refreshing block entities as a long time may pass between its creation and fn call
                         val be = if (state.hasBlockEntity()) {
                             val newBe = (state.block as EntityBlock).newBlockEntity(pos, state)
-                            val chunk = level.getChunkAt(pos)
-
-                            chunk.removeBlockEntity(pos)
-                            newBe?.also{ chunk.addAndRegisterBlockEntity(it) }
+                            newBe?.also{ level.getChunkAt(pos).addAndRegisterBlockEntity(it) }
                         } else null
 
                         val tag =
@@ -223,7 +223,6 @@ object SchematicActionsQueue: ServerClosable() {
 
                 currentChunk = 0
                 currentShip++
-                if (getNow_ms() - start > timeout) { return false }
             }
             if (!createdAllBlocks) {
                 // loading all block entities and ICopyableBlock's

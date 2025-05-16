@@ -45,6 +45,7 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.util.expand
 import org.valkyrienskies.core.util.toAABBd
+import org.valkyrienskies.mod.common.entity.VSPhysicsEntity
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.isBlockInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
@@ -83,7 +84,7 @@ object SchematicActionsQueue: ServerClosable() {
         return try { fn() } catch (e: Throwable) {ELOG(e.stackTraceToString()); onError(); null}
     }
 
-    class SchemPlacementItem(
+    private class SchemPlacementItem(
         val level: ServerLevel,
         val player: ServerPlayer?,
         val schematicV1: IShipSchematicDataV1,
@@ -162,9 +163,13 @@ object SchematicActionsQueue: ServerClosable() {
 
         private var shipsInfo: Map<Long, IShipInfo>? = null
         var createdAllBlocks = false
+        var flatTagDataCopy: List<CompoundTag>? = null
 
         fun place(start: Long, timeout: Long): Boolean? {
             val shipsInfo = shipsInfo ?: let {
+                //should only be called once
+                schematicV1.blockData.forEach { (_, data) -> data.updateKeys() }
+
                 val info = schematicV1 as IShipSchematic
                 info.info!!.shipsInfo
                     .associate { Pair(it.id, it) }
@@ -174,12 +179,14 @@ object SchematicActionsQueue: ServerClosable() {
                             player?.let { ServerToolGunState.sendErrorTo(it, ONE_OF_THE_SHIPS_IS_TOO_TALL) }
                             return null
                     } } }
+                    .also { shipsInfo = it }
             }
 
             while (!createdAllBlocks && currentShip < shipsToCreate.size) {
                 if (createdShips.size - 1 < currentShip) {
                     createdShips.add(shipsToCreate[currentShip].let { Pair(it.first.invoke(), it.second) })
                     createdShips.last().also { (ship, shipId) -> //old ship id
+                        oldToNewId[shipId] = ship.id
                         val info = shipsInfo[shipId]!!
                         val offset = info.previousCenterPosition.let { it.sub(it.x.roundToInt().toDouble(), it.y.roundToInt().toDouble(), it.z.roundToInt().toDouble(), JVector3d()) }
                         centerPositions[shipId] = Pair(
@@ -197,10 +204,9 @@ object SchematicActionsQueue: ServerClosable() {
 
                 val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("Block data is null")
                 val blockPalette = schematicV1.blockPalette
-                val flatExtraData = schematicV1.flatTagData.map { it.copy() }
-                oldToNewId.clear()
-                oldToNewId.putAll(createdShips.associate { Pair(it.second, it.first.id) })
-                currentBlockData.updateKeys()
+                val flatExtraData = flatTagDataCopy ?: schematicV1.flatTagData
+                    .map { it.copy() }
+                    .also { flatTagDataCopy = it }
 
                 val shipCenter = MVector3d(
                     ship.chunkClaim.xMiddle * 16 - 7,
@@ -232,7 +238,6 @@ object SchematicActionsQueue: ServerClosable() {
             while (currentShip < shipsToCreate.size) {
                 val ship = createdShips[currentShip].first
                 val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("Block data is null")
-                currentBlockData.updateKeys()
 
                 val shipCenter = MVector3d(
                     ship.chunkClaim.xMiddle * 16 - 7,
@@ -249,7 +254,6 @@ object SchematicActionsQueue: ServerClosable() {
 
                 currentChunk = 0
                 currentShip++
-                if (getNow_ms() - start > timeout) { return false }
             }
 
             entityCreationFn = {
@@ -304,7 +308,7 @@ object SchematicActionsQueue: ServerClosable() {
         saveData[uuid] = SchemSaveItem(level, player, schematicV1, ships, postPlacementFn, padBoundary)
     }
 
-    class SchemSaveItem(
+    private class SchemSaveItem(
         val level: ServerLevel,
         val player: ServerPlayer?,
         val schematicV1: IShipSchematicDataV1,
@@ -441,7 +445,8 @@ object SchematicActionsQueue: ServerClosable() {
                 val aabb = ship.shipAABB!!.toAABBd(AABBd())
                 val worldEntities = level.getEntitiesOfClass(Entity::class.java, AABB(aabb.minX(), aabb.minY(), aabb.minZ(), aabb.maxX(), aabb.maxY(), aabb.maxZ())) { it !is Player }
                 schematicV1.entityData[ship.id] = worldEntities.mapNotNull {
-                    if (savedEntities.contains(it.uuid)) {return@mapNotNull null }
+                    if (savedEntities.contains(it.uuid)) { return@mapNotNull null }
+                    if (it is VSPhysicsEntity) { return@mapNotNull null }
                     val epos = it.position()
                     //idk why but getEntitiesOfClass also gets shipyard entities of other ships
                     if (level.isBlockInShipyard(epos.x, epos.y, epos.z) && level.getShipManagingPos(epos.x, epos.y, epos.z)?.id != ship.id) {return@mapNotNull null}

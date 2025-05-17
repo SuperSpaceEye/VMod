@@ -8,8 +8,8 @@ import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.networking.regC2S
+import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.ReservedRenderingPages
-import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.PhysgunRayRenderer
 import net.spaceeye.vmod.shipAttachments.PhysgunController
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -128,7 +128,7 @@ object ServerPhysgunState: ServerClosable() {
                 state.caughtShipIds.clear()
                 activelySeeking.remove(player.uuid)
 
-                ServerRenderingData.removeRenderer(state.rID)
+                RenderingData.server.removeRenderer(state.rID)
                 state.rID = -1
                 return@regC2S
             }
@@ -193,7 +193,7 @@ object ServerPhysgunState: ServerClosable() {
                 synchronized(state.lock) {
                     if (state.mainShipId == -1L) {
                         toRemove.add(uuid)
-                        ServerRenderingData.removeRenderer(state.rID)
+                        RenderingData.server.removeRenderer(state.rID)
                         state.rID = -1
                         return@forEach
                     }
@@ -203,7 +203,7 @@ object ServerPhysgunState: ServerClosable() {
                         || state.serverPlayer!!.mainHandItem.item != VMItems.PHYSGUN.get()
                     ) {
                         toRemove.add(uuid)
-                        ServerRenderingData.removeRenderer(state.rID)
+                        RenderingData.server.removeRenderer(state.rID)
                         state.rID = -1
                         state.mainShipId = -1L
                         state.caughtShipIds.clear()
@@ -236,7 +236,7 @@ object ServerPhysgunState: ServerClosable() {
                     || state.serverPlayer!!.mainHandItem.item != VMItems.PHYSGUN.get()
                 ) {
                     toRemove.add(uuid)
-                    ServerRenderingData.removeRenderer(state.rID)
+                    RenderingData.server.removeRenderer(state.rID)
                     state.rID = -1
                     state.mainShipId = -1L
                     state.caughtShipIds.clear()
@@ -255,7 +255,7 @@ object ServerPhysgunState: ServerClosable() {
                 if (state.rID == -1) {
                     val renderer = PhysgunRayRenderer()
                     renderer.data.player = uuid
-                    state.rID = ServerRenderingData.addRenderer(listOf(pageId), renderer)
+                    state.rID = RenderingData.server.addRenderer(listOf(pageId), renderer)
                 }
 
                 if (result.state.isAir) {return@forEach}
@@ -283,11 +283,11 @@ object ServerPhysgunState: ServerClosable() {
 
                 controller.sharedState = state
 
-                val renderer = (ServerRenderingData.getRenderer(state.rID) ?: return@forEach) as PhysgunRayRenderer
+                val renderer = (RenderingData.server.getRenderer(state.rID) ?: return@forEach) as PhysgunRayRenderer
                 renderer.data.player = uuid
                 renderer.data.shipId = state.mainShipId
                 renderer.data.hitPosInShipyard = result.globalHitPos!!
-                ServerRenderingData.setRenderer(listOf(pageId), state.rID, renderer)
+                RenderingData.server.setRenderer(listOf(pageId), state.rID, renderer)
 
                 toRemove.add(uuid)
                 active.add(uuid)

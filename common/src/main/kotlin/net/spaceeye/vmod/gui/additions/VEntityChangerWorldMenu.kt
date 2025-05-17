@@ -15,7 +15,7 @@ import gg.essential.elementa.dsl.percent
 import gg.essential.elementa.dsl.pixels
 import gg.essential.elementa.dsl.toConstraint
 import net.spaceeye.vmod.gui.ScreenWindowAddition
-import net.spaceeye.vmod.rendering.ClientRenderingData
+import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.state.VEntityChanger
@@ -92,7 +92,7 @@ object VEntityChangerWorldMenu: ScreenWindowAddition {
         lastCursorPos = chosenPos
 
         val rID = VEntityChanger.clientVEntities[chosenPos].second
-        ClientRenderingData.getItem(rID)?.also { it.highlightUntilRenderingTicks(it.renderingTick + 3) }
+        RenderingData.client.getItem(rID)?.also { it.highlightUntilRenderingTicks(it.renderingTick + 3) }
     }
 
     override fun onRenderHUD(stack: PoseStack, delta: Float) {

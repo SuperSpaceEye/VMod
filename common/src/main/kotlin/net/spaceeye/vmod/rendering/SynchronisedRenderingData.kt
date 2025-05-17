@@ -193,11 +193,10 @@ private object SynchronisedRenderingData {
     }
 }
 
-val ClientRenderingData: ClientSynchronisedRenderingData
-    get() = SynchronisedRenderingData.clientSynchronisedData
-
-val ServerRenderingData: ServerSynchronisedRenderingData
-    get() = SynchronisedRenderingData.serverSynchronisedData
+object RenderingData {
+    val client get() = SynchronisedRenderingData.clientSynchronisedData
+    val server get() = SynchronisedRenderingData.serverSynchronisedData
+}
 
 fun initRenderingData() {
     SynchronisedRenderingData

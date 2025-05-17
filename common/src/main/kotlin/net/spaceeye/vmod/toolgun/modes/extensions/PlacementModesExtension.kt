@@ -6,7 +6,7 @@ import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.rendering.ClientRenderingData
+import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.types.special.PrecisePlacementAssistRenderer
 import net.spaceeye.vmod.toolgun.modes.ToolgunModeExtension
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
@@ -25,8 +25,8 @@ open class PlacementModesExtension(
         set(value) {
             precisePlacementAssistSideNum = value
             if (posMode != PositionModes.PRECISE_PLACEMENT) {return}
-            ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId)
-            precisePlacementAssistRendererId = ClientRenderingData.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
+            RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
+            precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
         }
 
     override fun serialize(): FriendlyByteBuf {
@@ -49,11 +49,11 @@ open class PlacementModesExtension(
 
     override fun eOnOpenMode() {
         if (posMode != PositionModes.PRECISE_PLACEMENT) {return}
-        precisePlacementAssistRendererId = ClientRenderingData.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
+        precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
     }
 
     override fun eOnCloseMode() {
-        ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId)
+        RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
     }
 
     override fun eMakeGUISettings(parentWindow: UIContainer) {
@@ -62,23 +62,23 @@ open class PlacementModesExtension(
         if (showCenteredInBlock) {
             makeDropDown(
                 HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
-                DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL           ; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
-                DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE ; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
-                DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
+                DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL           ; RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId) },
+                DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE ; RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId) },
+                DItem(CENTERED_IN_BLOCK.get(), posMode == PositionModes.CENTERED_IN_BLOCK) { posMode = PositionModes.CENTERED_IN_BLOCK; RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId) },
                 DItem(PRECISE_PLACEMENT.get(), posMode == PositionModes.PRECISE_PLACEMENT) {
                     posMode = PositionModes.PRECISE_PLACEMENT
-                    ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId)
-                    precisePlacementAssistRendererId = ClientRenderingData.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
+                    RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
+                    precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
                 })
             )
         } else {
             makeDropDown(HITPOS_MODES.get(), parentWindow, offset, offset, listOf(
-                DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL           ; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
-                DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE ; ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId) },
+                DItem(NORMAL.get(),            posMode == PositionModes.NORMAL)            { posMode = PositionModes.NORMAL           ; RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId) },
+                DItem(CENTERED_ON_SIDE.get(),  posMode == PositionModes.CENTERED_ON_SIDE)  { posMode = PositionModes.CENTERED_ON_SIDE ; RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId) },
                 DItem(PRECISE_PLACEMENT.get(), posMode == PositionModes.PRECISE_PLACEMENT) {
                     posMode = PositionModes.PRECISE_PLACEMENT
-                    ClientRenderingData.removeClientsideRenderer(precisePlacementAssistRendererId)
-                    precisePlacementAssistRendererId = ClientRenderingData.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
+                    RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
+                    precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
                 })
             )
         }

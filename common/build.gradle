@@ -44,6 +44,11 @@ dependencies {
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.0-beta.2"))
 }
 
+//Renames .kotlin_module of common so that it's not overwrited during forge/fabric compilation
+compileKotlin { doLast {
+    file(compileKotlin.destinationDirectory.get().toString() + "/META-INF/VMod.kotlin_module").renameTo(file(compileKotlin.destinationDirectory.get().toString() + "/META-INF/VMod_common.kotlin_module"))
+} }
+
 architectury {
     common("fabric", "forge")
 }

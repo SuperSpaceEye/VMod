@@ -46,6 +46,8 @@ object VM {
     const val MOD_ID = "the_vmod"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!
 
+    var STUPID_FUCKING_THING_DOESNT_WORK = false
+
     @JvmStatic
     fun init() {
         VMAttachments.register()

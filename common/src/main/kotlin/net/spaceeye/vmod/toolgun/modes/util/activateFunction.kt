@@ -59,7 +59,7 @@ fun calculatePrecise(raycastResult: RaycastFunctions.RaycastResult, precisePlace
     return points.minBy { (it - point).sqrDist() }
 }
 
-fun BaseMode.serverRaycastAndActivateFn(
+inline fun serverRaycastAndActivateFn(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,
     level: Level,

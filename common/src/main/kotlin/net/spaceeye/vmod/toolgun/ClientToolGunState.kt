@@ -10,6 +10,7 @@ import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
@@ -137,6 +138,7 @@ object ClientToolGunState : ClientClosable() {
     var renderHud = true
 
     internal fun onRenderHUD(stack: PoseStack, delta: Float) {
+        if (VM.STUPID_FUCKING_THING_DOESNT_WORK) {return}
         if (!renderHud) {return}
         try {
         (screen ?: run {

@@ -316,7 +316,7 @@ interface PlacementAssistServerPart {
     val inst: ExtendableToolgunMode
 
 
-    fun activateMiddle(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = _serverRaycast2PointsFnActivation(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || middleFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, {inst.resetState()}) {
+    fun activateMiddle(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivationBase(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || middleFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, {inst.resetState()}) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
 
         if (previousResult!!.ship == null) {
@@ -333,8 +333,8 @@ interface PlacementAssistServerPart {
         val ship1 = level.getShipManagingPos(paFirstResult.blockPosition)
         val ship2 = level.getShipManagingPos(paSecondResult.blockPosition)
 
-        if (ship1 == null)  {return@_serverRaycast2PointsFnActivation handleFailure(player)}
-        if (ship1 == ship2) {return@_serverRaycast2PointsFnActivation handleFailure(player)}
+        if (ship1 == null)  {return@serverRaycast2PointsFnActivationBase handleFailure(player)}
+        if (ship1 == ship2) {return@serverRaycast2PointsFnActivationBase handleFailure(player)}
 
         val dir2 = paSecondResult.worldNormalDirection!!
 

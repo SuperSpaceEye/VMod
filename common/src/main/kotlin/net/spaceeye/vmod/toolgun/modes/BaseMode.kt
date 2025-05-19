@@ -5,8 +5,10 @@ import dev.architectury.networking.NetworkManager
 import gg.essential.elementa.components.UIContainer
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.toolgun.ClientToolGunState
@@ -48,7 +50,8 @@ interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientEventsHandler 
 
 fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) =
     name idWithConnc {
-        object : C2SConnection<T>(it, "toolgun_command") {
+        object : C2SConnection<T>() {
+            override val id = ResourceLocation(VM.MOD_ID, "c2s_toolgun_command_$it")
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
                 serverRaycastAndActivate<T>(context.player, buf, mode::class.java, ToolgunModes.getMode(mode::class), toExecute)
         }
@@ -56,7 +59,8 @@ fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, toExecute: 
 
 fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) =
     name idWithConnc {
-        object : C2SConnection<T>(name, "toolgun_command") {
+        object : C2SConnection<T>() {
+            override val id = ResourceLocation(VM.MOD_ID, "c2s_toolgun_command_$it")
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
                 serverTryActivate<T>(context.player, buf, mode::class.java, ToolgunModes.getMode(mode::class), toExecute)
         }

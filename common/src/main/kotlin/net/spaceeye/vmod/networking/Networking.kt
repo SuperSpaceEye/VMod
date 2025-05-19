@@ -72,9 +72,8 @@ fun Side.opposite() = when (this) {
     Side.C2S -> Side.S2C
 }
 
-abstract class C2SConnection<T : Serializable>(id: String, connectionName: String): Connection {
+abstract class C2SConnection<T : Serializable>(): Connection {
     override val side: Side = Side.C2S
-    override val id = ResourceLocation(VM.MOD_ID, "c2s_${connectionName}_$id")
 
     override fun getHandler(): NetworkReceiver = NetworkReceiver(::serverHandler)
     abstract fun serverHandler(buf: FriendlyByteBuf, context: PacketContext)
@@ -82,9 +81,8 @@ abstract class C2SConnection<T : Serializable>(id: String, connectionName: Strin
     fun sendToServer(packet: T) = NetworkManager.sendToServer(id, packet.serialize())
 }
 
-abstract class S2CConnection<T : Serializable>(id: String, connectionName: String): Connection {
+abstract class S2CConnection<T : Serializable>(): Connection {
     override val side: Side = Side.S2C
-    override val id = ResourceLocation(VM.MOD_ID, "s2c_${connectionName}_$id")
 
     override fun getHandler(): NetworkReceiver = NetworkReceiver(::clientHandler)
     abstract fun clientHandler(buf: FriendlyByteBuf, context: PacketContext)
@@ -93,12 +91,12 @@ abstract class S2CConnection<T : Serializable>(id: String, connectionName: Strin
     fun sendToClients(players: Iterable<ServerPlayer>, packet: T) = NetworkManager.sendToPlayers(players, id, packet.serialize())
 }
 
-@Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regC2S"))
-inline fun <reified T: Serializable>makeC2S(name: String, connName: String,
+inline fun <reified T: Serializable>makeC2S(id: ResourceLocation,
                                             crossinline doProcess: (ServerPlayer) -> Boolean,
                                             crossinline rejectCallback: (ServerPlayer) -> Unit = {},
                                             crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
-    object : C2SConnection<T>(name, connName) {
+    object : C2SConnection<T>() {
+        override val id = id
         override fun serverHandler(buf: FriendlyByteBuf, context: PacketContext) {
             val player = context.player as ServerPlayer
             if (!doProcess(player)) {return rejectCallback(player)}
@@ -109,9 +107,9 @@ inline fun <reified T: Serializable>makeC2S(name: String, connName: String,
         }
     }
 
-@Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regC2S"))
-inline fun <reified T: Serializable>makeC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
-    object : C2SConnection<T>(name, connName) {
+inline fun <reified T: Serializable>makeC2S(id: ResourceLocation, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
+    object : C2SConnection<T>() {
+        override val id = id
         override fun serverHandler(buf: FriendlyByteBuf, context: PacketContext) {
             val pkt = T::class.constructor(buf)
             pkt.deserialize(buf)
@@ -119,9 +117,9 @@ inline fun <reified T: Serializable>makeC2S(name: String, connName: String, cros
         }
     }
 
-@Deprecated("For internal use. You should probably not use this", replaceWith = ReplaceWith("regS2C"))
-inline fun <reified T: Serializable>makeS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit ) =
-    object : S2CConnection<T>(name, connName) {
+inline fun <reified T: Serializable>makeS2C(id: ResourceLocation, crossinline fn: (pkt: T) -> Unit ) =
+    object : S2CConnection<T>() {
+        override val id = id
         override fun clientHandler(buf: FriendlyByteBuf, context: PacketContext) {
             val pkt = T::class.constructor(buf)
             pkt.deserialize(buf)
@@ -129,13 +127,12 @@ inline fun <reified T: Serializable>makeS2C(name: String, connName: String, cros
         }
     }
 
-inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline doProcess: (ServerPlayer) -> Boolean, crossinline rejectCallback: (ServerPlayer) -> Unit = {}, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(it, connName, doProcess, rejectCallback, fn)}
-inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(it, connName, fn)}
-inline fun <reified T: Serializable>regS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C(it, connName, fn)}
+/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline doProcess: (ServerPlayer) -> Boolean, crossinline rejectCallback: (ServerPlayer) -> Unit = {}, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(VM.MOD_ID, "c2s_${connName}_$it"), doProcess, rejectCallback, fn)}
+/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(VM.MOD_ID, "c2s_${connName}_$it"), fn)}
+/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ inline fun <reified T: Serializable>regS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C( ResourceLocation(VM.MOD_ID, "s2c_${connName}_$it"), fn)}
 
-abstract class TRConnection<T : Serializable>(id: String, connectionName: String, val invocationSide: Side): Connection {
+abstract class TRConnection<T : Serializable>(val invocationSide: Side): Connection {
     override val side: Side = invocationSide
-    override val id: ResourceLocation = ResourceLocation(VM.MOD_ID, "tr_${connectionName}_$id")
 
     override fun getHandler(): NetworkReceiver = NetworkReceiver(::handlerFn)
     abstract fun handlerFn(buf: FriendlyByteBuf, context: PacketContext)

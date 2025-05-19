@@ -91,6 +91,7 @@ abstract class S2CConnection<T : Serializable>(): Connection {
     fun sendToClients(players: Iterable<ServerPlayer>, packet: T) = NetworkManager.sendToPlayers(players, id, packet.serialize())
 }
 
+@Deprecated("You probably shouldn't use this.", ReplaceWith("regC2S"))
 inline fun <reified T: Serializable>makeC2S(id: ResourceLocation,
                                             crossinline doProcess: (ServerPlayer) -> Boolean,
                                             crossinline rejectCallback: (ServerPlayer) -> Unit = {},
@@ -107,6 +108,7 @@ inline fun <reified T: Serializable>makeC2S(id: ResourceLocation,
         }
     }
 
+@Deprecated("You probably shouldn't use this.", ReplaceWith("regC2S"))
 inline fun <reified T: Serializable>makeC2S(id: ResourceLocation, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit ) =
     object : C2SConnection<T>() {
         override val id = id
@@ -117,6 +119,7 @@ inline fun <reified T: Serializable>makeC2S(id: ResourceLocation, crossinline fn
         }
     }
 
+@Deprecated("You probably shouldn't use this.", ReplaceWith("regS2C"))
 inline fun <reified T: Serializable>makeS2C(id: ResourceLocation, crossinline fn: (pkt: T) -> Unit ) =
     object : S2CConnection<T>() {
         override val id = id
@@ -127,9 +130,9 @@ inline fun <reified T: Serializable>makeS2C(id: ResourceLocation, crossinline fn
         }
     }
 
-/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline doProcess: (ServerPlayer) -> Boolean, crossinline rejectCallback: (ServerPlayer) -> Unit = {}, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(VM.MOD_ID, "c2s_${connName}_$it"), doProcess, rejectCallback, fn)}
-/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(VM.MOD_ID, "c2s_${connName}_$it"), fn)}
-/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ inline fun <reified T: Serializable>regS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C( ResourceLocation(VM.MOD_ID, "s2c_${connName}_$it"), fn)}
+/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ @Suppress inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline doProcess: (ServerPlayer) -> Boolean, crossinline rejectCallback: (ServerPlayer) -> Unit = {}, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(VM.MOD_ID, "c2s_${connName}_$it"), doProcess, rejectCallback, fn)}
+/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ @Suppress inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(VM.MOD_ID, "c2s_${connName}_$it"), fn)}
+/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ @Suppress inline fun <reified T: Serializable>regS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C( ResourceLocation(VM.MOD_ID, "s2c_${connName}_$it"), fn)}
 
 abstract class TRConnection<T : Serializable>(val invocationSide: Side): Connection {
     override val side: Side = invocationSide

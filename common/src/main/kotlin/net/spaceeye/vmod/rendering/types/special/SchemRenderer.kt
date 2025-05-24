@@ -301,6 +301,9 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
             )
             //now in the ship frame
             poseStack.mulPose(rotationQuat)
+            infoItem.shipScale.toFloat().also {
+            poseStack.scale(it, it, it)
+            }
 
             data.forEach { x, y, z, item ->
                 val bpos = BlockPos(x, y, z)

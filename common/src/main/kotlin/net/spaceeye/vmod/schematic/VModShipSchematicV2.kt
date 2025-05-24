@@ -23,6 +23,7 @@ import org.joml.Vector3i
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -60,6 +61,7 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid
     SchematicActionsQueue.queueShipsCreationEvent(level, player, uuid, shipInitializers, this) { ships, centerPositions, entityCreationFn ->
         val createdShips = ships.map { it.first }
         createdShips.zip(newTransforms).forEach { (it, transform) ->
+            if (it.transformProvider is SchemTempPositionSetter) { it.transformProvider = null }
             val b = it.shipAABB!!
             var offset = MVector3d(it.transform.positionInModel) - MVector3d(
                 (b.maxX() - b.minX()) / 2.0 + b.minX(),
@@ -109,6 +111,8 @@ private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vecto
 
         val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(), false, it.shipScale, level.dimensionId)
         newShip.isStatic = true
+
+        newShip.transformProvider = SchemTempPositionSetter(newShip, MVector3d(pos), MVector3d(newTransform.position))
 
         //TODO idk if i can calculate final position correctly, so maybe just teleport it to idk 100000000 100000000 100000000 while it's being created?
         level.shipObjectWorld.teleportShip(newShip, ShipTeleportDataImpl(

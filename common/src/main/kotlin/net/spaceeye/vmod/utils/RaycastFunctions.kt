@@ -37,20 +37,20 @@ object RaycastFunctions {
 
     data class Source(var dir: Vector3d, var origin: Vector3d)
 
-    class RaycastResult(
-        @JvmField var state: BlockState,
-        @JvmField var origin: Vector3d,
-        @JvmField var lookVec: Vector3d,
-        @JvmField var blockPosition: BlockPos,
-        @JvmField var worldHitPos: Vector3d?, // if in shipyard, will transform to world pos
-        @JvmField var globalHitPos: Vector3d?, // if in shipyard, will not transform to world pos
-        @JvmField var worldCenteredHitPos: Vector3d?,
-        @JvmField var globalCenteredHitPos: Vector3d?,
-        @JvmField var hitNormal: Vector3d?,
-        @JvmField var worldNormalDirection: Vector3d?,
-        @JvmField var globalNormalDirection: Vector3d?,
-        @JvmField var ship: Ship?,
-        @JvmField var shipId: ShipId
+    data class RaycastResult(
+        var state: BlockState,
+        var origin: Vector3d,
+        var lookVec: Vector3d,
+        var blockPosition: BlockPos,
+        var worldHitPos: Vector3d?, // if in shipyard, will transform to world pos
+        var globalHitPos: Vector3d?, // if in shipyard, will not transform to world pos
+        var worldCenteredHitPos: Vector3d?,
+        var globalCenteredHitPos: Vector3d?,
+        var hitNormal: Vector3d?,
+        var worldNormalDirection: Vector3d?,
+        var globalNormalDirection: Vector3d?,
+        var ship: Ship?,
+        var shipId: ShipId
     )
 
     //https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms

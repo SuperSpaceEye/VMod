@@ -335,6 +335,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
             }
 
             renderer = SchemRenderer(value, rotationAngle, transparency)
+            RenderingData.client.removeClientsideRenderer(rID)
             rID = RenderingData.client.addClientsideRenderer(renderer!!)
             refreshHUD()
         }

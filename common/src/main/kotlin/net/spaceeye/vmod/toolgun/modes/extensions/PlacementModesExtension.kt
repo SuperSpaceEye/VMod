@@ -49,6 +49,7 @@ open class PlacementModesExtension(
 
     override fun eOnOpenMode() {
         if (posMode != PositionModes.PRECISE_PLACEMENT) {return}
+        RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
         precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
     }
 

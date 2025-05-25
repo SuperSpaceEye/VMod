@@ -145,7 +145,7 @@ class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
     override fun retainData(pos: ChunkPos, retain: Boolean) {}
 }
 
-class FakeLevelData(): ClientLevel.ClientLevelData(Difficulty.PEACEFUL, false, false) {
+class DummyLevelData(): ClientLevel.ClientLevelData(Difficulty.PEACEFUL, false, false) {
     override fun getXSpawn(): Int = 0
     override fun getYSpawn(): Int = 0
     override fun getZSpawn(): Int = 0
@@ -172,7 +172,7 @@ class FakeClientLevel(
     val palette: IBlockStatePalette,
     val infoItem: IShipInfo
 ): ClientLevel(
-    null, FakeLevelData(), level.dimension(), level.dimensionTypeRegistration(), 0, 0, null, null, level.isDebug, 0L
+    null, DummyLevelData(), level.dimension(), level.dimensionTypeRegistration(), 0, 0, null, null, level.isDebug, 0L
 ) {
     val defaultState = Blocks.AIR.defaultBlockState()
     val defaultFluidState = Fluids.EMPTY.defaultFluidState()
@@ -345,7 +345,7 @@ class TransparencyWrapperBufferSource(val source: MultiBufferSource, val transpa
     }
 }
 
-class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
+class SchematicRenderer(val schem: IShipSchematic, val transparency: Float, val renderBlockEntities: Boolean = true) {
     val matrixList: List<Matrix4f>
     var fakeLevels = mutableListOf<FakeClientLevel>()
     val mySources = SchemMultiBufferSource()
@@ -436,8 +436,9 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
             buf.apply(actualBuffer, matrices)
         }
 
+        if (!renderBlockEntities) {return}
         val renderer = Minecraft.getInstance().blockEntityRenderDispatcher
-//        val sources = TransparencyWrapperBufferSource(sources, transparency)
+        val sources = TransparencyWrapperBufferSource(sources, transparency)
         fakeLevels.forEach { level ->
             val infoItem = level.infoItem
             poseStack.pushPose()
@@ -485,13 +486,14 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
 class SchemRenderer(
     val schem: IShipSchematic,
     val rotationAngle: Ref<Double>,
-    var transparency: Float = 0.5f
+    var transparency: Float = 0.5f,
+    var renderBlockEntities: Boolean
 ): BlockRenderer() {
     var renderer: SchematicRenderer? = null
 
     init {
         Thread {
-            renderer = SchematicRenderer(schem, transparency)
+            renderer = SchematicRenderer(schem, transparency, renderBlockEntities)
         }.start()
     }
 

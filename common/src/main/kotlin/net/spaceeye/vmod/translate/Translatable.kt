@@ -93,6 +93,7 @@ val ANGLE_LIMIT = s("Angle Limit")
 val SIDES = s("Sides")
 val FULLBRIGHT = s("Fullbright")
 val TRANSPARENCY = s("Transparency")
+val TRY_RENDER_BLOCK_ENTITIES = s("Try render block entities")
 
 val PLACEMENT_ASSIST_SCROLL_STEP = s("Placement Assist Scroll Step")
 

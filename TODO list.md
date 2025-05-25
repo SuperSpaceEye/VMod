@@ -1,6 +1,7 @@
 # VERY IMPORTANT
 
 * Rework permission level and player roles
+* Mass Changing doesnt save in vschem
 
 # Maybe
 

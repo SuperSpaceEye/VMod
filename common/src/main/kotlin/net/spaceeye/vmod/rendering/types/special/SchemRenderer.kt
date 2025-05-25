@@ -250,7 +250,6 @@ class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
     var defaultColor = Color(255, 255, 255, 255)
     var transparency = 0.5f
 
-    var vertexPose = PoseStack().also { it.setIdentity() }.last()!!
     var vertexOffset = org.joml.Vector3f(0f, 0f, 0f)
     var vertexMatrixIndex = 0
 
@@ -399,7 +398,6 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
                 val buffer = mySources.getBuffer(type)
 
                 buffer.vertexMatrixIndex = matrixIndex
-                buffer.vertexPose = poseStack.last()
                 buffer.vertexOffset.set(
                     bpos.x.toDouble() + offset.x,
                     bpos.y.toDouble() + offset.y,
@@ -455,8 +453,8 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
 
             val toRemove = mutableListOf<Int>()
             level.blockEntities.forEachIndexed {i, (pos, be) ->
-                val beRenderer = renderer.getRenderer(be) ?: return@forEach
-                if (!be.type.isValid(be.blockState)) return@forEach
+                val beRenderer = renderer.getRenderer(be) ?: return@forEachIndexed Unit.also { toRemove.add(i) }
+                if (!be.type.isValid(be.blockState)) return@forEachIndexed Unit.also { toRemove.add(i) }
 
                 poseStack.pushPose()
 
@@ -469,7 +467,11 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float) {
                 )
 
                 try {
-                    beRenderer.render(be, 0f, poseStack, sources, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY)
+                    PoseStack().also {
+                        it.setIdentity()
+                        it.mulPoseMatrix(poseStack.last().pose())
+                        beRenderer.render(be, 0f, it, sources, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY)
+                    }
                 } catch (e: Exception) { ELOG("Failed to render block entity\n${e.stackTraceToString()}"); toRemove.add(i)
                 } catch (e: Error) { ELOG("Failed to render block entity\n${e.stackTraceToString()}"); toRemove.add(i) }
                 poseStack.popPose()

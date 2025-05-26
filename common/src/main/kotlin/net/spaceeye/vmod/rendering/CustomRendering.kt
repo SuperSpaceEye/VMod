@@ -124,8 +124,6 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
     } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION);
     } catch (e: Exception) { ELOG("Renderer raised exception:\n${e.stackTraceToString()}")
     } catch (e: Error) { ELOG("Renderer raised error!!!\n${e.stackTraceToString()}") }
-
-    if (renderBlockRenderers) RenderingStuff.blockBuffer.endBatch()
 }
 
 private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {

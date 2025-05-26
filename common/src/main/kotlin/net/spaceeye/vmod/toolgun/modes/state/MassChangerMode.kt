@@ -21,6 +21,7 @@ import org.valkyrienskies.mod.common.BlockStateInfo
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 
+//TODO rework it?
 class MassChangerMode: ExtendableToolgunMode(), MassChangerGUI, MassChangerHUD {
     @JsonIgnore private var i = 0
 

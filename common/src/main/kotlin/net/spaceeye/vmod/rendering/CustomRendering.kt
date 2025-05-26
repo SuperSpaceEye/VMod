@@ -114,6 +114,10 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
     for (ship in level.shipObjectWorld.loadedShips) {
         val data = RenderingData.client.getData()
         for ((_, render) in data[ship.id] ?: continue) {
+            val poseStack = PoseStack().also {
+                it.setIdentity()
+                it.mulPoseMatrix(poseStack.last().pose())
+            }
             when (render) {
                 is BlockRenderer -> if (renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
                 else -> if(!renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderData(poseStack, camera, timestamp)
@@ -138,6 +142,10 @@ private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlock
         if (render.activeFor_ms + render.timestampOfBeginning < now) { toDelete.add(idx); continue }
         if ((render.renderingPosition - cpos).sqrDist() > RenderingSettings.renderingArea*RenderingSettings.renderingArea) { continue }
 
+        val poseStack = PoseStack().also {
+            it.setIdentity()
+            it.mulPoseMatrix(poseStack.last().pose())
+        }
         render.wasActivated = true
         render.renderData(poseStack, camera, timestamp)
     }
@@ -150,6 +158,10 @@ private fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, render
     val page = RenderingData.client.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
     try {
     for ((_, render) in page) {
+        val poseStack = PoseStack().also {
+            it.setIdentity()
+            it.mulPoseMatrix(poseStack.last().pose())
+        }
         when (render) {
             is BlockRenderer -> if (renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
             else -> if(!renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderData(poseStack, camera, timestamp)

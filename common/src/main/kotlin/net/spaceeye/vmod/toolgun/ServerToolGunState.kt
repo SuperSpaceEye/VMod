@@ -69,9 +69,7 @@ object ServerToolGunState: ServerClosable() {
     }
 
     @JvmStatic fun playerHasAccess(player: ServerPlayer): Boolean {
-        return      player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_TOOLGUN_PERMISSION_LEVEL)
-                && !ToolgunPermissionManager.getDisallowedPlayers().contains(player.uuid)
-                ||  ToolgunPermissionManager.getAllowedPlayers().contains(player.uuid)
+        return player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_TOOLGUN_PERMISSION_LEVEL)
     }
 
     @JvmStatic fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {

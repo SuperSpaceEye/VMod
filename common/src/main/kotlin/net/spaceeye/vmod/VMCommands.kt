@@ -24,8 +24,8 @@ import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.shipAttachments.PhysgunController
 import net.spaceeye.vmod.shipAttachments.ThrustersController
 import net.spaceeye.vmod.shipAttachments.WeightSynchronizer
+import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.toolgun.ToolgunPermissionManager
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
 import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics
 import net.spaceeye.vmod.utils.Vector3d
@@ -62,15 +62,22 @@ object VMCommands {
         set(value) {
             VMConfig.SERVER.PERMISSIONS.VMOD_COMMANDS_PERMISSION_LEVEL = value
         }
+    //do not change
+    const val permissionString = "Allow Command Usage"
 
-    private fun isHoldingToolgun(it: CommandSourceStack): Boolean {
+    init {
+        PlayerAccessManager.addPermission(permissionString)
+    }
+
+    //TODO this is stupid
+    private fun hasPermission(it: CommandSourceStack): Boolean {
         val player = try {
             it.playerOrException
         } catch (e: Exception) {
             return false
         }
 
-        return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem() && ServerToolGunState.playerHasAccess(player)
+        return PlayerAccessManager.hasPermission(player, permissionString)
     }
 
     private fun findClosestShips(cc: CommandContext<CommandSourceStack>): List<Ship> {
@@ -288,25 +295,6 @@ object VMCommands {
     }
 
     private object OP {
-        fun allowPlayerToUseToolgun(cc: CommandContext<CommandSourceStack>): Int {
-            val uuid = EntityArgument.getPlayer(cc, "player").uuid
-            ToolgunPermissionManager.allowedPlayersAdd(uuid)
-            return 0
-        }
-
-        fun disallowPlayerFromUsingToolgun(cc: CommandContext<CommandSourceStack>): Int {
-            val uuid = EntityArgument.getPlayer(cc, "player").uuid
-            ToolgunPermissionManager.disallowedPlayersAdd(uuid)
-            return 0
-        }
-
-        fun clearPlayerFromSpecialPermission(cc: CommandContext<CommandSourceStack>): Int {
-            val uuid = EntityArgument.getPlayer(cc, "player").uuid
-            ToolgunPermissionManager.allowedPlayersRemove(uuid)
-            ToolgunPermissionManager.disallowedPlayersRemove(uuid)
-            return 0
-        }
-
         fun changeDimensionGravity(cc: CommandContext<CommandSourceStack>): Int {
             val dimension = DimensionArgument.getDimension(cc, "dimension")
 
@@ -345,7 +333,7 @@ object VMCommands {
     fun registerServerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             lt("vmod")
-            .requires { it.hasPermission(permissionLevel) || isHoldingToolgun(it) }
+            .requires { it.hasPermission(permissionLevel) || hasPermission(it) }
             .then(
                 lt("teleport").then(
                     arg("ship", ShipArgument.ships()).then(
@@ -455,24 +443,6 @@ object VMCommands {
                         arg("level", IntegerArgumentType.integer(0, 4)).executes {
                             permissionLevel = IntegerArgumentType.getInteger(it, "level")
                             0
-                        }
-                    )
-                ).then(
-                    lt("allow-player-to-use-toolgun").then(
-                        arg("player", EntityArgument.player()).executes {
-                            OP.allowPlayerToUseToolgun(it)
-                        }
-                    )
-                ).then(
-                    lt("disallow-player-from-using-toolgun").then(
-                        arg("player", EntityArgument.player()).executes {
-                            OP.disallowPlayerFromUsingToolgun(it)
-                        }
-                    )
-                ).then(
-                    lt("clear-player-from-special-permissions").then(
-                        arg("player", EntityArgument.player()).executes {
-                            OP.clearPlayerFromSpecialPermission(it)
                         }
                     )
                 ).then(

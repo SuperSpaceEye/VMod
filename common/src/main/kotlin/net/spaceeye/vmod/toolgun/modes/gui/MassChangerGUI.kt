@@ -9,6 +9,7 @@ import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
 import net.spaceeye.vmod.toolgun.modes.state.MassChangerMode
 import net.spaceeye.vmod.translate.*
+import java.awt.Color
 
 interface MassChangerGUI: GUIBuilder, EGUIBuilder {
     override val itemName get() = MASS_CHANGER
@@ -16,7 +17,7 @@ interface MassChangerGUI: GUIBuilder, EGUIBuilder {
     override fun eMakeGUISettings(parentWindow: UIContainer) {
         this as MassChangerMode
 
-        makeText(MASS_CHANGER_IS_DANGEROUS.get(), 2f, 2f, parentWindow)
+        makeText(MASS_CHANGER_IS_DANGEROUS.get(), Color.red, 2f, 2f, parentWindow)
         makeTextEntry(NEW_MASS.get(), ::newMass, 2f, 2f, parentWindow, ServerLimits.instance.massLimit)
         makeCheckBox(PERSISTENT.get(), ::persistent, 2f, 2f, parentWindow)
     }

@@ -184,6 +184,8 @@ val REMOVE = x("Remove")
 val OK = x("Ok")
 val ROLE_NAME = x("Role Name")
 val DEFAULT_HUD_GUI = x("Press ==GUI_MENU_OPEN_OR_CLOSE== to open or close GUI", "default_hud_gui")
+val ONLINE_PLAYERS = x("Online Players:", "online_players")
+val OFFLINE_PLAYERS = x("Offline Players:", "offline_players")
 
 val YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN = x("You don't have the permission to use toolgun")
 val TOOLGUN_MODE_ACTIVATION_HAS_FAILED = x("Toolgun mode activation has failed")

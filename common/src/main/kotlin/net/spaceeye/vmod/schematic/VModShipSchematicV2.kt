@@ -23,7 +23,9 @@ import org.joml.Vector3i
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
+import net.spaceeye.vmod.translate.makeFake
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -142,8 +144,9 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uui
     val traversed = traverseGetAllTouchingShips(level, originShip.id)
 
     // this is needed so that schem doesn't try copying phys entities
-    val ships = traversed.mapNotNull { level.shipObjectWorld.allShips.getById(it) }
-
+    val ships = traversed
+        .mapNotNull { level.shipObjectWorld.allShips.getById(it) }
+        .filter { (it.shipAABB != null).also { r -> if (!r && player != null) player.sendMessage(makeFake("${it.slug} has null shipAABB, ignoring"), UUID(0L, 0L)) } }
     extraData = ShipSchematic.onCopy(level, ships,
         ships.associate {
             val b = it.shipAABB!!

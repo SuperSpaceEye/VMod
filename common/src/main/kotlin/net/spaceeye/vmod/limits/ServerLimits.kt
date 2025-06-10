@@ -58,6 +58,7 @@ open class ServerLimitsInstance: ReflectableObject {
     val extensionSpeed: FloatLimit by get(i++, FloatLimit(0.001f))
     val fixedDistance: FloatLimit by get(i++, FloatLimit())
     val thrusterForce: DoubleLimit by get(i++, DoubleLimit(1.0, 1e100))
+    var massPerBlock: DoubleLimit by get(i++, DoubleLimit(1.0))
     val stripRadius: DoubleLimit by get(i++, DoubleLimit(0.0, 10.0))
     val maxDistance: DoubleLimit by get(i++, DoubleLimit(0.0, 100.0))
     val gearRatio: FloatLimit by get(i++, FloatLimit(0.001f))

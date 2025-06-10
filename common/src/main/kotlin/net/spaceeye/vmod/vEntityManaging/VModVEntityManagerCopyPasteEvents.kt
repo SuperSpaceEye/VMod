@@ -38,16 +38,16 @@ class VModVEntityManagerCopyPasteEvents: ISchematicEvent {
 
     override fun onPasteBeforeBlocksAreLoaded(
         level: ServerLevel,
-        maybeLoadedShips: List<Pair<ServerShip, Long>>,
-        emptyShip: Pair<ServerShip, Long>,
-        centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>,
+        maybeLoadedShips: Map<Long, ServerShip>,
+        emptyShip: Pair<Long, ServerShip>,
+        centerPositions: Map<ShipId, Pair<org.joml.Vector3d, org.joml.Vector3d>>,
         data: Supplier<FriendlyByteBuf>?
     ) {}
 
     override fun onPasteAfterBlocksAreLoaded(
         level: ServerLevel,
-        loadedShips: List<Pair<ServerShip, Long>>,
-        centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>,
+        loadedShips: Map<Long, ServerShip>,
+        centerPositions: Map<ShipId, Pair<org.joml.Vector3d, org.joml.Vector3d>>,
         data: Supplier<FriendlyByteBuf>?
     ) {
         if (data == null) {return}
@@ -58,13 +58,7 @@ class VModVEntityManagerCopyPasteEvents: ISchematicEvent {
         val lastDimensionIds = instance.loadDimensionIds(tag)
         val toInitVEntities = (tag[SAVE_TAG_NAME_STRING] as ListTag).mapNotNull { instance.loadVEntityFromTag(it as CompoundTag, lastDimensionIds) }
 
-        val mapped = loadedShips.associate {
-            if (lastDimensionIds.containsKey(it.second)) {
-                Pair(level.shipObjectWorld.dimensionToGroundBodyIdImmutable[lastDimensionIds[it.second]]!!, it.first.id)
-            } else {
-                Pair(it.second, it.first.id)
-            }
-        }
+        val mapped = loadedShips.map { Pair(it.key, it.value.id) }.toMap()
 
         val changedIds = mutableMapOf<Int, Int>()
         for (it in toInitVEntities) {

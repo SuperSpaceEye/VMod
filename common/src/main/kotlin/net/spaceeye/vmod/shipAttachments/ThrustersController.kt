@@ -124,7 +124,7 @@ class ThrustersController: ShipForcesInducer {
         fun getOrCreate(ship: LoadedServerShip) =
             ship.getAttachment<ThrustersController>()
                 ?: ThrustersController().also {
-                    ship.setAttachment(it)
+                    ship.saveAttachment(it)
                 }
     }
 }

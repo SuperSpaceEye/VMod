@@ -20,19 +20,19 @@ import org.valkyrienskies.core.api.ships.*
 class GravityController(
     var dimensionId: String,
 ): ShipForcesInducer {
+    var useDimensionGravity = true
+
     @JsonIgnore
-    var gravityVector = VSGravityManager.getDimensionGravityMutableReference(dimensionId)
+    var dimensionGravity = VSGravityManager.getDimensionGravityMutableReference(dimensionId)
+    @JsonIgnore
+    var gravityVector = dimensionGravity
 
     private var gravityVectorForSaving: JVector3d
         get() = gravityVector.toJomlVector3d()
-        set(value) {
-            gravityVector = Vector3d(value)
-            // a bit dumb but should work
-            val dimensionGravity = VSGravityManager.getDimensionGravityMutableReference(dimensionId)
-            if (gravityVector == dimensionGravity) { gravityVector = dimensionGravity }
-        }
+        set(value) { gravityVector = Vector3d(value) }
 
     override fun applyForces(physShip: PhysShip) {
+        val gravityVector = if (useDimensionGravity) dimensionGravity else gravityVector
         val forceDiff = (gravityVector - VS_DEFAULT_GRAVITY) * physShip.mass
         if (forceDiff.sqrDist() < Float.MIN_VALUE) return
 
@@ -49,7 +49,7 @@ class GravityController(
         fun getOrCreate(ship: LoadedServerShip) =
             ship.getAttachment<GravityController>()
                 ?: GravityController(ship.chunkClaimDimension).also {
-                    ship.setAttachment(it)
+                    ship.saveAttachment(it)
                 }
     }
 }

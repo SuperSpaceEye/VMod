@@ -76,7 +76,7 @@ object SchematicActionsQueue: ServerClosable() {
 
     fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
 
-    fun queueShipsCreationEvent(level: ServerLevel, player: ServerPlayer?, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: (ships: List<Pair<ServerShip, Long>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit) {
+    fun queueShipsCreationEvent(level: ServerLevel, player: ServerPlayer?, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: (ships: List<Pair<Long, ServerShip>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit) {
         placeData[uuid] = SchemPlacementItem(level, player, schematicV1, ships, postPlacementFn)
     }
 
@@ -89,14 +89,14 @@ object SchematicActionsQueue: ServerClosable() {
         val player: ServerPlayer?,
         val schematicV1: IShipSchematicDataV1,
         val shipsToCreate: List<Pair<() -> ServerShip, Long>>,
-        val postPlacementFn: (ships: List<Pair<ServerShip, Long>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit
+        val postPlacementFn: (ships: List<Pair<Long, ServerShip>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit
     ) {
         var currentShip = 0
         var currentChunk = 0
 
         val oldToNewId = mutableMapOf<Long, ShipId>()
         val centerPositions = mutableMapOf<ShipId, Pair<JVector3d, JVector3d>>()
-        var createdShips = mutableListOf<Pair<ServerShip, Long>>()
+        var createdShips = mutableListOf<Pair<Long, ServerShip>>()
         var afterPasteCallbacks = mutableListOf<() -> Unit>()
         var delayedBlockEntityLoading = ChunkyBlockData<() -> Unit>()
 
@@ -184,8 +184,8 @@ object SchematicActionsQueue: ServerClosable() {
 
             while (!createdAllBlocks && currentShip < shipsToCreate.size) {
                 if (createdShips.size - 1 < currentShip) {
-                    createdShips.add(shipsToCreate[currentShip].let { Pair(it.first.invoke(), it.second) })
-                    createdShips.last().also { (ship, shipId) -> //old ship id
+                    createdShips.add(shipsToCreate[currentShip].let { Pair(it.second, it.first.invoke()) })
+                    createdShips.last().also { (shipId, ship) -> //old ship id
                         oldToNewId[shipId] = ship.id
                         val info = shipsInfo[shipId]!!
                         val offset = info.previousCenterPosition.let { it.sub(it.x.roundToInt().toDouble(), it.y.roundToInt().toDouble(), it.z.roundToInt().toDouble(), JVector3d()) }
@@ -198,9 +198,9 @@ object SchematicActionsQueue: ServerClosable() {
                             )
                         )
                     }
-                    ShipSchematic.onPasteBeforeBlocksAreLoaded(level, createdShips, createdShips[currentShip], centerPositions, schematicV1.extraData.toMap())
+                    ShipSchematic.onPasteBeforeBlocksAreLoaded(level, createdShips.toMap(), createdShips[currentShip], centerPositions, schematicV1.extraData.toMap())
                 }
-                val ship = createdShips[currentShip].first
+                val ship = createdShips[currentShip].second
 
                 val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("Block data is null")
                 val blockPalette = schematicV1.blockPalette
@@ -235,7 +235,7 @@ object SchematicActionsQueue: ServerClosable() {
 
             //Updating all blocks
             while (currentShip < shipsToCreate.size) {
-                val ship = createdShips[currentShip].first
+                val ship = createdShips[currentShip].second
                 val currentBlockData = schematicV1.blockData[shipsToCreate[currentShip].second] ?: throw RuntimeException("Block data is null")
 
                 val shipCenter = MVector3d(
@@ -506,7 +506,7 @@ object SchematicActionsQueue: ServerClosable() {
                     var tick = 0
                     SessionEvents.serverOnTick.on { (server), unsubscribe ->
                         tick++
-                        if (tick > 1) {
+                        if (tick > 2) {
                             item!!.postPlacementFn(item.createdShips, item.centerPositions, item.entityCreationFn)
                             unsubscribe()
                         }

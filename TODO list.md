@@ -11,6 +11,12 @@
 
 # Do Eventually
 
+# Mass Changing
+* Create mode where you set mass per block, not total mass, and in total mass mode display a warning maybe?
+
+# Gravity Changer
+* rework saving/loading
+
 # Connection Mode
 * when smth like "onMassChange" exists, create another mode for stiffness, damping, and bounce threshold that makes values depend on mass of the first ship or smth, so that instead of absolute values (like 3000 N of force) it's Nx ship mass (0.5 * 100kg)
 

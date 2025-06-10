@@ -11,8 +11,8 @@ open class ReflectableItemDelegate <T : Any>(
     var reflectionPos: Int,
     var it: T?,
     val metadata: MutableMap<String, Any> = mutableMapOf<String, Any>(),
-    val setWrapper: ((old: T, new: T) -> T)? = null,
-    val getWrapper: ((value: T) -> T)? = null
+    var setWrapper: ((old: T, new: T) -> T)? = null,
+    var getWrapper: ((value: T) -> T)? = null
 ) {
     lateinit var cachedName: String
     open operator fun getValue(thisRef: Any?, property: KProperty<*>?):T {

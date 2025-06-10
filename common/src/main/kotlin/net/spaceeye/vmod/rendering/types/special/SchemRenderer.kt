@@ -42,6 +42,8 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.DataLayer
 import net.minecraft.world.level.chunk.LightChunk
 import net.minecraft.world.level.chunk.LightChunkGetter
+import net.minecraft.world.level.entity.EntityAccess
+import net.minecraft.world.level.entity.EntityTypeTest
 import net.minecraft.world.level.entity.LevelEntityGetter
 import net.minecraft.world.level.gameevent.GameEvent
 import net.minecraft.world.level.lighting.LayerLightEventListener
@@ -164,6 +166,15 @@ class DummyLevelData(): ClientLevel.ClientLevelData(Difficulty.PEACEFUL, false, 
     override fun setSpawnAngle(spawnAngle: Float) {}
 }
 
+class DummyLevelEntityGetter<T: EntityAccess?>(): LevelEntityGetter<T> {
+    override fun get(id: Int): T? = null
+    override fun get(uuid: UUID): T? = null
+    override fun getAll(): Iterable<T?>? = listOf()
+    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, consumer: Consumer<U?>) {}
+    override fun get(boundingBox: AABB, consumer: Consumer<T?>) {}
+    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, bounds: AABB, consumer: Consumer<U?>) {}
+}
+
 //null, DummyLevelData(), level.dimension(), level.dimensionTypeRegistration(), 0, 0, null, null, level.isDebug, 0L
 class FakeClientLevel(
     val level: ClientLevel,
@@ -232,7 +243,7 @@ class FakeClientLevel(
     override fun gameEvent(entity: Entity?, event: GameEvent, pos: BlockPos) {}
     override fun sendBlockUpdated(pos: BlockPos, oldState: BlockState, newState: BlockState, flags: Int) {}
     override fun destroyBlockProgress(breakerId: Int, pos: BlockPos, progress: Int) {}
-    override fun getEntities(): LevelEntityGetter<Entity?>? = DummyLevelEntityGetter<Entity>()
+    override fun getEntities(): LevelEntityGetter<Entity?>? = DummyLevelEntityGetter<Entity?>()
 
     override fun getUncachedNoiseBiome(x: Int, y: Int, z: Int): Holder<Biome?>? { throw AssertionError("Shouldn't be called") }
     override fun gatherChunkSourceStats(): String? { throw AssertionError("Shouldn't be called")  }

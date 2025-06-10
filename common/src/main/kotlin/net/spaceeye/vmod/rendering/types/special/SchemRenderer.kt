@@ -31,7 +31,7 @@ import net.minecraft.world.item.crafting.RecipeManager
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.ColorResolver
-import net.minecraft.world.level.GameRules
+import net.minecraft.world.level.Level
 import net.minecraft.world.level.LightLayer
 import net.minecraft.world.level.biome.Biome
 import net.minecraft.world.level.block.Block
@@ -146,26 +146,6 @@ class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
     override fun retainData(pos: ChunkPos, retain: Boolean) {}
 }
 
-class DummyLevelData(): ClientLevel.ClientLevelData(Difficulty.PEACEFUL, false, false) {
-    override fun getXSpawn(): Int = 0
-    override fun getYSpawn(): Int = 0
-    override fun getZSpawn(): Int = 0
-    override fun getSpawnAngle(): Float = 0f
-    override fun getGameTime(): Long = 0L
-    override fun getDayTime(): Long = 0L
-    override fun isThundering(): Boolean = false
-    override fun isRaining(): Boolean = false
-    override fun setRaining(raining: Boolean) {}
-    override fun isHardcore(): Boolean = false
-    override fun getGameRules(): GameRules? = Minecraft.getInstance().level!!.gameRules
-    override fun getDifficulty(): Difficulty? = Difficulty.PEACEFUL
-    override fun isDifficultyLocked(): Boolean = true
-    override fun setXSpawn(xSpawn: Int) {}
-    override fun setYSpawn(ySpawn: Int) {}
-    override fun setZSpawn(zSpawn: Int) {}
-    override fun setSpawnAngle(spawnAngle: Float) {}
-}
-
 class DummyLevelEntityGetter<T: EntityAccess?>(): LevelEntityGetter<T> {
     override fun get(id: Int): T? = null
     override fun get(uuid: UUID): T? = null
@@ -175,15 +155,14 @@ class DummyLevelEntityGetter<T: EntityAccess?>(): LevelEntityGetter<T> {
     override fun <U : T?> get(test: EntityTypeTest<T?, U?>, bounds: AABB, consumer: Consumer<U?>) {}
 }
 
-//null, DummyLevelData(), level.dimension(), level.dimensionTypeRegistration(), 0, 0, null, null, level.isDebug, 0L
-class FakeClientLevel(
+class FakeLevel(
     val level: ClientLevel,
     val data: ChunkyBlockData<BlockItem>,
     flatTagData: List<CompoundTag>,
     val palette: IBlockStatePalette,
     val infoItem: IShipInfo
-): ClientLevel(
-    null, DummyLevelData(), level.dimension(), level.registryAccess(), level.dimensionTypeRegistration(), Supplier{level.profiler}, level.isClientSide, level.isDebug, 0L, 0
+): Level(
+    null, level.dimension(), level.dimensionTypeRegistration(), Supplier{level.profiler}, true, false, 0L
 ) {
     val defaultState = Blocks.AIR.defaultBlockState()
     val defaultFluidState = Fluids.EMPTY.defaultFluidState()
@@ -244,18 +223,18 @@ class FakeClientLevel(
     override fun sendBlockUpdated(pos: BlockPos, oldState: BlockState, newState: BlockState, flags: Int) {}
     override fun destroyBlockProgress(breakerId: Int, pos: BlockPos, progress: Int) {}
     override fun getEntities(): LevelEntityGetter<Entity?>? = DummyLevelEntityGetter<Entity?>()
+    override fun players(): List<AbstractClientPlayer?>? = emptyList()
+    override fun getFreeMapId(): Int = 0
+    override fun getEntity(id: Int): Entity? = null
 
     override fun getUncachedNoiseBiome(x: Int, y: Int, z: Int): Holder<Biome?>? { throw AssertionError("Shouldn't be called") }
     override fun gatherChunkSourceStats(): String? { throw AssertionError("Shouldn't be called")  }
-    override fun getEntity(id: Int): Entity? { throw AssertionError("Shouldn't be called")  }
     override fun getMapData(mapName: String): MapItemSavedData? { throw AssertionError("Shouldn't be called")  }
-    override fun getFreeMapId(): Int { throw AssertionError("Shouldn't be called")  }
     override fun getScoreboard(): Scoreboard? { throw AssertionError("Shouldn't be called")  }
     override fun getRecipeManager(): RecipeManager? { throw AssertionError("Shouldn't be called")  }
     override fun getBlockTicks(): LevelTickAccess<Block?>? { throw AssertionError("Shouldn't be called")  }
     override fun getFluidTicks(): LevelTickAccess<Fluid?>? { throw AssertionError("Shouldn't be called")  }
     override fun getChunkSource(): ClientChunkCache? { throw AssertionError("Shouldn't be called")  }
-    override fun players(): List<AbstractClientPlayer?>? { throw AssertionError("Shouldn't be called")  }
 }
 
 class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
@@ -361,7 +340,7 @@ class TransparencyWrapperBufferSource(val source: MultiBufferSource, val transpa
 
 class SchematicRenderer(val schem: IShipSchematic, val transparency: Float, val renderBlockEntities: Boolean = true) {
     val matrixList: List<Matrix4f>
-    var fakeLevels = mutableListOf<FakeClientLevel>()
+    var fakeLevels = mutableListOf<FakeLevel>()
     val mySources = SchemMultiBufferSource()
 
     init {
@@ -381,7 +360,7 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float, val 
             val infoItem = info[shipId]!!
             val rotationQuat = infoItem.rotation.get(Quaternionf())
 
-            val flevel = FakeClientLevel(level, data, schem.flatTagData, schem.blockPalette, infoItem)
+            val flevel = FakeLevel(level, data, schem.flatTagData, schem.blockPalette, infoItem)
             fakeLevels.add(flevel)
 
             //should be in the rotated world frame

@@ -13,6 +13,7 @@ import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.BlockStateInfo
+import org.valkyrienskies.mod.common.shipObjectWorld
 
 class TestMode: ExtendableToolgunMode() {
     override val itemName = makeFake("Test Mode")
@@ -24,6 +25,7 @@ class TestMode: ExtendableToolgunMode() {
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {return}
         val ship = raycastResult.ship as? ServerShip ?: return
+        val lship = level.shipObjectWorld.loadedShips.getById(ship.id)
 
         val aabb = ship.shipAABB ?: return
 

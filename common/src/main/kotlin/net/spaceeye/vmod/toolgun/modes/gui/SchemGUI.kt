@@ -6,6 +6,7 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.guiElements.Button
+import net.spaceeye.vmod.guiElements.makeCheckBox
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.FloatLimit
 import net.spaceeye.vmod.limits.StrLimit
@@ -122,6 +123,7 @@ interface SchemGUI: GUIBuilder, EGUIBuilder {
     override fun eMakeGUISettings(parentWindow: UIContainer) {
         this as SchemMode
         makeTextEntry(TRANSPARENCY.get(), ::transparency, 2f, 2f, parentWindow, FloatLimit(0f, 1f))
+        makeCheckBox(TRY_RENDER_BLOCK_ENTITIES.get(), ::tryRenderBlockEntities, 2f, 2f, parentWindow)
 
         Companion.parentWindow = parentWindow
 

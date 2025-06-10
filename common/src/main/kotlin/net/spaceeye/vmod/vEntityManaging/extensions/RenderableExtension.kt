@@ -8,9 +8,9 @@ import net.spaceeye.vmod.vEntityManaging.util.VEntityExtension
 import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.reflectable.tDeserialize
 import net.spaceeye.vmod.reflectable.tSerialize
+import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.RenderingTypes.getType
-import net.spaceeye.vmod.rendering.ServerRenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -37,7 +37,7 @@ open class RenderableExtension(): VEntityExtension {
 
     override fun onBeforeOnScaleByVEntity(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {
         renderer.scaleBy(scaleBy)
-        ServerRenderingData.setUpdated(rID, renderer)
+        RenderingData.server.setUpdated(rID, renderer)
     }
 
     override fun onSerialize(): CompoundTag? {
@@ -64,11 +64,11 @@ open class RenderableExtension(): VEntityExtension {
 
     override fun onMakeVEntity(level: ServerLevel) {
         val ids = obj.attachedToShips(listOf())
-        ServerRenderingData.removeRenderer(rID)
-        rID = ServerRenderingData.addRenderer(ids, renderer)
+        RenderingData.server.removeRenderer(rID)
+        rID = RenderingData.server.addRenderer(ids, renderer)
     }
 
     override fun onDeleteVEntity(level: ServerLevel) {
-        ServerRenderingData.removeRenderer(rID)
+        RenderingData.server.removeRenderer(rID)
     }
 }

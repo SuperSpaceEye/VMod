@@ -3,6 +3,7 @@ package net.spaceeye.vmod.vsStuff
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.utils.PosMap
+import net.spaceeye.vmod.utils.ServerClosable
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.world.chunks.BlockType
@@ -12,9 +13,14 @@ import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-object CustomBlockMassManager {
+object CustomBlockMassManager: ServerClosable() {
     val dimToPosToMass = mutableMapOf<DimensionId, PosMap<Double>>()
     val shipToPosToMass = mutableMapOf<ShipId, PosMap<Double>>()
+
+    override fun close() {
+        dimToPosToMass.clear()
+        shipToPosToMass.clear()
+    }
 
     fun removeCustomMass(dimensionId: DimensionId, x: Int, y: Int, z: Int) {
         dimToPosToMass.getOrPut(dimensionId) { PosMap() }.removeItemFromPos(x, y, z)

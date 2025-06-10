@@ -7,12 +7,10 @@
     "LevelChunkMixin",
     "ShipObjectClientWorldMixin",
     "ShipObjectServerWorldMixin",
-    "ShipObjectWorldAccessor",
-    "SmartBlockEntityAccessor"
+    "ShipObjectWorldAccessor"
   ],
   "client": [
     "BlockRenderDispatcherAccessor",
-    "BufferBuilderAccessor",
     "GameRendererMixin",
     "KeyboardHandlerMixin",
     "LevelRendererMixin",

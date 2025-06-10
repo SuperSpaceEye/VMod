@@ -59,7 +59,7 @@ fun calculatePrecise(raycastResult: RaycastFunctions.RaycastResult, precisePlace
     return points.minBy { (it - point).sqrDist() }
 }
 
-fun BaseMode.serverRaycastAndActivateFn(
+inline fun serverRaycastAndActivateFn(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,
     level: Level,
@@ -84,7 +84,7 @@ fun BaseMode.serverRaycastAndActivateFn(
     fnToActivate(level, shipId, ship, spoint, rpoint, raycastResult)
 }
 
-fun _serverRaycast2PointsFnActivation(
+fun <T> serverRaycast2PointsFnActivationBase(
     mode: PositionModes,
     precisePlacementAssistSideNum: Int,
     level: ServerLevel,
@@ -102,17 +102,17 @@ fun _serverRaycast2PointsFnActivation(
         rpoint1: Vector3d,
         rpoint2: Vector3d,
         prresult: RaycastFunctions.RaycastResult,
-        rresult: RaycastFunctions.RaycastResult) -> Unit
-) {
-    if (raycastResult.state.isAir) {return}
+        rresult: RaycastFunctions.RaycastResult) -> T
+): T? {
+    if (raycastResult.state.isAir) {return null}
     val (res, previousResult) = processNewResult(raycastResult)
-    if (!res) {return}
+    if (!res) {return null}
 
     val ship1 = previousResult!!.ship as ServerShip?
     val ship2 = raycastResult.ship as ServerShip?
 
-    if (ship1 == null && ship2 == null) { resetFn(); return }
-    if (ship1 == ship2) { resetFn(); return }
+    if (ship1 == null && ship2 == null) { resetFn(); return null }
+    if (ship1 == ship2) { resetFn(); return null }
 
     val shipId1: ShipId = previousResult.shipId
     val shipId2: ShipId = raycastResult.shipId
@@ -122,7 +122,7 @@ fun _serverRaycast2PointsFnActivation(
     val rpoint1 = if (ship1 == null) spoint1 else posShipToWorld(ship1, Vector3d(spoint1))
     val rpoint2 = if (ship2 == null) spoint2 else posShipToWorld(ship2, Vector3d(spoint2))
 
-    fnToActivate(level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, previousResult, raycastResult)
+    return fnToActivate(level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, previousResult, raycastResult)
 }
 
 //TODO this is stupid
@@ -145,4 +145,4 @@ fun BaseMode.serverRaycast2PointsFnActivation(
         rpoint2: Vector3d,
         prresult: RaycastFunctions.RaycastResult,
         rresult: RaycastFunctions.RaycastResult) -> Unit
-): Unit = _serverRaycast2PointsFnActivation(mode, precisePlacementAssistSideNum, level, raycastResult, processNewResult, resetFn, fnToActivate)
+): Unit = serverRaycast2PointsFnActivationBase(mode, precisePlacementAssistSideNum, level, raycastResult, processNewResult, resetFn, fnToActivate) ?: Unit

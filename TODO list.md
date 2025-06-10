@@ -10,6 +10,9 @@
 
 # Do Eventually
 
+# Gravity Changer
+* rework saving/loading
+
 # Connection Mode
 * when smth like "onMassChange" exists, create another mode for stiffness, damping, and bounce threshold that makes values depend on mass of the first ship or smth, so that instead of absolute values (like 3000 N of force) it's Nx ship mass (0.5 * 100kg)
 
@@ -21,7 +24,8 @@
 * Redo ConeBlockRenderer into a more general version
 
 ## Constraint disabler
-* A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
+* An extension that will enable/disable it when signal is given
+* Maybe also a variant that removes them?
 
 ## Toolgun settings presets menu
 * maybe when pressing alt or smth it will show all presets for this mode, and allow player to cycle them

@@ -3,6 +3,7 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.compat.vsBackwardsCompat.scaling
 import net.spaceeye.vmod.vEntityManaging.addFor
 import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
@@ -18,7 +19,7 @@ import net.spaceeye.vmod.toolgun.modes.extensions.*
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.utils.*
-import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShipNoScaling
+import net.spaceeye.vmod.utils.vs.transformDirectionWorldToShip
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
@@ -52,9 +53,9 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
         val distance = if (fixedDistance < 0) {(rpoint2 - rpoint1).dist().toFloat()} else {fixedDistance}
 
         level.makeVEntity(ConnectionConstraint(
-            spoint1, spoint2,
-            ship1?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
-            ship2?.let { transformDirectionWorldToShipNoScaling(it, wDir) } ?: wDir.copy(),
+            spoint1, spoint2, //directions get scaled
+            ship1?.let { transformDirectionWorldToShip(it, wDir) } ?: wDir.copy(),
+            ship2?.let { transformDirectionWorldToShip(it, wDir) } ?: wDir.copy(),
             Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
             Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
             shipId1, shipId2, maxForce, stiffness, damping, distance, connectionMode
@@ -92,9 +93,9 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                         { (it as ConnectionMode).connectionMode == ConnectionConstraint.ConnectionModes.HINGE_ORIENTATION },
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->
                             ConnectionConstraint(
-                                spoint1, spoint2,
-                                rresults.first.globalNormalDirection!!,
-                                -rresults.second.globalNormalDirection!!,
+                                spoint1, spoint2, //scale directions manually
+                                 rresults.first .globalNormalDirection!! / (ship1?.transform?.scaling?.x() ?: 1.0),
+                                -rresults.second.globalNormalDirection!! / (ship2?.transform?.scaling?.x() ?: 1.0),
                                 Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
                                 Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
                                 shipId1, shipId2, it.maxForce, it.stiffness, it.damping, paDistanceFromBlock.toFloat(), it.connectionMode

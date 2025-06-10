@@ -61,14 +61,10 @@ object VMConfig {
             var VMOD_OP_COMMANDS_PERMISSION_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
             var VMOD_TOOLGUN_PERMISSION_LEVEL: Int by CInt(2, "No Comment", Pair(0, 4))
             var VMOD_CHANGING_SERVER_SETTINGS_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
-
-            //TODO using config to store shit
-            var ALWAYS_ALLOWED: String by CString("", "DO NOT CHANGE")
-            var ALWAYS_DISALLOWED: String by CString("", "DO NOT CHANGE")
         }
 
         class Schematics: ConfigSubDirectory() {
-            var TIMEOUT_TIME: Int by CInt(50, "No Comment", Pair(0, 20000))
+            var TIMEOUT_TIME: Int by CInt(50, "No Comment", Pair(0, Int.MAX_VALUE))
         }
     }
 }

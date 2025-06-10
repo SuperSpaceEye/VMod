@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.Serializable
+import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.getMapper
 import java.util.UUID
 
@@ -50,6 +51,7 @@ class RolePermissionsData(): Serializable {
 class PlayersRolesData(): Serializable {
     var playersRoles = mutableMapOf<UUID, PlayerAccessState>()
     var allRoles = mutableListOf<String>()
+    var online = mutableListOf<UUID>()
 
     override fun serialize(): FriendlyByteBuf {
         val buf = FriendlyByteBuf(Unpooled.buffer(512))
@@ -57,6 +59,7 @@ class PlayersRolesData(): Serializable {
         synchronized(PlayerAccessManager) {
             buf.writeCollection(PlayerAccessManager.playersRoles.toList()) { buf, it -> buf.writeUUID(it.first); buf.writeUtf(it.second.nickname); buf.writeUtf(it.second.role)}
             buf.writeCollection(PlayerAccessManager.allRoles) { buf, it -> buf.writeUtf(it) }
+            buf.writeCollection(ServerObjectsHolder.server!!.playerList.players.map { it.uuid }) { buf, it -> buf.writeUUID(it) }
         }
 
         return FriendlyByteBuf(Unpooled.wrappedBuffer(buf.accessByteBufWithCorrectSize()))
@@ -68,6 +71,7 @@ class PlayersRolesData(): Serializable {
             Pair(uuid, PlayerAccessState(uuid, buf.readUtf(), buf.readUtf()))
         }.associate { it }.toMutableMap()
         allRoles = buf.readCollection({ mutableListOf() }) {buf -> buf.readUtf()}
+        online = buf.readCollection({ mutableListOf() }) {buf -> buf.readUUID()}
     }
 }
 

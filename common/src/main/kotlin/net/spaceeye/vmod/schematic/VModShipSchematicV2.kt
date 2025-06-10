@@ -1,11 +1,13 @@
 package net.spaceeye.vmod.schematic
 
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.*
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
+import net.spaceeye.valkyrien_ship_schematics.interfaces.ICopyableForcesInducer
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematicInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
@@ -23,6 +25,9 @@ import org.joml.Vector3i
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.shipAttachments.AttachmentAccessor
+import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
+import net.spaceeye.vmod.translate.makeFake
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -59,8 +64,17 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid
     if (!verifyBlockDataIsValid(shipInitializers.map { it.second }, player)) { return false }
 
     SchematicActionsQueue.queueShipsCreationEvent(level, player, uuid, shipInitializers, this) { ships, centerPositions, entityCreationFn ->
-        val createdShips = ships.map { it.first }
+        val createdShips = ships.map { it.second }
+
+        val shipsMap = ships.toMap()
+        try {
+            loadAttachments(level, shipsMap, centerPositions, extraData)
+        } catch (e: Throwable) {
+            ELOG(e.stackTraceToString())
+        }
+
         createdShips.zip(newTransforms).forEach { (it, transform) ->
+            if (it.transformProvider is SchemTempPositionSetter) { it.transformProvider = null }
             val b = it.shipAABB!!
             var offset = MVector3d(it.transform.positionInModel) - MVector3d(
                 (b.maxX() - b.minX()) / 2.0 + b.minX(),
@@ -77,12 +91,92 @@ fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid
         }
 
         entityCreationFn()
-        ShipSchematic.onPasteAfterBlocksAreLoaded(level, ships, centerPositions, extraData.toMap())
+        ShipSchematic.onPasteAfterBlocksAreLoaded(level, shipsMap, centerPositions, extraData.toMap())
         postPlaceFn(createdShips)
         SchematicActionsQueue.queueShipsUnfreezeEvent(uuid, createdShips, 10)
     }
 
     return true
+}
+
+private class AttachmentsSerializable(): ISerializable {
+    lateinit var data: MutableList<Pair<Long, MutableList<ICopyableForcesInducer?>>>
+
+    constructor(data: MutableList<Pair<Long, MutableList<ICopyableForcesInducer>>>): this() {
+        this.data = data as MutableList<Pair<Long, MutableList<ICopyableForcesInducer?>>>
+    }
+
+    override fun serialize(): FriendlyByteBuf {
+        val buf = getBuffer()
+        val mapper = getMapper()
+
+        buf.writeCollection(data) {buf, (shipId, attachments) ->
+            buf.writeLong(shipId)
+            buf.writeCollection(attachments) { buf, item ->
+                buf.writeUtf(item!!.javaClass.name)
+                buf.writeByteArray(mapper.writeValueAsBytes(item))
+            }
+        }
+
+        return buf
+    }
+
+    override fun deserialize(buf: FriendlyByteBuf) {
+        val mapper = getMapper()
+
+        data = buf.readCollection({mutableListOf()}) { buf ->
+            Pair(
+                buf.readLong(),
+                buf.readCollection({mutableListOf()}) { buf ->
+                    try {
+                        val className = buf.readUtf()
+                        val clazz = Class.forName(className)
+                        mapper.readValue(buf.readByteArray(), clazz)
+                    } catch (e: Throwable) {
+                        ELOG("Failed to deserialize attachment \n${e.stackTraceToString()}")
+                        null
+                    }
+                }
+            )
+        }
+    }
+}
+
+private fun IShipSchematicDataV1.saveAttachments(ships: List<ServerShip>, level: ServerLevel, centerPositions: Map<Long, Vector3d>) {
+    val attachments = ships
+        .mapNotNull { level.shipObjectWorld.loadedShips.getById(it.id) }
+        .map { ship -> Pair(ship, AttachmentAccessor.getOrCreate(ship).forceInducers
+            .filterIsInstance<ICopyableForcesInducer>()
+            .mapNotNull { ship.getAttachment(it.javaClass) }
+            .toMutableList()
+        ) }
+        .filter { it.second.isNotEmpty() }
+
+    attachments.forEach { (ship, attachments) ->
+        attachments.forEach {
+            it.onCopy(level, ship, ships, centerPositions)
+        }
+    }
+
+    val data = attachments.map{ Pair(it.first.id, it.second) }.toMutableList()
+
+    extraData.add(Pair("SavedAttachments", AttachmentsSerializable(data)))
+}
+
+private fun loadAttachments(level: ServerLevel, ships: Map<Long, ServerShip>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, extraData: MutableList<Pair<String, ISerializable>>) {
+    if (extraData.isEmpty() || extraData.last().first != "SavedAttachments") {return}
+
+    val se = AttachmentsSerializable()
+    se.deserialize(extraData.last().second.serialize())
+
+    se.data.forEach { (oldId, attachments) ->
+        val loadedShip = level.shipObjectWorld.loadedShips.getById(ships[oldId]!!.id) ?: return@forEach
+        attachments.forEach {
+            if (it == null) return@forEach
+            loadedShip.saveAttachment(it.javaClass, it)
+            it.onPaste(level, loadedShip, ships, centerPositions)
+        }
+    }
 }
 
 private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<BodyTransform>): List<Pair<() -> ServerShip, Long>> {
@@ -110,6 +204,8 @@ private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vecto
 
         val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(), false, it.shipScale, level.dimensionId)
         newShip.isStatic = true
+
+        newShip.transformProvider = SchemTempPositionSetter(newShip, MVector3d(pos), MVector3d(newTransform.position))
 
         //TODO idk if i can calculate final position correctly, so maybe just teleport it to idk 100000000 100000000 100000000 while it's being created?
         level.shipObjectWorld.teleportShip(newShip, ShipTeleportDataImpl(
@@ -139,24 +235,25 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uui
     val traversed = traverseGetAllTouchingShips(level, originShip.id)
 
     // this is needed so that schem doesn't try copying phys entities
-    val ships = traversed.mapNotNull { level.shipObjectWorld.allShips.getById(it) }
-
-    extraData = ShipSchematic.onCopy(level, ships,
-        ships.associate {
-            val b = it.shipAABB!!
-            Pair(it.id, JVector3d(
-                (b.maxX() - b.minX()) / 2.0 + b.minX(),
-                (b.maxY() - b.minY()) / 2.0 + b.minY(),
-                (b.maxZ() - b.minZ()) / 2.0 + b.minZ(),
-            ))
-        }).toMutableList()
+    val ships = traversed
+        .mapNotNull { level.shipObjectWorld.allShips.getById(it) }
+        .filter { (it.shipAABB != null).also { r -> if (!r && player != null) player.sendMessage(makeFake("${it.slug} has null shipAABB, ignoring"), UUID(0L, 0L)) } }
+    val centerPositions = ships.associate {
+        val b = it.shipAABB!!
+        Pair(it.id, JVector3d(
+            (b.maxX() - b.minX()) / 2.0 + b.minX(),
+            (b.maxY() - b.minY()) / 2.0 + b.minY(),
+            (b.maxZ() - b.minZ()) / 2.0 + b.minZ(),
+        ))
+    }
+    extraData = ShipSchematic.onCopy(level, ships, centerPositions).toMutableList()
 
     (this as IShipSchematic).saveShipData(ships, originShip)
+    this.saveAttachments(ships, level, centerPositions) // should always be saved last
     // copy ship blocks separately
     SchematicActionsQueue.queueShipsSavingEvent(level, player, uuid, ships, this, true, postSaveFn)
     return true
 }
-
 
 private fun getWorldAABB(it: ServerShip, newTransform: BodyTransform): AABBd = it.shipAABB?.toAABBd(AABBd())?.transform(newTransform.toWorld) ?: AABBd(it.worldAABB)
 

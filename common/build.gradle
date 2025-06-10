@@ -7,7 +7,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation ("net.spaceeye:valkyrien-ship-schematics-$project.name:1.20.1-1.1") {transitive false}
+    modImplementation ("net.spaceeye:valkyrien-ship-schematics-$project.name:1.20.1-1.2") {transitive false}
     implementation "org.jgrapht:jgrapht-core:1.5.2"
 
     api 'org.joml:joml-primitives:1.10.0'
@@ -39,6 +39,11 @@ dependencies {
 
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.0-beta.2"))
 }
+
+//Renames .kotlin_module of common so that it's not overwrited during forge/fabric compilation
+compileKotlin { doLast {
+    file(compileKotlin.destinationDirectory.get().toString() + "/META-INF/VMod.kotlin_module").renameTo(file(compileKotlin.destinationDirectory.get().toString() + "/META-INF/VMod_common.kotlin_module"))
+} }
 
 architectury {
     common("fabric", "forge")

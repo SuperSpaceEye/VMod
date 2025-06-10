@@ -18,7 +18,7 @@ import net.spaceeye.vmod.toolgun.modes.hud.StripHUD
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
-import net.spaceeye.vmod.rendering.ClientRenderingData
+import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
@@ -53,7 +53,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
             val response = queryIds ?: return@on
 
             response.forEach {
-                val renderer = ClientRenderingData.getItem(it.key) ?: return@forEach
+                val renderer = RenderingData.client.getItem(it.key) ?: return@forEach
                 if (mode == StripModes.StripAll || (it.value - result.globalHitPos!!).sqrDist() <= radius * radius) {
                     renderer.highlightUntil(timestamp+1)
                 }

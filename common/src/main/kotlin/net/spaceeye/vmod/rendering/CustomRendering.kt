@@ -114,8 +114,12 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
 
     try {
     for (ship in level.shipObjectWorld.loadedShips) {
-        val data = ClientRenderingData.getData()
+        val data = RenderingData.client.getData()
         for ((_, render) in data[ship.id] ?: continue) {
+            val poseStack = PoseStack().also {
+                it.setIdentity()
+                it.mulPoseMatrix(poseStack.last().pose())
+            }
             when (render) {
                 is BlockRenderer -> if (renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
                 else -> if(!renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderData(poseStack, camera, timestamp)
@@ -126,8 +130,6 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
     } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION);
     } catch (e: Exception) { ELOG("Renderer raised exception:\n${e.stackTraceToString()}")
     } catch (e: Error) { ELOG("Renderer raised error!!!\n${e.stackTraceToString()}") }
-
-    if (renderBlockRenderers) RenderingStuff.blockBuffer.endBatch()
 }
 
 private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
@@ -135,25 +137,33 @@ private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlock
     val cpos = Vector3d(Minecraft.getInstance().player!!.position())
     val now = getNow_ms()
     val toDelete = mutableListOf<Int>()
-    val page = ClientRenderingData.getData()[ReservedRenderingPages.TimedRenderingObjects] ?: return
+    val page = RenderingData.client.getData()[ReservedRenderingPages.TimedRenderingObjects] ?: return
     for ((idx, render) in page) {
         if (render !is TimedRenderer || render !is PositionDependentRenderer) { toDelete.add(idx); CELOG("Found renderer in ${render.javaClass.simpleName} in renderTimedObjects that didn't implement interface TimedRenderingData or PositionDependentRenderingData.", RENDERING_HAS_THROWN_AN_EXCEPTION); continue }
         if (!render.wasActivated && render.activeFor_ms == -1L) { render.timestampOfBeginning = now }
         if (render.activeFor_ms + render.timestampOfBeginning < now) { toDelete.add(idx); continue }
         if ((render.renderingPosition - cpos).sqrDist() > RenderingSettings.renderingArea*RenderingSettings.renderingArea) { continue }
 
+        val poseStack = PoseStack().also {
+            it.setIdentity()
+            it.mulPoseMatrix(poseStack.last().pose())
+        }
         render.wasActivated = true
         render.renderData(poseStack, camera, timestamp)
     }
 
     if (toDelete.isEmpty()) {return}
-    ClientRenderingData.removeTimedRenderers(toDelete)
+    RenderingData.client.removeTimedRenderers(toDelete)
 }
 
 private fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
-    val page = ClientRenderingData.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
+    val page = RenderingData.client.getData()[ReservedRenderingPages.ClientsideRenderingObjects] ?: return
     try {
     for ((_, render) in page) {
+        val poseStack = PoseStack().also {
+            it.setIdentity()
+            it.mulPoseMatrix(poseStack.last().pose())
+        }
         when (render) {
             is BlockRenderer -> if (renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderBlockData(poseStack, camera, RenderingStuff.blockBuffer, timestamp)
             else -> if(!renderBlockRenderers) if (render.renderingTick != renderTick) render.also { it.renderingTick = renderTick }.renderData(poseStack, camera, timestamp)

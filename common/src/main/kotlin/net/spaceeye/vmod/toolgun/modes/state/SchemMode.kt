@@ -18,7 +18,6 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
-import net.spaceeye.vmod.rendering.ClientRenderingData
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
@@ -28,6 +27,7 @@ import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
 import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.constructor
+import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.special.SchemRenderer
 import net.spaceeye.vmod.schematic.VModShipSchematicV2
@@ -302,7 +302,8 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
     var rotationAngle: Ref<Double> by get(i++, Ref(0.0), {it}, customSerialize = { it, buf -> buf.writeDouble((it).it)}, customDeserialize = { buf -> val rotationAngle = Ref(0.0) ; rotationAngle.it = buf.readDouble(); rotationAngle})
 
     //TODO doesn't matter right now, but when i will add setting presets i will need a way to get this value
-    var transparency: Float = 0.5f
+    var transparency: Float = 1f
+    var tryRenderBlockEntities: Boolean = true
 
     override fun eInit(type: BaseNetworking.EnvType) {
         SchemNetworking.init(this, type)
@@ -329,13 +330,14 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
 
             if (value == null) {
                 renderer = null
-                ClientRenderingData.removeClientsideRenderer(rID)
+                RenderingData.client.removeClientsideRenderer(rID)
                 refreshHUD()
                 return
             }
 
-            renderer = SchemRenderer(value, rotationAngle, transparency)
-            rID = ClientRenderingData.addClientsideRenderer(renderer!!)
+            renderer = SchemRenderer(value, rotationAngle, transparency, tryRenderBlockEntities)
+            RenderingData.client.removeClientsideRenderer(rID)
+            rID = RenderingData.client.addClientsideRenderer(renderer!!)
             refreshHUD()
         }
 
@@ -344,7 +346,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
     var scrollAngle = Math.toRadians(10.0)
 
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult)  {
-        ClientRenderingData.removeClientsideRenderer(rID)
+        RenderingData.client.removeClientsideRenderer(rID)
         if (raycastResult.state.isAir) {
             resetState();
             ServerPlayerSchematics.schematics.remove(player.uuid)

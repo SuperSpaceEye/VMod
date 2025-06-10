@@ -23,18 +23,22 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color
 
-class PrecisePlacementAssistRenderer(var precisePlacementAssistSideNum: Int): BaseRenderer() {
+class PrecisePlacementAssistRenderer(
+    var precisePlacementAssistSideNum: Int,
+    var distance: Double = 20.0,
+    var doRender: () -> Boolean = {ToolgunItem.playerIsUsingToolgun()}
+): BaseRenderer() {
     val level = Minecraft.getInstance().level!!
 
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
-        if (!ToolgunItem.playerIsUsingToolgun()) {return}
+        if (!doRender()) {return}
 
         val raycastResult = RaycastFunctions.renderRaycast(level,
             RaycastFunctions.Source(
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.lookVector).snormalize(),
                 Vector3d(Minecraft.getInstance().gameRenderer.mainCamera.position)
             ),
-            20.0
+            distance
         )
 
         val state = raycastResult.state

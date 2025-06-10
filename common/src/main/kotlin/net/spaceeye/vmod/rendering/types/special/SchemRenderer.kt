@@ -3,7 +3,6 @@ package net.spaceeye.vmod.rendering.types.special
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
 import com.mojang.math.Matrix4f
-import com.simibubi.create.foundation.utility.worldWrappers.DummyLevelEntityGetter
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientChunkCache
@@ -40,6 +39,8 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.DataLayer
 import net.minecraft.world.level.chunk.LightChunkGetter
+import net.minecraft.world.level.entity.EntityAccess
+import net.minecraft.world.level.entity.EntityTypeTest
 import net.minecraft.world.level.entity.LevelEntityGetter
 import net.minecraft.world.level.gameevent.GameEvent
 import net.minecraft.world.level.lighting.LayerLightEventListener
@@ -48,6 +49,7 @@ import net.minecraft.world.level.material.Fluid
 import net.minecraft.world.level.material.FluidState
 import net.minecraft.world.level.material.Fluids
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData
+import net.minecraft.world.phys.AABB
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.ticks.LevelTickAccess
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.BlockItem
@@ -76,6 +78,8 @@ import org.valkyrienskies.mod.common.util.toJOML
 import org.valkyrienskies.mod.common.util.toMinecraft
 import java.awt.Color
 import java.util.Random
+import java.util.UUID
+import java.util.function.Consumer
 import kotlin.math.roundToInt
 
 //TODO optimize more
@@ -165,6 +169,15 @@ class DummyLevelData(): ClientLevel.ClientLevelData(Difficulty.PEACEFUL, false, 
     override fun setSpawnAngle(spawnAngle: Float) {}
 }
 
+class DummyLevelEntityGetter<T: EntityAccess?>(): LevelEntityGetter<T> {
+    override fun get(id: Int): T? = null
+    override fun get(uuid: UUID): T? = null
+    override fun getAll(): Iterable<T?>? = listOf()
+    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, consumer: Consumer<U?>) {}
+    override fun get(boundingBox: AABB, consumer: Consumer<T?>) {}
+    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, bounds: AABB, consumer: Consumer<U?>) {}
+}
+
 class FakeClientLevel(
     val level: ClientLevel,
     val data: ChunkyBlockData<BlockItem>,
@@ -229,7 +242,7 @@ class FakeClientLevel(
     override fun gameEvent(entity: Entity?, event: GameEvent, pos: BlockPos) {}
     override fun sendBlockUpdated(pos: BlockPos, oldState: BlockState, newState: BlockState, flags: Int) {}
     override fun destroyBlockProgress(breakerId: Int, pos: BlockPos, progress: Int) {}
-    override fun getEntities(): LevelEntityGetter<Entity?>? = DummyLevelEntityGetter<Entity>()
+    override fun getEntities(): LevelEntityGetter<Entity?>? = DummyLevelEntityGetter<Entity?>()
 
     override fun getUncachedNoiseBiome(x: Int, y: Int, z: Int): Holder<Biome?>? { throw AssertionError("Shouldn't be called") }
     override fun gatherChunkSourceStats(): String? { throw AssertionError("Shouldn't be called")  }

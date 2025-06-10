@@ -1,7 +1,6 @@
 # VERY IMPORTANT
 
 * Rework permission level and player roles
-* Mass Changing doesnt save in vschem
 
 # Maybe
 
@@ -10,9 +9,6 @@
 * Think of smth to use blockless ships that have collision (set type to smth that is not air)
 
 # Do Eventually
-
-# Mass Changing
-* Create mode where you set mass per block, not total mass, and in total mass mode display a warning maybe?
 
 # Gravity Changer
 * rework saving/loading
@@ -28,7 +24,8 @@
 * Redo ConeBlockRenderer into a more general version
 
 ## Constraint disabler
-* A "wrapper" MConstraint that will "wrap" around MConstraint and enable/disable it when signal is given
+* An extension that will enable/disable it when signal is given
+* Maybe also a variant that removes them?
 
 ## Toolgun settings presets menu
 * maybe when pressing alt or smth it will show all presets for this mode, and allow player to cycle them

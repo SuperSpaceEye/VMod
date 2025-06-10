@@ -237,7 +237,7 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uui
     // this is needed so that schem doesn't try copying phys entities
     val ships = traversed
         .mapNotNull { level.shipObjectWorld.allShips.getById(it) }
-        .filter { (it.shipAABB != null).also { r -> if (!r && player != null) player.sendMessage(makeFake("${it.slug} has null shipAABB, ignoring"), UUID(0L, 0L)) } }
+        .filter { (it.shipAABB != null).also { r -> if (!r && player != null) player.sendSystemMessage(makeFake("${it.slug} has null shipAABB, ignoring")) } }
     val centerPositions = ships.associate {
         val b = it.shipAABB!!
         Pair(it.id, JVector3d(

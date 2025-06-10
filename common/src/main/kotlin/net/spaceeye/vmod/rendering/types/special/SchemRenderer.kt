@@ -2,7 +2,6 @@ package net.spaceeye.vmod.rendering.types.special
 
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
-import com.mojang.math.Matrix4f
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientChunkCache
@@ -22,6 +21,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundSource
+import net.minecraft.util.AbortableIterationConsumer
 import net.minecraft.util.RandomSource
 import net.minecraft.world.Difficulty
 import net.minecraft.world.entity.Entity
@@ -52,6 +52,7 @@ import net.minecraft.world.level.material.Fluid
 import net.minecraft.world.level.material.FluidState
 import net.minecraft.world.level.material.Fluids
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData
+import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.ticks.LevelTickAccess
@@ -80,6 +81,8 @@ import org.joml.Vector3i
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
+import java.util.UUID
+import java.util.function.Consumer
 import java.util.function.Supplier
 import kotlin.math.roundToInt
 
@@ -150,9 +153,9 @@ class DummyLevelEntityGetter<T: EntityAccess?>(): LevelEntityGetter<T> {
     override fun get(id: Int): T? = null
     override fun get(uuid: UUID): T? = null
     override fun getAll(): Iterable<T?>? = listOf()
-    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, consumer: Consumer<U?>) {}
+    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, consumer: AbortableIterationConsumer<U?>) {}
     override fun get(boundingBox: AABB, consumer: Consumer<T?>) {}
-    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, bounds: AABB, consumer: Consumer<U?>) {}
+    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, bounds: AABB, consumer: AbortableIterationConsumer<U?>) {}
 }
 
 class FakeLevel(
@@ -162,7 +165,7 @@ class FakeLevel(
     val palette: IBlockStatePalette,
     val infoItem: IShipInfo
 ): Level(
-    null, level.dimension(), level.dimensionTypeRegistration(), Supplier{level.profiler}, true, false, 0L
+    null, level.dimension(), level.registryAccess(), level.dimensionTypeRegistration(), Supplier{level.profiler}, true, false, 0L, 0
 ) {
     val defaultState = Blocks.AIR.defaultBlockState()
     val defaultFluidState = Fluids.EMPTY.defaultFluidState()
@@ -218,7 +221,10 @@ class FakeLevel(
     override fun playSound(player: Player?, entity: Entity, event: SoundEvent, category: SoundSource, volume: Float, pitch: Float) {}
     override fun setMapData(mapId: String, data: MapItemSavedData) {}
     override fun registryAccess(): RegistryAccess? { return Minecraft.getInstance().level!!.registryAccess() }
+    override fun enabledFeatures(): FeatureFlagSet? = FeatureFlagSet.of()
     override fun levelEvent(player: Player?, type: Int, pos: BlockPos, data: Int) {}
+    override fun gameEvent(event: GameEvent, position: Vec3, context: GameEvent.Context) {}
+
     override fun gameEvent(entity: Entity?, event: GameEvent, pos: BlockPos) {}
     override fun sendBlockUpdated(pos: BlockPos, oldState: BlockState, newState: BlockState, flags: Int) {}
     override fun destroyBlockProgress(breakerId: Int, pos: BlockPos, progress: Int) {}
@@ -440,7 +446,7 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float, val 
                 infoItem.relPositionToCenter.y,
                 infoItem.relPositionToCenter.z,
             )
-            poseStack.mulPose(infoItem.rotation.toMinecraft())
+            poseStack.mulPose(infoItem.rotation.let { Quaternionf(it.x().toFloat(), it.y().toFloat(), it.z().toFloat(), it.w().toFloat()) })
             infoItem.shipScale.toFloat().also {
                 poseStack.scale(it, it, it)
             }

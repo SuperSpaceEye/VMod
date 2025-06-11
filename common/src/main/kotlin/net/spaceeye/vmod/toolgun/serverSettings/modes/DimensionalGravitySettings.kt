@@ -89,7 +89,7 @@ class DimensionalGravitySettings: ServerSettingsGUIBuilder {
         }
 
         val c2sTryUpdateGravityVectors = regC2S<C2STryUpdateGravityVectors>("try_update_gravity_vectors", "gravity_settings",
-            {it.hasPermissions(4)}, { s2cDimensionalGravityUpdateWasRejected.sendToClient(it, EmptyPacket())}) { pkt, player ->
+            { pkt, player -> player.hasPermissions(4)}, { pkt, player -> s2cDimensionalGravityUpdateWasRejected.sendToClient(player, EmptyPacket())}) { pkt, player ->
             vectorData.forEach { VSGravityManager.setGravity(it.first, it.second) }
         }
 

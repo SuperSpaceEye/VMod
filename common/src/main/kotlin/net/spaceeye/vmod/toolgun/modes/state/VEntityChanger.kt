@@ -235,8 +235,8 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
             }
         }
         val c2sSendUpdate = regC2S<C2SSendUpdate>("send_update", "ventity_changer",
-            { ServerToolGunState.playerHasPermission(it, VEntityChanger::class.java as Class<BaseMode>) },
-            { ServerToolGunState.s2cErrorHappened.sendToClient(it, ServerToolGunState.S2CErrorHappened(
+            { pkt, player -> ServerToolGunState.playerHasPermission(player, VEntityChanger::class.java as Class<BaseMode>) },
+            { pkt, player ->  ServerToolGunState.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(
                 YOU_DONT_HAVE_ACCESS_TO_THIS.key, true, true)) }
         ) { pkt, player ->
             val level = player.level as ServerLevel

@@ -3,6 +3,7 @@ package net.spaceeye.vmod.reflectable
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
+import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.typeToSerDeser
@@ -134,9 +135,11 @@ object ByteSerializableItem {
     }
 
     init {
+        registerSerializationItem(BlockPos.MutableBlockPos::class, { it, buf -> buf.writeBlockPos(it)}) { buf -> buf.readBlockPos().mutable()}
         registerSerializationItem(FriendlyByteBuf::class, {it, buf -> buf.writeByteArray(it.accessByteBufWithCorrectSize())}) {buf -> FriendlyByteBuf(Unpooled.wrappedBuffer(buf.readByteArray()))}
         registerSerializationItem(Quaterniond::class, {it, buf -> buf.writeQuatd(it)}) {buf -> buf.readQuatd()}
         registerSerializationItem(Vector3d::class, {it, buf -> buf.writeVector3d(it)}) {buf -> buf.readVector3d()}
+        registerSerializationItem(BlockPos::class, { it, buf -> buf.writeBlockPos(it)}) { buf -> buf.readBlockPos()}
         registerSerializationItem(ByteBuf::class, {it, buf -> buf.writeByteArray(it.array())}) {buf -> Unpooled.wrappedBuffer(buf.readByteArray())}
         registerSerializationItem(Boolean::class, {it, buf -> buf.writeBoolean(it)}) {buf -> buf.readBoolean()}
         registerSerializationItem(Double::class, {it, buf -> buf.writeDouble(it)}) {buf -> buf.readDouble()}

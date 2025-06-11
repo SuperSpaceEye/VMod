@@ -90,7 +90,7 @@ class PlayerRoleManager: ServerSettingsGUIBuilder {
         }
 
         val c2sChangePlayerRole = regC2S<C2SChangePlayerRole>("try_change_player_role", "player_role_manager",
-            {player -> player.hasPermissions(4)}) {pkt, player ->
+            { pkt, player -> player.hasPermissions(4)}) {pkt, player ->
             PlayerAccessManager.setPlayerRole(pkt.uuid, pkt.newRole)
             s2cSendPlayersRolesData.sendToClient(player, PlayersRolesData())
         }

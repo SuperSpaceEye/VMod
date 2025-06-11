@@ -96,8 +96,8 @@ object ServerToolGunState: ServerClosable() {
     }
 
     val c2sRequestRemoveLastVEntity = regC2S<EmptyPacket>("request_remove_last_ventity", "server_toolgun",
-        {PlayerAccessManager.hasPermission(it, "request_remove_last_ventity")},
-        {s2cErrorHappened.sendToClient(it, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))}
+        { pkt, player -> PlayerAccessManager.hasPermission(player, "request_remove_last_ventity")},
+        { pkt, player -> s2cErrorHappened.sendToClient(player, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))}
         ) { pkt, player->
         val stack = playersVEntitiesStack[player.uuid] ?: return@regC2S
         var item: VEntityId = stack.removeLastOrNull() ?: return@regC2S

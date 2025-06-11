@@ -145,7 +145,7 @@ object ServerLimits {
     }
 
     private val c2sSendUpdatedServerLimits = regC2S<ServerLimitsPacket>("send_updated_server_limits", "server_limits",
-        {it.hasPermissions(4)}, { ServerToolGunState.sendErrorTo(it, SERVER_LIMITS_UPDATE_WAS_REJECTED) }) { pkt, player ->
+        {pkt, player -> player.hasPermissions(4)}, { pkt, player -> ServerToolGunState.sendErrorTo(player, SERVER_LIMITS_UPDATE_WAS_REJECTED) }) { pkt, player ->
         instance = pkt.instance
     }
 }

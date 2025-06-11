@@ -279,7 +279,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     }
 
     // transmitter can't begin transmitting data to receiver by itself
-    val c2sLoadSchematic = regC2S<EmptyPacket>("load_schematic", networkName, {player ->
+    val c2sLoadSchematic = regC2S<EmptyPacket>("load_schematic", networkName, { pkt, player ->
         val lastReq = ServerPlayerSchematics.loadRequests[player.uuid]
         lastReq == null || getNow_ms() - lastReq > 10000L
     }) {pkt, player ->

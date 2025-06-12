@@ -6,6 +6,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.utils.Either
 import net.spaceeye.vmod.utils.readVarLongArray
 import net.spaceeye.vmod.utils.writeVarLongArray
@@ -170,14 +171,15 @@ abstract class SynchronisedDataTransmitter<T: Serializable> (
     internal val trSynchronizeData = object : DataStream<R2TSynchronizationTickData, T2RSynchronizationTickData>(
         streamName,
         receiverSide.opposite(),
-        currentSide
+        currentSide,
+        VM.MOD_ID
     ) {
         override val partByteAmount: Int = partByteMaxAmount
         override fun requestPacketConstructor(buf: FriendlyByteBuf): R2TSynchronizationTickData = R2TSynchronizationTickData()
         override fun dataPacketConstructor(): T2RSynchronizationTickData = T2RSynchronizationTickData(itemWriter, itemReader)
 
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { throw AssertionError() }
-        override fun receiverDataTransmitted(uuid: UUID, data: T2RSynchronizationTickData?) { throw AssertionError() }
+        override fun receiverDataTransmitted(uuid: UUID, data: T2RSynchronizationTickData, ctx: NetworkManager.PacketContext) { throw AssertionError() }
 
         override fun transmitterRequestProcessor(pkt: R2TSynchronizationTickData, ctx: NetworkManager.PacketContext): Either<T2RSynchronizationTickData, RequestFailurePkt>? {
             val uuid = ctx.player.uuid
@@ -342,7 +344,8 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
     internal val trSynchronizeData = object : DataStream<R2TSynchronizationTickData, T2RSynchronizationTickData>(
         streamName,
         transmitterSide,
-        currentSide
+        currentSide,
+        VM.MOD_ID
     ) {
         override val partByteAmount: Int = partByteMaxAmount
         override fun requestPacketConstructor(buf: FriendlyByteBuf): R2TSynchronizationTickData = R2TSynchronizationTickData()
@@ -350,8 +353,7 @@ abstract class SynchronisedDataReceiver<T: Serializable> (
         override fun transmitterRequestProcessor(req: R2TSynchronizationTickData, ctx: NetworkManager.PacketContext): Either<T2RSynchronizationTickData, RequestFailurePkt>? { throw AssertionError() }
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("IT SHOULDN'T BE POSSIBLE TO REACH THIS. HOW DID YOU DO THIS.") }
 
-        override fun receiverDataTransmitted(uuid: UUID, pkt: T2RSynchronizationTickData?) {
-            if (pkt == null) {return}
+        override fun receiverDataTransmitted(uuid: UUID, pkt: T2RSynchronizationTickData, ctx: NetworkManager.PacketContext) {
             lock {
                 pkt.dataUpdates.forEach { (idx, pair) ->
                     val (item, pages) = pair

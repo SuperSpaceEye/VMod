@@ -5,7 +5,6 @@ import dev.architectury.networking.NetworkManager.PacketContext
 import io.netty.buffer.Unpooled
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.resources.ResourceLocation
-import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.utils.Either
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.getNow_ms
@@ -19,6 +18,7 @@ abstract class DataStream<
     streamName: String,
     transmitterSide: NetworkManager.Side,
     currentSide: NetworkManager.Side,
+    modId: String
     ) {
     open val partByteAmount: Int = 30000
 
@@ -29,7 +29,7 @@ abstract class DataStream<
     // if not null, will either start transmitting or send transmission failed pkt
     abstract fun transmitterRequestProcessor(req: TRequest, ctx: PacketContext): Either<TData, RequestFailurePkt>?
 
-    abstract fun receiverDataTransmitted(uuid: UUID, data: TData?)
+    abstract fun receiverDataTransmitted(uuid: UUID, data: TData, ctx: PacketContext)
     abstract fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt)
 
     // for when you need to restrict access to some receivers
@@ -66,7 +66,7 @@ abstract class DataStream<
     // is invoked on the receiver, handler is registered on the transmitter
     val r2tRequestData = registerTR("request_data", currentSide) {
         object : TRConnection<TRequest>(transmitterSide.opposite()) {
-            override val id = ResourceLocation(VM.MOD_ID, "tr_${streamName}_$it")
+            override val id = ResourceLocation(modId, "tr_${streamName}_$it")
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) = verifyUUIDHasAccess(context) {
                 val pkt = requestPacketConstructor(buf)
                 pkt.deserialize(buf)
@@ -80,7 +80,7 @@ abstract class DataStream<
     }
     private val t2rRequestFailure = registerTR("request_failure", currentSide) {
         object : TRConnection<RequestFailurePkt>(transmitterSide) {
-            override val id = ResourceLocation(VM.MOD_ID, "tr_${streamName}_$it")
+            override val id = ResourceLocation(modId, "tr_${streamName}_$it")
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) {
                 receiverDataTransmissionFailed(RequestFailurePkt(buf))
             }
@@ -89,8 +89,8 @@ abstract class DataStream<
 
     private val t2rSendPart = registerTR("send_part", currentSide) {
         object : TRConnection<DataPartPkt>(transmitterSide) {
-            override val id = ResourceLocation(VM.MOD_ID, "tr_${streamName}_$it")
-            override fun handlerFn(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) {
+            override val id = ResourceLocation(modId, "tr_${streamName}_$it")
+            override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) {
                 val pkt = DataPartPkt(buf)
                 val data = receiverData.updateReceived(pkt.requestUUID, pkt.data)
 
@@ -98,7 +98,7 @@ abstract class DataStream<
                     val dataPkt = dataPacketConstructor()
                     dataPkt.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(data.toByteArray())))
                     receiverData.receivedData.remove(pkt.requestUUID)
-                    receiverDataTransmitted(pkt.requestUUID, dataPkt)
+                    receiverDataTransmitted(pkt.requestUUID, dataPkt, context)
                     return
                 }
 
@@ -109,7 +109,7 @@ abstract class DataStream<
 
     private val r2tRequestPart = registerTR("request_part", currentSide) {
         object : TRConnection<RequestPart>(transmitterSide.opposite()) {
-            override val id = ResourceLocation(VM.MOD_ID, "tr_${streamName}_$it")
+            override val id = ResourceLocation(modId, "tr_${streamName}_$it")
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) = verifyUUIDHasAccess(context) {
                 val pkt = RequestPart(buf)
                 val item = transmitterData.requestsHolder[pkt.requestUUID]

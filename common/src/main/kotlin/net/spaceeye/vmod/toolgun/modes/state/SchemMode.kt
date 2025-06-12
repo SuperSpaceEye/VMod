@@ -92,7 +92,7 @@ object PlayerSchematics: ServerClosable() {
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Save Schem Transmission Failed") }
 
-        override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerObjectsHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
+        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest?): Boolean = ServerToolGunState.playerHasAccess(ctx.player as ServerPlayer)
         override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
@@ -118,7 +118,7 @@ object PlayerSchematics: ServerClosable() {
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) {}
 
-        override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerObjectsHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
+        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest?): Boolean = ServerToolGunState.playerHasAccess(ctx.player as ServerPlayer)
         override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
@@ -142,7 +142,7 @@ object PlayerSchematics: ServerClosable() {
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Load Schem Transmission Failed") }
 
-        override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerObjectsHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
+        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendLoadRequest?): Boolean = ServerToolGunState.playerHasAccess(ctx.player as ServerPlayer)
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder, ctx: NetworkManager.PacketContext) {
             schematics[data.uuid] = bcGetSchematicFromBytes(data.data.array())
             loadRequests.remove(data.uuid)

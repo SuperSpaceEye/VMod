@@ -12,7 +12,7 @@ import net.spaceeye.vmod.limits.FloatLimit
 import net.spaceeye.vmod.limits.StrLimit
 import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
 import net.spaceeye.vmod.toolgun.modes.GUIBuilder
-import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
+import net.spaceeye.vmod.toolgun.modes.state.PlayerSchematics
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
 import net.spaceeye.vmod.toolgun.modes.state.SchemNetworking
 import net.spaceeye.vmod.translate.*
@@ -38,7 +38,7 @@ class SaveForm(val mode: SchemMode): UIBlock(Color.GRAY.brighter()) {
         Button(Color.GRAY.brighter().brighter(), SAVE.get()) {
             parent.removeChild(this)
             mode.filename = filename
-            ClientPlayerSchematics.saveSchemStream.r2tRequestData.transmitData(ClientPlayerSchematics.SendSchemRequest(Minecraft.getInstance().player!!.uuid))
+            PlayerSchematics.saveSchemStream.r2tRequestData.transmitData(PlayerSchematics.SendSchemRequest(Minecraft.getInstance().player!!.uuid))
         }.constrain {
             x = 2.pixels()
             y = SiblingConstraint() + 2.pixels()
@@ -77,7 +77,7 @@ interface SchemGUI: GUIBuilder, EGUIBuilder {
 
     fun makeScrollItems() {
         this as SchemMode
-        val paths = ClientPlayerSchematics.listSchematics().sortedWith {a, b ->
+        val paths = PlayerSchematics.listSchematics().sortedWith { a, b ->
             a.toString().lowercase(Locale.getDefault())
             .compareTo(b.toString().lowercase(Locale.getDefault()))}
 
@@ -91,7 +91,7 @@ interface SchemGUI: GUIBuilder, EGUIBuilder {
             } childOf itemsScroll!!
 
             Button(Color.GRAY.brighter(), LOAD.get()) {
-                schem = ClientPlayerSchematics.loadSchematic(path)
+                schem = PlayerSchematics.loadSchematic(path)
                 if (schem != null) {
                     SchemNetworking.c2sLoadSchematic.sendToServer(EmptyPacket())
                 }

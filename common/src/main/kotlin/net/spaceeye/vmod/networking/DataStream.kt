@@ -18,8 +18,15 @@ abstract class DataStream<
     streamName: String,
     transmitterSide: NetworkManager.Side,
     currentSide: NetworkManager.Side,
-    modId: String
-    ) {
+    modId: String,
+    unified: Boolean = false
+) {
+    constructor(
+        streamName: String,
+        transmitterSide: NetworkManager.Side,
+        modId: String
+    ): this(streamName, transmitterSide, NetworkManager.Side.S2C, modId, true)
+
     open val partByteAmount: Int = 30000
 
     abstract fun requestPacketConstructor(buf: FriendlyByteBuf): TRequest
@@ -64,7 +71,7 @@ abstract class DataStream<
     }
 
     // is invoked on the receiver, handler is registered on the transmitter
-    val r2tRequestData = registerTR("request_data", currentSide) {
+    val r2tRequestData = registerTR("request_data", currentSide, unified) {
         object : TRConnection<TRequest>(transmitterSide.opposite()) {
             override val id = ResourceLocation(modId, "tr_${streamName}_$it")
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) = verifyUUIDHasAccess(context) {
@@ -78,7 +85,7 @@ abstract class DataStream<
             }
         }
     }
-    private val t2rRequestFailure = registerTR("request_failure", currentSide) {
+    private val t2rRequestFailure = registerTR("request_failure", currentSide, unified) {
         object : TRConnection<RequestFailurePkt>(transmitterSide) {
             override val id = ResourceLocation(modId, "tr_${streamName}_$it")
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) {
@@ -87,7 +94,7 @@ abstract class DataStream<
         }
     }
 
-    private val t2rSendPart = registerTR("send_part", currentSide) {
+    private val t2rSendPart = registerTR("send_part", currentSide, unified) {
         object : TRConnection<DataPartPkt>(transmitterSide) {
             override val id = ResourceLocation(modId, "tr_${streamName}_$it")
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) {
@@ -107,7 +114,7 @@ abstract class DataStream<
         }
     }
 
-    private val r2tRequestPart = registerTR("request_part", currentSide) {
+    private val r2tRequestPart = registerTR("request_part", currentSide, unified) {
         object : TRConnection<RequestPart>(transmitterSide.opposite()) {
             override val id = ResourceLocation(modId, "tr_${streamName}_$it")
             override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) = verifyUUIDHasAccess(context) {

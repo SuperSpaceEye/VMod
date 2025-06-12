@@ -54,11 +54,11 @@ inline infix fun <TT: Serializable> String.idWithConnc(constructor: (String) -> 
     return instance
 }
 
-inline fun <T: Serializable> registerTR(id: String, registeringSide: Side, constructor: (String) -> TRConnection<T>): TRConnection<T> {
+inline fun <T: Serializable> registerTR(id: String, registeringSide: Side, ignoreRegisteringSide: Boolean = false, constructor: (String) -> TRConnection<T>): TRConnection<T> {
     val instance = constructor(id)
     try {
         // handler should be on the opposite side of the intended invocation side.
-        if (registeringSide == instance.invocationSide.opposite()) {
+        if (registeringSide == instance.invocationSide.opposite() || ignoreRegisteringSide) {
             if (registeredIDs.contains(instance.id.toString())) {return instance}
             registeredIDs.add(instance.id.toString())
             NetworkManager.registerReceiver(instance.invocationSide, instance.id, instance.getHandler())

@@ -26,8 +26,7 @@ import net.spaceeye.vmod.shipAttachments.ThrustersController
 import net.spaceeye.vmod.shipAttachments.WeightSynchronizer
 import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics
-import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics
+import net.spaceeye.vmod.toolgun.modes.state.PlayerSchematics
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
 import net.spaceeye.vmod.utils.vs.traverseGetAllTouchingShips
@@ -132,11 +131,11 @@ object VMCommands {
         val name = StringArgumentType.getString(cc, "name")
         val uuid = try { cc.source.playerOrException.uuid } catch (e: Exception) { ELOG("Failed to save schematic to server because user is not a player"); return 1 }
 
-        val schem = ServerPlayerSchematics.schematics[uuid] ?: run {
+        val schem = PlayerSchematics.schematics[uuid] ?: run {
             cc.source.playerOrException.sendMessage(TextComponent("Failed to save schematic to sever because player has no schematic chosen. Choose schematic with a toolgun and try again."), uuid)
             return 1
         }
-        ClientPlayerSchematics.saveSchematic(name, schem)
+        PlayerSchematics.saveSchematic(name, schem)
 
         return 0
     }
@@ -147,12 +146,12 @@ object VMCommands {
         val name = StringArgumentType.getString(cc, "name")
         val uuid = UUID(0L, 0L)
 
-        val schem = ClientPlayerSchematics.loadSchematic(Paths.get("VMod-Schematics/$name")) ?: run {
+        val schem = PlayerSchematics.loadSchematic(Paths.get("VMod-Schematics/$name")) ?: run {
             ELOG("Failed to load schematic because name doesn't exist.")
             return 1
         }
 
-        ServerPlayerSchematics.schematics[uuid] = schem
+        PlayerSchematics.schematics[uuid] = schem
         lastName = name
 
         return 0
@@ -167,7 +166,7 @@ object VMCommands {
         val rotation = try {RelativeVector3Argument.getRelativeVector3(cc as MCSN, "rotation").toEulerRotation(0.0, 0.0, 0.0)} catch (e: Exception) {Quaterniond()}
         val name = try {StringArgumentType.getString(cc, "name")} catch (e: Exception) {lastName}
 
-        val schem = ServerPlayerSchematics.schematics[uuid] ?: run {
+        val schem = PlayerSchematics.schematics[uuid] ?: run {
             ELOG("failed to place schematic because it's null.")
             return 1
         }

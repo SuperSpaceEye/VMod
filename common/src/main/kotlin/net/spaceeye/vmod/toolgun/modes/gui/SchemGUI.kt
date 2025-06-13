@@ -78,7 +78,7 @@ interface SchemGUI: GUIBuilder, EGUIBuilder {
     fun makeScrollItems() {
         this as SchemMode
         val paths = PlayerSchematics.listSchematics().sortedWith { a, b ->
-            a.toString().lowercase(Locale.getDefault())
+                       a.toString().lowercase(Locale.getDefault())
             .compareTo(b.toString().lowercase(Locale.getDefault()))}
 
         for (path in paths) {

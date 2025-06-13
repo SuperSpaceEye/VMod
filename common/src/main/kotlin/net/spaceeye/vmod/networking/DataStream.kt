@@ -43,7 +43,7 @@ abstract class DataStream<
     abstract fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt)
 
     // for when you need to restrict access to some receivers
-    open fun uuidHasAccess(uuid: UUID, ctx: PacketContext, req: TRequest?): Boolean = true
+    open fun uuidHasAccess(uuid: UUID, ctx: PacketContext, req: TRequest): Boolean = true
 
     private val transmitterData = DataStreamTransmitterDataHolder()
     private val receiverData = DataStreamReceiverDataHolder()

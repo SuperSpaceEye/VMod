@@ -19,13 +19,17 @@ abstract class DataStream<
     transmitterSide: NetworkManager.Side,
     currentSide: NetworkManager.Side,
     modId: String,
-    unified: Boolean = false
-) {
+    unified: Boolean = false,
+    receiverWrapper:    (fn: () -> Unit) -> Unit = {it()},
+    transmitterWrapper: (fn: () -> Unit) -> Unit = {it()},
+    ) {
     constructor(
         streamName: String,
         transmitterSide: NetworkManager.Side,
-        modId: String
-    ): this(streamName, transmitterSide, NetworkManager.Side.S2C, modId, true)
+        modId: String,
+        receiverWrapper:    (fn: () -> Unit) -> Unit = {it()},
+        transmitterWrapper: (fn: () -> Unit) -> Unit = {it()},
+    ): this(streamName, transmitterSide, NetworkManager.Side.S2C, modId, true, receiverWrapper, transmitterWrapper)
 
     open val partByteAmount: Int = 30000
 
@@ -48,10 +52,7 @@ abstract class DataStream<
     private val transmitterData = DataStreamTransmitterDataHolder()
     private val receiverData = DataStreamReceiverDataHolder()
 
-    private inline fun verifyUUIDHasAccess(context: PacketContext, buf: FriendlyByteBuf, fn: (pkt: TRequest) -> Unit) {
-        //TODO very sus
-        val pkt = requestPacketConstructor(buf).also { it.deserialize(buf) }
-
+    private inline fun verifyUUIDHasAccess(context: PacketContext, pkt: TRequest, fn: (pkt: TRequest) -> Unit) {
         val uuid = context.player?.uuid
         if (uuid != null && !uuidHasAccess(uuid, context, pkt)) {
             t2rRequestFailure.transmitData(RequestFailurePkt(), context)
@@ -76,23 +77,26 @@ abstract class DataStream<
         sendPart(context, uuid, 1)
     }
 
+    private inline fun deserializeRequestPkt(buf: FriendlyByteBuf, fn: (TRequest) -> Unit) = fn(requestPacketConstructor(buf).also { it.deserialize(buf) })
+
     // is invoked on the receiver, handler is registered on the transmitter
     val r2tRequestData = registerTR("request_data", currentSide, unified) {
         object : TRConnection<TRequest>(transmitterSide.opposite()) {
             override val id = ResourceLocation(modId, "tr_${streamName}_$it")
-            override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) = verifyUUIDHasAccess(context, buf) { pkt ->
-                val data = transmitterRequestProcessor(pkt, context) ?: return
+            override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext)
+            = deserializeRequestPkt(buf) { pkt -> transmitterWrapper { verifyUUIDHasAccess(context, pkt) { pkt ->
+                val data = transmitterRequestProcessor(pkt, context) ?: return@verifyUUIDHasAccess
 
-                if (data is Either.Right){ t2rRequestFailure.transmitData(data.b, context); return }
+                if (data is Either.Right){ t2rRequestFailure.transmitData(data.b, context); return@verifyUUIDHasAccess }
 
                 startSendingDataToReceiver((data as Either.Left).a, context)
-            }
+            } } }
         }
     }
     private val t2rRequestFailure = registerTR("request_failure", currentSide, unified) {
         object : TRConnection<RequestFailurePkt>(transmitterSide) {
             override val id = ResourceLocation(modId, "tr_${streamName}_$it")
-            override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) {
+            override fun handlerFn(buf: FriendlyByteBuf, context: PacketContext) = receiverWrapper {
                 receiverDataTransmissionFailed(RequestFailurePkt(buf))
             }
         }
@@ -109,7 +113,7 @@ abstract class DataStream<
                     val dataPkt = dataPacketConstructor()
                     dataPkt.deserialize(FriendlyByteBuf(Unpooled.wrappedBuffer(data.toByteArray())))
                     receiverData.receivedData.remove(pkt.requestUUID)
-                    receiverDataTransmitted(pkt.requestUUID, dataPkt, context)
+                    receiverWrapper { receiverDataTransmitted(pkt.requestUUID, dataPkt, context) }
                     return
                 }
 

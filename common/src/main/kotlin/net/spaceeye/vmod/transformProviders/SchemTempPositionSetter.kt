@@ -12,11 +12,14 @@ class SchemTempPositionSetter(
     val ship: ServerShip,
     val toPos: Vector3d,
     val relPos: Vector3d,
+    var work: Boolean
 ): ServerShipTransformProvider {
     override fun provideNextTransformAndVelocity(
         prevShipTransform: ShipTransform,
         shipTransform: ShipTransform
     ): ServerShipTransformProvider.NextTransformAndVelocityData? {
+        if (!work) return null
+        ship.transformProvider = null
         return ServerShipTransformProvider.NextTransformAndVelocityData(
             ShipTransformImpl(
                 (relPos + toPos + Vector3d(shipTransform.positionInShip) - (ship.shipAABB?.let {b ->Vector3d(

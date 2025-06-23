@@ -13,11 +13,13 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.ShipForcesInducer
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.hooks.VSEvents
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.roundToInt
 
 class CustomMassSave(): ShipForcesInducer, ICopyableForcesInducer {
     var wasCopied: Boolean = false
     @JsonIgnore private var tempMassData: List<Pair<Vector3i, Double>>? = null
+    @JsonIgnore var lock = ReentrantLock()
 
     var shipId: Long = -1L
     var dimensionId: String = ""
@@ -34,13 +36,13 @@ class CustomMassSave(): ShipForcesInducer, ICopyableForcesInducer {
             value?.forEach { (pos, mass) -> CustomBlockMassManager.loadCustomMass(dimensionId, shipId, pos.x, pos.y, pos.z, mass) }
         }
 
-    override fun onCopy(
-        level: ServerLevel,
-        shipOn: LoadedServerShip,
-        shipsToBeSaved: List<ServerShip>,
-        centerPositions: Map<ShipId, Vector3d>
-    ) {
+    override fun onCopy(level: ServerLevel, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {
+        lock.lock()
         wasCopied = true
+    }
+
+    override fun onAfterCopy(level: ServerLevel, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {
+        lock.unlock()
     }
 
     override fun onPaste(
@@ -70,7 +72,12 @@ class CustomMassSave(): ShipForcesInducer, ICopyableForcesInducer {
         tempMassData = null
     }
     
-    override fun applyForces(physShip: PhysShip) {}
+    override fun applyForces(physShip: PhysShip) {
+        // not the most elegant solution but it'll work, probably
+        if (!lock.tryLock()) {return}
+        wasCopied = false
+        lock.unlock()
+    }
 
     companion object {
         init {

@@ -6,6 +6,7 @@ import gg.essential.elementa.WindowScreen
 import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.constraints.*
+import net.spaceeye.vmod.PlatformUtils
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
 import net.spaceeye.vmod.gui.additions.VEntityChangerWorldMenu
@@ -40,7 +41,7 @@ class ScreenWindow private constructor(): WindowScreen(ElementaVersion.V8, drawD
     fun onRenderHUD(stack: PoseStack, delta: Float) {
         linearExtensions.forEach { it.onRenderHUD(stack, delta) }
 
-        render(stack, 0, 0, delta)
+        PlatformUtils.renderScreen(this, stack, 0, 0, delta)
     }
 
     companion object {

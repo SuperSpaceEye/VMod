@@ -36,7 +36,7 @@ fun getModePositions(mode: PositionModes, prevPos: RaycastFunctions.RaycastResul
 }
 
 fun calculatePrecise(raycastResult: RaycastFunctions.RaycastResult, precisePlacementSideNum: Int = 3): Vector3d {
-    val centered = raycastResult.globalCenteredHitPos!!
+    val centered = raycastResult.globalCenteredFaceHitPos!!
     val globalNormal = raycastResult.globalNormalDirection!!
     val point = raycastResult.globalHitPos!!
 

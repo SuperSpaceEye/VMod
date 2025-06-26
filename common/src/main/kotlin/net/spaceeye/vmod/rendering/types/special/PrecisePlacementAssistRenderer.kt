@@ -44,7 +44,7 @@ class PrecisePlacementAssistRenderer(
         val state = raycastResult.state
         if (state.isAir) {return}
 
-        val centered = raycastResult.worldCenteredHitPos!!
+        val centered = raycastResult.worldCenteredFaceHitPos!!
         val worldNormal = raycastResult.worldNormalDirection!!
         val globalNormal = raycastResult.globalNormalDirection!!
         val point = raycastResult.worldHitPos!! + raycastResult.worldNormalDirection!! * 0.01

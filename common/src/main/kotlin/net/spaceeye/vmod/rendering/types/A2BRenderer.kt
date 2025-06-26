@@ -12,7 +12,7 @@ import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.ReflectableObject
-import net.spaceeye.vmod.rendering.RenderTypes
+import net.spaceeye.vmod.rendering.RenderSetups
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -83,7 +83,7 @@ open class A2BRenderer(): BaseRenderer(), ReflectableObject {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
-        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderSetups.setupFullRendering())
         RenderSystem.setShaderTexture(0, RenderingUtils.whiteTexture)
 
         val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else color
@@ -107,7 +107,7 @@ open class A2BRenderer(): BaseRenderer(), ReflectableObject {
         tesselator.end()
         poseStack.popPose()
 
-        RenderTypes.clearFullRendering()
+        RenderSetups.clearFullRendering()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = with(data) {

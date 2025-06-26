@@ -5,7 +5,10 @@ import com.mojang.math.Matrix4f
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
+import org.joml.Matrix4d
+import org.joml.Vector4d
 import java.awt.Color
 import kotlin.math.PI
 import kotlin.math.cos
@@ -252,55 +255,124 @@ object RenderingUtils {
 			return x*a*(x - 1)
 		}
 
-		// ilength is initial rope length
-        @JvmStatic fun drawRope(buf: VertexConsumer, matrix: Matrix4f,
+        @JvmStatic fun drawFlatRope(
+            buf: VertexConsumer, matrix: Matrix4f,
             r: Int, g: Int, b: Int, a: Int,
-            width: Double, segments: Int, ilength: Double,
+            width: Double, segments: Int, initialLength: Double,
             pos1: Vector3d, pos2: Vector3d, lightmapUVFn: (Vector3d) -> Int,
+        ) = ropePointsCreator(pos1, pos2, segments, initialLength) { i, last, current, up0, up1 ->
+            val lu =  up0 * width + last
+            val ld = -up0 * width + last
+            val ru = -up1 * width + current
+            val rd =  up1 * width + current
+
+            val prev = lightmapUVFn(last)
+            val curr = lightmapUVFn(current)
+
+            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(0f, 0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(prev).normal(0f, 1f, 0f).endVertex()
+            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(0f, 1f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(prev).normal(0f, 1f, 0f).endVertex()
+            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(1f, 1f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(curr).normal(0f, 1f, 0f).endVertex()
+            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(1f, 0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(curr).normal(0f, 1f, 0f).endVertex()
+        }
+
+        @JvmStatic fun drawTubeRope(
+            buf: VertexConsumer, matrix: Matrix4f,
+            r: Int, g: Int, b: Int, a: Int,
+            radius: Double, segments: Int, sides: Int, initialLength: Double,
+            pos1: Vector3d, pos2: Vector3d,
+            up1: Vector3d, right1: Vector3d, up2: Vector3d, right2: Vector3d,
+            lerpBetweenShipRotations: Boolean,
+            useDefinedUpRight: Boolean,
+            lightmapUVFn: (Vector3d) -> Int,
+        ) {
+            val rot1 = Matrix4d(right1.toJomlVector4d(), up1.toJomlVector4d(), right1.cross(up1).toJomlVector4d(), Vector4d())
+            val rot2 = Matrix4d(right2.toJomlVector4d(), up2.toJomlVector4d(), right2.cross(up2).toJomlVector4d(), Vector4d())
+
+            var cRot: Matrix4d = rot1
+
+            var rPoints: List<Vector3d>
+            var lPoints: List<Vector3d>
+
+            var up:    Vector3d = up1
+            var right: Vector3d = right1
+
+            if (!useDefinedUpRight) {
+                val l = (initialLength - (pos1-pos2).dist()).coerceAtLeast(0.0)
+                val pos2 = lerp(pos1, pos2, 1.0 / segments)
+                pos2.y += height(l, 1.0 / segments)
+
+                val forward = (pos2 - pos1).snormalize()
+                right = forward.cross(0, 1, 0).snormalize()
+                up = right.cross(forward).snormalize()
+            }
+
+            var lLight = lightmapUVFn(pos1)
+
+            lPoints = makePolygon(sides, radius, up, right, pos1)
+
+            ropePointsCreator(pos1, pos2, segments, initialLength) { i, last, current, up0, up1 ->
+                if ((current - pos2).sqrDist() < 0.001 && useDefinedUpRight) {
+                    right = right2
+                    up = up2
+                } else if (lerpBetweenShipRotations) {
+                    cRot = rot1.lerp(rot2, i.toDouble() / segments)
+
+                    right = Vector3d(cRot.getColumn(0, JVector3d()))
+                    up = Vector3d(cRot.getColumn(1, JVector3d()))
+                } else {
+                    val forward = (current - last).snormalize()
+                    right = forward.cross(0, 1, 0).snormalize()
+                    up = right.cross(forward).snormalize()
+                }
+
+                rPoints = makePolygon(sides, radius, up, right, current)
+
+                val rLight = lightmapUVFn(current)
+
+                drawPolygonTube(buf, matrix, r, g, b, a, lLight, rLight, 0f, 1f, lPoints, rPoints)
+
+                lPoints = rPoints
+                lLight = rLight
+            }
+        }
+
+        @JvmStatic fun ropePointsCreator(
+            pos1: Vector3d, pos2: Vector3d,
+            segments: Int, initialLength: Double,
+            fn: (i: Int, last: Vector3d, current: Vector3d, up0: Vector3d, up1: Vector3d) -> Unit
         ) {
             if (segments < 1) return
-			
-			var l = ilength - (pos1-pos2).dist()
-			if (l < 0.0) l = 0.0
-			
-			for (i in 1..segments) {
-				val x0 = (i-1).toDouble() / segments
-				val x1 = i.toDouble() / segments
-				var last = lerp(pos1, pos2, x0)
-				var current = lerp(pos1, pos2, x1)
-				last.y += height(l, x0)
-				current.y += height(l, x1)
-				var d0 = last-current
-				var d1 = d0
-				if (i > 1) {
-					val xm = (i-2).toDouble() / segments
-					d0 = lerp(pos1, pos2, xm)-last + d0
-					d0.y += height(l, xm)
-				}
-				if (i < segments) {
-					val x2 = (i+1).toDouble() / segments
-					d1 = current-lerp(pos1, pos2, x2) + d1
-					d1.y -= height(l, x2)
-				}
-				d0 = d0.normalize()
-				d1 = d1.normalize()
 
-				val up0 = last.normalize().cross(d0).normalize()
-				val up1 = current.normalize().cross(d1).normalize()
-				
-				val lu =  up0 * width + last
-				val ld = -up0 * width + last
-				val ru = -up1 * width + current
-				val rd =  up1 * width + current
+            var l = initialLength - (pos1-pos2).dist()
+            if (l < 0.0) l = 0.0
 
-                val prev = lightmapUVFn(last)
-                val curr = lightmapUVFn(current)
+            for (i in 1..segments) {
+                val x0 = (i-1).toDouble() / segments
+                val x1 =  i   .toDouble() / segments
+                var last    = lerp(pos1, pos2, x0)
+                var current = lerp(pos1, pos2, x1)
+                last   .y += height(l, x0)
+                current.y += height(l, x1)
+                var d0 = last-current
+                var d1 = d0
+                if (i > 1) {
+                    val xm = (i-2).toDouble() / segments
+                    d0 = lerp(pos1, pos2, xm)-last + d0
+                    d0.y += height(l, xm)
+                }
+                if (i < segments) {
+                    val x2 = (i+1).toDouble() / segments
+                    d1 = current-lerp(pos1, pos2, x2) + d1
+                    d1.y -= height(l, x2)
+                }
+                d0 = d0.normalize()
+                d1 = d1.normalize()
 
-				buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(0f, 0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(prev).normal(0f, 1f, 0f).endVertex()
-				buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(0f, 1f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(prev).normal(0f, 1f, 0f).endVertex()
-				buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(1f, 1f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(curr).normal(0f, 1f, 0f).endVertex()
-				buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(1f, 0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(curr).normal(0f, 1f, 0f).endVertex()
-			}
+                val up0 = last   .normalize().cross(d0).normalize()
+                val up1 = current.normalize().cross(d1).normalize()
+
+                fn(i, last, current, up0, up1)
+            }
         }
     }
 }

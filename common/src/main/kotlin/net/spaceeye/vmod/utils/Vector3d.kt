@@ -2,6 +2,7 @@ package net.spaceeye.vmod.utils
 
 import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
+import org.joml.Vector4d
 import kotlin.math.max
 import kotlin.math.min
 
@@ -42,12 +43,14 @@ class Vector3d(x:Number, y:Number, z:Number) {
 
     fun toD(x:Number, y: Number, z: Number): Array<Double> {return arrayOf(x.toDouble(), y.toDouble(), z.toDouble())}
 
-    fun toMCVector3d(): MCVector3d {return MCVector3d(x, y, z) }
-    fun toJomlVector3d(): JVector3d {return JVector3d(x, y, z) }
-    fun toJomlVector3i(): JVector3i {return JVector3i(x.toInt(), y.toInt(), z.toInt()) }
-    fun toArray(): Array<Double> {return arrayOf(x, y, z) }
-    fun toBlockPos(): BlockPos {return BlockPos(x, y, z) }
-    fun toMCVec3(): MCVec3 {return MCVec3(x, y, z)}
+    fun toMCVector3d() = MCVector3d(x, y, z)
+    fun toJomlVector3d() = JVector3d(x, y, z)
+    fun toJomlVector3i() = JVector3i(x.toInt(), y.toInt(), z.toInt())
+    fun toJomlVector4d() = Vector4d(x, y, z, 0.0)
+    fun toJomlVector4d(w: Double) = Vector4d(x, y, z, w)
+    fun toArray() = arrayOf(x, y, z)
+    fun toBlockPos() = BlockPos(x, y, z)
+    fun toMCVec3() = MCVec3(x, y, z)
 
     fun copy() = Vector3d(x, y, z)
 

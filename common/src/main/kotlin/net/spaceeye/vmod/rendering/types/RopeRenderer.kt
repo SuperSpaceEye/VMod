@@ -14,7 +14,7 @@ import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.ReflectableObject
-import net.spaceeye.vmod.rendering.RenderTypes
+import net.spaceeye.vmod.rendering.RenderSetups
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -91,7 +91,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else Color(255, 255, 255, 255)
 
         RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
-        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderSetups.setupFullRendering())
 
         poseStack.pushPose()
 
@@ -101,7 +101,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         val tpos2 = rpoint2 - cameraPos
 
         val matrix = poseStack.last().pose()
-        RenderingUtils.Quad.drawRope(
+        RenderingUtils.Quad.drawFlatRope(
             vBuffer, matrix,
             color.red, color.green, color.blue, color.alpha,
             width, segments, length,
@@ -112,7 +112,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         tesselator.end()
         poseStack.popPose()
 
-        RenderTypes.clearFullRendering()
+        RenderSetups.clearFullRendering()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = with(data) {

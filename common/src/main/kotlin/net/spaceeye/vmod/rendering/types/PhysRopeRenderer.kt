@@ -14,7 +14,7 @@ import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.ReflectableObject
-import net.spaceeye.vmod.rendering.RenderTypes
+import net.spaceeye.vmod.rendering.RenderSetups
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawPolygonTube
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.makePolygon
@@ -113,7 +113,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else color
 
         RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
-        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderSetups.setupFullRendering())
 
         poseStack.pushPose()
 
@@ -184,7 +184,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         tesselator.end()
         poseStack.popPose()
 
-        RenderTypes.clearFullRendering()
+        RenderSetups.clearFullRendering()
     }
 
     private fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = with(data) { return@with makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse) }

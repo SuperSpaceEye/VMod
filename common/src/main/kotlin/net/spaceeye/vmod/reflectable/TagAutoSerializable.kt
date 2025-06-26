@@ -64,45 +64,40 @@ interface TagSerializable {
 interface TagAutoSerializable: TagSerializable, ReflectableObject {
     @JsonIgnore
     @NonExtendable
-    override fun tSerialize() = tGetBuffer().also { buf ->
-        getAllReflectableItems().forEach {
-            if (it.metadata.contains("NoTagSerialization")) {return@forEach}
-            typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf, it.cachedName) }
-            ?: throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
-        }
-    }
+    override fun tSerialize() = (this as ReflectableObject).tSerialize(tGetBuffer())
 
     @JsonIgnore
     @NonExtendable
-    override fun tDeserialize(tag: CompoundTag) {
-        getReflectableItemsWithoutDataclassConstructorItems().forEach {
-            if (it.metadata.contains("NoTagSerialization")) {return@forEach}
-            it.setValue(null, null,
-                typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(tag, it.cachedName) }
-                ?: throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
-                )
-        }
-    }
+    override fun tDeserialize(tag: CompoundTag) = (this as ReflectableObject).tDeserialize(tag)
 
-    @JsonIgnore
-    override fun tGetBuffer(): CompoundTag {
-        return super.tGetBuffer()
-    }
+    @JsonIgnore override fun tGetBuffer() = super.tGetBuffer()
 }
 
 //TODO you can't define custom ser/deser
-fun ReflectableObject.tSerialize() = CompoundTag().also { buf ->
+fun ReflectableObject.tSerialize(buf: CompoundTag? = null) = (buf ?: CompoundTag()).also { buf ->
     getAllReflectableItems().forEach {
+        if (it.metadata.contains("NoTagSerialization")) {return@forEach}
         typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf, it.cachedName) }
-            ?: throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
+            ?: run {
+                if (it.it !is Enum<*>) throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
+                buf.putString(it.cachedName, (it.it as Enum<*>).name)
+            }
     }
 }
 
 fun ReflectableObject.tDeserialize(tag: CompoundTag) {
     getReflectableItemsWithoutDataclassConstructorItems().forEach {
+        if (it.metadata.contains("NoTagSerialization")) {return@forEach}
         it.setValue(null, null,
             typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(tag, it.cachedName) }
-                ?: throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
+                ?: let { _ ->
+                    if (it.it !is Enum<*>) throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
+                    if (!tag.contains(it.cachedName)) {return@let it.it!!}
+
+                    val value = tag.getString(it.cachedName)
+                    (it.it!! as Enum<*>).javaClass.enumConstants!!.forEach { const -> if (const.name == value) {it.setValue(null, null, const)} }
+                    it.it!!
+                }
         )
     }
 }

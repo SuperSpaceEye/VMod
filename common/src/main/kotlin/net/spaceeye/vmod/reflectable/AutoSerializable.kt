@@ -62,17 +62,18 @@ import kotlin.reflect.jvm.jvmErasure
 interface AutoSerializable: Serializable, ReflectableObject {
     @JsonIgnore
     @NonExtendable
-    override fun serialize() = (this as ReflectableObject).serialize()
+    override fun serialize() = (this as ReflectableObject).serialize(getBuffer())
 
     @JsonIgnore
     @NonExtendable
     override fun deserialize(buf: FriendlyByteBuf) = (this as ReflectableObject).deserialize(buf)
 
     @JsonIgnore
-    override fun getBuffer(): FriendlyByteBuf { return super.getBuffer() }
+    override fun getBuffer() = super.getBuffer()
 }
 
-fun ReflectableObject.serialize() = FriendlyByteBuf(Unpooled.buffer(64)).also { buf ->
+//TODO automatically serialize enums maybe
+fun ReflectableObject.serialize(buf: FriendlyByteBuf? = null) = (buf ?: FriendlyByteBuf(Unpooled.buffer(64))).also { buf ->
     getAllReflectableItems().forEach {
         (it.metadata["byteSerialize"] as? ByteSerializeFn)?.invoke(it.it!!, buf)
             ?: typeToSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf) }
@@ -182,6 +183,7 @@ object ByteSerializableItem {
         typeToSerDeser[default::class]?.let { return ReflectableItemDelegate(pos, default, mutableMapOf(Pair("verification", verification)), getWrapper = if (verifyOnGet) verification else null) }
 
         when (default) {
+            //todo move it from here
             is Enum<*> -> {
                 val enumClass = default.javaClass as Class<out Enum<*>>
                 return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, { it, buf -> buf.writeEnum(it as Enum<*>)}) { buf -> buf.readEnum(enumClass) as T }, getWrapper = if (verifyOnGet) verification else null)

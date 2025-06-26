@@ -18,6 +18,7 @@ object RenderingTypes: Registry<BaseRenderer>(false) {
         register(PhysRopeRenderer::class)
         register(ConeBlockRenderer::class)
         register(PhysgunRayRenderer::class)
+        register(TubeRopeRenderer::class)
 
 
         register(DebugPointRenderer::class)

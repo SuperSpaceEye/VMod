@@ -192,10 +192,4 @@ class HydraulicsConstraint(): TwoShipsMConstraint(), VEAutoSerializable, Tickabl
         super.iOnDeleteVEntity(level)
         wasDeleted = true
     }
-
-    companion object {
-        init {
-            TagSerializableItem.registerSerializationEnum(ConnectionMode::class)
-        }
-    }
 }

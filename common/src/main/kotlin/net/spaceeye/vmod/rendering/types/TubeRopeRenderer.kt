@@ -9,6 +9,7 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
@@ -44,14 +45,16 @@ class TubeRopeRenderer(): BaseRenderer(), ReflectableObject {
 
         var length: Double by get(i++, 0.0)
 
-        var color: Color by get(i++, Color(0))
+        var color: Color by get(i++, Color.WHITE)
 
-        var width: Double by get(i++, .2, true) { ClientLimits.instance.ropeRendererWidth.get(it) }
-        var sides: Int by get(i++, 4) // todo
-        var segments: Int by get(i++, 16) { ClientLimits.instance.ropeRendererSegments.get(it) }
+        var width: Double by get(i++, .2, true) { ClientLimits.instance.tubeRopeRendererWidth.get(it) }
+        var sides: Int by get(i++, 4, true) { ClientLimits.instance.tubeRopeRendererSides.get(it) }
+        var segments: Int by get(i++, 16) { ClientLimits.instance.tubeRopeRendererSegments.get(it) }
         var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
         var lerpBetweenRotations: Boolean by get(i++, false)
         var useDefinedUpRight: Boolean by get(i++, false)
+
+        var texture: ResourceLocation by get(i++, RenderingUtils.ropeTexture)
     }
     private var data = Data()
     override val reflectObjectOverride: ReflectableObject? get() = data
@@ -74,7 +77,8 @@ class TubeRopeRenderer(): BaseRenderer(), ReflectableObject {
         segments: Int,
         fullbright: Boolean,
         lerpBetweenRotations: Boolean,
-        useDefinedUpRight: Boolean
+        useDefinedUpRight: Boolean,
+        texture: ResourceLocation
     ): this() {
         with(data) {
             this.shipId1 = shipId1
@@ -97,9 +101,20 @@ class TubeRopeRenderer(): BaseRenderer(), ReflectableObject {
             this.fullbright = fullbright
             this.lerpBetweenRotations = lerpBetweenRotations
             this.useDefinedUpRight = useDefinedUpRight
+
+            this.texture = texture
         }
     }
 
+    private var highlightTimestamp = 0L
+    override fun highlightUntil(until: Long) {
+        if (until > highlightTimestamp) highlightTimestamp = until
+    }
+
+    private var highlightTick = 0L
+    override fun highlightUntilRenderingTicks(until: Long) {
+        if (until > highlightTick) highlightTick = until
+    }
 
 
     override fun renderData(
@@ -109,27 +124,25 @@ class TubeRopeRenderer(): BaseRenderer(), ReflectableObject {
     ) = with(data) {
         val level = Minecraft.getInstance().level!!
 
-        val ship1 = if (shipId1 != -1L) {
-            level.shipObjectWorld.loadedShips.getById(shipId1) ?: return
-        } else null
-        val ship2 = if (shipId2 != -1L) {
-            level.shipObjectWorld.loadedShips.getById(shipId2) ?: return
-        } else null
+        val ship1 = if (shipId1 != -1L) { level.shipObjectWorld.loadedShips.getById(shipId1) ?: return } else null
+        val ship2 = if (shipId2 != -1L) { level.shipObjectWorld.loadedShips.getById(shipId2) ?: return } else null
 
         val rPos1 = if (ship1 == null) point1 else posShipToWorldRender(ship1, point1)
         val rPos2 = if (ship2 == null) point2 else posShipToWorldRender(ship2, point2)
 
-        val up1 = ship1?.shipToWorld?.transformDirection(up1.toJomlVector3d())?.let { Vector3d(it) } ?: up1
+        val up1    = ship1?.shipToWorld?.transformDirection(up1   .toJomlVector3d())?.let { Vector3d(it) } ?: up1
         val right1 = ship1?.shipToWorld?.transformDirection(right1.toJomlVector3d())?.let { Vector3d(it) } ?: right1
 
-        val up2 = ship2?.shipToWorld?.transformDirection(up2.toJomlVector3d())?.let { Vector3d(it) } ?: up2
+        val up2    = ship2?.shipToWorld?.transformDirection(up2   .toJomlVector3d())?.let { Vector3d(it) } ?: up2
         val right2 = ship2?.shipToWorld?.transformDirection(right2.toJomlVector3d())?.let { Vector3d(it) } ?: right2
+
+        val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else color
 
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
         vBuffer.begin(VertexFormat.Mode.QUADS, RenderSetups.setupFullRendering())
-        RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
+        RenderSystem.setShaderTexture(0, texture)
 
         poseStack.pushPose()
 
@@ -165,7 +178,7 @@ class TubeRopeRenderer(): BaseRenderer(), ReflectableObject {
             centerPositions[shipId1]?.let { (old, new) -> updatePosition(point1, old, new) } ?: point1,
             centerPositions[shipId2]?.let { (old, new) -> updatePosition(point2, old, new) } ?: point2,
             up1.copy(), up2.copy(), right1.copy(), right2.copy(),
-            length, color, width, sides, segments, fullbright, lerpBetweenRotations, useDefinedUpRight
+            length, color, width, sides, segments, fullbright, lerpBetweenRotations, useDefinedUpRight, texture
         )
     }
 

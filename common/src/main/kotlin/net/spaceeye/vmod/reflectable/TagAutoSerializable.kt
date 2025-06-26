@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.DoubleTag
 import net.minecraft.nbt.FloatTag
 import net.minecraft.nbt.ListTag
+import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.reflectable.TagSerializableItem.typeToTagSerDeser
 import net.spaceeye.vmod.utils.*
 import org.jetbrains.annotations.ApiStatus.NonExtendable
@@ -88,15 +89,11 @@ fun ReflectableObject.tSerialize(buf: CompoundTag? = null) = (buf ?: CompoundTag
 fun ReflectableObject.tDeserialize(tag: CompoundTag) {
     getReflectableItemsWithoutDataclassConstructorItems().forEach {
         if (it.metadata.contains("NoTagSerialization")) {return@forEach}
-        it.setValue(null, null,
+        it.setValue(null, null, if (!tag.contains(it.cachedName)) it.it!! else
             typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(tag, it.cachedName) }
                 ?: let { _ ->
                     if (it.it !is Enum<*>) throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
-                    if (!tag.contains(it.cachedName)) {return@let it.it!!}
-
-                    val value = tag.getString(it.cachedName)
-                    (it.it!! as Enum<*>).javaClass.enumConstants!!.forEach { const -> if (const.name == value) {it.setValue(null, null, const)} }
-                    it.it!!
+                    java.lang.Enum.valueOf(it.it!!.javaClass as Class<out Enum<*>>, tag.getString(it.cachedName))
                 }
         )
     }
@@ -115,30 +112,32 @@ object TagSerializableItem {
         typeToTagSerDeser[type] = Pair(serialize as TagSerializeFn, deserialize)
     }
 
-    @JvmStatic fun <T: Enum<*>> registerSerializationEnum(type: KClass<T>) {
-        registerSerializationItem(type, {it, buf, key -> buf.putString(key, it.name) }, {buf, key -> java.lang.Enum.valueOf(type.java as Class<out Enum<*>>, buf.getString(key)) as T })
-    }
+    @JvmStatic fun <T: Any> rsi(
+        type: KClass<T>,
+        serialize: ((it: T, buf: CompoundTag, key: String) -> Unit),
+        deserialize: ((buf: CompoundTag, key: String) -> T)) = registerSerializationItem(type, serialize, deserialize)
 
     init {
-        registerSerializationItem(BlockPos.MutableBlockPos::class, { it, buf, key -> buf.putLong(key, it.asLong())}) { buf, key -> BlockPos.of(buf.getLong(key)).let { BlockPos.MutableBlockPos(it.x, it.y, it.z) }}
-        registerSerializationItem(Quaterniondc::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
-        registerSerializationItem(Quaterniond::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
-        registerSerializationItem(Vector3d::class, {it, buf, key -> buf.putMyVector3d(key, it)}) {buf, key -> buf.getMyVector3d(key)}
-        registerSerializationItem(BlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) { buf, key -> BlockPos.of(buf.getLong(key))}
-        registerSerializationItem(ByteBuf::class, {it, buf, key -> buf.putByteArray(key, it.array())}) {buf, key -> Unpooled.wrappedBuffer(buf.getByteArray(key))}
-        registerSerializationItem(Boolean::class, {it, buf, key -> buf.putBoolean(key, it)}) {buf, key -> buf.getBoolean(key)}
-        registerSerializationItem(Double::class, {it, buf, key -> buf.putDouble(key, it)}) {buf, key -> buf.getDouble(key)}
-        registerSerializationItem(String::class, {it, buf, key -> buf.putString(key, it)}) {buf, key -> buf.getString(key)}
-        registerSerializationItem(Color::class, {it, buf, key -> buf.putColor(key, it)}) {buf, key -> buf.getColor(key)}
-        registerSerializationItem(Float::class, {it, buf, key -> buf.putFloat(key, it)}) {buf, key -> buf.getFloat(key)}
-        registerSerializationItem(Long::class, {it, buf, key -> buf.putLong(key, it)}) {buf, key -> buf.getLong(key)}
-        registerSerializationItem(UUID::class, {it, buf, key -> buf.putUUID(key, it)}) {buf, key -> buf.getUUID(key)}
-        registerSerializationItem(Int::class, {it, buf, key -> buf.putInt(key, it)}) {buf, key -> buf.getInt(key)}
+        rsi(BlockPos.MutableBlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) {buf, key -> BlockPos.of(buf.getLong(key)).let { BlockPos.MutableBlockPos(it.x, it.y, it.z) }}
+        rsi(ResourceLocation::class, {it, buf, key -> buf.putString(key, it.toString())}) {buf, key -> ResourceLocation(buf.getString(key)) }
+        rsi(Quaterniondc::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
+        rsi(Quaterniond::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
+        rsi(Vector3d::class, {it, buf, key -> buf.putMyVector3d(key, it)}) {buf, key -> buf.getMyVector3d(key)}
+        rsi(BlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) { buf, key -> BlockPos.of(buf.getLong(key))}
+        rsi(ByteBuf::class, {it, buf, key -> buf.putByteArray(key, it.array())}) {buf, key -> Unpooled.wrappedBuffer(buf.getByteArray(key))}
+        rsi(Boolean::class, {it, buf, key -> buf.putBoolean(key, it)}) {buf, key -> buf.getBoolean(key)}
+        rsi(Double::class, {it, buf, key -> buf.putDouble(key, it)}) {buf, key -> buf.getDouble(key)}
+        rsi(String::class, {it, buf, key -> buf.putString(key, it)}) {buf, key -> buf.getString(key)}
+        rsi(Color::class, {it, buf, key -> buf.putColor(key, it)}) {buf, key -> buf.getColor(key)}
+        rsi(Float::class, {it, buf, key -> buf.putFloat(key, it)}) {buf, key -> buf.getFloat(key)}
+        rsi(Long::class, {it, buf, key -> buf.putLong(key, it)}) {buf, key -> buf.getLong(key)}
+        rsi(UUID::class, {it, buf, key -> buf.putUUID(key, it)}) {buf, key -> buf.getUUID(key)}
+        rsi(Int::class, {it, buf, key -> buf.putInt(key, it)}) {buf, key -> buf.getInt(key)}
 
-        registerSerializationItem(IntArray::class, {it, buf, key -> buf.putIntArray(key, it)}, {buf, key -> buf.getIntArray(key)})
-        registerSerializationItem(LongArray::class, {it, buf, key -> buf.putLongArray(key, it)}, {buf, key -> buf.getLongArray(key)})
-        registerSerializationItem(FloatArray::class, {it, buf, key -> val tag = ListTag(); tag.addAll(it.map { FloatTag.valueOf(it) }); buf.put(key, tag) }, {buf, key -> (buf.get(key) as ListTag).map { (it as FloatTag).asFloat }.toFloatArray()})
-        registerSerializationItem(DoubleArray::class, {it, buf, key -> val tag = ListTag(); tag.addAll(it.map { DoubleTag.valueOf(it) }); buf.put(key, tag) }, {buf, key -> (buf.get(key) as ListTag).map { (it as DoubleTag).asDouble }.toDoubleArray()})
+        rsi(IntArray::class, {it, buf, key -> buf.putIntArray(key, it)}, {buf, key -> buf.getIntArray(key)})
+        rsi(LongArray::class, {it, buf, key -> buf.putLongArray(key, it)}, {buf, key -> buf.getLongArray(key)})
+        rsi(FloatArray::class, {it, buf, key -> val tag = ListTag(); tag.addAll(it.map { FloatTag.valueOf(it) }); buf.put(key, tag) }, {buf, key -> (buf.get(key) as ListTag).map { (it as FloatTag).asFloat }.toFloatArray()})
+        rsi(DoubleArray::class, {it, buf, key -> val tag = ListTag(); tag.addAll(it.map { DoubleTag.valueOf(it) }); buf.put(key, tag) }, {buf, key -> (buf.get(key) as ListTag).map { (it as DoubleTag).asDouble }.toDoubleArray()})
     }
 
 //    /**

@@ -58,6 +58,8 @@
   "vmod.gui.setting.fullbright": "Fullbright",
   "vmod.gui.setting.transparency": "Transparency",
   "vmod.gui.setting.try_render_block_entities": "Try render block entities",
+  "vmod.gui.setting.use_tube_renderer": "Use Tube Renderer",
+  "vmod.gui.setting.allow_twisting": "Allow Twisting",
   "vmod.gui.setting.placement_assist_scroll_step": "Placement Assist Scroll Step",
   "vmod.gui.setting.hitpos_modes": "Hitpos Modes",
   "vmod.gui.setting.normal": "Normal",

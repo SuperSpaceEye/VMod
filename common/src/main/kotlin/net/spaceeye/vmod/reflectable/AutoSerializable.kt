@@ -72,12 +72,14 @@ interface AutoSerializable: Serializable, ReflectableObject {
     override fun getBuffer() = super.getBuffer()
 }
 
-//TODO automatically serialize enums maybe
 fun ReflectableObject.serialize(buf: FriendlyByteBuf? = null) = (buf ?: FriendlyByteBuf(Unpooled.buffer(64))).also { buf ->
     getAllReflectableItems().forEach {
         (it.metadata["byteSerialize"] as? ByteSerializeFn)?.invoke(it.it!!, buf)
             ?: typeToSerDeser[it.it!!::class]?.let { (ser, deser) -> ser(it.it!!, buf) }
-            ?: throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
+            ?: run {
+                if (it.it !is Enum<*>) throw AssertionError("Can't serialize ${it.it!!::class.simpleName}")
+                buf.writeEnum(it.it!! as Enum<*>)
+            }
     }
 }
 
@@ -86,7 +88,10 @@ fun ReflectableObject.deserialize(buf: FriendlyByteBuf) {
         it.setValue(null, null,
             (it.metadata["byteDeserialize"] as? ByteDeserializeFn<Any>)?.invoke(buf)
                 ?: typeToSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(buf) }
-                ?: throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
+                ?: let {_ ->
+                    if (it.it !is Enum<*>) throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
+                    buf.readEnum(it.it!!.javaClass as Class<out Enum<*>>)
+                }
         )
     }
 }
@@ -110,7 +115,11 @@ fun <T: Serializable> KClass<T>.constructor(buf: FriendlyByteBuf? = null): T {
 
     val deserializers = members.map {
         val clazz = it.returnType.jvmErasure
-        typeToSerDeser[clazz]!!.second
+        if (!clazz.java.isEnum) {
+            typeToSerDeser[clazz]!!.second
+        } else {
+            {buf -> buf.readEnum(clazz.java as Class<out Enum<*>>)}
+        }
     }
 
     val items = deserializers.map { it.invoke(buf) }
@@ -131,30 +140,31 @@ object ByteSerializableItem {
         typeToSerDeser[type] = Pair(serialize as ByteSerializeFn, deserialize)
     }
 
-    @JvmStatic fun <T: Enum<*>> registerSerializationEnum(type: KClass<T>) {
-        registerSerializationItem(type, {it, buf -> buf.writeEnum(it) }, {buf -> buf.readEnum(type.java as Class<out Enum<*>>) as T })
-    }
+    @JvmStatic fun <T: Any> rsi(
+        type: KClass<T>,
+        serialize: ((it: T, buf: FriendlyByteBuf) -> Unit),
+        deserialize: ((buf: FriendlyByteBuf) -> T)) = registerSerializationItem(type, serialize, deserialize)
 
     init {
-        registerSerializationItem(BlockPos.MutableBlockPos::class, { it, buf -> buf.writeBlockPos(it)}) { buf -> buf.readBlockPos().mutable()}
-        registerSerializationItem(FriendlyByteBuf::class, {it, buf -> buf.writeByteArray(it.accessByteBufWithCorrectSize())}) {buf -> FriendlyByteBuf(Unpooled.wrappedBuffer(buf.readByteArray()))}
-        registerSerializationItem(Quaterniond::class, {it, buf -> buf.writeQuatd(it)}) {buf -> buf.readQuatd()}
-        registerSerializationItem(Vector3d::class, {it, buf -> buf.writeVector3d(it)}) {buf -> buf.readVector3d()}
-        registerSerializationItem(BlockPos::class, { it, buf -> buf.writeBlockPos(it)}) { buf -> buf.readBlockPos()}
-        registerSerializationItem(ByteBuf::class, {it, buf -> buf.writeByteArray(it.array())}) {buf -> Unpooled.wrappedBuffer(buf.readByteArray())}
-        registerSerializationItem(Boolean::class, {it, buf -> buf.writeBoolean(it)}) {buf -> buf.readBoolean()}
-        registerSerializationItem(Double::class, {it, buf -> buf.writeDouble(it)}) {buf -> buf.readDouble()}
-        registerSerializationItem(String::class, {it, buf -> buf.writeUtf(it)}) {buf -> buf.readUtf()}
-        registerSerializationItem(Color::class, {it, buf -> buf.writeColor(it)}) {buf -> buf.readColor()}
-        registerSerializationItem(Float::class, {it, buf -> buf.writeFloat(it)}) {buf -> buf.readFloat()}
-        registerSerializationItem(Long::class, {it, buf -> buf.writeLong(it)}) {buf -> buf.readLong()}
-        registerSerializationItem(UUID::class, {it, buf -> buf.writeUUID(it)}) {buf -> buf.readUUID()}
-        registerSerializationItem(Int::class, {it, buf -> buf.writeInt(it)}) {buf -> buf.readInt()}
+        rsi(BlockPos.MutableBlockPos::class, { it, buf -> buf.writeBlockPos(it)}) { buf -> buf.readBlockPos().mutable()}
+        rsi(FriendlyByteBuf::class, {it, buf -> buf.writeByteArray(it.accessByteBufWithCorrectSize())}) {buf -> FriendlyByteBuf(Unpooled.wrappedBuffer(buf.readByteArray()))}
+        rsi(Quaterniond::class, {it, buf -> buf.writeQuatd(it)}) {buf -> buf.readQuatd()}
+        rsi(Vector3d::class, {it, buf -> buf.writeVector3d(it)}) {buf -> buf.readVector3d()}
+        rsi(BlockPos::class, { it, buf -> buf.writeBlockPos(it)}) { buf -> buf.readBlockPos()}
+        rsi(ByteBuf::class, {it, buf -> buf.writeByteArray(it.array())}) {buf -> Unpooled.wrappedBuffer(buf.readByteArray())}
+        rsi(Boolean::class, {it, buf -> buf.writeBoolean(it)}) {buf -> buf.readBoolean()}
+        rsi(Double::class, {it, buf -> buf.writeDouble(it)}) {buf -> buf.readDouble()}
+        rsi(String::class, {it, buf -> buf.writeUtf(it)}) {buf -> buf.readUtf()}
+        rsi(Color::class, {it, buf -> buf.writeColor(it)}) {buf -> buf.readColor()}
+        rsi(Float::class, {it, buf -> buf.writeFloat(it)}) {buf -> buf.readFloat()}
+        rsi(Long::class, {it, buf -> buf.writeLong(it)}) {buf -> buf.readLong()}
+        rsi(UUID::class, {it, buf -> buf.writeUUID(it)}) {buf -> buf.readUUID()}
+        rsi(Int::class, {it, buf -> buf.writeInt(it)}) {buf -> buf.readInt()}
 
-        registerSerializationItem(IntArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeInt(it)}}) {buf -> buf.readCollection({mutableListOf<Int>()}) {buf.readInt()}.toIntArray()}
-        registerSerializationItem(LongArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeLong(it)}}) {buf -> buf.readCollection({mutableListOf<Long>()}) {buf.readLong()}.toLongArray()}
-        registerSerializationItem(FloatArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeFloat(it)}}) {buf -> buf.readCollection({mutableListOf<Float>()}) {buf.readFloat()}.toFloatArray()}
-        registerSerializationItem(DoubleArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeDouble(it)}}) {buf -> buf.readCollection({mutableListOf<Double>()}) {buf.readDouble()}.toDoubleArray()}
+        rsi(IntArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeInt(it)}}) {buf -> buf.readCollection({mutableListOf<Int>()}) {buf.readInt()}.toIntArray()}
+        rsi(LongArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeLong(it)}}) {buf -> buf.readCollection({mutableListOf<Long>()}) {buf.readLong()}.toLongArray()}
+        rsi(FloatArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeFloat(it)}}) {buf -> buf.readCollection({mutableListOf<Float>()}) {buf.readFloat()}.toFloatArray()}
+        rsi(DoubleArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeDouble(it)}}) {buf -> buf.readCollection({mutableListOf<Double>()}) {buf.readDouble()}.toDoubleArray()}
     }
 
     private fun makeByteSerDeser(verification: ((it: Nothing) -> Any), ser: ByteSerializeFn, deser: ByteDeserializeFn<Any>): MutableMap<String, Any> = mutableMapOf(

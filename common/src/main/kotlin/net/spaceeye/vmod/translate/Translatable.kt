@@ -96,6 +96,8 @@ val SIDES = s("Sides")
 val FULLBRIGHT = s("Fullbright")
 val TRANSPARENCY = s("Transparency")
 val TRY_RENDER_BLOCK_ENTITIES = s("Try render block entities")
+val USE_TUBE_RENDERER = s("Use Tube Renderer")
+val ALLOW_TWISTING = s("Allow Twisting")
 
 val PLACEMENT_ASSIST_SCROLL_STEP = s("Placement Assist Scroll Step")
 

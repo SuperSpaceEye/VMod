@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.typeToSerDeser
 import net.spaceeye.vmod.utils.*
@@ -146,11 +147,12 @@ object ByteSerializableItem {
         deserialize: ((buf: FriendlyByteBuf) -> T)) = registerSerializationItem(type, serialize, deserialize)
 
     init {
-        rsi(BlockPos.MutableBlockPos::class, { it, buf -> buf.writeBlockPos(it)}) { buf -> buf.readBlockPos().mutable()}
+        rsi(BlockPos.MutableBlockPos::class, {it, buf -> buf.writeBlockPos(it)}) {buf -> buf.readBlockPos().mutable()}
+        rsi(ResourceLocation::class, {it, buf -> buf.writeUtf(it.toString())}) {buf -> ResourceLocation(buf.readUtf())}
         rsi(FriendlyByteBuf::class, {it, buf -> buf.writeByteArray(it.accessByteBufWithCorrectSize())}) {buf -> FriendlyByteBuf(Unpooled.wrappedBuffer(buf.readByteArray()))}
         rsi(Quaterniond::class, {it, buf -> buf.writeQuatd(it)}) {buf -> buf.readQuatd()}
         rsi(Vector3d::class, {it, buf -> buf.writeVector3d(it)}) {buf -> buf.readVector3d()}
-        rsi(BlockPos::class, { it, buf -> buf.writeBlockPos(it)}) { buf -> buf.readBlockPos()}
+        rsi(BlockPos::class, { it, buf -> buf.writeBlockPos(it)}) {buf -> buf.readBlockPos()}
         rsi(ByteBuf::class, {it, buf -> buf.writeByteArray(it.array())}) {buf -> Unpooled.wrappedBuffer(buf.readByteArray())}
         rsi(Boolean::class, {it, buf -> buf.writeBoolean(it)}) {buf -> buf.readBoolean()}
         rsi(Double::class, {it, buf -> buf.writeDouble(it)}) {buf -> buf.readDouble()}
@@ -200,6 +202,10 @@ object ByteSerializableItem {
             }
         }
 
-        return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, customSerialize as (Any, FriendlyByteBuf) -> Unit, customDeserialize!!), getWrapper = if (verifyOnGet) verification else null)
+        if (customSerialize == null || customDeserialize == null) {
+            throw AssertionError("type ${default.javaClass} was used without registered and with no custom ser/deser")
+        }
+
+        return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, customSerialize as (Any, FriendlyByteBuf) -> Unit, customDeserialize), getWrapper = if (verifyOnGet) verification else null)
     }
 }

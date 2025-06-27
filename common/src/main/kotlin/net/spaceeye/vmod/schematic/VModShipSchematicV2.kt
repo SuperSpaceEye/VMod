@@ -179,7 +179,7 @@ private fun IShipSchematicDataV1.saveAttachments(ships: List<ServerShip>, level:
     attachments.forEach { (ship, attachments) ->
         attachments.forEach {
             try {
-                it.onCopy(level, ship, ships, centerPositions)
+                it.onCopy({level}, ship, ships, centerPositions)
             } catch (e: Throwable) {
                 ELOG(e.stackTraceToString())
             }
@@ -193,7 +193,7 @@ private fun IShipSchematicDataV1.saveAttachments(ships: List<ServerShip>, level:
     attachments.forEach { (ship, attachments) ->
         attachments.forEach {
             try {
-                it.onAfterCopy(level, ship, ships, centerPositions)
+                it.onAfterCopy({level}, ship, ships, centerPositions)
             } catch (e: Throwable) {
                 ELOG(e.stackTraceToString())
             }
@@ -214,7 +214,7 @@ private fun loadAttachments(level: ServerLevel, ships: Map<Long, ServerShip>, ce
             //TODO remove this after 2.5.0. for some god forsaken reason VS allows you to add multiple separate attachments to one ship
             loadedShip.saveAttachment(it.javaClass, null)
             loadedShip.saveAttachment(it.javaClass, it)
-            it.onPaste(level, loadedShip, ships, centerPositions)
+            it.onPaste({level}, loadedShip, ships, centerPositions)
         }
     }
 }

@@ -14,6 +14,7 @@ import org.valkyrienskies.core.api.ships.ShipForcesInducer
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Supplier
 import kotlin.math.roundToInt
 
 class CustomMassSave(): ShipForcesInducer, ICopyableForcesInducer {
@@ -36,17 +37,17 @@ class CustomMassSave(): ShipForcesInducer, ICopyableForcesInducer {
             value?.forEach { (pos, mass) -> CustomBlockMassManager.loadCustomMass(dimensionId, shipId, pos.x, pos.y, pos.z, mass) }
         }
 
-    override fun onCopy(level: ServerLevel, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {
+    override fun onCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {
         lock.lock()
         wasCopied = true
     }
 
-    override fun onAfterCopy(level: ServerLevel, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {
+    override fun onAfterCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {
         lock.unlock()
     }
 
     override fun onPaste(
-        level: ServerLevel,
+        level: Supplier<ServerLevel>,
         shipOn: LoadedServerShip,
         loadedShips: Map<Long, ServerShip>,
         centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>
@@ -67,7 +68,7 @@ class CustomMassSave(): ShipForcesInducer, ICopyableForcesInducer {
                 .sub(oldCenter)
                 .add(newCenter)
                 .let { Vector3i(it.x.roundToInt(), it.y.roundToInt(), it.z.roundToInt()) }
-            CustomBlockMassManager.setCustomMass(level, pos.x, pos.y, pos.z, mass, )
+            CustomBlockMassManager.setCustomMass(level.get(), pos.x, pos.y, pos.z, mass, )
         }
         tempMassData = null
     }

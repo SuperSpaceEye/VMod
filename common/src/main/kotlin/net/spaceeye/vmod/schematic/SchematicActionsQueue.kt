@@ -135,7 +135,7 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.putInt("z", pos.z)
 
                     var callbacks = mutableListOf<((CompoundTag?) -> CompoundTag?)>()
-                    val cb = SchemCompatObj.onPaste(level, oldToNewId, centerPositions, tag, pos, state) { delay, fn -> fn?.let{callbacks.add(it)} }
+                    val cb = SchemCompatObj.onPaste(level, oldToNewId, centerPositions, tag, pos, state) { _, fn -> fn?.let{callbacks.add(it)} }
 
                     delayedBlockEntityLoading.add(pos.x, pos.y, pos.z) {
                         //refreshing block entities as a long time may pass between its creation and fn call
@@ -144,13 +144,8 @@ object SchematicActionsQueue: ServerClosable() {
                             newBe?.also{ level.getChunkAt(pos).addAndRegisterBlockEntity(it) }
                         } else null
 
-                        val tag =
-                            if (block is ICopyableBlock) {block.onPaste(level, pos, state, oldToNewId, centerPositions, tag)} else {null}
-                            ?: callbacks.let {
-                                var ret: CompoundTag? = null
-                                for (it in it) { ret = it(tag); if (ret != null) {break} }
-                                ret
-                            } ?: tag
+                        var tag = if (block is ICopyableBlock) {block.onPaste(level, pos, state, oldToNewId, centerPositions, tag) ?: tag} else tag
+                        callbacks.forEach { tag = it(tag) ?: tag }
 
                         if (be is Container? && !settings.loadContainers) { return@add }
 

@@ -39,6 +39,7 @@ object SchemCompatObj {
         safeAdd("takeoff") { TakeoffSchemCompat() }
 
         safeAdd("create") { CreateContraptionsCompat() }
+        safeAdd("create") { CreateKineticsCompat() }
     }
 
     fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, centerPositions: Map<Long, JVector3d>, be: BlockEntity?, tag: CompoundTag?): Boolean {
@@ -51,6 +52,7 @@ object SchemCompatObj {
         }
         return cancel
     }
+    //TODO rename delayLoading cuz it's useless now
     fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit): ((BlockEntity?) -> Unit)? {
         val callbacks = mutableListOf<(BlockEntity?) -> Unit>()
         items.forEach {

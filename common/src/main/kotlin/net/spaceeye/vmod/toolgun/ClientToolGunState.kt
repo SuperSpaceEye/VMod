@@ -161,8 +161,8 @@ object ClientToolGunState : ClientClosable() {
     private lateinit var gui: MainToolgunGUIWindow
 
     //TODO redo this
-    internal fun guiIsOpened() = Minecraft.getInstance().screen.let { it == gui || it is VEntityChangerGui }
-    internal fun otherGuiIsOpened() = Minecraft.getInstance().screen.let { it != null && it != gui && it !is VEntityChangerGui }
+    internal fun guiIsOpened() = Minecraft.getInstance().screen.let { it is MainToolgunGUIWindow || it is VEntityChangerGui }
+    internal fun otherGuiIsOpened() = Minecraft.getInstance().screen.let { it != null && it !is MainToolgunGUIWindow && it !is VEntityChangerGui }
 
     private val externalWindows = mutableListOf<Pair<TranslatableComponent, (UIBlock) -> ToolgunWindow>>()
 

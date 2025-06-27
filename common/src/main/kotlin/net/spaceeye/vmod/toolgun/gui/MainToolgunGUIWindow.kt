@@ -16,7 +16,9 @@ import net.spaceeye.vmod.translate.SERVER_SETTINGS
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
-class MainToolgunGUIWindow(): WindowScreen(ElementaVersion.V8) {
+class MainToolgunGUIWindow(
+    drawTopButtons: Boolean = true
+): WindowScreen(ElementaVersion.V8) {
     class ButtonsXConstraint(
         val mainWindow: UIBlock,
     ): XConstraint {
@@ -105,9 +107,11 @@ class MainToolgunGUIWindow(): WindowScreen(ElementaVersion.V8) {
     }
 
     init {
-        buildButtons()
         currentWindow = ToolgunGUI(mainWindow)
-        buttons[0].setDisplay(true)
-        buttons[0].updateColor()
+        if (drawTopButtons) {
+            buildButtons()
+            buttons[0].setDisplay(true)
+            buttons[0].updateColor()
+        }
     }
 }

@@ -1,6 +1,8 @@
 package net.spaceeye.vmod
 
+import dev.architectury.event.events.client.ClientCommandRegistrationEvent
 import dev.architectury.event.events.client.ClientPlayerEvent
+import dev.architectury.event.events.common.CommandRegistrationEvent
 import dev.architectury.event.events.common.LifecycleEvent
 import dev.architectury.utils.Env
 import dev.architectury.utils.EnvExecutor
@@ -69,6 +71,9 @@ object VM {
         VMBlockEntities.register()
         VMItems.register()
         VMEntities.register()
+
+        ClientCommandRegistrationEvent.EVENT.register { VMClientCommands.registerClientCommands(it) }
+        CommandRegistrationEvent.EVENT.register { it, _-> VMCommands.registerServerCommands(it) }
 
         makeEvents()
     }

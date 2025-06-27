@@ -1,11 +1,13 @@
 package net.spaceeye.vmod.rendering
 
 import com.mojang.blaze3d.vertex.VertexConsumer
+import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Matrix4d
+import org.joml.Matrix4f
 import org.joml.Vector4d
 import java.awt.Color
 import kotlin.math.PI

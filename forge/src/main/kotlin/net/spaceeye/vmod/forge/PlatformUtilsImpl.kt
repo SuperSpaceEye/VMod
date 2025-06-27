@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.forge
 
-import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
 import net.spaceeye.vmod.config.AbstractConfigBuilder
 
@@ -16,7 +16,7 @@ object PlatformUtilsImpl {
     }
 
     @JvmStatic
-    fun renderScreen(screen: Screen, stack: PoseStack, mouseX: Int, mouseY: Int, delta: Float) {
+    fun renderScreen(screen: Screen, stack: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
         screen.render(stack, mouseX, mouseY, delta)
     }
 }

@@ -1,8 +1,7 @@
 package net.spaceeye.vmod
 
-import com.mojang.blaze3d.vertex.PoseStack
 import dev.architectury.injectables.annotations.ExpectPlatform
-import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
 import net.spaceeye.vmod.config.AbstractConfigBuilder
 
@@ -17,5 +16,5 @@ object PlatformUtils {
 
     @ExpectPlatform
     @JvmStatic
-    fun renderScreen(screen: Screen, stack: PoseStack, mouseX: Int, mouseY: Int, delta: Float) { throw AssertionError() }
+    fun renderScreen(screen: Screen, stack: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) { throw AssertionError() }
 }

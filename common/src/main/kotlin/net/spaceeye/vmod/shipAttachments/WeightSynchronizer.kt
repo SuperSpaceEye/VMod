@@ -21,6 +21,7 @@ import org.valkyrienskies.core.apigame.world.chunks.BlockType
 import org.valkyrienskies.mod.common.BlockStateInfo
 import org.valkyrienskies.mod.common.getShipObjectManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.util.function.Supplier
 
 class WeightSynchronizer: ShipForcesInducer, ServerTickListener, ICopyableForcesInducer {
     var shipId = -1L
@@ -53,9 +54,9 @@ class WeightSynchronizer: ShipForcesInducer, ServerTickListener, ICopyableForces
             updateMass(level, ship, false, syncMassPerBlock, massPerBlock, targetTotalMass)
         }
     }
-    override fun onCopy(level: ServerLevel, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {}
+    override fun onCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {}
     override fun onPaste(
-        level: ServerLevel,
+        level: Supplier<ServerLevel>,
         shipOn: LoadedServerShip,
         loadedShips: Map<Long, ServerShip>,
         centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>

@@ -7,11 +7,14 @@ import net.minecraft.nbt.DoubleTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.Container
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.Mob
 import net.minecraft.world.entity.MobSpawnType
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.level.ChunkPos
+import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.chunk.LevelChunk
@@ -33,6 +36,7 @@ import net.spaceeye.vmod.utils.BlockPos
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
 import net.spaceeye.vmod.translate.ONE_OF_THE_SHIPS_IS_TOO_TALL
 import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_COPYING
 import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_PLACING
@@ -77,8 +81,8 @@ object SchematicActionsQueue: ServerClosable() {
 
     fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
 
-    fun queueShipsCreationEvent(level: ServerLevel, player: ServerPlayer?, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, postPlacementFn: (ships: List<Pair<Long, ServerShip>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit) {
-        placeData[uuid] = SchemPlacementItem(level, player, schematicV1, ships, postPlacementFn)
+    fun queueShipsCreationEvent(level: ServerLevel, player: ServerPlayer?, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, settings: PasteSchematicSettings, postPlacementFn: (ships: List<Pair<Long, ServerShip>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit) {
+        placeData[uuid] = SchemPlacementItem(level, player, schematicV1, ships, postPlacementFn, settings)
     }
 
     private inline fun <T> logThrowables(onError: () -> Unit = {}, fn: () -> T): T? {
@@ -90,7 +94,8 @@ object SchematicActionsQueue: ServerClosable() {
         val player: ServerPlayer?,
         val schematicV1: IShipSchematicDataV1,
         val shipsToCreate: List<Pair<() -> ServerShip, Long>>,
-        val postPlacementFn: (ships: List<Pair<Long, ServerShip>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit
+        val postPlacementFn: (ships: List<Pair<Long, ServerShip>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit,
+        val settings: PasteSchematicSettings
     ) {
         var currentShip = 0
         var currentChunk = 0
@@ -108,18 +113,23 @@ object SchematicActionsQueue: ServerClosable() {
             currentChunkData.chunkForEach(currentChunk) { x, y, z, it -> logThrowables({hadNonfatalErrors++}) {
                 val pos = BlockPos(x + shipCenter.x, y + shipCenter.y, z + shipCenter.z)
                 val state = blockPalette.fromId(it.paletteId) ?: run {
-                    ELOG("State under ID ${it.paletteId} is null.")
+                    settings.logger?.error("State under ID ${it.paletteId} is null.")
                     hadNonfatalErrors++
                     Blocks.AIR.defaultBlockState()
                 }
                 if (state.isAir) {return@chunkForEach}
                 val block = state.block
 
+                val blacklisted = when (settings.blacklistMode) {
+                    true  ->  settings.nbtLoadingBlacklist.contains(block)
+                    false -> !settings.nbtLoadingWhitelist.contains(block)
+                }
+
                 level.getChunkAt(pos).also {
                     it.setBlockState(pos, state, false)
-                    it.removeBlockEntity(pos)
+                    if (!blacklisted) it.removeBlockEntity(pos)
                 }
-                if (it.extraDataId != -1) {
+                if (!blacklisted && it.extraDataId != -1) {
                     val tag = flatTagData[it.extraDataId]
                     tag.putInt("x", pos.x)
                     tag.putInt("y", pos.y)
@@ -143,6 +153,8 @@ object SchematicActionsQueue: ServerClosable() {
                                 ret
                             } ?: tag
 
+                        if (be is Container? && !settings.loadContainers) { return@add }
+
                         be?.load(tag)
                         cb?.let { afterPasteCallbacks.add { it(be) } }
                     }
@@ -155,9 +167,10 @@ object SchematicActionsQueue: ServerClosable() {
                 val pos = BlockPos(x + shipCenter.x, y + shipCenter.y, z + shipCenter.z)
                 val state = level.getBlockState(pos)
 
+                level.chunkSource.updateChunkForced(ChunkPos(pos), true)
                 level.chunkSource.blockChanged(pos)
-                level.setBlocksDirty(pos, state, state)
                 level.blockUpdated(pos, state.block)
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS)
                 level.updateNeighbourForOutputSignal(pos, state.block)
             } }
         }
@@ -219,7 +232,7 @@ object SchematicActionsQueue: ServerClosable() {
                     placeChunk(level, oldToNewId, currentBlockData, blockPalette, flatExtraData, shipCenter)
                     currentChunk++
 
-                    if (getNow_ms() - start > timeout) { return false }
+                    if (getNow_ms() - start > timeout && settings.allowChunkPlacementInterruption) { return false }
                 }
 
                 currentChunk = 0
@@ -249,15 +262,17 @@ object SchematicActionsQueue: ServerClosable() {
                     updateChunk(level, currentBlockData, shipCenter)
                     currentChunk++
 
-                    if (getNow_ms() - start > timeout) { return false }
+                    if (getNow_ms() - start > timeout && settings.allowUpdateInterruption) { return false }
                 }
+
+                (ship.transformProvider as? SchemTempPositionSetter)?.work = true
 
                 currentChunk = 0
                 currentShip++
             }
 
             entityCreationFn = {
-            schematicV1.entityData.forEach { (oldId, entities) ->
+            if (settings.loadEntities) schematicV1.entityData.forEach { (oldId, entities) ->
                 val newShip = level.shipObjectWorld.allShips.getById(oldToNewId[oldId]!!)!!
                 entities.forEach { (pos, tag) -> logThrowables({hadNonfatalErrors++}) {
                     val tag = tag.copy()
@@ -290,8 +305,7 @@ object SchematicActionsQueue: ServerClosable() {
                 } }
             } }
 
-            //TODO think of a way to make str into translatable
-            if (hadNonfatalErrors > 0) { player?.let { ServerToolGunState.sendErrorTo(it, "Schematic had $hadNonfatalErrors nonfatal errors") } }
+            if (hadNonfatalErrors > 0) { settings.nonfatalErrorsHandler(hadNonfatalErrors, schematicV1, player) }
 
             return true
         }

@@ -184,9 +184,8 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
             dataCallback = null
         }
 
-        val c2sTryUpdateRolesSettings = regC2S<C2SRolesSettingsUpdate>("try_update_roles_settings", "player_roles_settings", {
-            it.hasPermissions(4)
-        }) {pkt, player ->
+        val c2sTryUpdateRolesSettings = regC2S<C2SRolesSettingsUpdate>("try_update_roles_settings", "player_roles_settings",
+            { pkt, player -> player.hasPermissions(4) }) {pkt, player ->
             synchronized(PlayerAccessManager.rolesPermissions) {
                 pkt.rolesPermissions.forEach { (k, v) ->
                     PlayerAccessManager.rolesPermissions[k] = v
@@ -194,9 +193,8 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
             }
         }
 
-        val c2sTryRemoveRole = regC2S<C2SRemoveRole>("try_remove_role", "player_roles_settings", {
-            it.hasPermissions(4)
-        }) {(roleName), player ->
+        val c2sTryRemoveRole = regC2S<C2SRemoveRole>("try_remove_role", "player_roles_settings",
+            { pkt, player -> player.hasPermissions(4) }) {(roleName), player ->
             PlayerAccessManager.removeRole(roleName)
             s2cRoleWasRemoved.sendToClient(player, EmptyPacket())
         }
@@ -207,7 +205,7 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
         }
 
         val c2sTryAddNewRole = regC2S<C2SNewRole>("try_add_new_role", "player_roles_settings",
-            {player -> player.hasPermissions(4)}) {(name), player ->
+            { pkt, player ->  player.hasPermissions(4) }) {(name), player ->
             PlayerAccessManager.addRole(name)
             s2cRoleWasAdded.sendToClient(player, EmptyPacket())
         }

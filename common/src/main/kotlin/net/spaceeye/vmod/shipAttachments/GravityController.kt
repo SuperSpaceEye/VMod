@@ -41,6 +41,7 @@ class GravityController(
 
     fun reset() {
         gravityVector = VSGravityManager.getDimensionGravityMutableReference(dimensionId)
+        useDimensionGravity = true
     }
 
     companion object {

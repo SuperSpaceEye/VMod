@@ -14,6 +14,7 @@ import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ConnectionHUD
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.toolgun.modes.*
 import net.spaceeye.vmod.toolgun.modes.extensions.*
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
@@ -63,7 +64,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
             ship1?.id ?: -1L,
             ship2?.id ?: -1L,
             spoint1, spoint2,
-            color, width, fullbright
+            color, width, fullbright, RenderingUtils.whiteTexture
         ))).addExtension(Strippable())){it.addFor(player)}
 
         resetState()

@@ -88,9 +88,4 @@ class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
 
         return true
     }
-    companion object {
-        init {
-            TagSerializableItem.registerSerializationEnum(ConnectionMode::class)
-        }
-    }
 }

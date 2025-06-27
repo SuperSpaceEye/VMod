@@ -46,6 +46,8 @@ object RaycastFunctions {
         var globalHitPos: Vector3d?, // if in shipyard, will not transform to world pos
         var worldCenteredHitPos: Vector3d?,
         var globalCenteredHitPos: Vector3d?,
+        var worldCenteredFaceHitPos: Vector3d?,
+        var globalCenteredFaceHitPos: Vector3d?,
         var hitNormal: Vector3d?,
         var worldNormalDirection: Vector3d?,
         var globalNormalDirection: Vector3d?,
@@ -70,6 +72,7 @@ object RaycastFunctions {
         return RayIntersectBoxResult(true, tmin, tmax)
     }
 
+    //TODO do i need it?
     @JvmStatic
     fun calculateNormal(start: Vector3d, unitD: Vector3d, raycastResult: RayIntersectBoxResult, dist: Double): Vector3d {
         val box_hit = (start + unitD * raycastResult.tToIn * dist) - (start + unitD * raycastResult.tToIn * dist).sfloor() - 0.5
@@ -121,7 +124,7 @@ object RaycastFunctions {
         )
 
         val state = level.getBlockState(clipResult.blockPos)
-        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null, null, -1) }
+        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null, null, null, null, -1) }
 
         val ship = level.getShipManagingPos(clipResult.blockPos)
 
@@ -132,8 +135,16 @@ object RaycastFunctions {
             unitLookVec = transformWorldToShip(ship, unitLookVec)
         }
 
-        val result = rayIntersectsBox(AABB(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1), source.origin, (unitLookVec + eps).srdiv(1.0))
-        val normal = calculateNormal(source.origin, unitLookVec, result, unitLookVec.dist())
+        val aabbs = state.getCollisionShape(level, clipResult.blockPos).toAabbs()
+
+        val result = aabbs
+            .mapNotNull { rayIntersectsBox(it.move(clipResult.blockPos), source.origin, (unitLookVec + eps).srdiv(1.0)).let { if (it.intersects) it else null } }
+            .minBy { it.tToIn }
+
+        //todo idk
+//        val result = rayIntersectsBox(AABB(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1), source.origin, (unitLookVec + eps).srdiv(1.0))
+//        var normal = calculateNormal(source.origin, unitLookVec, result, unitLookVec.dist())
+        val normal = Vector3d(clipResult.direction.normal.x, clipResult.direction.normal.y, clipResult.direction.normal.z).abs()
 
         val globalHitPos: Vector3d = source.origin + unitLookVec * (unitLookVec.dist() * result.tToIn)
         var worldHitPos = Vector3d(globalHitPos)
@@ -148,6 +159,11 @@ object RaycastFunctions {
         val globalCenteredHitPos = globalHitPos.floor().sadd(offset.x, offset.y, offset.z)
         var worldCenteredHitPos = Vector3d(globalCenteredHitPos)
 
+        val inBlock = globalHitPos - bpos
+        val inBlockCenteredFaceHitPos = Vector3d(0.5, 0.5, 0.5) * (Vector3d(1, 1, 1) - normal.abs()) + inBlock * normal.abs()
+        val globalCenteredFaceHitPos = bpos + inBlockCenteredFaceHitPos
+        var worldCenteredFaceHitPos = globalCenteredFaceHitPos.copy()
+
         var normalDirection = (globalCenteredHitPos - bpos - 0.5) * 2
         val globalNormalDirection = Vector3d(normalDirection)
 
@@ -157,9 +173,10 @@ object RaycastFunctions {
             source.origin = posShipToWorld(ship, source.origin, null)
             worldHitPos = posShipToWorld(ship, globalHitPos, null)
             worldCenteredHitPos = posShipToWorld(ship, globalCenteredHitPos, null)
+            worldCenteredFaceHitPos = posShipToWorld(ship, worldCenteredFaceHitPos, null)
         }
 
-        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, normal, normalDirection, globalNormalDirection, ship, ship?.id ?: if (level is ServerLevel) level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!! else -1)
+        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, worldCenteredFaceHitPos, globalCenteredFaceHitPos, normal, normalDirection, globalNormalDirection, ship, ship?.id ?: if (level is ServerLevel) level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!! else -1)
     }
 
     fun Level.clipIncludeShips(

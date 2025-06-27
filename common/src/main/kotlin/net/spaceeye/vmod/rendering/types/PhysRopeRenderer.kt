@@ -9,12 +9,13 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.ReflectableObject
-import net.spaceeye.vmod.rendering.RenderTypes
+import net.spaceeye.vmod.rendering.RenderSetups
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawPolygonTube
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.makePolygon
@@ -50,6 +51,8 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
 
         var shipIds: LongArray by get(i++, longArrayOf())
+
+        var texture: ResourceLocation by get(i++, RenderingUtils.ropeTexture)
     }
     var data = Data()
     override val reflectObjectOverride: ReflectableObject? get() = data
@@ -67,7 +70,8 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         right2: Vector3d,
         color: Color, sides: Int,
         fullbright: Boolean,
-        shipIds: List<Long>
+        shipIds: List<Long>,
+        texture: ResourceLocation
     ): this() { with(data) {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
@@ -87,6 +91,8 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         this.fullbright = fullbright
 
         this.shipIds = shipIds.toLongArray()
+
+        this.texture = texture
     } }
 
     private var highlightTimestamp = 0L
@@ -112,8 +118,8 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
 
         val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else color
 
-        RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
-        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
+        RenderSystem.setShaderTexture(0, texture)
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderSetups.setupFullRendering())
 
         poseStack.pushPose()
 
@@ -184,7 +190,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         tesselator.end()
         poseStack.popPose()
 
-        RenderTypes.clearFullRendering()
+        RenderSetups.clearFullRendering()
     }
 
     private fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = with(data) { return@with makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse) }
@@ -196,7 +202,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
             centerPositions[shipId1]?.let { (old, new) -> updatePosition(point1, old, new) } ?: point1,
             centerPositions[shipId2]?.let { (old, new) -> updatePosition(point2, old, new) } ?: point2,
             up1.copy(), up2.copy(), right1.copy(), right2.copy(),
-            color, sides, fullbright, listOf()
+            color, sides, fullbright, listOf(), texture
         )
     }
     override fun scaleBy(by: Double) {}

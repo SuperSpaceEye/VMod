@@ -14,8 +14,12 @@ class ClientLimitsInstance: ReflectableObject {
     var lineRendererWidth    : DoubleLimit by get(i++, DoubleLimit(0.0, 5.0))
     var ropeRendererWidth    : DoubleLimit by get(i++, DoubleLimit(0.0, 5.0))
     var blockRendererScale   : FloatLimit  by get(i++, FloatLimit(0.001f, 10f))
-    var ropeRendererSegments : IntLimit    by get(i++, IntLimit(0, 128))
+    var ropeRendererSegments : IntLimit    by get(i++, IntLimit(1, 128))
     var physRopeSides        : IntLimit    by get(i++, IntLimit(2, 10))
+
+    var tubeRopeRendererSegments : IntLimit by get(i++, IntLimit(1, 128))
+    var tubeRopeRendererSides    : IntLimit by get(i++, IntLimit(1, 32))
+    var tubeRopeRendererWidth    : DoubleLimit by get(i++, DoubleLimit(0.0, 5.0))
 
     var lightingMode: BoolLimit by get(i++, BoolLimit())
 }

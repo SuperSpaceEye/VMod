@@ -7,7 +7,7 @@ import net.spaceeye.vmod.vEntityManaging.util.ExtendableVEntity
 import net.spaceeye.vmod.vEntityManaging.util.VEntityExtension
 import org.valkyrienskies.core.api.ships.properties.ShipId
 
-class ConvertedFromLegacy: VEntityExtension {
+open class ConvertedFromLegacy: VEntityExtension {
     override fun onInit(obj: ExtendableVEntity) {}
 
     override fun onAfterCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>, new: ExtendableVEntity) {

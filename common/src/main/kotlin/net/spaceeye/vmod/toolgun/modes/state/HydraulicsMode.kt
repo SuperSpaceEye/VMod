@@ -12,6 +12,7 @@ import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.vEntityManaging.types.constraints.HydraulicsConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.types.A2BRenderer
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
@@ -74,7 +75,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
             ship1?.id ?: -1L,
             ship2?.id ?: -1L,
             spoint1, spoint2,
-            color, width, fullbright
+            color, width, fullbright, RenderingUtils.whiteTexture
         ))).addExtension(SignalActivator(
             "channel", "targetPercentage"
         )).addExtension(Strippable())){it.addFor(player)}
@@ -117,7 +118,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                                 ship1?.id ?: -1L,
                                 ship2?.id ?: -1L,
                                 spoint1, spoint2,
-                                it.color, it.width, it.fullbright
+                                it.color, it.width, it.fullbright, RenderingUtils.whiteTexture
                             ))).addExtension(SignalActivator(
                                 "channel", "targetPercentage"
                             )).addExtension(Strippable())

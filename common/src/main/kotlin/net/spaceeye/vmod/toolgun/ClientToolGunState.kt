@@ -2,6 +2,7 @@ package net.spaceeye.vmod.toolgun
 
 import com.mojang.blaze3d.platform.InputConstants
 import dev.architectury.event.EventResult
+import dev.architectury.event.events.client.ClientLifecycleEvent
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry
 import gg.essential.elementa.components.UIBlock
@@ -10,7 +11,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.ELOG
-import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.PlatformUtils
 import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
@@ -52,6 +53,9 @@ object ClientToolGunState : ClientClosable() {
             if (it != Minecraft.getInstance().player) {return@register}
             currentMode = null
             refreshHUD()
+        }
+        ClientLifecycleEvent.CLIENT_STARTED.register {
+            initScreen()
         }
     }
 
@@ -137,16 +141,18 @@ object ClientToolGunState : ClientClosable() {
 
     var renderHud = true
 
+    fun initScreen() {
+        screen = ScreenWindow.makeScreen()
+        // why? it doesn't correctly remap in dev env when added as a dependency for another project for some reason, this works though
+        PlatformUtils.initScreen(screen!!)
+    }
+
     internal fun onRenderHUD(stack: GuiGraphics, delta: Float) {
-        if (VM.STUPID_FUCKING_THING_DOESNT_WORK) {return}
         if (!renderHud) {return}
         try {
         (screen ?: run {
-            val temp = ScreenWindow.makeScreen()
-            val minecraft = Minecraft.getInstance()
-            temp.init(minecraft, minecraft.window.guiScaledWidth, minecraft.window.guiScaledHeight)
-            screen = temp
-            temp
+            initScreen()
+            screen!!
         }).onRenderHUD(stack, delta)
         } catch (e: Exception) { ELOG("HUD rendering failed\n${e.stackTraceToString()}")
         } catch (e: Error) { ELOG("HUD rendering failed\n${e.stackTraceToString()}") }

@@ -13,7 +13,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.reflectable.ReflectableObject
-import net.spaceeye.vmod.rendering.RenderTypes
+import net.spaceeye.vmod.rendering.RenderSetups
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
@@ -114,7 +114,7 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
         poseStack.pushPose()
 
         val light = LightTexture.FULL_BRIGHT
-        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupPCRendering())
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderSetups.setupPCRendering())
         RenderSystem.enableCull()
 
         poseStack.translate(-camera.position.x, -camera.position.y, -camera.position.z)
@@ -144,7 +144,7 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
         tesselator.end()
         poseStack.popPose()
 
-        RenderTypes.clearPCRendering()
+        RenderSetups.clearPCRendering()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = throw AssertionError("shouldn't be copied")

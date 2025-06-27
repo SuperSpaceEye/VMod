@@ -15,6 +15,7 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematicInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
@@ -24,7 +25,6 @@ import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.gui.SchemGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SchemHUD
-import net.spaceeye.vmod.toolgun.modes.state.ClientPlayerSchematics.SchemHolder
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.constructor
 import net.spaceeye.vmod.rendering.RenderingData
@@ -36,7 +36,7 @@ import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
-import net.spaceeye.vmod.toolgun.modes.state.ServerPlayerSchematics.SendLoadRequest
+import net.spaceeye.vmod.toolgun.modes.state.PlayerSchematics.SendLoadRequest
 import net.spaceeye.vmod.translate.COULDNT_LOAD_VMODSCHEM_V1
 import net.spaceeye.vmod.utils.*
 import org.joml.AxisAngle4d
@@ -80,23 +80,28 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
 }
 
 //TODO Add rate limit
-object ClientPlayerSchematics {
+object PlayerSchematics: ServerClosable() {
     //TODO add handling logic for receiverDataTransmissionFailed
     var saveSchemStream = object : DataStream<SendSchemRequest, SchemHolder>(
         "save_schem_stream",
         NetworkManager.Side.S2C,
-        NetworkManager.Side.C2S,
+        VM.MOD_ID
     ) {
-        override val partByteAmount: Int get() = 0
+        override val partByteAmount: Int get() = VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Save Schem Transmission Failed") }
-        override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
 
-        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
+        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = ServerToolGunState.playerHasAccess(ctx.player as ServerPlayer)
+        override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
+            val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
+            return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
+        }
+
+        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder, ctx: NetworkManager.PacketContext) {
             ClientToolGunState.currentMode?.let {
                 if (it !is SchemMode) {return@let}
-                it.schem = bcGetSchematicFromBytes(data!!.data.array())
+                it.schem = bcGetSchematicFromBytes(data.data.array())
                 it.saveSchem(listSchematics())
                 it.reloadScrollItems()
             }
@@ -106,18 +111,23 @@ object ClientPlayerSchematics {
     var getSchemStream = object : DataStream<SendSchemRequest, SchemHolder>(
         "get_schem_stream",
         NetworkManager.Side.S2C,
-        NetworkManager.Side.C2S,
+        VM.MOD_ID
     ) {
-        override val partByteAmount: Int get() = 0
+        override val partByteAmount: Int get() = VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendSchemRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) {  }
-        override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
+        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) {}
 
-        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
+        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = ServerToolGunState.playerHasAccess(ctx.player as ServerPlayer)
+        override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
+            val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
+            return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
+        }
+
+        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder, ctx: NetworkManager.PacketContext) {
             ClientToolGunState.currentMode?.let {
                 if (it !is SchemMode) {return@let}
-                it.schem = bcGetSchematicFromBytes(data!!.data.array())
+                it.schem = bcGetSchematicFromBytes(data.data.array())
             }
         }
     }
@@ -125,12 +135,11 @@ object ClientPlayerSchematics {
     var loadSchemStream = object : DataStream<SendLoadRequest, SchemHolder>(
         "load_schem_stream",
         NetworkManager.Side.C2S,
-        NetworkManager.Side.C2S,
+        VM.MOD_ID
     ) {
         override val partByteAmount: Int get() = VMConfig.CLIENT.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
         override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
         override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Load Schem Transmission Failed") }
 
         override fun transmitterRequestProcessor(req: SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
@@ -139,6 +148,29 @@ object ClientPlayerSchematics {
                 mode.schem?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!, req.requestUUID) }
             }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
+        }
+
+        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder, ctx: NetworkManager.PacketContext) {
+            schematics[data.uuid] = bcGetSchematicFromBytes(data.data.array())
+            loadRequests.remove(data.uuid)
+        }
+    }
+
+    val loadRequests = mutableMapOf<UUID, Long>()
+
+    data class SendLoadRequest(var requestUUID: UUID): AutoSerializable
+
+    val schematics = mutableMapOf<UUID, IShipSchematic?>()
+
+    override fun close() {
+        schematics.clear()
+        loadRequests.clear()
+    }
+
+    init {
+        PlayerEvent.PLAYER_QUIT.register {
+            schematics.remove(it.uuid)
+            loadRequests.remove(it.uuid)
         }
     }
 
@@ -196,95 +228,20 @@ object ClientPlayerSchematics {
     }
 }
 
-object ServerPlayerSchematics: ServerClosable() {
-    var saveSchemStream = object : DataStream<ClientPlayerSchematics.SendSchemRequest, SchemHolder>(
-        "save_schem_stream",
-        NetworkManager.Side.S2C,
-        NetworkManager.Side.S2C,
-    ) {
-        override val partByteAmount: Int get() = VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
-        override fun requestPacketConstructor(buf: FriendlyByteBuf) = ClientPlayerSchematics.SendSchemRequest::class.constructor(buf)
-        override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Save Schem Transmission Failed") }
-        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
-        override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerObjectsHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
-
-        override fun transmitterRequestProcessor(req: ClientPlayerSchematics.SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
-            val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
-            return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
-        }
-    }
-
-    var getSchemStream = object : DataStream<ClientPlayerSchematics.SendSchemRequest, SchemHolder>(
-        "get_schem_stream",
-        NetworkManager.Side.S2C,
-        NetworkManager.Side.S2C,
-    ) {
-        override val partByteAmount: Int get() = VMConfig.SERVER.TOOLGUN.SCHEMATIC_PACKET_PART_SIZE
-        override fun requestPacketConstructor(buf: FriendlyByteBuf) = ClientPlayerSchematics.SendSchemRequest::class.constructor(buf)
-        override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Get Schem Transmission Failed") }
-        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) { throw AssertionError("Invoked Receiver code on Transmitter side") }
-        override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerObjectsHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
-
-        override fun transmitterRequestProcessor(req: ClientPlayerSchematics.SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
-            val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
-            return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
-        }
-    }
-
-    var loadSchemStream = object : DataStream<SendLoadRequest, SchemHolder>(
-        "load_schem_stream",
-        NetworkManager.Side.C2S,
-        NetworkManager.Side.S2C,
-    ) {
-        override val partByteAmount: Int get() = 0
-        override fun requestPacketConstructor(buf: FriendlyByteBuf) = SendLoadRequest::class.constructor(buf)
-        override fun dataPacketConstructor() = SchemHolder()
-        override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Server Load Schem Transmission Failed") }
-        override fun transmitterRequestProcessor(req: SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? { throw AssertionError("Invoked Transmitter code on Receiver side") }
-        override fun uuidHasAccess(uuid: UUID): Boolean { return ServerToolGunState.playerHasAccess(ServerObjectsHolder.server!!.playerList.getPlayer(uuid) ?: return false) }
-
-        override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder?) {
-            schematics[data!!.uuid] = bcGetSchematicFromBytes(data.data.array())
-            loadRequests.remove(data.uuid)
-        }
-    }
-
-    val loadRequests = mutableMapOf<UUID, Long>()
-
-    data class SendLoadRequest(var requestUUID: UUID): AutoSerializable
-
-    val schematics = mutableMapOf<UUID, IShipSchematic?>()
-
-    override fun close() {
-        schematics.clear()
-        loadRequests.clear()
-    }
-
-    init {
-        PlayerEvent.PLAYER_QUIT.register {
-            schematics.remove(it.uuid)
-            loadRequests.remove(it.uuid)
-        }
-    }
-}
-
 object SchemNetworking: BaseNetworking<SchemMode>() {
     val networkName = "schem_networking"
 
     init {
-        ClientPlayerSchematics
-        ServerPlayerSchematics
+        PlayerSchematics
     }
 
     // transmitter can't begin transmitting data to receiver by itself
-    val c2sLoadSchematic = regC2S<EmptyPacket>("load_schematic", networkName, {player ->
-        val lastReq = ServerPlayerSchematics.loadRequests[player.uuid]
+    val c2sLoadSchematic = regC2S<EmptyPacket>("load_schematic", networkName, { pkt, player ->
+        val lastReq = PlayerSchematics.loadRequests[player.uuid]
         lastReq == null || getNow_ms() - lastReq > 10000L
     }) {pkt, player ->
-        ServerPlayerSchematics.loadRequests[player.uuid] = getNow_ms()
-        ServerPlayerSchematics.loadSchemStream.r2tRequestData.transmitData(SendLoadRequest(player.uuid), FakePacketContext(player))
+        PlayerSchematics.loadRequests[player.uuid] = getNow_ms()
+        PlayerSchematics.loadSchemStream.r2tRequestData.transmitData(SendLoadRequest(player.uuid), FakePacketContext(player))
     }
 
     val s2cSendSchem = regS2C<EmptyPacket>("send_schem", networkName) {pkt ->
@@ -292,7 +249,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
             if (it !is SchemMode) {return@let}
             it.schem = null
         }
-        ClientPlayerSchematics.getSchemStream.r2tRequestData.transmitData(ClientPlayerSchematics.SendSchemRequest(Minecraft.getInstance().player!!.uuid))
+        PlayerSchematics.getSchemStream.r2tRequestData.transmitData(PlayerSchematics.SendSchemRequest(Minecraft.getInstance().player!!.uuid))
     }
 }
 
@@ -316,7 +273,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
         while (names.contains(name + ".${SCHEM_EXTENSION}")) { name += "_" }
         if (!name.endsWith(".${SCHEM_EXTENSION}")) { name += ".${SCHEM_EXTENSION}" }
 
-        ClientPlayerSchematics.saveSchematic(name, schem!!)
+        PlayerSchematics.saveSchematic(name, schem!!)
     }
 
     var renderer: BaseRenderer? = null
@@ -349,7 +306,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
         RenderingData.client.removeClientsideRenderer(rID)
         if (raycastResult.state.isAir) {
             resetState();
-            ServerPlayerSchematics.schematics.remove(player.uuid)
+            PlayerSchematics.schematics.remove(player.uuid)
             SchemNetworking.s2cSendSchem.sendToClient(player, EmptyPacket())
             return
         }
@@ -358,19 +315,19 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
 
         val serverCaughtShip = level.getShipManagingPos(raycastResult.blockPosition) ?: run {
             resetState();
-            ServerPlayerSchematics.schematics.remove(player.uuid)
+            PlayerSchematics.schematics.remove(player.uuid)
             SchemNetworking.s2cSendSchem.sendToClient(player, EmptyPacket())
             null
         } ?: return
         val schem = VModShipSchematicV2()
         schem.makeFrom(player.level() as ServerLevel, player, player.uuid, serverCaughtShip) {
-            ServerPlayerSchematics.schematics[player.uuid] = schem
+            PlayerSchematics.schematics[player.uuid] = schem
             SchemNetworking.s2cSendSchem.sendToClient(player, EmptyPacket())
         }
     }
 
     fun activateSecondaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) {
-        val schem = ServerPlayerSchematics.schematics[player.uuid] ?: return
+        val schem = PlayerSchematics.schematics[player.uuid] ?: return
         if (raycastResult.state.isAir) {return}
         //TODO
         if (SchematicActionsQueue.uuidIsQueuedInSomething(player.uuid)) {return}

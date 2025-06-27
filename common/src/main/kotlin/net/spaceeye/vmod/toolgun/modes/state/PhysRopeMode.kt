@@ -8,6 +8,7 @@ import net.spaceeye.vmod.toolgun.modes.gui.PhysRopeGUI
 import net.spaceeye.vmod.toolgun.modes.hud.PhysRopeHUD
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.types.PhysRopeRenderer
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
@@ -74,7 +75,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
             shipId1, shipId2,
             stiffness, maxForce,
             dist, segments, totalMass / segments, radius, Math.toRadians(angleLimit)
-        )   .also { it.addExtension(PhysRopeRenderable(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, up1, up2, right1, right2, Color(255, 255, 255), sides, fullbright, listOf()))) }
+        )   .also { it.addExtension(PhysRopeRenderable(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, up1, up2, right1, right2, Color(255, 255, 255), sides, fullbright, listOf(), RenderingUtils.ropeTexture))) }
             .addExtension(Strippable())
             .also {level.makeVEntity(it) {it.addFor(player)} }
 

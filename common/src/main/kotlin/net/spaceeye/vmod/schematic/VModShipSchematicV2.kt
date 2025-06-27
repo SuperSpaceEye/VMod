@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.level.block.Block
 import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.*
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
@@ -14,6 +15,7 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.SchemSerializeDataV1Impl
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
@@ -26,10 +28,12 @@ import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.shipAttachments.AttachmentAccessor
+import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
 import net.spaceeye.vmod.translate.makeFake
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
+import org.apache.logging.log4j.Logger
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
@@ -49,21 +53,42 @@ class VModShipSchematicV2(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
     override var entityData: MutableMap<ShipId, List<EntityItem>> = mutableMapOf()
     override var flatTagData: MutableList<CompoundTag> = mutableListOf()
 
-    override var extraData: MutableList<Pair<String, ISerializable>> = mutableListOf()
+    override var extraData: MutableList<Pair<String, FriendlyByteBuf>> = mutableListOf()
 
     override var info: IShipSchematicInfo? = null
 //    override var entityData: MutableMap<ShipId, List<EntityItem>> = mutableMapOf()
 }
 
+data class PasteSchematicSettings(
+    var loadContainers: Boolean = true,
+    var loadEntities: Boolean = true,
+
+    var allowChunkPlacementInterruption: Boolean = true,
+    var allowUpdateInterruption: Boolean = true,
+
+    var blacklistMode: Boolean = true,
+    var nbtLoadingBlacklist: Set<Block> = emptySet(),
+    var nbtLoadingWhitelist: Set<Block> = emptySet(),
+
+    var logger: Logger? = null,
+    var nonfatalErrorsHandler: (numErrors: Int, schematic: IShipSchematicDataV1, player: ServerPlayer?) -> Unit = {_, _, _->}
+)
+
 @OptIn(VsBeta::class)
-fun IShipSchematicDataV1.placeAt(level: ServerLevel, player: ServerPlayer?, uuid: UUID, pos: Vector3d, rotation: Quaterniondc, postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
+fun IShipSchematicDataV1.placeAt(
+    level: ServerLevel, player: ServerPlayer?, uuid: UUID, pos: Vector3d, rotation: Quaterniondc,
+     settings: PasteSchematicSettings = PasteSchematicSettings(
+         logger = VM.logger,
+         //TODO think of a way to make str into translatable
+         nonfatalErrorsHandler = { numErrors, _, player -> player?.let { ServerToolGunState.sendErrorTo(it, "Schematic had $numErrors nonfatal errors") } }
+     ), postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
     val newTransforms = mutableListOf<BodyTransform>()
 
     val shipInitializers = (this as IShipSchematic).createShipConstructors(level, pos, rotation, newTransforms)
 
     if (!verifyBlockDataIsValid(shipInitializers.map { it.second }, player)) { return false }
 
-    SchematicActionsQueue.queueShipsCreationEvent(level, player, uuid, shipInitializers, this) { ships, centerPositions, entityCreationFn ->
+    SchematicActionsQueue.queueShipsCreationEvent(level, player, uuid, shipInitializers, this, settings) { ships, centerPositions, entityCreationFn ->
         val createdShips = ships.map { it.second }
 
         val shipsMap = ships.toMap()
@@ -154,27 +179,43 @@ private fun IShipSchematicDataV1.saveAttachments(ships: List<ServerShip>, level:
 
     attachments.forEach { (ship, attachments) ->
         attachments.forEach {
-            it.onCopy(level, ship, ships, centerPositions)
+            try {
+                it.onCopy({level}, ship, ships, centerPositions)
+            } catch (e: Throwable) {
+                ELOG(e.stackTraceToString())
+            }
         }
     }
 
     val data = attachments.map{ Pair(it.first.id, it.second) }.toMutableList()
 
-    extraData.add(Pair("SavedAttachments", AttachmentsSerializable(data)))
+    extraData.add(Pair("SavedAttachments", AttachmentsSerializable(data).serialize()))
+
+    attachments.forEach { (ship, attachments) ->
+        attachments.forEach {
+            try {
+                it.onAfterCopy({level}, ship, ships, centerPositions)
+            } catch (e: Throwable) {
+                ELOG(e.stackTraceToString())
+            }
+        }
+    }
 }
 
-private fun loadAttachments(level: ServerLevel, ships: Map<Long, ServerShip>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, extraData: MutableList<Pair<String, ISerializable>>) {
+private fun loadAttachments(level: ServerLevel, ships: Map<Long, ServerShip>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, extraData: MutableList<Pair<String, FriendlyByteBuf>>) {
     if (extraData.isEmpty() || extraData.last().first != "SavedAttachments") {return}
 
     val se = AttachmentsSerializable()
-    se.deserialize(extraData.last().second.serialize())
+    se.deserialize(extraData.last().second)
 
     se.data.forEach { (oldId, attachments) ->
         val loadedShip = level.shipObjectWorld.loadedShips.getById(ships[oldId]!!.id) ?: return@forEach
         attachments.forEach {
             if (it == null) return@forEach
+            //TODO remove this after 2.5.0. for some god forsaken reason VS allows you to add multiple separate attachments to one ship
+            loadedShip.saveAttachment(it.javaClass, null)
             loadedShip.saveAttachment(it.javaClass, it)
-            it.onPaste(level, loadedShip, ships, centerPositions)
+            it.onPaste({level}, loadedShip, ships, centerPositions)
         }
     }
 }
@@ -197,19 +238,14 @@ private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vecto
         val newTransform = ShipTransformImpl(temp.position, it.previousCenterPosition, temp.rotation, JVector3d(it.shipScale, it.shipScale, it.shipScale))
         newTransforms.add(newTransform)
 
-        //this is pointless and doesnt actually work
-        var offset = MVector3d(it.previousCOMPosition) - MVector3d(it.previousCenterPosition)
-        offset = transformDirectionShipToWorld(newTransform, offset)
-        val toPos = MVector3d(newTransform.position) + MVector3d(pos) + offset
-
-        val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(), false, it.shipScale, level.dimensionId)
+        val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(1000000000, 1000000000, 1000000000), false, it.shipScale, level.dimensionId)
         newShip.isStatic = true
 
-        newShip.transformProvider = SchemTempPositionSetter(newShip, MVector3d(pos), MVector3d(newTransform.position))
+        //TODO i don't like this but idk what else to do
+        newShip.transformProvider = SchemTempPositionSetter(newShip, MVector3d(pos), MVector3d(newTransform.position), false)
 
-        //TODO idk if i can calculate final position correctly, so maybe just teleport it to idk 100000000 100000000 100000000 while it's being created?
         level.shipObjectWorld.teleportShip(newShip, ShipTeleportDataImpl(
-            toPos.toJomlVector3d(),
+            JVector3d(1000000000.0, 1000000000.0, 1000000000.0),
             newTransform.rotation,
             newScale = it.shipScale
         ))
@@ -246,7 +282,7 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uui
             (b.maxZ() - b.minZ()) / 2.0 + b.minZ(),
         ))
     }
-    extraData = ShipSchematic.onCopy(level, ships, centerPositions).toMutableList()
+    extraData = ShipSchematic.onCopy(level, ships, centerPositions).map { Pair(it.first, it.second) }.toMutableList()
 
     (this as IShipSchematic).saveShipData(ships, originShip)
     this.saveAttachments(ships, level, centerPositions) // should always be saved last

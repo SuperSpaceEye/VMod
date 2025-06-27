@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.RenderStateShard
 import net.minecraft.client.renderer.GameRenderer
 import org.lwjgl.opengl.GL11
 
-object RenderTypes {
+object RenderSetups {
     fun setupFullRendering(): VertexFormat {
         RenderStateShard.RENDERTYPE_TRANSLUCENT_SHADER.setupRenderState()
 

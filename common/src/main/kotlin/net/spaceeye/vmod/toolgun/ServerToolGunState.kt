@@ -10,7 +10,6 @@ import net.spaceeye.vmod.vEntityManaging.removeVEntity
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
-import net.spaceeye.vmod.reflectable.ByteSerializableItem.registerSerializationEnum
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
@@ -64,8 +63,6 @@ object ServerToolGunState: ServerClosable() {
     init {
         // it needs to initialize all c2s and s2c receivers
         ToolgunModes.asList().forEach { it.get().init(BaseNetworking.EnvType.Server) }
-
-        registerSerializationEnum(AccessTo::class)
     }
 
     @JvmStatic fun playerHasAccess(player: ServerPlayer): Boolean {
@@ -96,8 +93,8 @@ object ServerToolGunState: ServerClosable() {
     }
 
     val c2sRequestRemoveLastVEntity = regC2S<EmptyPacket>("request_remove_last_ventity", "server_toolgun",
-        {PlayerAccessManager.hasPermission(it, "request_remove_last_ventity")},
-        {s2cErrorHappened.sendToClient(it, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))}
+        { pkt, player -> PlayerAccessManager.hasPermission(player, "request_remove_last_ventity")},
+        { pkt, player -> s2cErrorHappened.sendToClient(player, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))}
         ) { pkt, player->
         val stack = playersVEntitiesStack[player.uuid] ?: return@regC2S
         var item: VEntityId = stack.removeLastOrNull() ?: return@regC2S

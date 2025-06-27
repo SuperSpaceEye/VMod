@@ -9,12 +9,13 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.LightLayer
 import net.spaceeye.vmod.limits.ClientLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.ReflectableObject
-import net.spaceeye.vmod.rendering.RenderTypes
+import net.spaceeye.vmod.rendering.RenderSetups
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
@@ -37,9 +38,13 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
 
         var length: Double by get(i++, 0.0)
 
+        var color: Color by get(i++, Color.WHITE)
+
         var width: Double by get(i++, .2, true) { ClientLimits.instance.ropeRendererWidth.get(it) }
         var segments: Int by get(i++, 16, true) { ClientLimits.instance.ropeRendererSegments.get(it) }
         var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
+
+        var texture: ResourceLocation by get(i++, RenderingUtils.ropeTexture)
     }
     private var data = Data()
     override val reflectObjectOverride: ReflectableObject? get() = data
@@ -55,6 +60,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         width: Double,
         segments: Int,
         fullbright: Boolean,
+        texture: ResourceLocation
     ): this() { with(data) {
         this.shipId1 = shipId1
         this.shipId2 = shipId2
@@ -64,6 +70,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         this.width = width
         this.segments = segments
         this.fullbright = fullbright
+        this.texture = texture
     } }
 
     private var highlightTimestamp = 0L
@@ -88,10 +95,10 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         val tesselator = Tesselator.getInstance()
         val vBuffer = tesselator.builder
 
-        val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else Color(255, 255, 255, 255)
+        val color = if (timestamp < highlightTimestamp || renderingTick < highlightTick) Color(255, 0, 0, 255) else color
 
-        RenderSystem.setShaderTexture(0, RenderingUtils.ropeTexture)
-        vBuffer.begin(VertexFormat.Mode.QUADS, RenderTypes.setupFullRendering())
+        RenderSystem.setShaderTexture(0, texture)
+        vBuffer.begin(VertexFormat.Mode.QUADS, RenderSetups.setupFullRendering())
 
         poseStack.pushPose()
 
@@ -101,7 +108,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         val tpos2 = rpoint2 - cameraPos
 
         val matrix = poseStack.last().pose()
-        RenderingUtils.Quad.drawRope(
+        RenderingUtils.Quad.drawFlatRope(
             vBuffer, matrix,
             color.red, color.green, color.blue, color.alpha,
             width, segments, length,
@@ -112,7 +119,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         tesselator.end()
         poseStack.popPose()
 
-        RenderTypes.clearFullRendering()
+        RenderSetups.clearFullRendering()
     }
 
     override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = with(data) {
@@ -122,7 +129,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         val newId1 = if (shipId1 != -1L) {oldToNew[shipId1]!!.id} else {-1}
         val newId2 = if (shipId2 != -1L) {oldToNew[shipId2]!!.id} else {-1}
 
-        return RopeRenderer(newId1, newId2, spoint1, spoint2, length, width, segments, fullbright)
+        return RopeRenderer(newId1, newId2, spoint1, spoint2, length, width, segments, fullbright, texture)
     }
 
     override fun scaleBy(by: Double) = with(data) {

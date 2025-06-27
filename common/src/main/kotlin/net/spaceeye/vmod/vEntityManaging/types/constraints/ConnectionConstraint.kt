@@ -129,10 +129,4 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
 
         return true
     }
-    
-    companion object {
-        init {
-            TagSerializableItem.registerSerializationEnum(ConnectionModes::class)
-        }
-    }
 }

@@ -37,9 +37,9 @@ interface ConnectionGUI: GUIBuilder, EGUIBuilder {
         makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow)
 
         makeDropDown(CONNECTION_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(FIXED_ORIENTATION.get(), connectionMode == ConnectionModes.FIXED_ORIENTATION) { connectionMode = ConnectionModes.FIXED_ORIENTATION },
-            DItem(HINGE_ORIENTATION.get(), connectionMode == ConnectionModes.HINGE_ORIENTATION) { connectionMode = ConnectionModes.HINGE_ORIENTATION },
-            DItem(FREE_ORIENTATION.get(),  connectionMode == ConnectionModes.FREE_ORIENTATION)  { connectionMode = ConnectionModes.FREE_ORIENTATION },
+            DItem(FIXED.get(),   connectionMode == ConnectionModes.FIXED_ORIENTATION) { connectionMode = ConnectionModes.FIXED_ORIENTATION },
+            DItem(BEARING.get(), connectionMode == ConnectionModes.HINGE_ORIENTATION) { connectionMode = ConnectionModes.HINGE_ORIENTATION },
+            DItem(FREE.get(),    connectionMode == ConnectionModes.FREE_ORIENTATION)  { connectionMode = ConnectionModes.FREE_ORIENTATION },
         ))
 
         ColorPicker(color) {

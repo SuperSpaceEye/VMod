@@ -11,6 +11,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.constraints.VSSlideConstraint
 
 class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
+    //TODO unify and rename values (needs backwards compat)
     enum class ConnectionMode {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,

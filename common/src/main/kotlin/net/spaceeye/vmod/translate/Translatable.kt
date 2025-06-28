@@ -114,9 +114,9 @@ val STRIP_ALL = s("Strip All")
 val STRIP_IN_RADIUS = s("Strip In Radius")
 
 val CONNECTION_MODES = s("Connection Modes")
-val FIXED_ORIENTATION = s("Fixed Orientation")
-val HINGE_ORIENTATION = s("Hinge Orientation")
-val FREE_ORIENTATION = s("Free Orientation")
+val FIXED = s("Fixed")
+val BEARING = s("Bearing")
+val FREE = s("Free")
 
 val SCALING_MODE = s("Scaling Mode")
 val SCALE_ALL_CONNECTED = s("Scale All Connected")

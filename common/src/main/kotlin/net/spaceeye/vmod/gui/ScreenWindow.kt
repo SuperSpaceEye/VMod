@@ -9,10 +9,12 @@ import gg.essential.elementa.constraints.*
 import net.spaceeye.vmod.PlatformUtils
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
+import net.spaceeye.vmod.gui.additions.InfoAddition
 import net.spaceeye.vmod.gui.additions.VEntityChangerWorldMenu
 
 
-class ScreenWindow private constructor(): WindowScreen(ElementaVersion.V8, drawDefaultBackground = false) {
+//TODO i don't like it
+object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = false) {
     private val linearExtensions = mutableListOf<ScreenWindowAddition>()
     private val _extensions = mutableSetOf<ScreenWindowAddition>()
     val extensions: Collection<ScreenWindowAddition> get() = _extensions
@@ -44,21 +46,26 @@ class ScreenWindow private constructor(): WindowScreen(ElementaVersion.V8, drawD
         PlatformUtils.renderScreen(this, stack, 0, 0, delta)
     }
 
-    companion object {
-        private val additions = mutableListOf<() -> ScreenWindowAddition>()
+    private val additions = mutableListOf<() -> ScreenWindowAddition>()
+    private var initialized = false
 
-        fun addScreenAddition(constructor: () -> ScreenWindowAddition) {
-            additions.add(constructor)
+    fun addScreenAddition(constructor: () -> ScreenWindowAddition) {
+        additions.add(constructor)
+    }
+
+    fun makeScreen(): ScreenWindow {
+        if (!initialized) {
+            additions.forEach { addExtension(it.invoke()) }
+            initialized = true
         }
 
-        fun makeScreen(): ScreenWindow {
-            return ScreenWindow().also { screen -> additions.forEach { screen.addExtension(it.invoke()) } }
-        }
+        return this
+    }
 
-        init {
-            addScreenAddition { HUDAddition() }
-            addScreenAddition { ErrorAddition() }
-            addScreenAddition { VEntityChangerWorldMenu }
-        }
+    init {
+        addScreenAddition { HUDAddition() }
+        addScreenAddition { ErrorAddition() }
+        addScreenAddition { VEntityChangerWorldMenu }
+        addScreenAddition { InfoAddition }
     }
 }

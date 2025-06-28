@@ -11,16 +11,11 @@ import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.events.PersistentEvents
+import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import org.lwjgl.glfw.GLFW
 
 class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
     companion object {
-        @JvmStatic
-        fun playerIsUsingToolgun(): Boolean {
-            val player = Minecraft.getInstance().player ?: return false
-            return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem()
-        }
-
         @JvmStatic
         fun makeEvents() {
             EnvExecutor.runInEnv(Env.CLIENT) { Runnable {

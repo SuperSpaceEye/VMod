@@ -17,6 +17,7 @@ import gg.essential.elementa.dsl.toConstraint
 import net.spaceeye.vmod.gui.ScreenWindowAddition
 import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.state.VEntityChanger
 import net.spaceeye.vmod.utils.separateTypeName
@@ -98,8 +99,7 @@ object VEntityChangerWorldMenu: ScreenWindowAddition {
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
         itemsHolder.unhide()
 
-        if (   !ToolgunItem.playerIsUsingToolgun()
-            || ClientToolGunState.currentMode !is VEntityChanger) {return itemsHolder.hide()}
+        if (!playerIsUsingToolgun() || ClientToolGunState.currentMode !is VEntityChanger) {return itemsHolder.hide()}
 
         val curIds = VEntityChanger.clientVEntities.map { it.first.mID }.toSet()
         if (   VEntityChanger.clientVEntities.isEmpty()

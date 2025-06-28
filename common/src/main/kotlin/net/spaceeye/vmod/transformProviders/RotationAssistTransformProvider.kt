@@ -7,6 +7,7 @@ import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
@@ -40,7 +41,7 @@ class RotationAssistTransformProvider(
         shipTransform: ShipTransform,
         partialTick: Double
     ): ShipTransform? {
-        if (!ToolgunItem.playerIsUsingToolgun()) {return null}
+        if (!playerIsUsingToolgun()) {return null}
 
         val newRot = (ship2?.renderTransform?.rotation?.get(Quaterniond()) ?: Quaterniond())
             .mul(Quaterniond(AxisAngle4d(angle.it, gdir2.toJomlVector3d())))

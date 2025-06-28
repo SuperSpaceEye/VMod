@@ -89,10 +89,11 @@ fun ReflectableObject.tSerialize(buf: CompoundTag? = null) = (buf ?: CompoundTag
 fun ReflectableObject.tDeserialize(tag: CompoundTag) {
     getReflectableItemsWithoutDataclassConstructorItems().forEach {
         if (it.metadata.contains("NoTagSerialization")) {return@forEach}
-        it.setValue(null, null, if (!tag.contains(it.cachedName)) it.it!! else
+        //TODO enable in the future
+        it.setValue(null, null, //if (!tag.contains(it.cachedName)) it.it!! else
             typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(tag, it.cachedName) }
                 ?: let { _ ->
-                    if (it.it !is Enum<*>) throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
+                    if (it.it !is Enum<*>) return@let it.it!! //throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
                     java.lang.Enum.valueOf(it.it!!.javaClass as Class<out Enum<*>>, tag.getString(it.cachedName))
                 }
         )

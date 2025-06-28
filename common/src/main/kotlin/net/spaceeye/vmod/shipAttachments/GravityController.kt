@@ -44,6 +44,9 @@ class GravityController(
         useDimensionGravity = true
     }
 
+    @JsonIgnore
+    fun effectiveGravity() = if (useDimensionGravity) dimensionGravity else gravityVector
+
     companion object {
         val VS_DEFAULT_GRAVITY = Vector3d(0, -10, 0)
 

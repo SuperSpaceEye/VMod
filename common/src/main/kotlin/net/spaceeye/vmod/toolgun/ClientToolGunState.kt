@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.PlatformUtils
+import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
@@ -49,6 +50,7 @@ object ClientToolGunState : ClientClosable() {
         }
 
     init {
+        ScreenWindow
         ClientPlayerEvent.CLIENT_PLAYER_JOIN.register {
             if (it != Minecraft.getInstance().player) {return@register}
             currentMode = null
@@ -92,6 +94,15 @@ object ClientToolGunState : ClientClosable() {
             "key.vmod.toggle_hud",
             InputConstants.Type.KEYSYM,
             InputConstants.KEY_H,
+            "vmod.keymappings_name"
+        )
+    )
+
+    val TOOLGUN_TOGGLE_HUD_INFO_KEY = register(
+        KeyMapping(
+            "key.vmod.toggle_hud_info",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_I,
             "vmod.keymappings_name"
         )
     )
@@ -163,6 +174,11 @@ object ClientToolGunState : ClientClosable() {
     //TODO redo this
     internal fun guiIsOpened() = Minecraft.getInstance().screen.let { it is MainToolgunGUIWindow || it is VEntityChangerGui }
     internal fun otherGuiIsOpened() = Minecraft.getInstance().screen.let { it != null && it !is MainToolgunGUIWindow && it !is VEntityChangerGui }
+
+    fun playerIsUsingToolgun(): Boolean {
+        val player = Minecraft.getInstance().player ?: return false
+        return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem()
+    }
 
     private val externalWindows = mutableListOf<Pair<TranslatableComponent, (UIBlock) -> ToolgunWindow>>()
 

@@ -19,8 +19,8 @@ import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.rendering.RenderingData
+import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -34,7 +34,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     init {
         PersistentEvents.clientPreRender.on { (timestamp), _ ->
             if (!render) {return@on}
-            if (!ToolgunItem.playerIsUsingToolgun()) {return@on}
+            if (!playerIsUsingToolgun()) {return@on}
 
             val minecraft = Minecraft.getInstance()
             val camera = minecraft.gameRenderer.mainCamera

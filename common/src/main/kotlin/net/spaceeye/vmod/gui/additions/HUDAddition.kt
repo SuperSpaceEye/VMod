@@ -8,7 +8,7 @@ import gg.essential.elementa.dsl.constrain
 import gg.essential.elementa.dsl.percent
 import net.spaceeye.vmod.gui.ScreenWindowAddition
 import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.ToolgunItem.Companion.playerIsUsingToolgun
+import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.modes.DefaultHUD
 
 class HUDAddition: ScreenWindowAddition {

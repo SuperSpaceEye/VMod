@@ -18,6 +18,7 @@ import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
 import org.valkyrienskies.core.apigame.constraints.VSHingeOrientationConstraint
 
 class HydraulicsConstraint(): TwoShipsMConstraint(), VEAutoSerializable, Tickable {
+    //TODO unify and rename values (needs backwards compat)
     enum class ConnectionMode {
         FIXED_ORIENTATION,
         HINGE_ORIENTATION,

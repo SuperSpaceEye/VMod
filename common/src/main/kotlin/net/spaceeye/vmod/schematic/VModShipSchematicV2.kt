@@ -82,6 +82,8 @@ fun IShipSchematicDataV1.placeAt(
          //TODO think of a way to make str into translatable
          nonfatalErrorsHandler = { numErrors, _, player -> player?.let { ServerToolGunState.sendErrorTo(it, "Schematic had $numErrors nonfatal errors") } }
      ), postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
+    extraData.forEach { (_, bytes) -> bytes.setIndex(0, bytes.accessByteBufWithCorrectSize().size) }
+
     val newTransforms = mutableListOf<BodyTransform>()
 
     val shipInitializers = (this as IShipSchematic).createShipConstructors(level, pos, rotation, newTransforms)

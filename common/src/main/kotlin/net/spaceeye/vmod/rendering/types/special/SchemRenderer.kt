@@ -66,6 +66,7 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.BlockRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
 import net.spaceeye.vmod.utils.JVector3d
@@ -499,7 +500,7 @@ class SchemRenderer(
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, sources: MultiBufferSource, timestamp: Long) {
         val mode = ClientToolGunState.currentMode
         if (mode !is SchemMode) {return}
-        if (!ToolgunItem.playerIsUsingToolgun()) {return}
+        if (!playerIsUsingToolgun()) {return}
         val level = Minecraft.getInstance().level!!
 
         val raycastResult = RaycastFunctions.renderRaycast(

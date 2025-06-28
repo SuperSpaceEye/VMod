@@ -24,9 +24,9 @@ interface SliderGUI: GUIBuilder, EGUIBuilder {
 
         makeDropDown(
             CONNECTION_MODES.get(), parentWindow, offset, offset, listOf(
-            DItem(FIXED_ORIENTATION.get(), connectionMode == ConnectionMode.FIXED_ORIENTATION) { connectionMode = ConnectionMode.FIXED_ORIENTATION },
-            DItem(HINGE_ORIENTATION.get(), connectionMode == ConnectionMode.HINGE_ORIENTATION) { connectionMode = ConnectionMode.HINGE_ORIENTATION },
-            DItem(FREE_ORIENTATION.get(),  connectionMode == ConnectionMode.FREE_ORIENTATION)  { connectionMode = ConnectionMode.FREE_ORIENTATION },
+            DItem(FIXED.get(),   connectionMode == ConnectionMode.FIXED_ORIENTATION) { connectionMode = ConnectionMode.FIXED_ORIENTATION },
+            DItem(BEARING.get(), connectionMode == ConnectionMode.HINGE_ORIENTATION) { connectionMode = ConnectionMode.HINGE_ORIENTATION },
+            DItem(FREE.get(),    connectionMode == ConnectionMode.FREE_ORIENTATION)  { connectionMode = ConnectionMode.FREE_ORIENTATION },
         ))
     }
 }

@@ -11,7 +11,6 @@
 # Do Eventually
 
 * Add a way for addons to add their own client/server settings
-* Add a way to open client/server settings via command or smth
 
 # Gravity Changer
 * rework saving/loading

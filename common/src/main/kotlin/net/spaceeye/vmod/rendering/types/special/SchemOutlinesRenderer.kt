@@ -14,6 +14,7 @@ import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
 import net.spaceeye.vmod.utils.RaycastFunctions
@@ -44,7 +45,7 @@ class SchemOutlinesRenderer(
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
         val mode = ClientToolGunState.currentMode
         if (mode !is SchemMode) {return}
-        if (!ToolgunItem.playerIsUsingToolgun()) {return}
+        if (!playerIsUsingToolgun()) {return}
 
         val width = 0.05
 

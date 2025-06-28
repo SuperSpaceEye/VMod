@@ -147,6 +147,7 @@
   "key.vmod.remove_top_ventity": "Remove Top VEntity",
   "key.vmod.reset_ventity_mode": "Reset VEntity Mode",
   "key.vmod.toggle_hud": "Toggle HUD",
+  "key.vmod.toggle_hud_info": "Toggle HUD Info",
   "vmod.keymappings_name": "VMod Toolgun",
   
   "item.the_vmod.toolgun": "Toolgun",

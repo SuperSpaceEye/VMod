@@ -154,12 +154,12 @@ object InfoAddition: ScreenWindowAddition {
     val c2sQueryShipInfo = regC2S<C2SQueryShipInfo>("query_ship_info", "info_addition",
         //TODO sus?
         {pkt, player ->
-            val level = player.level as ServerLevel
+            val level = player.level() as ServerLevel
             val ship = level.shipObjectWorld.loadedShips.getById(pkt.shipId) ?: return@regC2S false
             ship.transform.positionInWorld.distance(player.position().toJOML()) < 100.0
         }
     ) { pkt, player ->
-        val level = player.level as ServerLevel
+        val level = player.level() as ServerLevel
         val ship = level.shipObjectWorld.loadedShips.getById(pkt.shipId) ?: return@regC2S
 
         val customMassSave = CustomMassSave.getOrCreate(ship)

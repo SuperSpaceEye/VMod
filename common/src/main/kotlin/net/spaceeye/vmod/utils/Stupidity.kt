@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.SectionPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.Tag
+import net.minecraft.util.AbortableIterationConsumer
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.ChunkPos
@@ -19,6 +20,7 @@ import net.minecraft.world.level.chunk.ChunkSource
 import net.minecraft.world.level.chunk.ChunkStatus
 import net.minecraft.world.level.chunk.DataLayer
 import net.minecraft.world.level.chunk.LevelChunkSection
+import net.minecraft.world.level.chunk.LightChunk
 import net.minecraft.world.level.chunk.LightChunkGetter
 import net.minecraft.world.level.entity.EntityAccess
 import net.minecraft.world.level.entity.EntityTypeTest
@@ -38,7 +40,7 @@ import java.util.function.Function
 import java.util.stream.Stream
 
 class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
-    override fun getChunkForLighting(chunkX: Int, chunkZ: Int): BlockGetter? = null
+    override fun getChunkForLighting(chunkX: Int, chunkZ: Int): LightChunk? = null
     override fun getLevel(): BlockGetter? = null
 }, false, false) {
     class SchemLayerListener(): LayerLightEventListener {
@@ -46,11 +48,11 @@ class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
 
         override fun getDataLayerData(sectionPos: SectionPos): DataLayer? = null
         override fun checkBlock(pos: BlockPos) {}
-        override fun onBlockEmissionIncrease(pos: BlockPos, emissionLevel: Int) {}
         override fun hasLightWork(): Boolean = false
-        override fun runUpdates(pos: Int, isQueueEmpty: Boolean, updateBlockLight: Boolean): Int = pos
+        override fun runLightUpdates(): Int = 0
         override fun updateSectionStatus(pos: SectionPos, isQueueEmpty: Boolean) {}
-        override fun enableLightSources(chunkPos: ChunkPos, isQueueEmpty: Boolean) {}
+        override fun setLightEnabled(chunkPos: ChunkPos, lightEnabled: Boolean) {}
+        override fun propagateLightSources(chunkPos: ChunkPos) {}
     }
     val layerListener = SchemLayerListener()
 
@@ -60,14 +62,10 @@ class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
     override fun getMaxLightSection(): Int = 1000000
 
     override fun checkBlock(pos: BlockPos) {}
-    override fun onBlockEmissionIncrease(pos: BlockPos, emissionLevel: Int) {}
     override fun hasLightWork(): Boolean = false
-    override fun runUpdates(pos: Int, isQueueEmpty: Boolean, updateBlockLight: Boolean): Int = pos
     override fun updateSectionStatus(pos: SectionPos, isQueueEmpty: Boolean) {}
-    override fun enableLightSources(chunkPos: ChunkPos, isQueueEmpty: Boolean) {}
     override fun getLayerListener(type: LightLayer): LayerLightEventListener? = layerListener
     override fun getDebugData(lightLayer: LightLayer, sectionPos: SectionPos): String? = "n/a"
-    override fun queueSectionData(type: LightLayer, pos: SectionPos, array: DataLayer?, bl: Boolean) {}
     override fun retainData(pos: ChunkPos, retain: Boolean) {}
 }
 
@@ -75,9 +73,9 @@ class DummyLevelEntityGetter<T: EntityAccess?>(): LevelEntityGetter<T> {
     override fun get(id: Int): T? = null
     override fun get(uuid: UUID): T? = null
     override fun getAll(): Iterable<T?>? = listOf()
-    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, consumer: Consumer<U?>) {}
+    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, consumer: AbortableIterationConsumer<U?>) {}
     override fun get(boundingBox: AABB, consumer: Consumer<T?>) {}
-    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, bounds: AABB, consumer: Consumer<U?>) {}
+    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, bounds: AABB, consumer: AbortableIterationConsumer<U?>) {}
 }
 
 class FakeLevelHeightAccessor(): LevelHeightAccessor {
@@ -100,7 +98,6 @@ class EmptyChunkAccess(): ChunkAccess(ChunkPos(0, 0), null, FakeLevelHeightAcces
     override fun getStatus(): ChunkStatus? = ChunkStatus.EMPTY
     override fun removeBlockEntity(pos: BlockPos) {}
     override fun getBlockEntityNbtForSaving(pos: BlockPos): CompoundTag? = CompoundTag()
-    override fun getLights(): Stream<BlockPos?>? = Stream.empty()
     override fun getBlockTicks(): TickContainerAccess<Block?>? = FakeTickContainer()
     override fun getFluidTicks(): TickContainerAccess<Fluid?>? = FakeTickContainer()
     override fun getTicksForSerialization(): TicksToSave? = TicksToSave(FakeTickContainer(), FakeTickContainer())

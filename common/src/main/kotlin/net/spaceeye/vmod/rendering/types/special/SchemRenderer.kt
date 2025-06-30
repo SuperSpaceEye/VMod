@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer
 import com.mojang.math.Matrix4f
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.multiplayer.ClientChunkCache
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.client.renderer.ItemBlockRenderTypes
@@ -17,7 +16,6 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.Holder
 import net.minecraft.core.RegistryAccess
-import net.minecraft.core.SectionPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.sounds.SoundEvent
@@ -25,30 +23,21 @@ import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.crafting.RecipeManager
-import net.minecraft.world.level.BlockGetter
-import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.ColorResolver
 import net.minecraft.world.level.Level
-import net.minecraft.world.level.LightLayer
 import net.minecraft.world.level.biome.Biome
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.minecraft.world.level.chunk.DataLayer
-import net.minecraft.world.level.chunk.LightChunkGetter
-import net.minecraft.world.level.entity.EntityAccess
-import net.minecraft.world.level.entity.EntityTypeTest
 import net.minecraft.world.level.entity.LevelEntityGetter
 import net.minecraft.world.level.gameevent.GameEvent
-import net.minecraft.world.level.lighting.LayerLightEventListener
 import net.minecraft.world.level.lighting.LevelLightEngine
 import net.minecraft.world.level.material.Fluid
 import net.minecraft.world.level.material.FluidState
 import net.minecraft.world.level.material.Fluids
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData
-import net.minecraft.world.phys.AABB
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.ticks.LevelTickAccess
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.BlockItem
@@ -62,11 +51,13 @@ import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.BlockRenderer
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
-import net.spaceeye.vmod.toolgun.ToolgunItem
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
+import net.spaceeye.vmod.utils.DummyChunkSource
+import net.spaceeye.vmod.utils.DummyLevelEntityGetter
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Ref
+import net.spaceeye.vmod.utils.SchemLightEngine
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getQuatFromDir
 import org.joml.AxisAngle4d
@@ -78,8 +69,6 @@ import org.valkyrienskies.mod.common.util.toJOML
 import org.valkyrienskies.mod.common.util.toMinecraft
 import java.awt.Color
 import java.util.Random
-import java.util.UUID
-import java.util.function.Consumer
 import java.util.function.Supplier
 import kotlin.math.roundToInt
 
@@ -115,49 +104,6 @@ import kotlin.math.roundToInt
 //    //not using endVertex to not call ensureCapacity
 //    buffer.`vmod$vertices`(buffer.`vmod$vertices`() + 1)
 //}
-
-class SchemLightEngine(): LevelLightEngine(object : LightChunkGetter {
-    override fun getChunkForLighting(chunkX: Int, chunkZ: Int): BlockGetter? = null
-    override fun getLevel(): BlockGetter? = null
-}, false, false) {
-    class SchemLayerListener(): LayerLightEventListener {
-        override fun getLightValue(levelPos: BlockPos): Int = 15
-
-        override fun getDataLayerData(sectionPos: SectionPos): DataLayer? = null
-        override fun checkBlock(pos: BlockPos) {}
-        override fun onBlockEmissionIncrease(pos: BlockPos, emissionLevel: Int) {}
-        override fun hasLightWork(): Boolean = false
-        override fun runUpdates(pos: Int, isQueueEmpty: Boolean, updateBlockLight: Boolean): Int = pos
-        override fun updateSectionStatus(pos: SectionPos, isQueueEmpty: Boolean) {}
-        override fun enableLightSources(chunkPos: ChunkPos, isQueueEmpty: Boolean) {}
-    }
-    val layerListener = SchemLayerListener()
-
-    override fun getRawBrightness(blockPos: BlockPos, amount: Int): Int = 15
-    override fun getLightSectionCount(): Int = 2000000
-    override fun getMinLightSection(): Int = -1000000
-    override fun getMaxLightSection(): Int = 1000000
-
-    override fun checkBlock(pos: BlockPos) {}
-    override fun onBlockEmissionIncrease(pos: BlockPos, emissionLevel: Int) {}
-    override fun hasLightWork(): Boolean = false
-    override fun runUpdates(pos: Int, isQueueEmpty: Boolean, updateBlockLight: Boolean): Int = pos
-    override fun updateSectionStatus(pos: SectionPos, isQueueEmpty: Boolean) {}
-    override fun enableLightSources(chunkPos: ChunkPos, isQueueEmpty: Boolean) {}
-    override fun getLayerListener(type: LightLayer): LayerLightEventListener? = layerListener
-    override fun getDebugData(lightLayer: LightLayer, sectionPos: SectionPos): String? = "n/a"
-    override fun queueSectionData(type: LightLayer, pos: SectionPos, array: DataLayer?, bl: Boolean) {}
-    override fun retainData(pos: ChunkPos, retain: Boolean) {}
-}
-
-class DummyLevelEntityGetter<T: EntityAccess?>(): LevelEntityGetter<T> {
-    override fun get(id: Int): T? = null
-    override fun get(uuid: UUID): T? = null
-    override fun getAll(): Iterable<T?>? = listOf()
-    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, consumer: Consumer<U?>) {}
-    override fun get(boundingBox: AABB, consumer: Consumer<T?>) {}
-    override fun <U : T?> get(test: EntityTypeTest<T?, U?>, bounds: AABB, consumer: Consumer<U?>) {}
-}
 
 class FakeLevel(
     val level: ClientLevel,
@@ -228,6 +174,9 @@ class FakeLevel(
     override fun getFreeMapId(): Int = 0
     override fun getEntity(id: Int): Entity? = null
 
+    private val fakeChunkSource = DummyChunkSource(this, dummyLightEngine)
+    override fun getChunkSource() = fakeChunkSource
+
     override fun getUncachedNoiseBiome(x: Int, y: Int, z: Int): Holder<Biome?>? { throw AssertionError("Shouldn't be called") }
     override fun gatherChunkSourceStats(): String? { throw AssertionError("Shouldn't be called")  }
     override fun getMapData(mapName: String): MapItemSavedData? { throw AssertionError("Shouldn't be called")  }
@@ -235,7 +184,6 @@ class FakeLevel(
     override fun getRecipeManager(): RecipeManager? { throw AssertionError("Shouldn't be called")  }
     override fun getBlockTicks(): LevelTickAccess<Block?>? { throw AssertionError("Shouldn't be called")  }
     override fun getFluidTicks(): LevelTickAccess<Fluid?>? { throw AssertionError("Shouldn't be called")  }
-    override fun getChunkSource(): ClientChunkCache? { throw AssertionError("Shouldn't be called")  }
 }
 
 class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
@@ -467,6 +415,7 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float, val 
                         it.mulPoseMatrix(poseStack.last().pose())
                         beRenderer.render(be, 0f, it, sources, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY)
                     }
+                //TODO maybe i shouldn't just log everything
                 } catch (e: Exception) { ELOG("Failed to render block entity\n${e.stackTraceToString()}"); toRemove.add(i)
                 } catch (e: Error) { ELOG("Failed to render block entity\n${e.stackTraceToString()}"); toRemove.add(i) }
                 poseStack.popPose()

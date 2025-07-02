@@ -62,7 +62,7 @@ class MassChangerMode: ExtendableToolgunMode(), MassChangerGUI, MassChangerHUD {
     companion object {
         init {
             ToolgunModes.registerWrapper(MassChangerMode::class) {
-                it.addExtension<MassChangerMode> {
+                it.addExtension {
                     BasicConnectionExtension<MassChangerMode>("ship_mass_changer"
                         ,leftFunction  = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,rightFunction = { inst, level, player, rr -> inst.activateSecondaryFunction(level, player, rr) }

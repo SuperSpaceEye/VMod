@@ -250,7 +250,7 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
 
         init {
             ToolgunModes.registerWrapper(VEntityChanger::class) {
-                it.addExtension<VEntityChanger> {
+                it.addExtension {
                     BasicConnectionExtension<VEntityChanger>("ventity_changer"
                         ,leftFunction = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
 

@@ -90,15 +90,15 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
     companion object {
         init {
             ToolgunModes.registerWrapper(PhysRopeMode::class) {
-                it.addExtension<PhysRopeMode> {
+                it.addExtension {
                     BasicConnectionExtension<PhysRopeMode>("phys_rope_mode"
                         ,allowResetting = true
                         ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,leftClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
-                }.addExtension<PhysRopeMode> {
+                }.addExtension {
                     PlacementModesExtension(false)
-                }.addExtension<PhysRopeMode> {
+                }.addExtension {
                     BlockMenuOpeningExtension<PhysRopeMode> { inst -> inst.primaryFirstRaycast }
                 }
             }

@@ -15,6 +15,8 @@ import net.spaceeye.vmod.toolgun.modes.gui.ConnectionGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ConnectionHUD
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.*
 import net.spaceeye.vmod.toolgun.modes.extensions.*
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
@@ -29,16 +31,16 @@ import java.awt.Color
 class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
-    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }
-    var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }.presettable()
+    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }.presettable()
+    var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }.presettable()
 
-    var width: Double by get(i++, .2)
-    var color: Color by get(i++, Color(62, 62, 62, 255))
-    var fullbright: Boolean by get(i++, false)
+    var width: Double by get(i++, .2).presettable()
+    var color: Color by get(i++, Color(62, 62, 62, 255)).presettable()
+    var fullbright: Boolean by get(i++, false).presettable()
 
-    var fixedDistance: Float by get(i++, -1.0f) { ServerLimits.instance.fixedDistance.get(it) }
-    var connectionMode: ConnectionConstraint.ConnectionModes by get(i++, ConnectionConstraint.ConnectionModes.FIXED_ORIENTATION)
+    var fixedDistance: Float by get(i++, -1.0f) { ServerLimits.instance.fixedDistance.get(it) }.presettable()
+    var connectionMode: ConnectionConstraint.ConnectionModes by get(i++, ConnectionConstraint.ConnectionModes.FIXED_ORIENTATION).presettable()
     var primaryFirstRaycast: Boolean by get(i++, false)
 
 
@@ -80,15 +82,15 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
         init {
             //"it" IS THE SAME ON CLIENT BUT ON SERVER IT CREATES NEW INSTANCE OF THE MODE
             ToolgunModes.registerWrapper(ConnectionMode::class) {
-                it.addExtension<ConnectionMode> {
+                it.addExtension {
                     BasicConnectionExtension<ConnectionMode>("connection_mode"
                         ,allowResetting = true
                         ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,leftClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
-                }.addExtension<ConnectionMode> {
+                }.addExtension {
                     BlockMenuOpeningExtension<ConnectionMode> { inst -> inst.primaryFirstRaycast || inst.paMiddleFirstRaycast }
-                }.addExtension<ConnectionMode> {
+                }.addExtension {
                     PlacementAssistExtension(true, paNetworkingObj,
                         { (it as ConnectionMode).primaryFirstRaycast },
                         { (it as ConnectionMode).connectionMode == ConnectionConstraint.ConnectionModes.HINGE_ORIENTATION },
@@ -103,7 +105,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
                             ).addExtension(Strippable())
                         }
                     )
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

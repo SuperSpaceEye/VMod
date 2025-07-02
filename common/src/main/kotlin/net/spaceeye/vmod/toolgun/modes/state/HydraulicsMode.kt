@@ -14,6 +14,8 @@ import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.types.A2BRenderer
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.*
@@ -33,22 +35,23 @@ object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
-    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }
-    var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }.presettable()
+    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }.presettable()
+    var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }.presettable()
 
-    var width: Double by get(i++, .2)
+    var width: Double by get(i++, .2).presettable()
 
-    var color: Color by get(i++, Color(62, 62, 200, 255))
-    var fullbright: Boolean by get(i++, false)
+    var color: Color by get(i++, Color(62, 62, 200, 255)).presettable()
+    var fullbright: Boolean by get(i++, false).presettable()
 
-    var fixedMinLength: Float by get(i++, -1f) { ServerLimits.instance.fixedDistance.get(it) }
-    var connectionMode: HydraulicsConstraint.ConnectionMode by get(i++, HydraulicsConstraint.ConnectionMode.FIXED_ORIENTATION)
+    var fixedMinLength: Float by get(i++, -1f) { ServerLimits.instance.fixedDistance.get(it) }.presettable()
+    var connectionMode: HydraulicsConstraint.ConnectionMode by get(i++, HydraulicsConstraint.ConnectionMode.FIXED_ORIENTATION).presettable()
+
+    var extensionDistance: Float by get(i++, 5f) { ServerLimits.instance.extensionDistance.get(it) }.presettable()
+    var extensionSpeed: Float by get(i++, 1f) { ServerLimits.instance.extensionSpeed.get(it) }.presettable()
+    var channel: String by get(i++, "hydraulics") { ServerLimits.instance.channelLength.get(it) }.presettable()
+
     var primaryFirstRaycast: Boolean by get(i++, false)
-
-    var extensionDistance: Float by get(i++, 5f) { ServerLimits.instance.extensionDistance.get(it) }
-    var extensionSpeed: Float by get(i++, 1f) { ServerLimits.instance.extensionSpeed.get(it) }
-    var channel: String by get(i++, "hydraulics") { ServerLimits.instance.channelLength.get(it) }
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementAssistExtension>().posMode
     val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementAssistExtension>().precisePlacementAssistSideNum
@@ -91,15 +94,15 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     companion object {
         init {
             ToolgunModes.registerWrapper(HydraulicsMode::class) {
-                it.addExtension<HydraulicsMode> {
+                it.addExtension {
                     BasicConnectionExtension<HydraulicsMode>("hydraulics_mode"
                         ,allowResetting = true
                         ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,leftClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
-                }.addExtension<HydraulicsMode>{
+                }.addExtension{
                     BlockMenuOpeningExtension<HydraulicsMode> { inst -> inst.primaryFirstRaycast || inst.paMiddleFirstRaycast }
-                }.addExtension<HydraulicsMode> {
+                }.addExtension {
                     PlacementAssistExtension(true, HydraulicsNetworking,
                         { (it as HydraulicsMode).primaryFirstRaycast },
                         { (it as HydraulicsMode).connectionMode == HydraulicsConstraint.ConnectionMode.HINGE_ORIENTATION },
@@ -124,7 +127,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                             )).addExtension(Strippable())
                         }
                     )
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

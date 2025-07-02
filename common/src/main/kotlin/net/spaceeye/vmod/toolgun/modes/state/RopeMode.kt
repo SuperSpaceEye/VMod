@@ -17,6 +17,8 @@ import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.types.TubeRopeRenderer
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -29,21 +31,21 @@ import java.awt.Color
 class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
-    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }
-    var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }.presettable()
+    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }.presettable()
+    var damping: Float by get(i++, -1f) { ServerLimits.instance.damping.get(it) }.presettable()
 
-    var fixedDistance: Float by get(i++, -1.0f) { ServerLimits.instance.fixedDistance.get(it) }
+    var fixedDistance: Float by get(i++, -1.0f) { ServerLimits.instance.fixedDistance.get(it) }.presettable()
+
+    var segments: Int by get(i++, 16).presettable()
+    var sides: Int by get(i++, 4).presettable()
+    var width: Double by get(i++, .2).presettable()
+    var fullbright: Boolean by get(i++, false).presettable()
+
+    var useTubeRenderer: Boolean by get(i++, false).presettable()
+    var allowTwisting by get(i++, false).presettable()
 
     var primaryFirstRaycast: Boolean by get(i++, false)
-
-    var segments: Int by get(i++, 16)
-    var sides: Int by get(i++, 4)
-    var width: Double by get(i++, .2)
-    var fullbright: Boolean by get(i++, false)
-
-    var useTubeRenderer: Boolean by get(i++, false)
-    var allowTwisting by get(i++, false)
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
@@ -89,17 +91,17 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     companion object {
         init {
             ToolgunModes.registerWrapper(RopeMode::class) {
-                it.addExtension<RopeMode> {
+                it.addExtension {
                     BasicConnectionExtension<RopeMode>("rope_mode"
                         ,allowResetting = true
                         ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,leftClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
-                }.addExtension<RopeMode> {
+                }.addExtension {
                     PlacementModesExtension(true)
-                }.addExtension<RopeMode> {
+                }.addExtension {
                     BlockMenuOpeningExtension<RopeMode> { inst -> inst.primaryFirstRaycast }
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

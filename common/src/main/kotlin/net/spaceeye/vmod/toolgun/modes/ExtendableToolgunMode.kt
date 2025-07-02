@@ -3,6 +3,7 @@ package net.spaceeye.vmod.toolgun.modes
 import dev.architectury.event.EventResult
 import gg.essential.elementa.components.UIContainer
 import net.minecraft.network.FriendlyByteBuf
+import net.spaceeye.vmod.reflectable.SubReflectable
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
@@ -36,11 +37,11 @@ interface ToolgunModeExtension: MSerializable, EBase, EClientEventsHandler, EGUI
 }
 
 abstract class ExtendableToolgunMode: BaseMode, EBase, EGUIBuilder, EHUDBuilder, EClientEventsHandler {
-    private val linearExtensions = mutableListOf<ToolgunModeExtension>()
+    @SubReflectable val linearExtensions = mutableListOf<ToolgunModeExtension>()
     private val _extensions = mutableSetOf<ToolgunModeExtension>()
     val extensions: Collection<ToolgunModeExtension> get() = _extensions
 
-    fun <T: ExtendableToolgunMode> addExtension(fn: (T) -> ToolgunModeExtension): T {
+    fun <T: ExtendableToolgunMode> addExtensionFn(fn: (T) -> ToolgunModeExtension): T {
         val ext = fn(this as T)
         if (_extensions.add(ext)) {linearExtensions.add(ext)}
         return this
@@ -150,4 +151,8 @@ abstract class ExtendableToolgunMode: BaseMode, EBase, EGUIBuilder, EHUDBuilder,
     }
 
     final override fun refreshHUD() { super.refreshHUD() }
+
+    companion object {
+        @JvmStatic fun <T: ExtendableToolgunMode> T.addExtension(fn: (T) -> ToolgunModeExtension): T = this.addExtensionFn(fn)
+    }
 }

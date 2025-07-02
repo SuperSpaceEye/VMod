@@ -120,6 +120,7 @@ object InfoAddition: ScreenWindowAddition {
             numVSConstraints.setText("Num VS Constraints: ${it.numVSConstraints}")
             numVEntities    .setText("Num VEntities: ${it.numVEntities}")
 
+            //TODO simplify
             val maxWidth = (infoContainer.children.maxBy { (it as UIWrappedText).getTextWidth() } as UIWrappedText).let{
                 it.getTextWidth() * it.getTextScale() + 4
             }

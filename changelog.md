@@ -1,3 +1,7 @@
+# 1.6.0
+* Fixed rare crash when raycasting
+* Rolled back schematic renderer change cuz it didn't work
+
 # 1.5.1
 * Fixed incompat with control craft
 * Changed schematic renderer

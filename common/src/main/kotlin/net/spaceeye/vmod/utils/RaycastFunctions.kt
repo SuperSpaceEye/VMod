@@ -139,7 +139,10 @@ object RaycastFunctions {
 
         val result = aabbs
             .mapNotNull { rayIntersectsBox(it.move(clipResult.blockPos), source.origin, (unitLookVec + eps).srdiv(1.0)).let { if (it.intersects) it else null } }
-            .minBy { it.tToIn }
+            .let { when (it.isNotEmpty()) {
+                true  -> it.minBy { it.tToIn }
+                false -> rayIntersectsBox(AABB(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1), source.origin, (unitLookVec + eps).srdiv(1.0))
+            } }
 
         //todo idk
 //        val result = rayIntersectsBox(AABB(bpos.x, bpos.y, bpos.z, bpos.x+1, bpos.y+1, bpos.z+1), source.origin, (unitLookVec + eps).srdiv(1.0))

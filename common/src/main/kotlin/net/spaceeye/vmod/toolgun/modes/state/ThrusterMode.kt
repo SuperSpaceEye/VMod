@@ -61,11 +61,11 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
     companion object {
         init {
             ToolgunModes.registerWrapper(ThrusterMode::class) {
-                it.addExtension<ThrusterMode> {
+                it.addExtension {
                     BasicConnectionExtension<ThrusterMode>("thruster_mode"
                         ,leftFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )
-                }.addExtension<ThrusterMode> {
+                }.addExtension {
                     PlacementModesExtension(false)
                 }
             }

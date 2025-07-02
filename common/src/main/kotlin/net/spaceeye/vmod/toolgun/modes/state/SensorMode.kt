@@ -60,11 +60,11 @@ class SensorMode: ExtendableToolgunMode(), SensorGUI, SensorHUD {
     companion object {
         init {
             ToolgunModes.registerWrapper(SensorMode::class) {
-                it.addExtension<SensorMode> {
+                it.addExtension {
                     BasicConnectionExtension<SensorMode>("sensor_mode"
                         ,leftFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )
-                }.addExtension<SensorMode> {
+                }.addExtension {
                     PlacementModesExtension(false)
                 }
             }

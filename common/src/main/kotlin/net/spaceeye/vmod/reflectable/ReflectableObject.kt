@@ -28,8 +28,14 @@ open class ReflectableItemDelegate <T : Any>(
         cachedName = property.name
         return this
     }
+
+    override fun toString(): String {
+        return "[Name: $cachedName | Item: $it | Pos: $reflectionPos | Set wrapper: ${setWrapper != null} | Get wrapper: ${getWrapper != null} | Metadata: $metadata]"
+    }
 }
 
+//TODO add explanation
+annotation class SubReflectable
 
 interface ReflectableObject {
     /**
@@ -37,58 +43,76 @@ interface ReflectableObject {
      */
     @get:JsonIgnore val reflectObjectOverride: ReflectableObject? get() = null
 
+    private fun iterableResolver(items: Iterable<*>): List<ReflectableItemDelegate<*>> {
+        return items.mapNotNull { item ->
+            if (item == null) return@mapNotNull null
+            when (item) {
+                is ReflectableObject -> item.getAllReflectableItems()
+                is Iterable<*> -> iterableResolver(item)
+                else -> throw AssertionError("Type ${item.javaClass} not supported")
+            }
+        }.flatten()
+    }
+
     @JsonIgnore
     @ApiStatus.NonExtendable
-    fun getAllReflectableItems(): List<ReflectableItemDelegate<*>> {
+    fun getAllReflectableItems(processSubReflectables: Boolean = false, filterBy: (ReflectableItemDelegate<*>) -> Boolean = {true}): List<ReflectableItemDelegate<*>> {
         reflectObjectOverride?.also { return it.getAllReflectableItems() }
 
         val toReturn = mutableListOf<ReflectableItemDelegate<*>>()
 
-        val constructorItems: MutableSet<String> = mutableSetOf()
         if (this::class.isData) {
             val order = this::class.primaryConstructor?.parameters ?: listOf()
             val orderNames = order.map { it.name!! }
             val members = orderNames.map { item -> this::class.memberProperties.find { it.name == item }!! }
-            val delegates = members.map { it -> ReflectableItemDelegate(-1, it.call(this)!!) }
+            val delegates = members
+                .map { it -> ReflectableItemDelegate(-1, it.call(this)!!) }
+                .filter(filterBy)
 
             toReturn.addAll(delegates)
-            constructorItems.addAll(orderNames)
         }
-
-        val memberProperties = this::class.memberProperties.filter {
-            !constructorItems.contains(it.name)
-        }.mapNotNull { item ->
-            val javaField = item.javaField
-            if (javaField == null || !ReflectableItemDelegate::class.java.isAssignableFrom(javaField.type)) return@mapNotNull null
-
-            javaField.isAccessible = true
-            val delegate = javaField.get(this) as ReflectableItemDelegate<*>
-
-            delegate
-        }.sortedBy { it.reflectionPos }
-
-        toReturn.addAll(memberProperties)
+        toReturn.addAll(getReflectableItemsWithoutDataclassConstructorItems(processSubReflectables, filterBy))
 
         return toReturn
     }
 
     @JsonIgnore
     @ApiStatus.NonExtendable
-    fun getReflectableItemsWithoutDataclassConstructorItems(): List<ReflectableItemDelegate<*>> {
+    fun getReflectableItemsWithoutDataclassConstructorItems(processSubReflectables: Boolean = false, filterBy: (ReflectableItemDelegate<*>) -> Boolean = {true}): List<ReflectableItemDelegate<*>> {
         reflectObjectOverride?.also { return it.getAllReflectableItems() }
 
-        val constructorItems = (if (this::class.isData) this::class.primaryConstructor?.parameters?.map { it.name }?.toSet() else null) ?: setOf()
-        return this::class.memberProperties.filter {
+        val constructorItems = (if (this::class.isData) this::class.primaryConstructor?.parameters?.map { it.name }?.toSet() else null) ?: emptySet()
+
+        val subReflectables = mutableListOf<Any>()
+
+        val delegates = this::class.memberProperties.filter {
             !constructorItems.contains(it.name)
         }.mapNotNull { item ->
-            val javaField = item.javaField
-            if (javaField == null || !ReflectableItemDelegate::class.java.isAssignableFrom(javaField.type)) return@mapNotNull null
+            val javaField = item.javaField ?: return@mapNotNull null
+            if (processSubReflectables && item.annotations.contains(SubReflectable())) {
+                javaField.isAccessible = true
+                val item = javaField.get(this) ?: return@mapNotNull null
+                subReflectables.add(item)
+                return@mapNotNull null
+            }
+
+            if (!ReflectableItemDelegate::class.java.isAssignableFrom(javaField.type)) return@mapNotNull null
 
             javaField.isAccessible = true
-            val delegate = javaField.get(this) as ReflectableItemDelegate<*>
+            javaField.get(this) as ReflectableItemDelegate<*>
+        }.sortedBy {
+            it.reflectionPos
+        }.filter(filterBy).toMutableList()
 
-            delegate
-        }.sortedBy { it.reflectionPos }
+        delegates.addAll(subReflectables.map { item ->
+            when (item) {
+                is ReflectableObject -> item.getAllReflectableItems()
+                is Iterable<*> -> iterableResolver(item)
+                else -> throw AssertionError("Type ${item.javaClass} not supported")
+            }
+        }.flatten().filter(filterBy))
+
+        return delegates
     }
 }
 

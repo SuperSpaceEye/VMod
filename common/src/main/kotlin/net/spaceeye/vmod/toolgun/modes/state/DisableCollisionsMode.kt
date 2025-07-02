@@ -46,7 +46,7 @@ class DisableCollisionsMode: ExtendableToolgunMode(), DisableCollisionHUD, Disab
     companion object {
         init {
             ToolgunModes.registerWrapper(DisableCollisionsMode::class) {
-                it.addExtension<DisableCollisionsMode> {
+                it.addExtension {
                     BasicConnectionExtension<DisableCollisionsMode>("disable_connections_mode"
                         ,allowResetting = true
                         ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
@@ -54,7 +54,7 @@ class DisableCollisionsMode: ExtendableToolgunMode(), DisableCollisionHUD, Disab
                         ,leftClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                         ,blockRight = { inst -> inst.primaryFirstRaycast}
                     )
-                }.addExtension<DisableCollisionsMode> {
+                }.addExtension {
                     BlockMenuOpeningExtension<DisableCollisionsMode> { inst -> inst.primaryFirstRaycast }
                 }
             }

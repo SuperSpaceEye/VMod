@@ -58,13 +58,25 @@ class MainToolgunGUIWindow(
         height = 90f.percent()
     } childOf window
 
+    private fun UIBlock.constrain(): UIBlock {
+        this constrain {
+            x = CenterConstraint()
+            y = CenterConstraint()
+
+            width = 90f.percent()
+            height = 90f.percent()
+        }
+
+        return this
+    }
+
     internal var currentWindow: ToolgunWindow? = null
 
     internal var windows = mutableListOf(
-        DItem(MAIN.get(), true) {currentWindow = ToolgunGUI(mainWindow)},
-        DItem(CLIENT_SETTINGS.get(), false) {currentWindow = ClientSettingsGUI(mainWindow)},
-        DItem(SERVER_SETTINGS.get(), false) {currentWindow = ServerSettingsGUI(mainWindow)},
-//        DItem("Settings Presets", false) {}
+        DItem(MAIN.get(), true) {currentWindow = ToolgunGUI(mainWindow.constrain())},
+        DItem(CLIENT_SETTINGS.get(), false) {currentWindow = ClientSettingsGUI(mainWindow.constrain())},
+        DItem(SERVER_SETTINGS.get(), false) {currentWindow = ServerSettingsGUI(mainWindow.constrain())},
+        DItem("Settings Presets", false) { currentWindow = SettingPresets(mainWindow.constrain()) }
     )
 
     private var buttons = mutableListOf<ToggleButton>()
@@ -107,7 +119,7 @@ class MainToolgunGUIWindow(
     }
 
     init {
-        currentWindow = ToolgunGUI(mainWindow)
+        currentWindow = ToolgunGUI(mainWindow.constrain())
         if (drawTopButtons) {
             buildButtons()
             buttons[0].setDisplay(true)

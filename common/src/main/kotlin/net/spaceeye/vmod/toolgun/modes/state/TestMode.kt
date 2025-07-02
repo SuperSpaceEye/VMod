@@ -70,7 +70,7 @@ class TestMode: ExtendableToolgunMode() {
     companion object {
         init {
             ToolgunModes.registerWrapper(TestMode::class) {
-                it.addExtension<TestMode> {
+                it.addExtension {
                     BasicConnectionExtension<TestMode>("test_mode"
                         ,leftFunction = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                     )

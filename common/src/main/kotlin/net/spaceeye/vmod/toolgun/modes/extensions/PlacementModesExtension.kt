@@ -6,17 +6,20 @@ import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.reflectable.ReflectableItem.get
+import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.types.special.PrecisePlacementAssistRenderer
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ToolgunModeExtension
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.translate.*
 
 open class PlacementModesExtension(
     val showCenteredInBlock: Boolean,
-): ToolgunModeExtension {
-    var posMode: PositionModes = PositionModes.NORMAL
-    var precisePlacementAssistSideNum: Int = 3
+): ToolgunModeExtension, ReflectableObject {
+    var posMode: PositionModes by get(0, PositionModes.NORMAL).presettable()
+    var precisePlacementAssistSideNum: Int by get(1, 3).presettable()
 
     private var precisePlacementAssistRendererId: Int = -1
 

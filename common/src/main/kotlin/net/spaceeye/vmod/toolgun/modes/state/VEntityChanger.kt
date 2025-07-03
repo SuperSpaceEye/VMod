@@ -44,13 +44,19 @@ import net.spaceeye.vmod.guiElements.makeCheckBox
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntries
 import net.spaceeye.vmod.networking.regC2S
+import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItemDelegate
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.gui.ConfirmationForm
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.VEntityChangerGUI
 import net.spaceeye.vmod.toolgun.modes.hud.VEntityChangerHUD
 import net.spaceeye.vmod.translate.APPLY_CHANGES
+import net.spaceeye.vmod.translate.ARE_YOU_SURE_YOU_WANT_TO_DELETE_IT
+import net.spaceeye.vmod.translate.DELETE
+import net.spaceeye.vmod.translate.NO
+import net.spaceeye.vmod.translate.YES
 import net.spaceeye.vmod.translate.YOU_DONT_HAVE_ACCESS_TO_THIS
 import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.FakeKProperty
@@ -88,6 +94,17 @@ class VEntityChangerGui(val constraint: VEntity): WindowScreen(ElementaVersion.V
         }.constrain {
             x = 2.pixels
             y = 2.pixels
+
+            width = 100.percent - 4.pixels
+        } childOf scrollWindow
+        Button(Color(140, 140, 140), DELETE.get()) {
+            ConfirmationForm(ARE_YOU_SURE_YOU_WANT_TO_DELETE_IT.get(), YES.get(), NO.get(), {
+                VEntityChanger.c2sRemoveVEntity.sendToServer(VEntityChanger.Companion.RemoveVEntity(constraint.mID))
+                ClientToolGunState.closeGUI()
+            }) childOf scrollWindow
+        } constrain {
+            x = 2.pixels
+            y = SiblingConstraint(2f) + 2.pixels
 
             width = 100.percent - 4.pixels
         } childOf scrollWindow
@@ -236,7 +253,7 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
         }
         val c2sSendUpdate = regC2S<C2SSendUpdate>("send_update", "ventity_changer",
             { pkt, player -> ServerToolGunState.playerHasPermission(player, VEntityChanger::class.java as Class<BaseMode>) },
-            { pkt, player ->  ServerToolGunState.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(
+            { pkt, player -> ServerToolGunState.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(
                 YOU_DONT_HAVE_ACCESS_TO_THIS.key, true, true)) }
         ) { pkt, player ->
             val level = player.level as ServerLevel
@@ -246,6 +263,22 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
 
             level.removeVEntity(ventity.mID)
             level.makeVEntityWithId(ventity, ventity.mID) {  }
+        }
+        data class RemoveVEntity(var id: Int = -1): AutoSerializable
+        val c2sRemoveVEntity = regC2S<RemoveVEntity>("remove_ventity", "ventity_changer",
+            { pkt, player -> ServerToolGunState.playerHasPermission(player, VEntityChanger::class.java as Class<BaseMode>) },
+            { pkt, player -> ServerToolGunState.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(
+                YOU_DONT_HAVE_ACCESS_TO_THIS.key, true, true)) }
+            ) { pkt, player ->
+            val level = player.level as ServerLevel
+            level.removeVEntity(pkt.id)
+            s2cRemovedVEntity.sendToClient(player, pkt)
+        }
+
+        val s2cRemovedVEntity = regS2C<RemoveVEntity>("removed_ventity", "ventity_changer") { pkt ->
+            val idx = clientVEntities.indexOfFirst { it.first.mID == pkt.id }
+            if (idx == -1) return@regS2C
+            clientVEntities.removeAt(idx)
         }
 
         init {

@@ -22,9 +22,15 @@ import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModeExtension
 import net.spaceeye.vmod.translate.CANCEL
+import net.spaceeye.vmod.translate.FAILED_TO_MAKE_PRESET
 import net.spaceeye.vmod.translate.FILENAME
+import net.spaceeye.vmod.translate.INVALID_FILENAME
 import net.spaceeye.vmod.translate.LOAD
+import net.spaceeye.vmod.translate.MAKE_PRESET
+import net.spaceeye.vmod.translate.NO_PRESETS
+import net.spaceeye.vmod.translate.PRESETS
 import net.spaceeye.vmod.translate.SAVE
+import net.spaceeye.vmod.translate.SOMETHING_WENT_WRONG
 import net.spaceeye.vmod.translate.get
 import net.spaceeye.vmod.utils.getMapper
 import java.awt.Color
@@ -61,7 +67,7 @@ class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
                 File("${filename}.json").canonicalPath
             } catch (e: Exception) {
                 ClientToolGunState.closeGUI()
-                ClientToolGunState.addHUDError("Invalid filename")
+                ClientToolGunState.addHUDError(INVALID_FILENAME.get())
                 return@Button
             }
 
@@ -75,7 +81,7 @@ class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
                 Files.writeString(Paths.get("VMod-Presets/${obj::class.simpleName}/${filename}.json"), json)
             } catch (e: Exception) {
                 ClientToolGunState.closeGUI()
-                ClientToolGunState.addHUDError("Failed to make preset")
+                ClientToolGunState.addHUDError(FAILED_TO_MAKE_PRESET.get())
             }
         }.constrain {
             x = 2.pixels()
@@ -103,7 +109,7 @@ class Presettable: ToolgunModeExtension {
     override fun eMakeGUISettings(parentWindow: UIContainer) {
         parentWindow as ScrollComponent
 
-        val btn = Button(Color(150, 150, 150), "Make Preset") {
+        val btn = Button(Color(150, 150, 150), MAKE_PRESET.get()) {
             val mode = mode as ReflectableObject
             SaveForm(mode) childOf parentWindow
         }
@@ -133,7 +139,7 @@ class Presettable: ToolgunModeExtension {
 class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) {
     init { init() }
 
-    //TODO code is a mess
+    //TODO redo
     fun init() {
         settingsComponent constrain {
             val offset = 2
@@ -149,7 +155,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
         val modes = presets.filterKeys { Presettable.modes.contains(it) }
 
         if (modes.isEmpty()) {
-            val text = makeText("No Presets", Color.BLACK, 2f, 2f, settingsComponent)
+            val text = makeText(NO_PRESETS.get(), Color.BLACK, 2f, 2f, settingsComponent)
             text constrain {
                 width = text.getTextWidth().pixels
 
@@ -178,7 +184,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
             }
 
             //TODO maybe rename to chosen preset name?
-            makeDropDown("Presets", holder, 2f, 2f, presets.map {
+            makeDropDown(PRESETS.get(), holder, 2f, 2f, presets.map {
                 //TODo add update
                 DItem(it.nameWithoutExtension, false) {chosenPreset = it}
             }) constrain {
@@ -194,7 +200,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
                 } catch (e: Exception) {
                     ELOG(e.stackTraceToString())
                     ClientToolGunState.closeGUI()
-                    ClientToolGunState.addHUDError("smth went wrong")
+                    ClientToolGunState.addHUDError(SOMETHING_WENT_WRONG.get())
                 }
             } constrain {
                 x = SiblingConstraint(2f) + 1.pixels

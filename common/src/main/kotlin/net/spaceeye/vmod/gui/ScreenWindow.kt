@@ -14,7 +14,7 @@ import net.spaceeye.vmod.gui.additions.PresetsAddition
 import net.spaceeye.vmod.gui.additions.VEntityChangerWorldMenu
 
 
-//TODO i don't like it
+//TODO maybe make it a class so that i can hot reload when elementa crashes
 object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = false) {
     private val linearExtensions = mutableListOf<ScreenWindowAddition>()
     private val _extensions = mutableSetOf<ScreenWindowAddition>()

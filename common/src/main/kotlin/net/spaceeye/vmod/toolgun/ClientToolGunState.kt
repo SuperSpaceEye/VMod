@@ -18,6 +18,7 @@ import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
+import net.spaceeye.vmod.toolgun.gui.SettingPresets
 import net.spaceeye.vmod.toolgun.gui.ToolgunWindow
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
@@ -51,6 +52,7 @@ object ClientToolGunState : ClientClosable() {
 
     init {
         ScreenWindow
+        SettingPresets
         ClientPlayerEvent.CLIENT_PLAYER_JOIN.register {
             if (it != Minecraft.getInstance().player) {return@register}
             currentMode = null
@@ -103,6 +105,15 @@ object ClientToolGunState : ClientClosable() {
             "key.vmod.toggle_hud_info",
             InputConstants.Type.KEYSYM,
             InputConstants.KEY_I,
+            "vmod.keymappings_name"
+        )
+    )
+
+    val TOOLGUN_CHANGE_PRESET_KEY = register(
+        KeyMapping(
+            "key.vmod.change_preset_key",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_LALT,
             "vmod.keymappings_name"
         )
     )

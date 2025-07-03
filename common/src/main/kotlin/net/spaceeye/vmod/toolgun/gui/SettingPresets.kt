@@ -35,9 +35,9 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
-import kotlin.math.max
 
 class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
     var filename = ""
@@ -202,27 +202,33 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
             } childOf holder
 
             //TODO should reload shit
-            Button(Color(150, 150, 150), "Delete") {
-                Files.deleteIfExists(chosenPreset)
-            } constrain {
-                x = SiblingConstraint(2f) + 1.pixels
-                y = CenterConstraint()
-            } childOf holder
+//            Button(Color(150, 150, 150), "Delete") {
+//                Files.deleteIfExists(chosenPreset)
+//            } constrain {
+//                x = SiblingConstraint(2f) + 1.pixels
+//                y = CenterConstraint()
+//            } childOf holder
 
             holder childOf settingsScrollComponent
         }
     }
 
-    fun listPresets(): Map<String, List<Path>> {
-        return Files
-            .list(Paths.get("VMod-Presets")).toList().toList()
-            .filter { it.isDirectory() && Files.list(it).toList().toList().any { it.extension == "json" }}
-            .associate { Pair(it.name, Files.list(it).toList().toList().filter { it.extension == "json" }) }
-    }
-
     override fun onGUIOpen() {}
 
     companion object {
+        @JvmStatic fun listPresets(mode: String): List<Path> {
+            return Files
+                .list(Paths.get("VMod-Presets/${mode}")).toList().toList()
+                .filter { it.isRegularFile() && it.extension == "json" }
+        }
+
+        @JvmStatic fun listPresets(): Map<String, List<Path>> {
+            return Files
+                .list(Paths.get("VMod-Presets")).toList().toList()
+                .filter { it.isDirectory() && Files.list(it).toList().toList().any { it.extension == "json" }}
+                .associate { Pair(it.name, Files.list(it).toList().toList().filter { it.extension == "json" }) }
+        }
+
         @JvmStatic fun toJsonStr(items: List<ReflectableItemDelegate<*>>): String {
             val serData = items.associate { Pair(it.cachedName, it.it!!) }
             return getMapper().writerWithDefaultPrettyPrinter().writeValueAsString(serData)

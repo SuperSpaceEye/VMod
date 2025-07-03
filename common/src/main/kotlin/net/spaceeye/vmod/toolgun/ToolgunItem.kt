@@ -14,6 +14,7 @@ import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import org.lwjgl.glfw.GLFW
 
+//TODO why am i defining events here, move them to ClientToolgunState
 class ToolgunItem: Item(Properties().tab(VMItems.TAB).stacksTo(1)) {
     companion object {
         @JvmStatic

@@ -10,6 +10,7 @@ import net.spaceeye.vmod.PlatformUtils
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
 import net.spaceeye.vmod.gui.additions.InfoAddition
+import net.spaceeye.vmod.gui.additions.PresetsAddition
 import net.spaceeye.vmod.gui.additions.VEntityChangerWorldMenu
 
 
@@ -67,5 +68,6 @@ object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = fa
         addScreenAddition { ErrorAddition() }
         addScreenAddition { VEntityChangerWorldMenu }
         addScreenAddition { InfoAddition }
+        addScreenAddition { PresetsAddition }
     }
 }

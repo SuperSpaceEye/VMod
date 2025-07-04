@@ -43,6 +43,8 @@ import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.guiElements.makeCheckBox
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeTextEntries
+import net.spaceeye.vmod.guiElements.makeTextEntriesLimit
+import net.spaceeye.vmod.limits.IntLimit
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItemDelegate
@@ -143,12 +145,12 @@ class VEntityChangerGui(val constraint: VEntity): WindowScreen(ElementaVersion.V
                 is UUID -> uiTextMaker()
                 is Int -> makeTextEntry(it.cachedName, kp<Int>(it), 2f, 2f, scrollWindow)
                 is Color -> {//color is immutable so i need to do this
-                    makeTextEntries(it.cachedName, listOf("r", "g", "b", "a"), listOf(
+                    makeTextEntriesLimit(it.cachedName, listOf("r", "g", "b", "a"), listOf(
                         fp({(it.it as Color).red  }) {v -> val c = it.it as Color; it.setValue(it, null, Color(v,     c.green, c.blue, c.alpha))},
                         fp({(it.it as Color).green}) {v -> val c = it.it as Color; it.setValue(it, null, Color(c.red, v,       c.blue, c.alpha))},
                         fp({(it.it as Color).blue }) {v -> val c = it.it as Color; it.setValue(it, null, Color(c.red, c.green, v,      c.alpha))},
                         fp({(it.it as Color).alpha}) {v -> val c = it.it as Color; it.setValue(it, null, Color(c.red, c.green, c.blue, v      ))},
-                    ), 2f, 2f, scrollWindow)
+                    ), 2f, 2f, scrollWindow, IntLimit(0, 255))
                 }
                 is Enum<*> -> makeDropDown(it.cachedName, kp<Enum<*>>(it), 2f, 2f, scrollWindow)
                 else -> uiTextMaker()

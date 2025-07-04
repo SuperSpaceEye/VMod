@@ -21,6 +21,7 @@ import kotlin.math.min
 
 data class DoubleLimit(var minValue: Double = -Double.MAX_VALUE, var maxValue: Double = Double.MAX_VALUE) { fun get(num: Double) = max(minValue, min(maxValue, num)) }
 data class FloatLimit (var minValue: Float  = -Float.MAX_VALUE,  var maxValue: Float  = Float.MAX_VALUE ) { fun get(num: Float)  = max(minValue, min(maxValue, num)) }
+data class LongLimit  (var minValue: Long   =  Long.MIN_VALUE,   var maxValue: Long   = Long.MAX_VALUE  ) { fun get(num: Long)   = max(minValue, min(maxValue, num)) }
 data class IntLimit   (var minValue: Int    =  Int.MIN_VALUE,    var maxValue: Int    = Int.MAX_VALUE   ) { fun get(num: Int)    = max(minValue, min(maxValue, num)) }
 
 data class BoolLimit  (var mode: Force = Force.NOTHING) {
@@ -93,6 +94,7 @@ object ServerLimits {
     init {
         ByteSerializableItem.registerSerializationItem(DoubleLimit::class, { it, buf -> buf.writeDouble(it.minValue); buf.writeDouble(it.maxValue) }) { buf -> DoubleLimit(buf.readDouble(), buf.readDouble())}
         ByteSerializableItem.registerSerializationItem(FloatLimit::class, { it, buf -> buf.writeFloat(it.minValue); buf.writeFloat(it.maxValue) }) { buf -> FloatLimit(buf.readFloat(), buf.readFloat())}
+        ByteSerializableItem.registerSerializationItem(LongLimit::class, { it, buf -> buf.writeLong(it.minValue); buf.writeLong(it.maxValue) }) { buf -> LongLimit(buf.readLong(), buf.readLong())}
         ByteSerializableItem.registerSerializationItem(IntLimit::class, { it, buf -> buf.writeInt(it.minValue); buf.writeInt(it.maxValue) }) { buf -> IntLimit(buf.readInt(), buf.readInt())}
         ByteSerializableItem.registerSerializationItem(StrLimit::class, { it, buf -> buf.writeInt(it.sizeLimit)}) { buf -> StrLimit(buf.readInt())}
         ByteSerializableItem.registerSerializationItem(BoolLimit::class, { it, buf -> buf.writeEnum(it.mode) }) { buf -> BoolLimit(buf.readEnum(BoolLimit.Force::class.java)) }

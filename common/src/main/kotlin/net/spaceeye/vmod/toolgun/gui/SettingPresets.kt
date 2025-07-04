@@ -22,6 +22,7 @@ import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModeExtension
 import net.spaceeye.vmod.translate.CANCEL
+import net.spaceeye.vmod.translate.DELETE
 import net.spaceeye.vmod.translate.FAILED_TO_MAKE_PRESET
 import net.spaceeye.vmod.translate.FILENAME
 import net.spaceeye.vmod.translate.INVALID_FILENAME
@@ -139,7 +140,6 @@ class Presettable: ToolgunModeExtension {
 class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) {
     init { init() }
 
-    //TODO redo
     fun init() {
         settingsComponent constrain {
             val offset = 2
@@ -155,7 +155,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
         val modes = presets.filterKeys { Presettable.modes.contains(it) }
 
         if (modes.isEmpty()) {
-            val text = makeText(NO_PRESETS.get(), Color.BLACK, 2f, 2f, settingsComponent)
+            val text = makeText(NO_PRESETS.get(), Color.BLACK, 2f, 2f, settingsScrollComponent)
             text constrain {
                 width = text.getTextWidth().pixels
 
@@ -165,7 +165,9 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
             return
         }
 
-        modes.forEach { (typeName, presets) ->
+        val sortedKeys = modes.keys.sortedWith {a, b -> a.compareTo(b) }
+        sortedKeys.forEach { typeName ->
+            val presets = modes[typeName]!!
             var chosenPreset = Paths.get("")
 
             val mode = Presettable.modes[typeName]!!
@@ -185,7 +187,6 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
 
             //TODO maybe rename to chosen preset name?
             makeDropDown(PRESETS.get(), holder, 2f, 2f, presets.map {
-                //TODo add update
                 DItem(it.nameWithoutExtension, false) {chosenPreset = it}
             }) constrain {
                 x = SiblingConstraint(2f) + 1.pixels
@@ -207,13 +208,15 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
                 y = CenterConstraint()
             } childOf holder
 
-            //TODO should reload shit
-//            Button(Color(150, 150, 150), "Delete") {
-//                Files.deleteIfExists(chosenPreset)
-//            } constrain {
-//                x = SiblingConstraint(2f) + 1.pixels
-//                y = CenterConstraint()
-//            } childOf holder
+            //TODO it rebuilds whole window on delete, but do i care?
+            Button(Color(150, 150, 150), DELETE.get()) {
+                if (!Files.deleteIfExists(chosenPreset)) return@Button
+                settingsScrollComponent.clearChildren()
+                init()
+            } constrain {
+                x = SiblingConstraint(2f) + 1.pixels
+                y = CenterConstraint()
+            } childOf holder
 
             holder childOf settingsScrollComponent
         }

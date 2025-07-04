@@ -1,6 +1,6 @@
 # 1.6.0
 * Added delete button to VEntityChanger
-  * Added Settings Presets
+* Added Settings Presets
 * Fixed rare crash when raycasting
 * Rolled back schematic renderer change cuz it didn't work
 * Fixed phys bearing schem compat not working

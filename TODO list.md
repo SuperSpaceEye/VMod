@@ -4,7 +4,6 @@
 
 by talking_snow
 * someone should make a parody of eureka where the ship assembly code makes every individual block  its own ship instead of what it normally does so everything immediatly falls apart
-* add possibility to remove vmod entities in entity changer
 
 # Maybe
 

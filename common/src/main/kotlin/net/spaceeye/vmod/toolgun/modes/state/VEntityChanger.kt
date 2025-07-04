@@ -268,9 +268,9 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
         val c2sRemoveVEntity = regC2S<RemoveVEntity>("remove_ventity", "ventity_changer",
             { pkt, player -> ServerToolGunState.playerHasPermission(player, VEntityChanger::class.java as Class<BaseMode>) },
             { pkt, player -> ServerToolGunState.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(
-                YOU_DONT_HAVE_ACCESS_TO_THIS.key, true, true)) }
+                YOU_DONT_HAVE_ACCESS_TO_THIS.string, true, true)) }
             ) { pkt, player ->
-            val level = player.level as ServerLevel
+            val level = player.level() as ServerLevel
             level.removeVEntity(pkt.id)
             s2cRemovedVEntity.sendToClient(player, pkt)
         }

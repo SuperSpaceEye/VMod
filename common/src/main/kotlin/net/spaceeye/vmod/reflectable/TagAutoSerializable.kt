@@ -129,7 +129,7 @@ object TagSerializableItem {
 
     init {
         rsin(BlockPos.MutableBlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) {buf, key -> BlockPos.of(buf.getLong(key)).let { BlockPos.MutableBlockPos(it.x, it.y, it.z) }}
-        rsin(ResourceLocation::class, {it, buf, key -> buf.putString(key, it.toString())}) {buf, key -> if (!buf.contains(key)) null else ResourceLocation(buf.getString(key)) }
+        rsin(ResourceLocation::class, {it, buf, key -> buf.putString(key, it.toString())}) {buf, key -> ResourceLocation(buf.getString(key)) }
         rsi (Quaterniondc::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)}
         rsi (Quaterniond::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)}
         rsi (Vector3d::class, {it, buf, key -> buf.putMyVector3d(key, it)}) {buf, key -> buf.getMyVector3d(key)}

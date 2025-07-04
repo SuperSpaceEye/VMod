@@ -59,7 +59,7 @@ class COMChangerMode: ExtendableToolgunMode(), COMChangerGUI, COMChangerHUD {
     companion object {
         init {
             ToolgunModes.registerWrapper(COMChangerMode::class) {
-                it.addExtension<COMChangerMode> {
+                it.addExtension {
                     BasicConnectionExtension<COMChangerMode>("com_changer"
                         ,leftFunction  = {inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr)}
                         ,rightFunction = {inst, level, player, rr -> inst.activateSecondaryFunction(level, player, rr)}

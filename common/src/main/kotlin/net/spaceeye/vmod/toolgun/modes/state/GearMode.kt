@@ -58,7 +58,7 @@ class GearMode: ExtendableToolgunMode(), GearGUI, GearHUD {
     companion object {
         init {
             ToolgunModes.registerWrapper(GearMode::class) {
-                it.addExtension<GearMode> {
+                it.addExtension {
                     BasicConnectionExtension<GearMode>(
                         "gear_mode",
                         allowResetting = true,
@@ -67,9 +67,9 @@ class GearMode: ExtendableToolgunMode(), GearGUI, GearHUD {
                             inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD()
                         }
                     )
-                }.addExtension<GearMode> {
+                }.addExtension {
                     PlacementModesExtension(true)
-                }.addExtension<GearMode> {
+                }.addExtension {
                     BlockMenuOpeningExtension<GearMode> { inst -> inst.primaryFirstRaycast }
                 }
             }

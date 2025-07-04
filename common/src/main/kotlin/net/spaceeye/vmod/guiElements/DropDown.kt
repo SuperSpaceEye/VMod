@@ -6,6 +6,7 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.animation.Animations
 import gg.essential.elementa.dsl.*
 import java.awt.Color
+import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
 data class DItem(val name: String, val highlight: Boolean, val fnToApply: () -> Unit)
@@ -19,6 +20,8 @@ class DropDown(
     val onClose: () -> Unit = {},
     val onOpen: () -> Unit = {}
 ): UIBlock() {
+    lateinit var dropDownButton: Button
+
     var activated = false
 
     var activatedStateOfButtons = mutableListOf<Boolean>()
@@ -59,19 +62,23 @@ class DropDown(
     }
 
     init {
+        val menuWidth = menuName.width() + 8
         constrain {
-            width = 100.percent() - 4.pixels()
+            width = menuWidth.pixels
             height = ChildBasedSizeConstraint() + 4.pixels()
         }
 
         val _this = this
         lateinit var itemsHolder: UIComponent
 
-        val menuButton = Button(Color(150, 150, 150), menuName, text_scale) {
+        val largestName = dItems.maxBy { it.name.length }.name
+        val largestWidth = max(largestName.width(text_scale), menuName.width()) + 8
+
+        dropDownButton = Button(Color(150, 150, 150), menuName, text_scale) {
             activated = !activated
             when (activated) {
-                true  -> { itemsHolder childOf _this; activateButtons(false); onOpen() }
-                false -> { _this.removeChild(itemsHolder); onClose() }
+                true  -> { this.constrain { width = largestWidth.pixels }; itemsHolder childOf _this; activateButtons(false); onOpen() }
+                false -> { this.constrain { width = menuWidth   .pixels }; _this.removeChild(itemsHolder); onClose() }
             }
         }.constrain {
             width = ChildBasedSizeConstraint() + 4.pixels()
@@ -126,8 +133,6 @@ fun makeDropDown(name: String,
     val dropDown = DropDown(name, dItems).constrain {
         x = xPadding.pixels()
         y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
-
-        width = 100.percent() - (xPadding * 2).pixels()
     } childOf makeChildOf
 
     return dropDown

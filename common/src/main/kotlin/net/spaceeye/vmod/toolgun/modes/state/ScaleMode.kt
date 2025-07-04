@@ -40,7 +40,7 @@ class ScaleMode: ExtendableToolgunMode(), ScaleGUI, ScaleHUD {
     companion object {
         init {
             ToolgunModes.registerWrapper(ScaleMode::class) {
-                it.addExtension<ScaleMode> {
+                it.addExtension {
                     BasicConnectionExtension<ScaleMode>("scale_mode"
                         ,leftFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )

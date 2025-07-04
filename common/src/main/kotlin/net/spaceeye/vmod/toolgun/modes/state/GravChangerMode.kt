@@ -83,7 +83,7 @@ class GravChangerMode: ExtendableToolgunMode(), GravChangerHUD, GravChangerGUI {
     companion object {
         init {
             ToolgunModes.registerWrapper(GravChangerMode::class) {
-                it.addExtension<GravChangerMode> {
+                it.addExtension {
                     BasicConnectionExtension<GravChangerMode>("grav_changer_mode"
                         ,allowResetting = true
                         ,leftFunction  = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }

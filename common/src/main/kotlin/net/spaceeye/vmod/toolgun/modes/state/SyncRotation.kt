@@ -49,13 +49,13 @@ class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
     companion object {
         init {
             ToolgunModes.registerWrapper(SyncRotation::class) {
-                it.addExtension<SyncRotation> {
+                it.addExtension {
                     BasicConnectionExtension<SyncRotation>("sync_rotation_mode"
                         ,allowResetting = true
                         ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,leftClientCallback = { inst -> inst.primaryFirstRaycast = !inst.primaryFirstRaycast; inst.refreshHUD() }
                     )
-                }.addExtension<SyncRotation> {
+                }.addExtension {
                     BlockMenuOpeningExtension<SyncRotation> { inst -> inst.primaryFirstRaycast }
                 }
             }

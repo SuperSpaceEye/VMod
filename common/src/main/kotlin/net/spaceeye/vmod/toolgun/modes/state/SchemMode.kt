@@ -360,7 +360,7 @@ class SchemMode: ExtendableToolgunMode(), SchemGUI, SchemHUD {
         init {
             SchemNetworking
             ToolgunModes.registerWrapper(SchemMode::class) {
-                it.addExtension<SchemMode> {
+                it.addExtension {
                     BasicConnectionExtension<SchemMode>("schem_mode"
                         ,allowResetting = true
                         ,leftFunction       = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }

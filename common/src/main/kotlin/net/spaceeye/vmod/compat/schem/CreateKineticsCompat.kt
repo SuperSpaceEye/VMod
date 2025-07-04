@@ -16,8 +16,11 @@ class CreateKineticsCompat: SchemCompatItem {
     override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((BlockEntity?) -> Unit) -> Unit) {
         if (state.block !is IBE<*>) {return}
         delayLoading(false) { tag ->
-            val be = level.getBlockEntity(pos) as? KineticBlockEntity ?: return@delayLoading tag
-            be.warnOfMovement()
+            level.getBlockEntity(pos) as? KineticBlockEntity ?: return@delayLoading tag
+            tag?.remove("Speed")
+            tag?.remove("Sequence")
+            tag?.remove("Source")
+            tag?.remove("Network")
             tag
         }
     }

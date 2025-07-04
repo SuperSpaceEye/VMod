@@ -37,6 +37,7 @@ import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistNetworking.S2CSendTraversalInfo
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -163,10 +164,10 @@ class PlacementAssistExtension(
 
     @JsonIgnore private var i = 0
 
-    override var paDistanceFromBlock: Double by get(i++, 0.0, {ServerLimits.instance.distanceFromBlock.get(it)})
+    override var paDistanceFromBlock: Double by get(i++, 0.0, {ServerLimits.instance.distanceFromBlock.get(it)}).presettable()
     override var paStage: ThreeClicksActivationSteps by get(i++, ThreeClicksActivationSteps.FIRST_RAYCAST)
     override var paAngle: Ref<Double> by get(i++, Ref(0.0), {it}, customSerialize = { it, buf -> buf.writeDouble((it).it)}, customDeserialize = { buf -> paAngle.it = buf.readDouble(); paAngle})
-    override var paScrollAngle: Double by get(i++, Math.toRadians(10.0))
+    override var paScrollAngle: Double by get(i++, Math.toRadians(10.0)).presettable()
     override var middleFirstRaycast: Boolean by get(i++, false)
 
 

@@ -17,6 +17,5 @@ fun makeText(text: String, color: Color, xPadding: Float, yPadding: Float, makeC
         this.color = color.toConstraint()
         x = xPadding.pixels()
         y = SiblingConstraint(yPadding/2) + (yPadding/2).pixels()
-        width = 100.percent() - (xPadding * 2).pixels()
     } childOf makeChildOf
 }

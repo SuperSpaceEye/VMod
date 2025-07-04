@@ -20,6 +20,7 @@ fun main() {
   "key.vmod.reset_ventity_mode": "Reset VEntity Mode",
   "key.vmod.toggle_hud": "Toggle HUD",
   "key.vmod.toggle_hud_info": "Toggle HUD Info",
+  "key.vmod.change_preset_key": "Change Preset Key",
   "vmod.keymappings_name": "VMod Toolgun",
   
   "item.the_vmod.toolgun": "Toolgun",

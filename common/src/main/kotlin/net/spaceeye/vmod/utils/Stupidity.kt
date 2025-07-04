@@ -90,25 +90,8 @@ class FakeTickContainer<T>(): TickContainerAccess<T>, SerializableTickContainer<
     override fun save(gameTime: Long, idGetter: Function<T?, String?>): Tag? = CompoundTag()
 }
 
-class EmptyChunkAccess(): ChunkAccess(ChunkPos(0, 0), null, FakeLevelHeightAccessor(), null, 0L, Array<LevelChunkSection?>(0) {null}, null) {
-    val air = Blocks.AIR
-    override fun setBlockState(pos: BlockPos, state: BlockState, isMoving: Boolean): BlockState? = air.defaultBlockState()
-    override fun setBlockEntity(blockEntity: BlockEntity) {}
-    override fun addEntity(entity: Entity) {}
-    override fun getStatus(): ChunkStatus? = ChunkStatus.EMPTY
-    override fun removeBlockEntity(pos: BlockPos) {}
-    override fun getBlockEntityNbtForSaving(pos: BlockPos): CompoundTag? = CompoundTag()
-    override fun getBlockTicks(): TickContainerAccess<Block?>? = FakeTickContainer()
-    override fun getFluidTicks(): TickContainerAccess<Fluid?>? = FakeTickContainer()
-    override fun getTicksForSerialization(): TicksToSave? = TicksToSave(FakeTickContainer(), FakeTickContainer())
-    override fun getBlockEntity(pos: BlockPos): BlockEntity? = null
-    override fun getBlockState(pos: BlockPos): BlockState? = air.defaultBlockState()
-    override fun getFluidState(pos: BlockPos): FluidState? = air.defaultBlockState().fluidState
-}
-
 class DummyChunkSource(val level: Level, val levelLightEngine: LevelLightEngine): ChunkSource() {
-    val access = EmptyChunkAccess()
-    override fun getChunk(chunkX: Int, chunkZ: Int, requiredStatus: ChunkStatus, load: Boolean): ChunkAccess? = access
+    override fun getChunk(chunkX: Int, chunkZ: Int, requiredStatus: ChunkStatus, load: Boolean): ChunkAccess? = null
     override fun tick(hasTimeLeft: BooleanSupplier, tickChunks: Boolean) {}
     override fun gatherStats(): String? = ""
     override fun getLoadedChunksCount(): Int = 0

@@ -98,15 +98,15 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
     companion object {
         init {
             ToolgunModes.registerWrapper(SliderMode::class) {
-                it.addExtension<SliderMode> {
+                it.addExtension {
                     BasicConnectionExtension<SliderMode>("slider_mode"
                         ,allowResetting = true
                         ,leftFunction       = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,leftClientCallback = { inst -> inst.primaryTimes++; inst.refreshHUD() }
                     )
-                }.addExtension<SliderMode> {
+                }.addExtension {
                     BlockMenuOpeningExtension<SliderMode> { inst -> inst.primaryTimes != 0 }
-                }.addExtension<SliderMode> {
+                }.addExtension {
                     PlacementModesExtension(true)
                 }
             }

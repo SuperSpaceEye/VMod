@@ -10,6 +10,7 @@ import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.limits.DoubleLimit
 import net.spaceeye.vmod.limits.FloatLimit
 import net.spaceeye.vmod.limits.IntLimit
+import net.spaceeye.vmod.limits.LongLimit
 import net.spaceeye.vmod.limits.StrLimit
 import java.awt.Color
 import kotlin.reflect.KMutableProperty0
@@ -97,8 +98,8 @@ fun makeTextEntry(name: String, value: KMutableProperty0<Float>, xPadding: Float
     return makeTextEntryBase(name, value, xPadding, yPadding, makeChildOf, {it.toFloatOrNull()}) { (it < limits.minValue || it > limits.maxValue) }
 }
 
-fun makeTextEntry(name: String, value: KMutableProperty0<Long>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent): TextEntry {
-    return makeTextEntryBase(name, value, xPadding, yPadding, makeChildOf, {it.toLongOrNull()}) { false }
+fun makeTextEntry(name: String, value: KMutableProperty0<Long>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent, limits: LongLimit = LongLimit()): TextEntry {
+    return makeTextEntryBase(name, value, xPadding, yPadding, makeChildOf, {it.toLongOrNull()}) { (it < limits.minValue || it > limits.maxValue) }
 }
 
 fun makeTextEntry(name: String, value: KMutableProperty0<Int>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent, limits: IntLimit = IntLimit()): TextEntry {
@@ -109,7 +110,11 @@ fun makeTextEntry(name: String, value: KMutableProperty0<String>, xPadding: Floa
     return makeTextEntryBase(name, value, xPadding, yPadding, makeChildOf, {it}) { (it.length > limit.sizeLimit) }
 }
 
-fun makeTextEntries(name: String, names: List<String>, values: List<KMutableProperty0<*>>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent): UIContainer {
+fun makeTextEntriesLimit(name: String, names: List<String>, values: List<KMutableProperty0<*>>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent, limit: Any? = null): UIContainer {
+    return makeTextEntries(name, names, values, xPadding, yPadding, makeChildOf, limit?.let { (0 until names.size).map { limit } })
+}
+
+fun makeTextEntries(name: String, names: List<String>, values: List<KMutableProperty0<*>>, xPadding: Float, yPadding: Float, makeChildOf: UIComponent, limits: List<*>? = null): UIContainer {
     val storage = UIContainer().constrain {
         x = xPadding.pixels()
         y = SiblingConstraint(yPadding/2)
@@ -123,13 +128,13 @@ fun makeTextEntries(name: String, names: List<String>, values: List<KMutableProp
         color = Color.BLACK.toConstraint()
     } childOf storage
 
-    names.zip(values).forEach { (name, value) ->
+    names.zip(values).forEachIndexed { i, (name, value) ->
         when (value.get()) {
-            is Double -> makeTextEntry(name, value as KMutableProperty0<Double>, 2f, 2f, storage)
-            is Float  -> makeTextEntry(name, value as KMutableProperty0<Float>,  2f, 2f, storage)
-            is Long   -> makeTextEntry(name, value as KMutableProperty0<Long>,   2f, 2f, storage)
-            is Int    -> makeTextEntry(name, value as KMutableProperty0<Int>,    2f, 2f, storage)
-            is String -> makeTextEntry(name, value as KMutableProperty0<String>, 2f, 2f, storage)
+            is Double -> makeTextEntry(name, value as KMutableProperty0<Double>, 2f, 2f, storage, limits?.let { it[i] as DoubleLimit } ?: DoubleLimit())
+            is Float  -> makeTextEntry(name, value as KMutableProperty0<Float>,  2f, 2f, storage, limits?.let { it[i] as FloatLimit } ?: FloatLimit())
+            is Long   -> makeTextEntry(name, value as KMutableProperty0<Long>,   2f, 2f, storage, limits?.let { it[i] as LongLimit } ?: LongLimit())
+            is Int    -> makeTextEntry(name, value as KMutableProperty0<Int>,    2f, 2f, storage, limits?.let { it[i] as IntLimit } ?: IntLimit())
+            is String -> makeTextEntry(name, value as KMutableProperty0<String>, 2f, 2f, storage, limits?.let { it[i] as StrLimit } ?: StrLimit())
             else -> throw NotImplementedError()
         }.constrain {
             width = ((100.percent - text.getWidth().pixels) / names.size) - (names.size * 1f).pixels

@@ -122,27 +122,32 @@ object TagSerializableItem {
         serialize: ((it: T, buf: CompoundTag, key: String) -> Unit),
         deserialize: ((buf: CompoundTag, key: String) -> T?)) = registerSerializationItem(type, serialize, deserialize)
 
-    init {
-        rsi(BlockPos.MutableBlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) {buf, key -> BlockPos.of(buf.getLong(key)).let { BlockPos.MutableBlockPos(it.x, it.y, it.z) }}
-        rsi(ResourceLocation::class, {it, buf, key -> buf.putString(key, it.toString())}) {buf, key -> if (!buf.contains(key)) null else ResourceLocation(buf.getString(key)) }
-        rsi(Quaterniondc::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
-        rsi(Quaterniond::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
-        rsi(Vector3d::class, {it, buf, key -> buf.putMyVector3d(key, it)}) {buf, key -> buf.getMyVector3d(key)}
-        rsi(BlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) { buf, key -> BlockPos.of(buf.getLong(key))}
-        rsi(ByteBuf::class, {it, buf, key -> buf.putByteArray(key, it.array())}) {buf, key -> Unpooled.wrappedBuffer(buf.getByteArray(key))}
-        rsi(Boolean::class, {it, buf, key -> buf.putBoolean(key, it)}) {buf, key -> buf.getBoolean(key)}
-        rsi(Double::class, {it, buf, key -> buf.putDouble(key, it)}) {buf, key -> buf.getDouble(key)}
-        rsi(String::class, {it, buf, key -> buf.putString(key, it)}) {buf, key -> buf.getString(key)}
-        rsi(Color::class, {it, buf, key -> buf.putColor(key, it)}) {buf, key -> buf.getColor(key)}
-        rsi(Float::class, {it, buf, key -> buf.putFloat(key, it)}) {buf, key -> buf.getFloat(key)}
-        rsi(Long::class, {it, buf, key -> buf.putLong(key, it)}) {buf, key -> buf.getLong(key)}
-        rsi(UUID::class, {it, buf, key -> buf.putUUID(key, it)}) {buf, key -> buf.getUUID(key)}
-        rsi(Int::class, {it, buf, key -> buf.putInt(key, it)}) {buf, key -> buf.getInt(key)}
+    @JvmStatic fun <T: Any> rsin(
+        type: KClass<T>,
+        serialize: ((it: T, buf: CompoundTag, key: String) -> Unit),
+        deserialize: ((buf: CompoundTag, key: String) -> T?)) = registerSerializationItem(type, serialize) { buf, key -> if (buf.contains(key)) deserialize(buf, key) else null }
 
-        rsi(IntArray::class, {it, buf, key -> buf.putIntArray(key, it)}, {buf, key -> buf.getIntArray(key)})
-        rsi(LongArray::class, {it, buf, key -> buf.putLongArray(key, it)}, {buf, key -> buf.getLongArray(key)})
-        rsi(FloatArray::class, {it, buf, key -> val tag = ListTag(); tag.addAll(it.map { FloatTag.valueOf(it) }); buf.put(key, tag) }, {buf, key -> (buf.get(key) as ListTag).map { (it as FloatTag).asFloat }.toFloatArray()})
-        rsi(DoubleArray::class, {it, buf, key -> val tag = ListTag(); tag.addAll(it.map { DoubleTag.valueOf(it) }); buf.put(key, tag) }, {buf, key -> (buf.get(key) as ListTag).map { (it as DoubleTag).asDouble }.toDoubleArray()})
+    init {
+        rsin(BlockPos.MutableBlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) {buf, key -> BlockPos.of(buf.getLong(key)).let { BlockPos.MutableBlockPos(it.x, it.y, it.z) }}
+        rsin(ResourceLocation::class, {it, buf, key -> buf.putString(key, it.toString())}) {buf, key -> ResourceLocation(buf.getString(key)) }
+        rsi (Quaterniondc::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)}
+        rsi (Quaterniond::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)}
+        rsi (Vector3d::class, {it, buf, key -> buf.putMyVector3d(key, it)}) {buf, key -> buf.getMyVector3d(key)}
+        rsin(BlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) { buf, key -> BlockPos.of(buf.getLong(key))}
+        rsin(ByteBuf::class, {it, buf, key -> buf.putByteArray(key, it.array())}) {buf, key -> Unpooled.wrappedBuffer(buf.getByteArray(key))}
+        rsin(Boolean::class, {it, buf, key -> buf.putBoolean(key, it)}) {buf, key -> buf.getBoolean(key)}
+        rsin(Double::class, {it, buf, key -> buf.putDouble(key, it)}) {buf, key -> buf.getDouble(key)}
+        rsin(String::class, {it, buf, key -> buf.putString(key, it)}) {buf, key -> buf.getString(key)}
+        rsin(Color::class, {it, buf, key -> buf.putColor(key, it)}) {buf, key -> buf.getColor(key)}
+        rsin(Float::class, {it, buf, key -> buf.putFloat(key, it)}) {buf, key -> buf.getFloat(key)}
+        rsin(Long::class, {it, buf, key -> buf.putLong(key, it)}) {buf, key -> buf.getLong(key)}
+        rsin(UUID::class, {it, buf, key -> buf.putUUID(key, it)}) {buf, key -> buf.getUUID(key)}
+        rsin(Int::class, {it, buf, key -> buf.putInt(key, it)}) {buf, key -> buf.getInt(key)}
+
+        rsin(IntArray::class, {it, buf, key -> buf.putIntArray(key, it)}, {buf, key -> buf.getIntArray(key)})
+        rsin(LongArray::class, {it, buf, key -> buf.putLongArray(key, it)}, {buf, key -> buf.getLongArray(key)})
+        rsin(FloatArray::class, {it, buf, key -> val tag = ListTag(); tag.addAll(it.map { FloatTag.valueOf(it) }); buf.put(key, tag) }, {buf, key -> (buf.get(key) as ListTag).map { (it as FloatTag).asFloat }.toFloatArray()})
+        rsin(DoubleArray::class, {it, buf, key -> val tag = ListTag(); tag.addAll(it.map { DoubleTag.valueOf(it) }); buf.put(key, tag) }, {buf, key -> (buf.get(key) as ListTag).map { (it as DoubleTag).asDouble }.toDoubleArray()})
     }
 
 //    /**

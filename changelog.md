@@ -4,6 +4,7 @@
 * Fixed rare crash when raycasting
 * Rolled back schematic renderer change cuz it didn't work
 * Fixed phys bearing schem compat not working
+* Fixed possible crash when changing color in VEntity Changer
 
 # 1.5.1
 * Fixed incompat with control craft

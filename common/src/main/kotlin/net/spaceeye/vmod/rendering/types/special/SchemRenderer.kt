@@ -119,6 +119,8 @@ class FakeLevel(
     var offset = Vector3i(0, 0, 0)
 
     var blockEntities = mutableListOf<Pair<BlockPos, BlockEntity>>()
+    private val dummyLightEngine = SchemLightEngine()
+    private val fakeChunkSource = DummyChunkSource(this, dummyLightEngine)
 
     init {
         data.forEach { x, y, z, item ->
@@ -155,10 +157,12 @@ class FakeLevel(
         return data.blocks.get(BlockPos(pos.x shr 4, 0, pos.z shr 4))?.get(BlockPos(pos.x and 15, pos.y, pos.z and 15))?.let { palette.fromId(it.paletteId) }?.fluidState ?: defaultFluidState
     }
 
-    private val dummyLightEngine = SchemLightEngine()
     override fun getLightEngine(): LevelLightEngine? = dummyLightEngine
     override fun getHeight(): Int = 2000000
     override fun getMinBuildHeight(): Int = -1000000
+    override fun getSectionsCount(): Int = 0
+    override fun getMinSection(): Int = 0
+    override fun getMaxSection(): Int = 0
     override fun isClientSide(): Boolean = true
     override fun blockEntityChanged(pos: BlockPos) {}
     override fun playSound(player: Player?, x: Double, y: Double, z: Double, sound: SoundEvent, category: SoundSource, volume: Float, pitch: Float) {}
@@ -174,7 +178,6 @@ class FakeLevel(
     override fun getFreeMapId(): Int = 0
     override fun getEntity(id: Int): Entity? = null
 
-    private val fakeChunkSource = DummyChunkSource(this, dummyLightEngine)
     override fun getChunkSource() = fakeChunkSource
 
     override fun getUncachedNoiseBiome(x: Int, y: Int, z: Int): Holder<Biome?>? { throw AssertionError("Shouldn't be called") }

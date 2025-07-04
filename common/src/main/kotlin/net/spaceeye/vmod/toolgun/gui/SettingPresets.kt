@@ -226,12 +226,15 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
 
     companion object {
         @JvmStatic fun listPresets(mode: String): List<Path> {
+            if (!Files.exists(Paths.get("VMod-Presets"))) return emptyList()
+            if (!Files.exists(Paths.get("VMod-Presets/${mode}"))) return emptyList()
             return Files
                 .list(Paths.get("VMod-Presets/${mode}")).toList().toList()
                 .filter { it.isRegularFile() && it.extension == "json" }
         }
 
         @JvmStatic fun listPresets(): Map<String, List<Path>> {
+            if (!Files.exists(Paths.get("VMod-Presets"))) return emptyMap()
             return Files
                 .list(Paths.get("VMod-Presets")).toList().toList()
                 .filter { it.isDirectory() && Files.list(it).toList().toList().any { it.extension == "json" }}

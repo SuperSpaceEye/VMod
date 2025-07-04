@@ -105,7 +105,7 @@ fun ReflectableObject.tDeserialize(tag: CompoundTag) {
 }
 
 typealias TagSerializeFn = (it: Any, tag: CompoundTag, key: String) -> Unit
-typealias TagDeserializeFn<T> = (tag: CompoundTag, key: String) -> T
+typealias TagDeserializeFn<T> = (tag: CompoundTag, key: String) -> T?
 
 object TagSerializableItem {
     val typeToTagSerDeser = mutableMapOf<KClass<*>, Pair<TagSerializeFn, TagDeserializeFn<*>>>()
@@ -113,18 +113,18 @@ object TagSerializableItem {
     @JvmStatic fun <T: Any> registerSerializationItem(
         type: KClass<T>,
         serialize: ((it: T, buf: CompoundTag, key: String) -> Unit),
-        deserialize: ((buf: CompoundTag, key: String) -> T)) {
+        deserialize: ((buf: CompoundTag, key: String) -> T?)) {
         typeToTagSerDeser[type] = Pair(serialize as TagSerializeFn, deserialize)
     }
 
     @JvmStatic fun <T: Any> rsi(
         type: KClass<T>,
         serialize: ((it: T, buf: CompoundTag, key: String) -> Unit),
-        deserialize: ((buf: CompoundTag, key: String) -> T)) = registerSerializationItem(type, serialize, deserialize)
+        deserialize: ((buf: CompoundTag, key: String) -> T?)) = registerSerializationItem(type, serialize, deserialize)
 
     init {
         rsi(BlockPos.MutableBlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) {buf, key -> BlockPos.of(buf.getLong(key)).let { BlockPos.MutableBlockPos(it.x, it.y, it.z) }}
-        rsi(ResourceLocation::class, {it, buf, key -> buf.putString(key, it.toString())}) {buf, key -> ResourceLocation(buf.getString(key)) }
+        rsi(ResourceLocation::class, {it, buf, key -> buf.putString(key, it.toString())}) {buf, key -> if (!buf.contains(key)) null else ResourceLocation(buf.getString(key)) }
         rsi(Quaterniondc::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
         rsi(Quaterniond::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)!!}
         rsi(Vector3d::class, {it, buf, key -> buf.putMyVector3d(key, it)}) {buf, key -> buf.getMyVector3d(key)}

@@ -9,6 +9,7 @@ import net.minecraft.nbt.DoubleTag
 import net.minecraft.nbt.FloatTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.resources.ResourceLocation
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.reflectable.TagSerializableItem.typeToTagSerDeser
 import net.spaceeye.vmod.utils.*
 import org.jetbrains.annotations.ApiStatus.NonExtendable
@@ -89,14 +90,17 @@ fun ReflectableObject.tSerialize(buf: CompoundTag? = null) = (buf ?: CompoundTag
 fun ReflectableObject.tDeserialize(tag: CompoundTag) {
     getReflectableItemsWithoutDataclassConstructorItems().forEach {
         if (it.metadata.contains("NoTagSerialization")) {return@forEach}
-        //TODO enable in the future
-        it.setValue(null, null, //if (!tag.contains(it.cachedName)) it.it!! else
+        try {
+        it.setValue(null, null,
             typeToTagSerDeser[it.it!!::class]?.let { (ser, deser) -> deser(tag, it.cachedName) }
                 ?: let { _ ->
                     if (it.it !is Enum<*>) return@let it.it!! //throw AssertionError("Can't deserialize ${it.it!!::class.simpleName}")
                     java.lang.Enum.valueOf(it.it!!.javaClass as Class<out Enum<*>>, tag.getString(it.cachedName))
                 }
         )
+        } catch (e: Exception) {
+            ELOG(e.stackTraceToString())
+        }
     }
 }
 

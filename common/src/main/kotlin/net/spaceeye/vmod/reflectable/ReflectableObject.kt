@@ -32,6 +32,9 @@ open class ReflectableItemDelegate <T : Any>(
     override fun toString(): String {
         return "[Name: $cachedName | Item: $it | Pos: $reflectionPos | Set wrapper: ${setWrapper != null} | Get wrapper: ${getWrapper != null} | Metadata: $metadata]"
     }
+
+    fun setSetWrapper(fn: (old: T, new:T) -> T): ReflectableItemDelegate<T> { setWrapper = fn; return this }
+    fun setGetWrapper(fn: (value: T) -> T): ReflectableItemDelegate<T> { getWrapper = fn; return this }
 }
 
 //TODO add explanation

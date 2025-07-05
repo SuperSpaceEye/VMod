@@ -145,7 +145,12 @@ object ClientToolGunState : ClientClosable() {
     }
 
     internal fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {
-        if (currentMode == null) {return EventResult.interruptFalse()}
+        if (currentMode == null) {
+            return when(button) {
+                GLFW.GLFW_MOUSE_BUTTON_LEFT -> EventResult.interruptFalse()
+                else -> EventResult.pass()
+            }
+        }
         return currentMode!!.onMouseButtonEvent(button, action, modifiers)
     }
 

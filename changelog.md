@@ -1,3 +1,6 @@
+* Fixed precise placement assist side num not updating after changing preset
+* Fixed game crashing on pressing delete in Settings Preset menu without choosing preset
+
 # 1.6.0
 * Added delete button to VEntityChanger
 * Added Settings Presets

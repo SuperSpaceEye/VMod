@@ -10,6 +10,8 @@ import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.types.PhysRopeRenderer
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -27,16 +29,16 @@ import java.awt.Color
 
 class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
     @JsonIgnore private var i = 0
-    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
-    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }
-    var fixedDistance: Float by get(i++, -1f) { ServerLimits.instance.fixedDistance.get(it) }
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }.presettable()
+    var stiffness: Float by get(i++, -1f) { ServerLimits.instance.stiffness.get(it) }.presettable()
+    var fixedDistance: Float by get(i++, -1f) { ServerLimits.instance.fixedDistance.get(it) }.presettable()
 
-    var segments: Int by get(i++, 16) { ServerLimits.instance.physRopeSegments.get(it) }
-    var totalMass: Double by get(i++, 1000.0) { ServerLimits.instance.totalMassOfPhysRope.get(it) }
-    var radius: Double by get(i++, 0.5) { ServerLimits.instance.physRopeRadius.get(it) }
-    var angleLimit: Double by get(i++, 15.0) { ServerLimits.instance.physRopeAngleLimit.get(it) }
-    var sides: Int by get(i++, 8) { ServerLimits.instance.physRopeSides.get(it) }
-    var fullbright: Boolean by get(i++, false)
+    var segments: Int by get(i++, 16) { ServerLimits.instance.physRopeSegments.get(it) }.presettable()
+    var totalMass: Double by get(i++, 1000.0) { ServerLimits.instance.totalMassOfPhysRope.get(it) }.presettable()
+    var radius: Double by get(i++, 0.5) { ServerLimits.instance.physRopeRadius.get(it) }.presettable()
+    var angleLimit: Double by get(i++, 15.0) { ServerLimits.instance.physRopeAngleLimit.get(it) }.presettable()
+    var sides: Int by get(i++, 8) { ServerLimits.instance.physRopeSides.get(it) }.presettable()
+    var fullbright: Boolean by get(i++, false).presettable()
 
     var primaryFirstRaycast: Boolean by get(i++, false)
 
@@ -100,7 +102,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
                     PlacementModesExtension(false)
                 }.addExtension {
                     BlockMenuOpeningExtension<PhysRopeMode> { inst -> inst.primaryFirstRaycast }
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

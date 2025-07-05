@@ -16,6 +16,8 @@ import net.spaceeye.vmod.toolgun.modes.hud.ThrusterHUD
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePosition
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -28,10 +30,10 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
     @JsonIgnore private var i = 0
 
-    var force: Double by get(i++, 10000.0) { ServerLimits.instance.thrusterForce.get(it) }
-    var channel: String by get(i++, "thruster") { ServerLimits.instance.channelLength.get(it) }
-    var scale: Double by get(i++, 1.0) { ServerLimits.instance.thrusterScale.get(it) }
-    var fullbright: Boolean by get(i++, false)
+    var force: Double by get(i++, 10000.0) { ServerLimits.instance.thrusterForce.get(it) }.presettable()
+    var channel: String by get(i++, "thruster") { ServerLimits.instance.channelLength.get(it) }.presettable()
+    var scale: Double by get(i++, 1.0) { ServerLimits.instance.thrusterScale.get(it) }.presettable()
+    var fullbright: Boolean by get(i++, false).presettable()
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
@@ -67,7 +69,7 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
                     )
                 }.addExtension {
                     PlacementModesExtension(false)
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

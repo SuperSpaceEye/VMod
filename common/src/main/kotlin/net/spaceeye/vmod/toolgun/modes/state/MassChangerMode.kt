@@ -14,17 +14,19 @@ import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.shipAttachments.WeightSynchronizer
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 class MassChangerMode: ExtendableToolgunMode(), MassChangerGUI, MassChangerHUD {
     @JsonIgnore private var i = 0
 
-    var newMass: Double by get(i++, 1000.0) { ServerLimits.instance.massLimit.get(it) }
-    var massPerBlock: Double by get(i++, 1.0) { ServerLimits.instance.massPerBlock.get(it) }
+    var newMass: Double by get(i++, 1000.0) { ServerLimits.instance.massLimit.get(it) }.presettable()
+    var massPerBlock: Double by get(i++, 1.0) { ServerLimits.instance.massPerBlock.get(it) }.presettable()
 
-    var syncMassPerBlock: Boolean by get(i++, true).also { it.setWrapper = {old, new -> updateGuiFn(new); new} }
-    var persistent: Boolean by get(i++, false)
+    var syncMassPerBlock: Boolean by get(i++, true).also { it.setWrapper = {old, new -> updateGuiFn(new); new} }.presettable()
+    var persistent: Boolean by get(i++, false).presettable()
 
     @JsonIgnore override var updateGuiFn: (Boolean) -> Unit = {}
 
@@ -67,7 +69,7 @@ class MassChangerMode: ExtendableToolgunMode(), MassChangerGUI, MassChangerHUD {
                         ,leftFunction  = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,rightFunction = { inst, level, player, rr -> inst.activateSecondaryFunction(level, player, rr) }
                     )
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

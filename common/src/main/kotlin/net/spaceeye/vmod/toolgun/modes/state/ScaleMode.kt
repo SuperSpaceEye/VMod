@@ -8,6 +8,8 @@ import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.gui.ScaleGUI
 import net.spaceeye.vmod.toolgun.modes.hud.ScaleHUD
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -22,8 +24,8 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 class ScaleMode: ExtendableToolgunMode(), ScaleGUI, ScaleHUD {
     @JsonIgnore private var i = 0
 
-    var scale: Double by get(i++, 1.0) { ServerLimits.instance.scale.get(it) }
-    var scaleAllConnected: Boolean by get(i++, true)
+    var scale: Double by get(i++, 1.0) { ServerLimits.instance.scale.get(it) }.presettable()
+    var scaleAllConnected: Boolean by get(i++, true).presettable()
 
     fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         if (raycastResult.state.isAir) {return}
@@ -44,7 +46,7 @@ class ScaleMode: ExtendableToolgunMode(), ScaleGUI, ScaleHUD {
                     BasicConnectionExtension<ScaleMode>("scale_mode"
                         ,leftFunction = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                     )
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

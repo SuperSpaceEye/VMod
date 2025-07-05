@@ -7,6 +7,8 @@ import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.toolgun.modes.gui.GravChangerGUI
 import net.spaceeye.vmod.toolgun.modes.hud.GravChangerHUD
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -25,8 +27,8 @@ class GravChangerMode: ExtendableToolgunMode(), GravChangerHUD, GravChangerGUI {
     }
     @JsonIgnore private var i = 0
 
-    var gravityVector: Vector3d by get(i++, Vector3d(0, -10, 0))
-    var mode: Mode by get(i++, Mode.Individual)
+    var gravityVector: Vector3d by get(i++, Vector3d(0, -10, 0)).presettable()
+    var mode: Mode by get(i++, Mode.Individual).presettable()
 
     fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         val origin = level.shipObjectWorld.loadedShips.getById((level.getShipManagingPos(raycastResult.globalHitPos?.toBlockPos() ?: return) ?: return).id) ?: return
@@ -89,7 +91,7 @@ class GravChangerMode: ExtendableToolgunMode(), GravChangerHUD, GravChangerGUI {
                         ,leftFunction  = { item, level, player, rr -> item.activatePrimaryFunction(level, player, rr) }
                         ,rightFunction = { item, level, player, rr -> item.activateSecondaryFunction(level, player, rr)}
                     )
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

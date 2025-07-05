@@ -13,6 +13,8 @@ import net.spaceeye.vmod.rendering.types.ConeBlockRenderer
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.toolgun.modes.util.getModePosition
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -28,11 +30,11 @@ import java.awt.Color
 class SensorMode: ExtendableToolgunMode(), SensorGUI, SensorHUD {
     @JsonIgnore private var i = 0
 
-    var maxDistance: Double by get(i++, 10.0) { ServerLimits.instance.maxDistance.get(it) }
-    var channel: String by get(i++, "sensor") { ServerLimits.instance.channelLength.get(it) }
-    var scale: Double by get(i++, 1.0) { ServerLimits.instance.thrusterScale.get(it) }
-    var fullbright: Boolean by get(i++, false)
-    var ignoreSelf: Boolean by get(i++, false)
+    var maxDistance: Double by get(i++, 10.0) { ServerLimits.instance.maxDistance.get(it) }.presettable()
+    var channel: String by get(i++, "sensor") { ServerLimits.instance.channelLength.get(it) }.presettable()
+    var scale: Double by get(i++, 1.0) { ServerLimits.instance.thrusterScale.get(it) }.presettable()
+    var fullbright: Boolean by get(i++, false).presettable()
+    var ignoreSelf: Boolean by get(i++, false).presettable()
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
@@ -66,7 +68,7 @@ class SensorMode: ExtendableToolgunMode(), SensorGUI, SensorHUD {
                     )
                 }.addExtension {
                     PlacementModesExtension(false)
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

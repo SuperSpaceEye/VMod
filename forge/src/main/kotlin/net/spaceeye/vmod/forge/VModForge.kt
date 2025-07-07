@@ -1,6 +1,8 @@
 package net.spaceeye.vmod.forge
 
 import dev.architectury.platform.forge.EventBuses
+import dev.architectury.utils.Env
+import dev.architectury.utils.EnvExecutor
 import net.minecraftforge.client.event.RegisterClientCommandsEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.Mod
@@ -15,6 +17,8 @@ class VModForge {
         // Submit our event bus to let architectury register our content on the right time
         EventBuses.registerModEventBus(VM.MOD_ID, FMLJavaModLoadingContext.get().modEventBus)
         init()
-        MinecraftForge.EVENT_BUS.addListener<RegisterClientCommandsEvent>{ VMClientCommands.registerClientCommands(it.dispatcher)}
+        EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+            MinecraftForge.EVENT_BUS.addListener<RegisterClientCommandsEvent> { VMClientCommands.registerClientCommands(it.dispatcher) }
+        } }
     }
 }

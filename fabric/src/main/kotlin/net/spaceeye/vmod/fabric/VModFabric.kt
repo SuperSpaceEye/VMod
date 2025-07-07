@@ -1,6 +1,8 @@
 package net.spaceeye.vmod.fabric
 
 import com.mojang.brigadier.CommandDispatcher
+import dev.architectury.utils.Env
+import dev.architectury.utils.EnvExecutor
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
@@ -13,7 +15,9 @@ class VModFabric : ModInitializer {
     override fun onInitialize() {
         ValkyrienSkiesModFabric().onInitialize()
         init()
-        ClientCommandRegistrationCallback.EVENT.register { it, a -> VMClientCommands.registerClientCommands(it as CommandDispatcher<CommandSourceStack>) }
+        EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+            ClientCommandRegistrationCallback.EVENT.register { it, a -> VMClientCommands.registerClientCommands(it as CommandDispatcher<CommandSourceStack>) }
+        } }
     }
 }
 

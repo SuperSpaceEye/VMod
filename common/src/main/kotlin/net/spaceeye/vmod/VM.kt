@@ -65,6 +65,7 @@ object VM {
             ClientToolGunState
             ClientPhysgunState
             ClientSettingsTypes
+            ClientCommandRegistrationEvent.EVENT.register { VMClientCommands.registerClientCommands(it) }
         } }
 
         VMBlocks.register()
@@ -72,7 +73,6 @@ object VM {
         VMItems.register()
         VMEntities.register()
 
-        ClientCommandRegistrationEvent.EVENT.register { VMClientCommands.registerClientCommands(it) }
         CommandRegistrationEvent.EVENT.register { it, _-> VMCommands.registerServerCommands(it) }
 
         makeEvents()

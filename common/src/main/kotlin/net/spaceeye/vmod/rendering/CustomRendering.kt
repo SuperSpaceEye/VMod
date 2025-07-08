@@ -22,6 +22,7 @@ import net.spaceeye.vmod.toolgun.CELOG
 import net.spaceeye.vmod.translate.RENDERING_HAS_THROWN_AN_EXCEPTION
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
+import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 import java.util.*
@@ -111,9 +112,11 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
     val level = Minecraft.getInstance().level!!
 
     try {
-    for (ship in level.shipObjectWorld.loadedShips) {
-        val data = RenderingData.client.getData()
-        for ((_, render) in data[ship.id] ?: continue) {
+    val data = RenderingData.client.getData()
+    val ids = level.shipObjectWorld.loadedShips.map { it.id }.toMutableList()
+    ids.addAll((level.shipObjectWorld as ShipObjectClientWorld).physicsEntities.map { it.key })
+    for (id in ids) {
+        for ((_, render) in data[id] ?: continue) {
             val poseStack = PoseStack().also {
                 it.setIdentity()
                 it.mulPoseMatrix(poseStack.last().pose())

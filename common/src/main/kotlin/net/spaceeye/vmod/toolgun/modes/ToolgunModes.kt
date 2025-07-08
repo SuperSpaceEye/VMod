@@ -29,6 +29,7 @@ object ToolgunModes: Registry<BaseMode>() {
         register(VEntityChanger::class)
         if (Platform.isDevelopmentEnvironment()) {
             register(TestMode::class)
+            register(FunnyMode::class)
         }
 
         ToolgunExtensions

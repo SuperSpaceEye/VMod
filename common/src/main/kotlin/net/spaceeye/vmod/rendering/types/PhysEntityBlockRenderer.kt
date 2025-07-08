@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.texture.OverlayTexture
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtUtils
 import net.minecraft.network.FriendlyByteBuf
@@ -26,6 +27,7 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
+import org.valkyrienskies.mod.common.util.toFloat
 import org.valkyrienskies.mod.common.util.toMinecraft
 import java.awt.Color
 
@@ -56,7 +58,8 @@ class PhysEntityBlockRenderer(): BlockRenderer(), ReflectableObject {
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource, timestamp: Long) = with(data) {
         val level = Minecraft.getInstance().level!!
         val entity = (level.shipObjectWorld as ShipObjectClientWorld).physicsEntities[shipId] ?: return
-        state = stateTag.let { try { NbtUtils.readBlockState(it) } catch (e: Exception) { null } } ?: return@with
+        val lookup = BuiltInRegistries.BLOCK.asLookup()
+        state = stateTag.let { try { NbtUtils.readBlockState(lookup, it) } catch (e: Exception) { null } } ?: return@with
 
         val pos = entity.renderTransform.position
         val rot = entity.renderTransform.rotation
@@ -68,7 +71,7 @@ class PhysEntityBlockRenderer(): BlockRenderer(), ReflectableObject {
 
         poseStack.translate(-camera.position.x, -camera.position.y, -camera.position.z)
         poseStack.translate(pos.x(), pos.y(), pos.z())
-        poseStack.mulPose(rot.toMinecraft())
+        poseStack.mulPose(rot.toFloat())
         poseStack.translate(-0.5, -0.5, -0.5)
 
         RenderingStuff.renderSingleBlock(state!!, poseStack, buffer, light, combinedOverlayIn, color)

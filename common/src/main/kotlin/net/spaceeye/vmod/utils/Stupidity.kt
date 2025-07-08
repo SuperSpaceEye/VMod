@@ -20,6 +20,7 @@ import net.minecraft.world.level.chunk.ChunkSource
 import net.minecraft.world.level.chunk.ChunkStatus
 import net.minecraft.world.level.chunk.DataLayer
 import net.minecraft.world.level.chunk.LevelChunk
+import net.minecraft.world.level.chunk.LightChunk
 import net.minecraft.world.level.chunk.LightChunkGetter
 import net.minecraft.world.level.entity.EntityAccess
 import net.minecraft.world.level.entity.EntityTypeTest
@@ -92,7 +93,6 @@ class FakeChunkAccess(level: Level): LevelChunk(level, ChunkPos(0, 0), null, Lev
     override fun getStatus(): ChunkStatus? = ChunkStatus.EMPTY
     override fun removeBlockEntity(pos: BlockPos) {}
     override fun getBlockEntityNbtForSaving(pos: BlockPos): CompoundTag? = CompoundTag()
-    override fun getLights(): Stream<BlockPos?>? = Stream.of<BlockPos>()
     override fun getBlockTicks(): TickContainerAccess<Block?>? = FakeTickContainer()
     override fun getFluidTicks(): TickContainerAccess<Fluid?>? = FakeTickContainer()
     override fun getTicksForSerialization(): TicksToSave? = TicksToSave(FakeTickContainer(), FakeTickContainer())

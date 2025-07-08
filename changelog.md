@@ -1,6 +1,8 @@
+# 1.6.1
 * Fixed precise placement assist side num not updating after changing preset
 * Fixed game crashing on pressing delete in Settings Preset menu without choosing preset
 * Made GravChangerMode, MassChangerMode, PhysRopeMode, ScaleMode, SensorMode, SliderMode, ThrusterMode, presettable
+* Fixed VMod not working on servers 
 
 # 1.6.0
 * Added delete button to VEntityChanger

@@ -15,6 +15,7 @@ import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.rendering.types.*
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.*
@@ -173,6 +174,13 @@ private object SynchronisedRenderingData {
             }
             AVSEvents.clientShipUnloadEvent.on { (ship), _ ->
                 clientSynchronisedData.unsubscribeFromPageUpdates(ship?.id ?: return@on)
+            }
+
+            AVSEvents.clientPhysEntityLoad.on { (data), _ ->
+                clientSynchronisedData.subscribeToPageUpdates(data.id)
+            }
+            AVSEvents.clientPhysEntityUnload.on { id, _ ->
+                clientSynchronisedData.unsubscribeFromPageUpdates(id)
             }
         }}
     }

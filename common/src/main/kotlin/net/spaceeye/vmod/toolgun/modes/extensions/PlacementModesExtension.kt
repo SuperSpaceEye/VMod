@@ -11,6 +11,8 @@ import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.types.special.PrecisePlacementAssistRenderer
 import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
+import net.spaceeye.vmod.toolgun.modes.BaseNetworking
+import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModeExtension
 import net.spaceeye.vmod.toolgun.modes.util.PositionModes
 import net.spaceeye.vmod.translate.*
@@ -18,18 +20,23 @@ import net.spaceeye.vmod.translate.*
 open class PlacementModesExtension(
     val showCenteredInBlock: Boolean,
 ): ToolgunModeExtension, ReflectableObject {
-    var posMode: PositionModes by get(0, PositionModes.NORMAL).presettable()
-    var precisePlacementAssistSideNum: Int by get(1, 3).presettable()
-
     private var precisePlacementAssistRendererId: Int = -1
+    private var type: BaseNetworking.EnvType = BaseNetworking.EnvType.Server
 
-    private var internalPrecisePlacementAssistSideNum: Int
-        get() = precisePlacementAssistSideNum
-        set(value) {
-            precisePlacementAssistSideNum = value
-            if (posMode != PositionModes.PRECISE_PLACEMENT) {return}
-            RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
-            precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
+    override fun onInit(mode: ExtendableToolgunMode, type: BaseNetworking.EnvType) {
+        super.onInit(mode, type)
+        this.type = type
+    }
+
+    var posMode: PositionModes by get(0, PositionModes.NORMAL).presettable()
+    var precisePlacementAssistSideNum: Int by get(1, 3)
+        .presettable()
+        .setSetWrapper { old, new ->
+            if (type == BaseNetworking.EnvType.Client && posMode == PositionModes.PRECISE_PLACEMENT) {
+                RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
+                precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(new))
+            }
+            new
         }
 
     override fun serialize(): FriendlyByteBuf {
@@ -62,7 +69,7 @@ open class PlacementModesExtension(
 
     override fun eMakeGUISettings(parentWindow: UIContainer) {
         val offset = 2f
-        makeTextEntry(PRECISE_PLACEMENT_ASSIST_SIDES.get(), ::internalPrecisePlacementAssistSideNum, offset, offset, parentWindow, ServerLimits.instance.precisePlacementAssistSides)
+        makeTextEntry(PRECISE_PLACEMENT_ASSIST_SIDES.get(), ::precisePlacementAssistSideNum, offset, offset, parentWindow, ServerLimits.instance.precisePlacementAssistSides)
         if (showCenteredInBlock) {
             makeDropDown(
                 HITPOS_MODES.get(), parentWindow, offset, offset, listOf(

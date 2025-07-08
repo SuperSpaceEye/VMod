@@ -210,7 +210,14 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
 
             //TODO it rebuilds whole window on delete, but do i care?
             Button(Color(150, 150, 150), DELETE.get()) {
-                if (!Files.deleteIfExists(chosenPreset)) return@Button
+                if (chosenPreset == Paths.get("")) return@Button
+                try {
+                    if (!Files.deleteIfExists(chosenPreset)) return@Button
+                } catch (e: Exception) {
+                    ELOG(e.stackTraceToString())
+                    ClientToolGunState.closeGUI()
+                    return@Button
+                }
                 settingsScrollComponent.clearChildren()
                 init()
             } constrain {

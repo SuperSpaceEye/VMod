@@ -132,6 +132,7 @@ object TagSerializableItem {
         rsin(ResourceLocation::class, {it, buf, key -> buf.putString(key, it.toString())}) {buf, key -> ResourceLocation(buf.getString(key)) }
         rsi (Quaterniondc::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)}
         rsi (Quaterniond::class, {it, buf, key -> buf.putQuatd(key, it)}) {buf, key -> buf.getQuatd(key)}
+        rsin(CompoundTag::class, {it, buf, key -> buf.put(key, it)}) {buf, key -> buf.get(key) as CompoundTag}
         rsi (Vector3d::class, {it, buf, key -> buf.putMyVector3d(key, it)}) {buf, key -> buf.getMyVector3d(key)}
         rsin(BlockPos::class, {it, buf, key -> buf.putLong(key, it.asLong())}) { buf, key -> BlockPos.of(buf.getLong(key))}
         rsin(ByteBuf::class, {it, buf, key -> buf.putByteArray(key, it.array())}) {buf, key -> Unpooled.wrappedBuffer(buf.getByteArray(key))}

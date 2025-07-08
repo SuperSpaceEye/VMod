@@ -14,6 +14,8 @@ import net.spaceeye.vmod.toolgun.modes.gui.SliderGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SliderHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.toolgun.gui.Presettable
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -26,8 +28,8 @@ import org.joml.Quaterniond
 class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
     @JsonIgnore private var i = 0
 
-    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
-    var connectionMode: SliderConstraint.ConnectionMode by get(i++, SliderConstraint.ConnectionMode.FIXED_ORIENTATION)
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }.presettable()
+    var connectionMode: SliderConstraint.ConnectionMode by get(i++, SliderConstraint.ConnectionMode.FIXED_ORIENTATION).presettable()
 
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
@@ -108,7 +110,7 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
                     BlockMenuOpeningExtension<SliderMode> { inst -> inst.primaryTimes != 0 }
                 }.addExtension {
                     PlacementModesExtension(true)
-                }
+                }.addExtension { Presettable() }
             }
         }
     }

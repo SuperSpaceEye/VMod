@@ -16,6 +16,7 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.minecraft.network.chat.Component
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.limits.ServerLimits
+import net.spaceeye.vmod.mixin.ShipObjectWorldAccessor
 import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.types.debug.DebugRenderer
 import net.spaceeye.vmod.schematic.placeAt
@@ -317,6 +318,20 @@ object VMCommands {
             }
             return 0
         }
+
+        fun deletePhysEntities(cc: CommandContext<CommandSourceStack>): Int {
+            val level = cc.source.level
+
+            val entities = (level.shipObjectWorld as ShipObjectWorldAccessor).shipIdToPhysEntity.keys.toList().sorted()
+            entities.forEach {
+                try {
+                    level.shipObjectWorld.deletePhysicsEntity(it)
+                } catch (e: Exception) { ELOG(e.stackTraceToString())
+                } catch (e: Error) { ELOG(e.stackTraceToString()) }
+            }
+
+            return 0
+        }
     }
 
     private object DEBUG {
@@ -458,6 +473,8 @@ object VMCommands {
                     )
                 ).then(
                     lt("clear-vmod-attachments").executes { OP.clearVmodAttachments(it) }
+                ).then(
+                    lt("delete-phys-entities").executes { OP.deletePhysEntities(it) }
                 )
             ).then(
                 lt("debug")

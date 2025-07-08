@@ -2,8 +2,12 @@ package net.spaceeye.vmod.reflectable
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufInputStream
+import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.Unpooled
 import net.minecraft.core.BlockPos
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtIo
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.networking.Serializable
@@ -150,6 +154,7 @@ object ByteSerializableItem {
         rsi(BlockPos.MutableBlockPos::class, {it, buf -> buf.writeBlockPos(it)}) {buf -> buf.readBlockPos().mutable()}
         rsi(ResourceLocation::class, {it, buf -> buf.writeUtf(it.toString())}) {buf -> ResourceLocation(buf.readUtf())}
         rsi(FriendlyByteBuf::class, {it, buf -> buf.writeByteArray(it.accessByteBufWithCorrectSize())}) {buf -> FriendlyByteBuf(Unpooled.wrappedBuffer(buf.readByteArray()))}
+        rsi(CompoundTag::class, {tag, buf -> buf.writeByteArray(ByteBufOutputStream(Unpooled.buffer()).also { NbtIo.writeCompressed(tag, it) }.buffer().accessByteBufWithCorrectSize()) }) { buf -> NbtIo.readCompressed(ByteBufInputStream(Unpooled.wrappedBuffer(buf.readByteArray()))) }
         rsi(Quaterniond::class, {it, buf -> buf.writeQuatd(it)}) {buf -> buf.readQuatd()}
         rsi(Vector3d::class, {it, buf -> buf.writeVector3d(it)}) {buf -> buf.readVector3d()}
         rsi(BlockPos::class, { it, buf -> buf.writeBlockPos(it)}) {buf -> buf.readBlockPos()}

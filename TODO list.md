@@ -64,6 +64,12 @@ by talking_snow
     * Some other commands idk
 
 ## Motor Constraint
+* Code below kinda works, but idk how to get angle from initial rotation, and it's very buggy (might get better on physx)
+```kotlin
+val fRot1 = Quaterniond(AxisAngle4d(Math.toRadians(angle), sDir1.toJomlVector3d())).mul(getHingeRotation(sDir1))
+val fRot2 = getHingeRotation(sDir2)
+VSFixedOrientationConstraint(shipId1, shipId2, compliance, fRot1, fRot2, maxForce)
+```
 
 ## Pulley
 A rope with connections to the ground through which it like moves. No idea on how to make it.

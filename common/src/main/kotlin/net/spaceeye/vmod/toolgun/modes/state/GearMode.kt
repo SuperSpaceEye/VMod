@@ -9,6 +9,7 @@ import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.vEntityManaging.types.constraints.GearConstraint
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
+import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -25,8 +26,8 @@ class GearMode: ExtendableToolgunMode(), GearGUI, GearHUD {
     @JsonIgnore
     private var i = 0
 
-    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }
-    var gearRatio: Float by get(i++, 1f) { ServerLimits.instance.gearRatio.get(it) }
+    var maxForce: Float by get(i++, -1f) { ServerLimits.instance.maxForce.get(it) }.presettable()
+    var gearRatio: Float by get(i++, 1f) { ServerLimits.instance.gearRatio.get(it) }.presettable()
 
     var primaryFirstRaycast: Boolean by get(i++, false)
 

@@ -34,42 +34,44 @@ repositories {
 }
 
 dependencies {
-    include modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.minecraft_version-$project.name:$project.vss_version") {transitive false}
+    include(implementation("com.fasterxml:classmate:1.5.1"))
+
+    include modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.minecraft_version-$project.name:$project.vss_version") {transitive = false}
     include implementation("org.jgrapht:jgrapht-core:1.5.2")
 
     compileOnlyApi 'org.joml:joml-primitives:1.10.0'
     compileOnlyApi 'org.joml:joml:1.10.4'
 
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-    modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    modImplementation ("net.fabricmc:fabric-loader:${project.fabric_loader_version}")
+    modApi ("net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}")
     // Remove the next line if you don't want to depend on the API
-    modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
+    modApi ("dev.architectury:architectury-fabric:${project.architectury_version}")
 
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+    common(project(path: ":common", configuration: "namedElements")) { transitive = false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive = false }
 
-    modApi("org.valkyrienskies:valkyrienskies-120-fabric:${rootProject.vs2_version}") { transitive = false }
-    compileOnly("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
-    compileOnly("org.valkyrienskies.core:api-game:${rootProject.vs_core_version}") { transitive = false }
-    compileOnly("org.valkyrienskies.core:util:${rootProject.vs_core_version}") { transitive = false }
-    compileOnly("org.valkyrienskies.core:impl:${rootProject.vs_core_version}") { transitive = false }
+    modApi("org.valkyrienskies:valkyrienskies-120-fabric:${project.vs2_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:api:${project.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:api-game:${project.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:util:${project.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:impl:${project.vs_core_version}") { transitive = false }
 
     // Kotlin
     modImplementation("net.fabricmc:fabric-language-kotlin:1.10.10+kotlin.1.9.10")
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21"
     api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
 
-    implementation(include("gg.essential:elementa:${rootProject.elementaVersion}"))
-    modImplementation(include("gg.essential:universalcraft-1.20.1-fabric:${rootProject.ucVersion}"))
+    implementation(include("gg.essential:elementa:${project.elementaVersion}"))
+    modImplementation(include("gg.essential:universalcraft-1.20.1-fabric:${project.ucVersion}"))
 
     modApi "curse.maven:forge-config-api-port-fabric-547434:4583000"
 
     // Configured
-    modLocalRuntime "curse.maven:configured-fabric-667378:4166864"    // Configured version 2.0.2 for Minecraft 1.19.3
+//    modLocalRuntime "curse.maven:configured-fabric-667378:4166864"    // Configured version 2.0.2 for Minecraft 1.19.3
     // Mod Menu
-    modLocalRuntime "com.terraformersmc:modmenu:5.0.2"
+//    modLocalRuntime "com.terraformersmc:modmenu:5.0.2"
 
-    modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
+    modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}") { transitive = false }
 
     //for mixin
     modCompileOnlyApi(files("vs_jars/takeoff-fabric-1.0.0-beta1+308678c5c5.jar"))

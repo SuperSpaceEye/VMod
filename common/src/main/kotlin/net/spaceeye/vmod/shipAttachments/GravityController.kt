@@ -3,12 +3,11 @@ package net.spaceeye.vmod.shipAttachments
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import net.spaceeye.vmod.compat.vsBackwardsCompat.mass
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.vsStuff.VSGravityManager
-import net.spaceeye.vmod.compat.vsBackwardsCompat.getAttachment
 import org.valkyrienskies.core.api.ships.*
+import org.valkyrienskies.core.api.world.PhysLevel
 
 @JsonAutoDetect(
     fieldVisibility = JsonAutoDetect.Visibility.ANY,
@@ -19,7 +18,7 @@ import org.valkyrienskies.core.api.ships.*
 @JsonIgnoreProperties(ignoreUnknown = true)
 class GravityController(
     var dimensionId: String,
-): ShipForcesInducer {
+): ShipPhysicsListener {
     var useDimensionGravity = true
 
     @JsonIgnore
@@ -31,7 +30,7 @@ class GravityController(
         get() = gravityVector.toJomlVector3d()
         set(value) { gravityVector = Vector3d(value) }
 
-    override fun applyForces(physShip: PhysShip) {
+    override fun physTick(physShip: PhysShip, physLevel: PhysLevel) {
         val gravityVector = if (useDimensionGravity) dimensionGravity else gravityVector
         val forceDiff = (gravityVector - VS_DEFAULT_GRAVITY) * physShip.mass
         if (forceDiff.sqrDist() < Float.MIN_VALUE) return
@@ -51,9 +50,9 @@ class GravityController(
         val VS_DEFAULT_GRAVITY = Vector3d(0, -10, 0)
 
         fun getOrCreate(ship: LoadedServerShip) =
-            ship.getAttachment<GravityController>()
+            ship.getAttachment(GravityController::class.java)
                 ?: GravityController(ship.chunkClaimDimension).also {
-                    ship.saveAttachment(it)
+                    ship.setAttachment(it)
                 }
     }
 }

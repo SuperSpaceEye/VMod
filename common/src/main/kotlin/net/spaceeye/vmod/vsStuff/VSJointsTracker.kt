@@ -2,7 +2,6 @@ package net.spaceeye.vmod.vsStuff
 
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.events.AVSEvents
-import net.spaceeye.vmod.mixin.ShipObjectWorldAccessor
 import net.spaceeye.vmod.utils.MyConnectivityInspector
 import net.spaceeye.vmod.utils.SafeEventEmitter
 import net.spaceeye.vmod.utils.ServerObjectsHolder
@@ -12,8 +11,12 @@ import org.jgrapht.graph.DefaultListenableGraph
 import org.jgrapht.graph.Multigraph
 import org.jgrapht.graph.concurrent.AsSynchronizedGraph
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import org.valkyrienskies.core.apigame.joints.VSJoint
+import org.valkyrienskies.core.apigame.joints.VSJointId
+import org.valkyrienskies.core.apigame.world.PhysLevelCore
+import org.valkyrienskies.mod.api.vsApi
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.util.concurrent.locks.ReentrantLock
 
 object VSJointsTracker {
     private val graph = DefaultListenableGraph(AsSynchronizedGraph(Multigraph<Long, DefaultEdge>(DefaultEdge::class.java)))
@@ -26,6 +29,10 @@ object VSJointsTracker {
     data class OnConnectionAdded  (val shipId1: ShipId, val shipId2: ShipId)
     data class OnConnectionRemoved(val shipId1: ShipId, val shipId2: ShipId)
 
+    //evil hack
+    private val lock = ReentrantLock()
+    private val physLevels = mutableMapOf<String, PhysLevelCore>()
+
     init {
         graph.addGraphListener(inspector)
         inspector.connectedSets()
@@ -33,17 +40,36 @@ object VSJointsTracker {
         AVSEvents.serverShipRemoveEvent.on { (ship), _ ->
             graph.removeVertex(ship.id)
         }
+
+        vsApi.physTickEvent.on {
+            if (!lock.tryLock()) return@on
+            physLevels[it.world.dimension] = (it.world as PhysLevelCore)
+            lock.unlock()
+        }
     }
 
     @JvmStatic
     fun getVSJoints(ids: List<VSJointId>): List<Pair<VSJointId, VSJoint?>> {
-        val acc = ServerObjectsHolder.server!!.shipObjectWorld as ShipObjectWorldAccessor
-        return ids.map { Pair(it, acc.constraints[it]) }
+        lock.lock()
+        val exist = mutableSetOf<VSJointId>()
+        val ret = physLevels
+            .map { (_, level) -> ids
+                .filter { !exist.contains(it) }
+                .mapNotNull { id -> level.getJointById(id)?.let { exist.add(id); Pair<VSJointId, VSJoint?>(id, it) } } }
+            .flatten().toMutableList()
+        ids.forEach { if (!exist.contains(it)) ret.add(Pair<VSJointId, VSJoint?>(it, null)) }
+
+        lock.unlock()
+        return ret
     }
 
     @JvmStatic
     fun getIdsOfShip(shipId: ShipId): Set<Int> {
-        return (ServerObjectsHolder.shipObjectWorld!! as ShipObjectWorldAccessor).shipIdToConstraints.getOrDefault(shipId, setOf())
+        physLevels.forEach {
+            val ship = it.value.getShipById(shipId) ?: return@forEach
+            return it.value.getJointsFromShip(ship.id)
+        }
+        return emptySet()
     }
 
     @JvmStatic
@@ -60,6 +86,8 @@ object VSJointsTracker {
         return shipId
     }
 
+
+    //TODO this shit is called from diff thread
     @JvmStatic
     @ApiStatus.Internal
     fun onCreateNewConstraint(joint: VSJoint) {

@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.compat.vsBackwardsCompat.getAttachment
 import org.valkyrienskies.core.api.ships.*
+import org.valkyrienskies.core.api.world.PhysLevel
 import java.util.concurrent.locks.ReentrantLock
 
 data class ThrusterData(
@@ -56,7 +56,7 @@ data class ThrusterData(
     setterVisibility = JsonAutoDetect.Visibility.NONE
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
-class ThrustersController: ShipForcesInducer {
+class ThrustersController: ShipPhysicsListener {
     data class ThrusterDataToSave(var id:Int, var pos: JVector3d, var forceDir: JVector3d, var force: Double, var percentage: Double)
 
     @JsonIgnore
@@ -66,7 +66,7 @@ class ThrustersController: ShipForcesInducer {
     private var thrustersData = mutableMapOf<Int, ThrusterData>()
     private var id = 0
 
-    override fun applyForces(physShip: PhysShip) {
+    override fun physTick(physShip: PhysShip, physLevel: PhysLevel) {
         synchronized(lock) {
             thrustersData.values.forEach {
                 if (it.percentage <= 0.0) {return@forEach}
@@ -122,9 +122,9 @@ class ThrustersController: ShipForcesInducer {
 
     companion object {
         fun getOrCreate(ship: LoadedServerShip) =
-            ship.getAttachment<ThrustersController>()
+            ship.getAttachment(ThrustersController::class.java)
                 ?: ThrustersController().also {
-                    ship.saveAttachment(it)
+                    ship.setAttachment(it)
                 }
     }
 }

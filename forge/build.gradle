@@ -75,23 +75,23 @@ dependencies {
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
 
-    forge "net.minecraftforge:forge:${rootProject.forge_version}"
+    forge "net.minecraftforge:forge:${project.forge_version}"
     // Remove the next line if you don't want to depend on the API
-    modApi "dev.architectury:architectury-forge:${rootProject.architectury_version}"
+    modApi "dev.architectury:architectury-forge:${project.architectury_version}"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
 
-    modApi("org.valkyrienskies:valkyrienskies-120-forge:${rootProject.vs2_version}") { transitive = false }
-    compileOnly("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
-    compileOnly("org.valkyrienskies.core:api-game:${rootProject.vs_core_version}") { transitive = false }
-    compileOnly("org.valkyrienskies.core:util:${rootProject.vs_core_version}") { transitive = false }
-    compileOnly("org.valkyrienskies.core:impl:${rootProject.vs_core_version}") { transitive = false }
+    modApi("org.valkyrienskies:valkyrienskies-120-forge:${project.vs2_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:api:${project.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:api-game:${project.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:util:${project.vs_core_version}") { transitive = false }
+    compileOnly("org.valkyrienskies.core:impl:${project.vs_core_version}") { transitive = false }
 
     implementation 'thedarkcolour:kotlinforforge:3.12.0'
 
-    shadow("gg.essential:elementa:${rootProject.elementaVersion}") {transitive = false}
-    shadow("gg.essential:universalcraft-1.20.1-forge:${rootProject.ucVersion}") {transitive = false}
+    shadow("gg.essential:elementa:${project.elementaVersion}") {transitive = false}
+    shadow("gg.essential:universalcraft-1.20.1-forge:${project.ucVersion}") {transitive = false}
 
     // Create and its dependencies
     modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }

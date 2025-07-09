@@ -36,9 +36,10 @@ import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
 import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
-import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistNetworking.S2CSendTraversalInfo
+import org.valkyrienskies.core.api.VsBeta
+import org.valkyrienskies.core.api.bodies.properties.rebuild
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId

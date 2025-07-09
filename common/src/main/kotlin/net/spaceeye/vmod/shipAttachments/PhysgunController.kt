@@ -3,14 +3,13 @@ package net.spaceeye.vmod.shipAttachments
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.physgun.PlayerPhysgunState
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.rotateVecByQuat
 import org.joml.Quaterniond
-import net.spaceeye.vmod.compat.vsBackwardsCompat.getAttachment
 import org.valkyrienskies.core.api.ships.*
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.api.world.PhysLevel
 
 
 @JsonAutoDetect(
@@ -20,12 +19,11 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
     setterVisibility = JsonAutoDetect.Visibility.NONE
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
-class PhysgunController: ShipForcesInducer {
+class PhysgunController: ShipPhysicsListener {
     @JsonIgnore
     var sharedState: PlayerPhysgunState? = null
-    override fun applyForces(physShip: PhysShip) {}
 
-    override fun applyForcesAndLookupPhysShips(physShip: PhysShip, lookupPhysShip: (ShipId) -> PhysShip?) {
+    override fun physTick(physShip: PhysShip, physLevel: PhysLevel) {
         val state = sharedState ?: return
 
         val pConst = state.pConst
@@ -41,7 +39,7 @@ class PhysgunController: ShipForcesInducer {
         }
 
         val shipsToInfluence = mutableListOf<PhysShip>()
-        state.caughtShipIds.forEach { shipsToInfluence.add(lookupPhysShip(it) ?: return@forEach) }
+        state.caughtShipIds.forEach { shipsToInfluence.add(physLevel.getShipById(it) ?: return@forEach) }
 //        shipsToInfluence.add(physShip)
 
         val idealPos = state.playerPos + state.playerDir * state.distanceFromPlayer
@@ -194,7 +192,7 @@ class PhysgunController: ShipForcesInducer {
 
     companion object {
         fun getOrCreate(ship: LoadedServerShip) =
-            ship.getAttachment<PhysgunController>()
+            ship.getAttachment(PhysgunController::class.java)
                 ?: PhysgunController().also {
                     ship.setAttachment(it)
                 }

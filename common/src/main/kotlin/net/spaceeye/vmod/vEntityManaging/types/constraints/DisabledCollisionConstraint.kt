@@ -7,9 +7,11 @@ import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.util.ExtendableVEntity
 import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.vEntityManaging.VEntity.Companion.withFutures
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import java.util.concurrent.CompletableFuture
 
 class DisabledCollisionConstraint(): ExtendableVEntity(), VEAutoSerializable {
     @JsonIgnore private var i = 0
@@ -45,14 +47,14 @@ class DisabledCollisionConstraint(): ExtendableVEntity(), VEAutoSerializable {
     override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity? { return DisabledCollisionConstraint(mapped[shipId1] ?: return null, mapped[shipId2] ?: return null) }
 
     private var beingRemoved = false
-    override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        return level.disableCollisionBetween(shipId1, shipId2) {
+    override fun iOnMakeVEntity(level: ServerLevel) = listOf(
+        level.disableCollisionBetween(shipId1, shipId2) {
             if (!beingRemoved) {
                 beingRemoved = true
                 level.removeVEntity(this)
             }
         }
-    }
+    )
     override fun iOnDeleteVEntity(level: ServerLevel) {
         beingRemoved = true
         level.enableCollisionBetween(shipId1, shipId2)

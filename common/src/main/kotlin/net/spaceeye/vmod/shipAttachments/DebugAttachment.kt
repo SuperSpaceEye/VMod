@@ -2,10 +2,9 @@ package net.spaceeye.vmod.shipAttachments
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import net.spaceeye.vmod.compat.vsBackwardsCompat.mass
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.compat.vsBackwardsCompat.getAttachment
 import org.valkyrienskies.core.api.ships.*
+import org.valkyrienskies.core.api.world.PhysLevel
 
 @JsonAutoDetect(
     fieldVisibility = JsonAutoDetect.Visibility.ANY,
@@ -14,8 +13,8 @@ import org.valkyrienskies.core.api.ships.*
     setterVisibility = JsonAutoDetect.Visibility.NONE
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
-class DebugAttachment(): ShipForcesInducer {
-    override fun applyForces(physShip: PhysShip) {
+class DebugAttachment(): ShipPhysicsListener {
+    override fun physTick(physShip: PhysShip, physLevel: PhysLevel) {
         val forceDiff = (Vector3d(0, 10, 0) - VS_DEFAULT_GRAVITY) * physShip.mass
         if (forceDiff.sqrDist() < Float.MIN_VALUE) return
 
@@ -26,7 +25,7 @@ class DebugAttachment(): ShipForcesInducer {
         val VS_DEFAULT_GRAVITY = Vector3d(0, -10, 0)
 
         fun getOrCreate(ship: LoadedServerShip) =
-            ship.getAttachment<DebugAttachment>()
+            ship.getAttachment(DebugAttachment::class.java)
                 ?: DebugAttachment().also {
                     ship.setAttachment(it)
                 }

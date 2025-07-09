@@ -16,7 +16,6 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.minecraft.network.chat.Component
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.mixin.ShipObjectWorldAccessor
 import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.types.debug.DebugRenderer
 import net.spaceeye.vmod.schematic.placeAt
@@ -44,12 +43,10 @@ import org.valkyrienskies.mod.common.command.shipWorld
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.mod.common.util.toJOML
-import org.valkyrienskies.mod.mixinducks.feature.command.VSCommandSource
 import java.nio.file.Paths
 import java.util.UUID
 import kotlin.math.max
 
-typealias VSCS = CommandContext<VSCommandSource>
 typealias MCS = CommandContext<CommandSourceStack>
 typealias MCSN = CommandContext<CommandSourceStack?>
 
@@ -94,7 +91,7 @@ object VMCommands {
     private fun teleportCommand(cc: CommandContext<CommandSourceStack>): Int {
         val source = cc.source as CommandSourceStack
 
-        val mainShip = ShipArgument.getShip(cc as VSCS, "ship") as ServerShip
+        val mainShip = ShipArgument.getShip(cc, "ship") as ServerShip
         val position = Vec3Argument.getVec3(cc, "position")
         val dimensionId = (cc.source as CommandSourceStack).level.dimensionId
 
@@ -110,7 +107,7 @@ object VMCommands {
     private fun scaleCommand(cc: CommandContext<CommandSourceStack>): Int {
         val source = cc.source as CommandSourceStack
         val dimensionId = cc.source.level.dimensionId
-        val mainShip = ShipArgument.getShip(cc as VSCS, "ship") as ServerShip
+        val mainShip = ShipArgument.getShip(cc, "ship") as ServerShip
         val scale = DoubleArgumentType.getDouble(cc, "scale")
 
         teleportShipWithConnected(source.level, mainShip, Vector3d(mainShip.transform.positionInWorld), mainShip.transform.shipToWorldRotation, scale, dimensionId)
@@ -190,7 +187,7 @@ object VMCommands {
     }
 
     private fun setGravityFor(cc: CommandContext<CommandSourceStack>): Int {
-        val ships = ShipArgument.getShips(cc as VSCS, "ships")
+        val ships = ShipArgument.getShips(cc, "ships")
 
         val loaded = cc.source.shipWorld.loadedShips
 
@@ -206,7 +203,7 @@ object VMCommands {
     }
 
     private fun setGravityForConnected(cc: CommandContext<CommandSourceStack>): Int {
-        val ships = ShipArgument.getShips(cc as VSCS, "ships")
+        val ships = ShipArgument.getShips(cc, "ships")
 
         val loaded = cc.source.shipWorld.loadedShips
 
@@ -228,7 +225,7 @@ object VMCommands {
     }
 
     private fun setGravityForConnectedAndTouching(cc: CommandContext<CommandSourceStack>): Int {
-        val ships = ShipArgument.getShips(cc as VSCS, "ships")
+        val ships = ShipArgument.getShips(cc, "ships")
 
         val loaded = cc.source.shipWorld.loadedShips
 
@@ -250,7 +247,7 @@ object VMCommands {
     }
 
     private fun resetGravityFor(cc: CommandContext<CommandSourceStack>): Int {
-        val ships = ShipArgument.getShips(cc as VSCS, "ships")
+        val ships = ShipArgument.getShips(cc, "ships")
 
         val loaded = cc.source.shipWorld.loadedShips
 
@@ -322,7 +319,7 @@ object VMCommands {
         fun deletePhysEntities(cc: CommandContext<CommandSourceStack>): Int {
             val level = cc.source.level
 
-            val entities = (level.shipObjectWorld as ShipObjectWorldAccessor).shipIdToPhysEntity.keys.toList().sorted()
+            val entities = level.shipObjectWorld.retrieveLoadedPhysicsEntities().keys.toList().sorted()
             entities.forEach {
                 try {
                     level.shipObjectWorld.deletePhysicsEntity(it)

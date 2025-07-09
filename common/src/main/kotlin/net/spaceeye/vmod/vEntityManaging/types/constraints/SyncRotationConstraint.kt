@@ -7,7 +7,10 @@ import net.spaceeye.vmod.utils.Vector3d
 import org.joml.Quaterniond
 import org.joml.Quaterniondc
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSFixedOrientationConstraint
+import org.valkyrienskies.core.apigame.joints.VSD6Joint
+import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
+import org.valkyrienskies.core.apigame.joints.VSJointPose
+import java.util.EnumMap
 
 class SyncRotationConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override var sPos1: Vector3d get() = Vector3d(); set(_) {}
@@ -41,12 +44,20 @@ class SyncRotationConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
     override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> = emptyList()
 
-    override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        val maxForce = if (maxForce < 0) { Float.MAX_VALUE.toDouble() } else { maxForce.toDouble() }
-        val compliance = Double.MIN_VALUE
-
-        val c = VSFixedOrientationConstraint(shipId1, shipId2, compliance, sRot1, sRot2, maxForce)
-        mc(c, cIDs, level) {return false}
-        return true
+    override fun iOnMakeVEntity(level: ServerLevel) = withFutures {
+        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+//        val stiffness = if (stiffness < 0) {null} else {stiffness}
+//        val damping = if (damping < 0) {null} else {damping}
+        val mainConstraint = VSD6Joint(
+            shipId1, VSJointPose(org.joml.Vector3d(), sRot1),
+            shipId2, VSJointPose(org.joml.Vector3d(), sRot2),
+            maxForceTorque,
+            EnumMap(mapOf(
+                Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
+                Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
+                Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
+            ))
+        )
+        mc(mainConstraint, level)
     }
 }

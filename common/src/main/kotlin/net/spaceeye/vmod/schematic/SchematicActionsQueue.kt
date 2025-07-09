@@ -260,7 +260,7 @@ object SchematicActionsQueue: ServerClosable() {
                     if (getNow_ms() - start > timeout && settings.allowUpdateInterruption) { return false }
                 }
 
-                (ship.transformProvider as? SchemTempPositionSetter)?.work = true
+//                (ship.transformProvider as? SchemTempPositionSetter)?.work = true
 
                 currentChunk = 0
                 currentShip++

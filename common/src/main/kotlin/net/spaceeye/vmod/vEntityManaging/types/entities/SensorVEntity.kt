@@ -17,7 +17,9 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
+import org.valkyrienskies.core.impl.shadow.fu
 import org.valkyrienskies.mod.common.dimensionId
+import java.util.concurrent.CompletableFuture
 import kotlin.math.min
 
 class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
@@ -67,10 +69,8 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         return SensorVEntity(nShip.id, nPos, lookDir, maxDistance, ignoreSelf, scale, channel)
     }
 
-    override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        level.shipObjectWorld.loadedShips.getById(shipId) ?: return false
-        return true
-    }
+    override fun iOnMakeVEntity(level: ServerLevel): List<CompletableFuture<Boolean>> =
+        listOf(CompletableFuture<Boolean>().also { it.complete(level.shipObjectWorld.loadedShips.getById(shipId) != null) })
 
     override fun iOnDeleteVEntity(level: ServerLevel) {}
 

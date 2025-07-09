@@ -20,6 +20,7 @@ import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.utils.PosMapList
 import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.addCustomServerClosable
+import net.spaceeye.vmod.utils.vs.gtpa
 import org.apache.commons.lang3.tuple.MutablePair
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.QueryableShipData
@@ -32,6 +33,7 @@ import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
 internal const val SAVE_TAG_NAME_STRING = "vmod_VEntities"
@@ -222,25 +224,36 @@ open class VEntityManager: SavedData() {
     }
 
     private fun tryMakeVEntity(entity: VEntity, level: ServerLevel, onFailure: () -> Unit, rest: () -> Unit) {
-        for (i in 0 until 10) {
-            if (try {entity.onMakeVEntity(level)} catch (e: Throwable) {ELOG(e.stackTraceToString()); false}) {return rest()}
-        }
+        var futures = entity.onMakeVEntity(level)
 
-        var attempts = 0
-        val maxAttempts = VMConfig.SERVER.CONSTRAINT_CREATION_ATTEMPTS
-        SessionEvents.serverOnTick.on { _, unsubscribe ->
-            if (attempts > maxAttempts) {
-                onFailure()
-                return@on unsubscribe()
-            }
-
-            if (try {entity.onMakeVEntity(level)} catch (e: Throwable) {ELOG(e.stackTraceToString()); false}) {
+        futures.forEach { it.thenAccept {
+            if (!futures.all { it.isDone }) {return@thenAccept}
+            if (futures.all { it.getNow(false) }) {
                 rest()
-                return@on unsubscribe()
+                return@thenAccept
             }
 
-            attempts++
-        }
+            var attempts = 0
+            val maxAttempts = VMConfig.SERVER.CONSTRAINT_CREATION_ATTEMPTS
+
+            SessionEvents.serverOnTick.on { _, unsubscribe ->
+                if (!futures.all { it.isDone }) {return@on}
+                if (futures.all { it.getNow(false) }) {
+                    rest()
+                    unsubscribe()
+                    return@on
+                }
+
+                if (attempts > maxAttempts) {
+                    onFailure()
+                    return@on unsubscribe()
+                }
+
+                futures = entity.onMakeVEntity(level)
+
+                attempts++
+            }
+        } }
     }
 
     //TODO REMEMBER TO FUCKING CALL setDirty()
@@ -301,19 +314,17 @@ open class VEntityManager: SavedData() {
 
     fun tryGetIdsOfPosition(pos: BlockPos): List<VEntityId>? = posToMId.getItemsAt(pos)
 
-    fun disableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId, callback: (() -> Unit)? = null): Boolean {
-        if (!level.shipObjectWorld.disableCollisionBetweenBodies(shipId1, shipId2)) { return false }
-
+    fun disableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId, callback: (() -> Unit)? = null): CompletableFuture<Boolean> {
         idToDisabledCollisions.getOrPut(shipId1) { mutableMapOf() }.compute (shipId2) { _, pair-> if (pair == null) { MutablePair(1, mutableListOf(callback)) } else { pair.left++; pair.right.add(callback); pair } }
         idToDisabledCollisions.getOrPut(shipId2) { mutableMapOf() }.compute (shipId1) { _, pair-> if (pair == null) { MutablePair(1, mutableListOf(callback)) } else { pair.left++; pair.right.add(callback); pair } }
-        return true
+        return level.gtpa.disableCollisionBetweenBodies(shipId1, shipId2)
     }
 
     fun enableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId) {
         val map = idToDisabledCollisions[shipId1]
-        if (map == null) {level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2); return}
+        if (map == null) {level.gtpa.enableCollisionBetweenBodies(shipId1, shipId2); return}
         val value = map[shipId2]
-        if (value == null) {level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2); return}
+        if (value == null) {level.gtpa.enableCollisionBetweenBodies(shipId1, shipId2); return}
         value.left--
         if (value.left > 0) {
             idToDisabledCollisions[shipId2]!!.compute(shipId1) {_, pair -> pair!!.left--; pair}
@@ -326,7 +337,7 @@ open class VEntityManager: SavedData() {
         if (map.isEmpty()) { idToDisabledCollisions.remove(shipId1) }
         if (idToDisabledCollisions[shipId2]!!.isEmpty()) { idToDisabledCollisions.remove(shipId2) }
 
-        level.shipObjectWorld.enableCollisionBetweenBodies(shipId1, shipId2)
+        level.gtpa.enableCollisionBetweenBodies(shipId1, shipId2)
 
         value.right?.filterNotNull()?.forEach { it.invoke() }
     }

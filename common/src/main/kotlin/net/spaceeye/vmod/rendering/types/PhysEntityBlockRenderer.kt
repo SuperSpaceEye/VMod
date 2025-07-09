@@ -13,22 +13,17 @@ import net.minecraft.nbt.NbtUtils
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.level.LightLayer
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.vmod.compat.vsBackwardsCompat.position
-import net.spaceeye.vmod.compat.vsBackwardsCompat.rotation
 import net.spaceeye.vmod.limits.ClientLimits
-import net.spaceeye.vmod.networking.hash
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderingStuff
-import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.mod.common.util.toFloat
-import org.valkyrienskies.mod.common.util.toMinecraft
 import java.awt.Color
 
 class PhysEntityBlockRenderer(): BlockRenderer(), ReflectableObject {

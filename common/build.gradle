@@ -7,29 +7,29 @@ repositories {
 }
 
 dependencies {
-    modImplementation ("net.spaceeye:valkyrien-ship-schematics-$project.minecraft_version-$project.name:$project.vss_version") {transitive false}
+    modImplementation ("net.spaceeye:valkyrien-ship-schematics-$project.minecraft_version-$project.name:$project.vss_version")
     implementation "org.jgrapht:jgrapht-core:1.5.2"
 
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
     // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
     // Do NOT use other classes from fabric loader
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modImplementation ("net.fabricmc:fabric-loader:${project.fabric_loader_version}")
     // Remove the next line if you don't want to depend on the API
-    modApi "dev.architectury:architectury:${rootProject.architectury_version}"
+    modApi ("dev.architectury:architectury:${project.architectury_version}")
 
-    modApi(files("vs_jars/valkyrienskies-120-common-2.3.0-beta.5+6911bbe238.jar"))
-//    modApi("org.valkyrienskies:valkyrienskies-120-common:${rootProject.vs2_version}")
-    compileOnly("org.valkyrienskies.core:api:${rootProject.vs_core_version}")
-    compileOnly("org.valkyrienskies.core:api-game:${rootProject.vs_core_version}")
-    compileOnly("org.valkyrienskies.core:util:${rootProject.vs_core_version}")
-    compileOnly("org.valkyrienskies.core:impl:${rootProject.vs_core_version}")
+//    modApi(files("vs_jars/valkyrienskies-120-common-2.3.0-beta.5+6911bbe238.jar"))
+    modApi("org.valkyrienskies:valkyrienskies-120-common:${project.vs2_version}")
+    compileOnly("org.valkyrienskies.core:api:${project.vs_core_version}")
+    compileOnly("org.valkyrienskies.core:api-game:${project.vs_core_version}")
+    compileOnly("org.valkyrienskies.core:util:${project.vs_core_version}")
+    compileOnly("org.valkyrienskies.core:impl:${project.vs_core_version}")
 
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21"
     api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
 
-    compileOnly("gg.essential:elementa:${rootProject.elementaVersion}")
-    modImplementation(include("gg.essential:universalcraft-1.20.1-fabric:${rootProject.ucVersion}"))
+    compileOnly("gg.essential:elementa:${project.elementaVersion}")
+    modImplementation(include("gg.essential:universalcraft-1.20.1-fabric:${project.ucVersion}"))
 
     modCompileOnlyApi(files("vs_jars/clockwork-1.18.2-0.1.16-fabric-a0682a9698.jar"))
     modCompileOnlyApi(files("vs_jars/trackwork-1.20.1-1.1.1b.jar"))

@@ -6,15 +6,18 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.VEntity
 import net.spaceeye.vmod.vEntityManaging.VSJointUser
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.gtpa
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import net.spaceeye.vmod.compat.vsBackwardsCompat.*
-import org.valkyrienskies.mod.common.shipObjectWorld
+import org.valkyrienskies.core.apigame.joints.VSJoint
+import org.valkyrienskies.core.apigame.joints.VSJointId
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedQueue
 
 abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
-    @JsonIgnore val cIDs = mutableListOf<VSJointId>() // should be used to store VS ids
+    @JsonIgnore val cIDs = ConcurrentLinkedQueue<VSJointId>() // should be used to store VS ids
     @JsonIgnore protected var i = 0 // use in get for auto serialization TODO move it to ExtendableVEntity?
 
     abstract var shipId1: Long
@@ -82,6 +85,20 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
      * IF YOU'RE OVERRIDING THIS REMEMBER TO CALL SUPER METHOD
      */
     override fun iOnDeleteVEntity(level: ServerLevel) {
-        cIDs.forEach { level.shipObjectWorld.removeConstraint(it) }
+        cIDs.forEach { level.gtpa.removeJoint(it) }
+    }
+
+    class HelperFn(val cIDs: ConcurrentLinkedQueue<VSJointId>) {
+        val futures = mutableListOf<CompletableFuture<Boolean>>()
+
+        fun mc(joint: VSJoint, level: ServerLevel) {
+            futures.add(mc(joint, cIDs, level))
+        }
+    }
+
+    fun withFutures(fn: HelperFn.(TwoShipsMConstraint) -> Unit): List<CompletableFuture<Boolean>> {
+        val inst = HelperFn(cIDs)
+        inst.fn(this)
+        return inst.futures
     }
 }

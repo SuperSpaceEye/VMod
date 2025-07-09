@@ -5,19 +5,19 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.valkyrien_ship_schematics.interfaces.ICopyableForcesInducer
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager
 import org.joml.Vector3i
-import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import org.joml.Vector3d
 import org.valkyrienskies.core.api.ships.LoadedServerShip
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ServerShip
-import org.valkyrienskies.core.api.ships.ShipForcesInducer
+import org.valkyrienskies.core.api.ships.ShipPhysicsListener
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.api.world.PhysLevel
 import org.valkyrienskies.core.impl.hooks.VSEvents
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Supplier
 import kotlin.math.roundToInt
 
-class CustomMassSave(): ShipForcesInducer, ICopyableForcesInducer {
+class CustomMassSave(): ShipPhysicsListener, ICopyableForcesInducer {
     var wasCopied: Boolean = false
     @JsonIgnore private var tempMassData: List<Pair<Vector3i, Double>>? = null
     @JsonIgnore var lock = ReentrantLock()
@@ -72,8 +72,8 @@ class CustomMassSave(): ShipForcesInducer, ICopyableForcesInducer {
         }
         tempMassData = null
     }
-    
-    override fun applyForces(physShip: PhysShip) {
+
+    override fun physTick(physShip: PhysShip, physLevel: PhysLevel) {
         // not the most elegant solution but it'll work, probably
         if (!lock.tryLock()) {return}
         wasCopied = false
@@ -88,11 +88,11 @@ class CustomMassSave(): ShipForcesInducer, ICopyableForcesInducer {
         }
 
         fun getOrCreate(ship: LoadedServerShip) =
-            ship.getAttachment<CustomMassSave>()
+            ship.getAttachment(CustomMassSave::class.java)
                 ?: CustomMassSave().also {
                     it.shipId = ship.id
                     it.dimensionId = ship.chunkClaimDimension
-                    ship.saveAttachment(it.javaClass, it)
+                    ship.setAttachment(it)
                 }
     }
 }

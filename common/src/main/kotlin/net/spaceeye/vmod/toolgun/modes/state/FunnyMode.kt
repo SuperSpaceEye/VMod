@@ -5,10 +5,8 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.block.state.BlockState
 import net.spaceeye.valkyrien_ship_schematics.ELOG
-import net.spaceeye.vmod.compat.vsBackwardsCompat.mass
 import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.types.PhysEntityBlockRenderer
-import net.spaceeye.vmod.toolgun.modes.EHUDBuilder
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -21,7 +19,8 @@ import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.joml.Matrix3d
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.PhysShip
-import org.valkyrienskies.core.api.ships.ShipForcesInducer
+import org.valkyrienskies.core.api.ships.ShipPhysicsListener
+import org.valkyrienskies.core.api.world.PhysLevel
 import org.valkyrienskies.core.apigame.physics.PhysicsEntityData
 import org.valkyrienskies.core.apigame.physics.VSSphereCollisionShapeData
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
@@ -77,18 +76,18 @@ class FunnyMode: ExtendableToolgunMode(), SimpleHUD {
             ))
             val entity = level.shipObjectWorld.createPhysicsEntity(PhysicsEntityData(
                 newId,
-                ShipTransformImpl((pos + 0.5).toJomlVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0)),
+                ShipTransformImpl.create((pos + 0.5).toJomlVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0)),
                 ShipInertiaDataImpl(JVector3d(), mass, sphereInertiaTensor(mass, radius)),
                 JVector3d(), JVector3d(),
                 VSSphereCollisionShapeData(radius),
             ), level.dimensionId)
 
-            entity.forceInducers.add(object : ShipForcesInducer {
-                override fun applyForces(physShip: PhysShip) {
+            entity.physicsListeners.add(object : ShipPhysicsListener {
+                override fun physTick(physShip: PhysShip, physLevel: PhysLevel) {
                     physShip as PhysShipImpl
 
-                    val force = -Vector3d(physShip.poseVel.vel) * physShip.mass * 0.05
-                    val omega = -Vector3d(physShip.poseVel.omega) * physShip.mass * 0.05
+                    val force = -Vector3d(physShip.velocity) * physShip.mass * 0.05
+                    val omega = -Vector3d(physShip.angularVelocity) * physShip.mass * 0.05
 
                     physShip.applyInvariantForce(force.toJomlVector3d())
                     physShip.applyInvariantTorque(omega.toJomlVector3d())

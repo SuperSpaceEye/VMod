@@ -9,7 +9,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import org.valkyrienskies.core.apigame.joints.VSJoint
+import org.valkyrienskies.core.apigame.joints.VSJointId
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedQueue
 
 interface Tickable {
     fun tick(server: MinecraftServer, unregister: () -> Unit)
@@ -49,6 +52,22 @@ interface VEntity {
     fun nbtSerialize(): CompoundTag?
     fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity?
 
-    @Internal fun onMakeVEntity(level: ServerLevel): Boolean
+    @Internal fun onMakeVEntity(level: ServerLevel): List<CompletableFuture<Boolean>>
     @Internal fun onDeleteVEntity(level: ServerLevel)
+
+    companion object {
+        class HelperFn {
+            val futures = mutableListOf<CompletableFuture<Boolean>>()
+
+            fun mc(joint: VSJoint, cIDs: ConcurrentLinkedQueue<VSJointId>, level: ServerLevel) {
+                futures.add(net.spaceeye.vmod.vEntityManaging.util.mc(joint, cIDs, level))
+            }
+        }
+
+        fun VEntity.withFutures(fn: HelperFn.(inst: VEntity) -> Unit): List<CompletableFuture<Boolean>> {
+            val inst = HelperFn()
+            inst.fn(this)
+            return inst.futures
+        }
+    }
 }

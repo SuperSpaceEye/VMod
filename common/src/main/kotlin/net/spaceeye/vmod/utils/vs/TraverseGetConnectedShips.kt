@@ -6,7 +6,7 @@ import net.spaceeye.vmod.vEntityManaging.VSJointUser
 import net.spaceeye.vmod.vsStuff.VSJointsTracker
 import net.spaceeye.vmod.utils.ServerObjectsHolder
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import org.valkyrienskies.core.apigame.joints.VSJointId
 import org.valkyrienskies.mod.common.getShipsIntersecting
 import org.valkyrienskies.mod.common.shipObjectWorld
 

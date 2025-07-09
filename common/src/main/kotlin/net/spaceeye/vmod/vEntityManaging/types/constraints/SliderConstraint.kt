@@ -3,12 +3,15 @@ package net.spaceeye.vmod.vEntityManaging.types.constraints
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.VEntity
 import net.spaceeye.vmod.vEntityManaging.util.*
-import net.spaceeye.vmod.reflectable.TagSerializableItem
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.getHingeRotation
 import net.spaceeye.vmod.utils.vs.tryMovePosition
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.apigame.constraints.VSSlideConstraint
+import org.valkyrienskies.core.apigame.joints.VSD6Joint
+import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
+import org.valkyrienskies.core.apigame.joints.VSJointPose
+import java.util.EnumMap
 
 class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     //TODO unify and rename values (needs backwards compat)
@@ -78,15 +81,65 @@ class SliderConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
 
-    override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        val compliance = 1e-300
-        val maxForce = if (maxForce < 0) { Float.MAX_VALUE.toDouble() } else {maxForce.toDouble()}
-        val constraint = VSSlideConstraint(shipId1, shipId2, compliance,
-            sPos1.toJomlVector3d(), sPos2.toJomlVector3d(),
-            maxForce, sDir1.toJomlVector3d(), 100.0)
+    override fun iOnMakeVEntity(level: ServerLevel) = withFutures {
+        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+//        val stiffness = if (stiffness < 0) {null} else {stiffness}
+//        val damping = if (damping < 0) {null} else {damping}
 
-        mc(constraint, cIDs, level) {return false}
+        val distanceConstraint = run {
+            val rot1 = getHingeRotation(-sDir1.normalize())
+            val rot2 = getHingeRotation(-sDir2.normalize())
+            VSD6Joint(
+                shipId1, VSJointPose(sPos1.toJomlVector3d(), rot1),
+                shipId2, VSJointPose(sPos2.toJomlVector3d(), rot2),
+                motions = EnumMap(mapOf(
+                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
 
-        return true
+                    Pair(VSD6Joint.D6Axis.TWIST, VSD6Joint.D6Motion.FREE),
+                    Pair(VSD6Joint.D6Axis.SWING1, VSD6Joint.D6Motion.FREE),
+                    Pair(VSD6Joint.D6Axis.SWING2, VSD6Joint.D6Motion.FREE),
+                )),
+//                linearLimits = EnumMap(mapOf(
+//                    Pair(VSD6Joint.D6Axis.X, VSD6Joint.LinearLimitPair(this.distance, this.distance)))
+//                ),
+                maxForceTorque = maxForceTorque
+            )
+        }
+        mc(distanceConstraint, level)
+        if (connectionMode == ConnectionMode.FREE_ORIENTATION) {return@withFutures}
+
+        val rotationConstraint = when(connectionMode) {
+            ConnectionMode.FIXED_ORIENTATION -> {
+                val rot1 = sRot1.invert(Quaterniond())
+                val rot2 = sRot2.invert(Quaterniond())
+                VSD6Joint(
+                    shipId1, VSJointPose(sPos1.toJomlVector3d(), rot1),
+                    shipId2, VSJointPose(sPos2.toJomlVector3d(), rot2),
+                    motions = EnumMap(mapOf(
+                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
+                    )),
+                    maxForceTorque = maxForceTorque
+                )
+            }
+            ConnectionMode.HINGE_ORIENTATION -> {
+                val rot1 = getHingeRotation(sDir1)
+                val rot2 = getHingeRotation(sDir2)
+                VSD6Joint(
+                    shipId1, VSJointPose(sPos1.toJomlVector3d(), rot1),
+                    shipId2, VSJointPose(sPos2.toJomlVector3d(), rot2),
+                    motions = EnumMap(mapOf(
+                        Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.Z, VSD6Joint.D6Motion.FREE),
+                        Pair(VSD6Joint.D6Axis.TWIST, VSD6Joint.D6Motion.FREE)
+                    )),
+                    maxForceTorque = maxForceTorque
+                )
+            }
+            ConnectionMode.FREE_ORIENTATION -> throw AssertionError("impossible")
+        }
+        mc(rotationConstraint, level)
     }
 }

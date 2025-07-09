@@ -36,7 +36,6 @@ object SchemCompatObj {
     init {
         safeAdd("vs_clockwork") { ClockworkSchemCompat() }
         safeAdd("trackwork") { TrackworkSchemCompat() }
-        safeAdd("takeoff") { TakeoffSchemCompat() }
 
         safeAdd("create") { CreateContraptionsCompat() }
         safeAdd("create") { CreateKineticsCompat() }

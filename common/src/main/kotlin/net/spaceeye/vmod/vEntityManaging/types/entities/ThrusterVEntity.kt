@@ -16,6 +16,7 @@ import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.shipObjectWorld
+import java.util.concurrent.CompletableFuture
 
 class ThrusterVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
     @JsonIgnore private var i = 0
@@ -61,14 +62,12 @@ class ThrusterVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         return ThrusterVEntity(nShip.id, nPos, Vector3d(forceDir), force, channel)
     }
 
-    override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        val ship = level.shipObjectWorld.loadedShips.getById(shipId) ?: return false
-
+    override fun iOnMakeVEntity(level: ServerLevel): List<CompletableFuture<Boolean>> {
+        val ship = level.shipObjectWorld.loadedShips.getById(shipId) ?: return listOf(CompletableFuture<Boolean>().also { it.complete(false) })
         val controller = ThrustersController.getOrCreate(ship)
-
         thrusterId = controller.newThruster(pos, forceDir, force)
 
-        return true
+        return listOf(CompletableFuture<Boolean>().also { it.complete(true) })
     }
 
     override fun iOnDeleteVEntity(level: ServerLevel) {

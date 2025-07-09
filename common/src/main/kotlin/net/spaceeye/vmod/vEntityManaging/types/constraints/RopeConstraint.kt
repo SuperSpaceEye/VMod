@@ -8,7 +8,10 @@ import net.spaceeye.vmod.vEntityManaging.util.mc
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import net.spaceeye.vmod.utils.vs.tryMovePosition
-import org.valkyrienskies.core.apigame.constraints.VSRopeConstraint
+import org.joml.Quaterniond
+import org.valkyrienskies.core.apigame.joints.VSDistanceJoint
+import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
+import org.valkyrienskies.core.apigame.joints.VSJointPose
 
 class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override var sPos1: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }
@@ -63,12 +66,19 @@ class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         onMakeVEntity(level)
     }
 
-    override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        val maxForce = if (maxForce < 0) { Float.MAX_VALUE.toDouble() } else { maxForce.toDouble() }
-        val compliance = if (stiffness <= 0f) { Float.MIN_VALUE.toDouble() } else { (1f / stiffness).toDouble() }
+    override fun iOnMakeVEntity(level: ServerLevel) = withFutures {
+        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+        val stiffness = if (stiffness < 0) {null} else {stiffness}
+        val damping = if (damping < 0) {null} else {damping}
 
-        val c = VSRopeConstraint(shipId1, shipId2, compliance, sPos1.toJomlVector3d(), sPos2.toJomlVector3d(), maxForce, ropeLength.toDouble())
-        mc(c, cIDs, level) { return false }
-        return true
+        val mainConstraint = VSDistanceJoint(
+            shipId1, VSJointPose(sPos1.toJomlVector3d(), Quaterniond()),
+            shipId2, VSJointPose(sPos2.toJomlVector3d(), Quaterniond()),
+            maxForceTorque,
+            0f, ropeLength,
+            stiffness = stiffness,
+            damping = damping
+        )
+        mc(mainConstraint, level)
     }
 }

@@ -5,13 +5,13 @@ import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
 import net.spaceeye.vmod.vEntityManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.utils.getHingeRotation
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
-//import org.valkyrienskies.core.apigame.joints.VSJointPose
 import net.spaceeye.vmod.utils.vs.tryMovePosition
-
-//import org.valkyrienskies.core.apigame.joints.VSGearJoint
-//import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
+import org.valkyrienskies.core.apigame.joints.VSGearJoint
+import org.valkyrienskies.core.apigame.joints.VSJointMaxForceTorque
+import org.valkyrienskies.core.apigame.joints.VSJointPose
 
 class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override var sPos1: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }
@@ -76,18 +76,15 @@ class GearConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {}
     override fun iGetAttachmentPoints(shipId: ShipId): List<Vector3d> { return emptyList() }
 
-    override fun iOnMakeVEntity(level: ServerLevel): Boolean {
-        TODO()
-//        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
-//        val rotationConstraint = VSGearJoint(
-//            shipId1, VSJointPose(sPos1.toJomlVector3d(), getHingeRotation(sDir1)),
-//            shipId2, VSJointPose(sPos2.toJomlVector3d(), getHingeRotation(sDir2)),
-//            maxForceTorque,
-//            gearRatio = gearRatio,
-//        )
-//
-//        mc(rotationConstraint, cIDs, level) {return false}
-//
-//        return true
+    override fun iOnMakeVEntity(level: ServerLevel) = withFutures {
+        val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
+        val rotationConstraint = VSGearJoint(
+            shipId1, VSJointPose(sPos1.toJomlVector3d(), getHingeRotation(sDir1)),
+            shipId2, VSJointPose(sPos2.toJomlVector3d(), getHingeRotation(sDir2)),
+            maxForceTorque,
+            gearRatio = gearRatio,
+        )
+
+        mc(rotationConstraint, level)
     }
 }

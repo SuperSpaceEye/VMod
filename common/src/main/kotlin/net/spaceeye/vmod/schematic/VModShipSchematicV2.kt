@@ -26,14 +26,14 @@ import org.joml.Vector3d
 import org.joml.Vector3i
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
-import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.shipAttachments.AttachmentAccessor
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
 import net.spaceeye.vmod.translate.makeFake
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
 import org.apache.logging.log4j.Logger
+import org.valkyrienskies.core.api.VsBeta
+import org.valkyrienskies.core.api.bodies.properties.BodyTransform
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
@@ -101,7 +101,6 @@ fun IShipSchematicDataV1.placeAt(
         }
 
         createdShips.zip(newTransforms).forEach { (it, transform) ->
-            if (it.transformProvider is SchemTempPositionSetter) { it.transformProvider = null }
             val b = it.shipAABB!!
             var offset = MVector3d(it.transform.positionInModel) - MVector3d(
                 (b.maxX() - b.minX()) / 2.0 + b.minX(),
@@ -215,8 +214,8 @@ private fun loadAttachments(level: ServerLevel, ships: Map<Long, ServerShip>, ce
         attachments.forEach {
             if (it == null) return@forEach
             //TODO remove this after 2.5.0. for some god forsaken reason VS allows you to add multiple separate attachments to one ship
-            loadedShip.saveAttachment(it.javaClass, null)
-            loadedShip.saveAttachment(it.javaClass, it)
+            loadedShip.removeAttachment(it.javaClass)
+            loadedShip.setAttachment(it.javaClass)
             it.onPaste({level}, loadedShip, ships, centerPositions)
         }
     }
@@ -237,14 +236,11 @@ private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vecto
         val temp = rotateAroundCenter(center, thisTransform, rotation)
 
         // reusing posInShip as it's useless
-        val newTransform = ShipTransformImpl(temp.position, it.previousCenterPosition, temp.rotation, JVector3d(it.shipScale, it.shipScale, it.shipScale))
+        val newTransform = ShipTransformImpl.create(temp.position, it.previousCenterPosition, temp.rotation, JVector3d(it.shipScale, it.shipScale, it.shipScale))
         newTransforms.add(newTransform)
 
         val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(1000000000, 1000000000, 1000000000), false, it.shipScale, level.dimensionId)
         newShip.isStatic = true
-
-        //TODO i don't like this but idk what else to do
-        newShip.transformProvider = SchemTempPositionSetter(newShip, MVector3d(pos), MVector3d(newTransform.position), false)
 
         level.shipObjectWorld.teleportShip(newShip, ShipTeleportDataImpl(
             JVector3d(1000000000.0, 1000000000.0, 1000000000.0),

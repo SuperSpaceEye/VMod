@@ -1,20 +1,20 @@
 package net.spaceeye.vmod.shipAttachments
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import net.spaceeye.vmod.compat.vsBackwardsCompat.getAttachment
 import org.valkyrienskies.core.api.ships.LoadedServerShip
 import org.valkyrienskies.core.api.ships.PhysShip
-import org.valkyrienskies.core.api.ships.ShipForcesInducer
+import org.valkyrienskies.core.api.ships.ShipPhysicsListener
+import org.valkyrienskies.core.api.world.PhysLevel
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 import org.valkyrienskies.core.impl.hooks.VSEvents
 
-class AttachmentAccessor: ShipForcesInducer {
+class AttachmentAccessor: ShipPhysicsListener {
     @JsonIgnore
-    var forceInducers = listOf<ShipForcesInducer>()
+    var forceInducers = listOf<ShipPhysicsListener>()
 
-    override fun applyForces(physShip: PhysShip) {
+    override fun physTick(physShip: PhysShip, physLevel: PhysLevel) {
         physShip as PhysShipImpl
-        forceInducers = physShip.forceInducers
+        forceInducers = physShip.physicsListeners
     }
 
     companion object {
@@ -25,9 +25,9 @@ class AttachmentAccessor: ShipForcesInducer {
         }
 
         fun getOrCreate(ship: LoadedServerShip) =
-            ship.getAttachment<AttachmentAccessor>()
+            ship.getAttachment(AttachmentAccessor::class.java)
                 ?: AttachmentAccessor().also {
-                    ship.setAttachment(it.javaClass, it)
+                    ship.setAttachment(it)
                 }
     }
 }

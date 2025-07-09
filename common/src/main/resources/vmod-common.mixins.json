@@ -5,9 +5,9 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "LevelChunkMixin",
+    "PhysLevelImpl",
     "ShipObjectClientWorldMixin",
-    "ShipObjectServerWorldMixin",
-    "ShipObjectWorldAccessor"
+    "ShipObjectServerWorldMixin"
   ],
   "client": [
     "BlockRenderDispatcherAccessor",

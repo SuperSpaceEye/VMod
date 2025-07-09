@@ -14,6 +14,7 @@ import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.mod.common.dimensionId
+import java.util.concurrent.CompletableFuture
 
 interface ExtendableVEntityIMethods {
     fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
@@ -34,7 +35,7 @@ interface ExtendableVEntityIMethods {
     fun iNbtSerialize(): CompoundTag?
     fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity?
 
-    @Internal fun iOnMakeVEntity(level: ServerLevel): Boolean
+    @Internal fun iOnMakeVEntity(level: ServerLevel): List<CompletableFuture<Boolean>>
     @Internal fun iOnDeleteVEntity(level: ServerLevel)
 }
 
@@ -95,7 +96,7 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
         val saveTag = CompoundTag()
 
         saveTag.putInt("mID", mID)
-        saveTag.putString("dimensionId", dimensionId)
+        saveTag.putString("dimensionId", dimensionId!!)
 
         val mainTag = iNbtSerialize() ?: return null
         saveTag.put("Main", mainTag)
@@ -133,10 +134,9 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
     }
 
     @Internal
-    final override fun onMakeVEntity(level: ServerLevel): Boolean {
+    final override fun onMakeVEntity(level: ServerLevel): List<CompletableFuture<Boolean>> {
         if (dimensionId == null) {dimensionId = level.dimensionId}
-        return iOnMakeVEntity(level)
-            .also { _extensions.forEach { it.onMakeVEntity(level) } }
+        return iOnMakeVEntity(level).also { _extensions.forEach { it.onMakeVEntity(level) } }
     }
 
     @Internal

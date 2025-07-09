@@ -32,10 +32,12 @@ import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsTypes
 import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
+import net.spaceeye.vmod.utils.vs.MyGameToPhysicsAdapter
 import net.spaceeye.vmod.vsStuff.VSGravityManager
-import net.spaceeye.vmod.vsStuff.VSMasslessShipProcessor
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.valkyrienskies.core.api.VsBeta
+import org.valkyrienskies.mod.api.vsApi
 import org.valkyrienskies.mod.common.shipObjectWorld
 
 fun ILOG(s: String) = VM.logger.info(s)
@@ -46,6 +48,7 @@ fun ELOG(s: String) = VM.logger.error(s)
 object VM {
     const val MOD_ID = "the_vmod"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!
+    val dimToGTPA = mutableMapOf<String, MyGameToPhysicsAdapter>()
 
     @JvmStatic
     fun init() {
@@ -59,7 +62,6 @@ object VM {
         ServerToolGunState
         ServerPhysgunState
         SchemCompatObj
-        VSMasslessShipProcessor
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientToolGunState
             ClientPhysgunState
@@ -90,6 +92,7 @@ object VM {
         TagSerializableItem
     }
 
+    @OptIn(VsBeta::class)
     @JvmStatic
     fun makeEvents() {
         PersistentEvents
@@ -130,5 +133,9 @@ object VM {
 
         ToolgunItem.makeEvents()
         PhysgunItem.makeEvents()
+
+        vsApi.physTickEvent.on { event -> val level = event.world; val delta = event.delta
+            dimToGTPA[level.dimension]?.also { it.physTick(level, delta) }
+        }
     }
 }

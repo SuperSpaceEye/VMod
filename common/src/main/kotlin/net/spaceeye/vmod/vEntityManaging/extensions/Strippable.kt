@@ -18,7 +18,7 @@ open class Strippable: VEntityExtension {
         return CompoundTag()
     }
 
-    override fun onDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): Boolean {
+    override fun onDeserialize(tag: CompoundTag): Boolean {
         return true
     }
 

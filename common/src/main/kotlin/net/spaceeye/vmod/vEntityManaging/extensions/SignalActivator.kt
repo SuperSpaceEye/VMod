@@ -74,7 +74,7 @@ class SignalActivator(): VEntityExtension, TickableVEntityExtension {
         return tag
     }
 
-    override fun onDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): Boolean {
+    override fun onDeserialize(tag: CompoundTag): Boolean {
         channelNameReflection = tag.getString("channelNameReflection")
         percentageNameReflection = tag.getString("percentageNameReflection")
 

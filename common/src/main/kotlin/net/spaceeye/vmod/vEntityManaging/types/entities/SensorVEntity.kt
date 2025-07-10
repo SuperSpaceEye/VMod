@@ -17,6 +17,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
+import org.valkyrienskies.core.apigame.world.PhysLevelCore
 import org.valkyrienskies.core.impl.shadow.fu
 import org.valkyrienskies.mod.common.dimensionId
 import java.util.concurrent.CompletableFuture
@@ -50,8 +51,8 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         this.scale = scale
     }
 
-    override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>) = allShips.contains(shipId)
-    override fun iAttachedToShips(dimensionIds: Collection<ShipId>) = mutableListOf(shipId)
+    override fun iStillExists(allShips: QueryableShipData<Ship>) = allShips.contains(shipId)
+    override fun iAttachedToShips() = mutableListOf(shipId)
     override fun iGetAttachmentPoints(qshipId: ShipId): List<Vector3d> = if (shipId == qshipId || qshipId == -1L) listOf(Vector3d(pos)) else emptyList()
 
 
@@ -74,7 +75,7 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
 
     override fun iOnDeleteVEntity(level: ServerLevel) {}
 
-    override fun tick(server: MinecraftServer, unregister: () -> Unit) {
+    override fun serverTick(server: MinecraftServer, unregister: () -> Unit) {
         val ship = server.shipObjectWorld.allShips.getById(shipId) ?: return
         ship.chunkClaimDimension
 
@@ -100,4 +101,6 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
 
         MessagingNetwork.notify(channel, Signal(min(distance / maxDistance, 1.0)))
     }
+
+    override fun physTick(level: PhysLevelCore, delta: Double) {}
 }

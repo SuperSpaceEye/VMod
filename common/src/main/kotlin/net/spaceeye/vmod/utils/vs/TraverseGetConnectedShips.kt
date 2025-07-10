@@ -69,7 +69,7 @@ fun traverseGetConnectedShips(shipId: ShipId, blacklist: Set<ShipId> = setOf(), 
             if (traversedVEntities.contains(it)) { return@forEach }
             traversedVEntities.add(it)
             val constraint = instance.getVEntity(it) ?: return@forEach
-            stack.addAll(constraint.attachedToShips(dimensionIds).filter { !traversedShips.contains(it) })
+            stack.addAll(constraint.attachedToShips().filter { !traversedShips.contains(it) })
             if (constraint is VSJointUser) {vsIdsOfVEntities.addAll(constraint.getVSIds())}
         }
 

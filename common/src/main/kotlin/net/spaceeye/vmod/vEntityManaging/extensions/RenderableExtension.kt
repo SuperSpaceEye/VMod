@@ -50,7 +50,7 @@ open class RenderableExtension(): VEntityExtension {
         return tag
     }
 
-    override fun onDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): Boolean {
+    override fun onDeserialize(tag: CompoundTag): Boolean {
         if (!tag.contains("renderer")) {return false}
         try {
             val type = tag.getString("rendererType")
@@ -63,7 +63,7 @@ open class RenderableExtension(): VEntityExtension {
     }
 
     override fun onMakeVEntity(level: ServerLevel) {
-        val ids = obj.attachedToShips(listOf())
+        val ids = obj.attachedToShips()
         RenderingData.server.removeRenderer(rID)
         rID = RenderingData.server.addRenderer(ids, renderer)
     }

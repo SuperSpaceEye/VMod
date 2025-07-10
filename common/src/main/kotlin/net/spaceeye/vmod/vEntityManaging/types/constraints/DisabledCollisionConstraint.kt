@@ -24,20 +24,20 @@ class DisabledCollisionConstraint(): ExtendableVEntity(), VEAutoSerializable {
         this.shipId2 = shipId2
     }
 
-    override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
+    override fun iStillExists(allShips: QueryableShipData<Ship>): Boolean {
         val ship1Exists = allShips.contains(shipId1)
         val ship2Exists = allShips.contains(shipId2)
 
         return     (ship1Exists && ship2Exists)
-                || (ship1Exists && dimensionIds.contains(shipId1))
-                || (ship2Exists && dimensionIds.contains(shipId2))
+                || (ship1Exists && -1L == shipId1)
+                || (ship2Exists && -1L == shipId2)
     }
 
-    override fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
+    override fun iAttachedToShips(): List<ShipId> {
         val toReturn = mutableListOf<ShipId>()
 
-        if (!dimensionIds.contains(shipId1)) {toReturn.add(shipId1)}
-        if (!dimensionIds.contains(shipId2)) {toReturn.add(shipId2)}
+        if (-1L != shipId1) {toReturn.add(shipId1)}
+        if (-1L != shipId2) {toReturn.add(shipId2)}
 
         return toReturn
     }

@@ -22,10 +22,8 @@ import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.shipAttachments.CustomMassSave
 import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.shipAttachments.PhysgunController
-import net.spaceeye.vmod.shipAttachments.ThrustersController
 import net.spaceeye.vmod.shipAttachments.WeightSynchronizer
 import net.spaceeye.vmod.toolgun.PlayerAccessManager
-import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.state.PlayerSchematics
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.teleportShipWithConnected
@@ -309,7 +307,6 @@ object VMCommands {
             level.shipObjectWorld.loadedShips.forEach {
                 it.getAttachment(GravityController::class.java)?.let { _ -> it.setAttachment(GravityController::class.java, null) }
                 it.getAttachment(PhysgunController::class.java)?.let { _ -> it.setAttachment(PhysgunController::class.java, null) }
-                it.getAttachment(ThrustersController::class.java)?.let { _ -> it.setAttachment(ThrustersController::class.java, null) }
                 it.getAttachment(CustomMassSave::class.java)?.let { _ -> it.setAttachment(CustomMassSave::class.java, null) }
                 it.getAttachment(WeightSynchronizer::class.java)?.let { _ -> it.setAttachment(WeightSynchronizer::class.java, null) }
             }

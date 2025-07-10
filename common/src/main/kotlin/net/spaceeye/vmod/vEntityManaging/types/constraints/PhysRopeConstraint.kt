@@ -301,8 +301,8 @@ class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         return tag
     }
 
-    override fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity? {
-        val entity = super.iNbtDeserialize(tag, lastDimensionIds) ?: return null
+    override fun iNbtDeserialize(tag: CompoundTag): VEntity? {
+        val entity = super.iNbtDeserialize(tag) ?: return null
         entity as PhysRopeConstraint
 
         val dataTag = (tag.get("data") as ListTag)

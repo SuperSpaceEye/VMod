@@ -25,20 +25,20 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
     abstract var sPos1: Vector3d
     abstract var sPos2: Vector3d
 
-    override fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
+    override fun iStillExists(allShips: QueryableShipData<Ship>): Boolean {
         val ship1Exists = allShips.contains(shipId1)
         val ship2Exists = allShips.contains(shipId2)
 
         return     (ship1Exists && ship2Exists)
-                || (ship1Exists && dimensionIds.contains(shipId2))
-                || (ship2Exists && dimensionIds.contains(shipId1))
+                || (ship1Exists && -1L == shipId2)
+                || (ship2Exists && -1L == shipId1)
     }
 
-    override fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
+    override fun iAttachedToShips(): List<ShipId> {
         val toReturn = mutableListOf<ShipId>()
 
-        if (!dimensionIds.contains(shipId1)) {toReturn.add(shipId1)}
-        if (!dimensionIds.contains(shipId2)) {toReturn.add(shipId2)}
+        if (-1L != shipId1) {toReturn.add(shipId1)}
+        if (-1L != shipId2) {toReturn.add(shipId2)}
 
         return toReturn
     }
@@ -67,18 +67,13 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
     }
 
     @NonExtendable
-    override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity? {
+    override fun nbtDeserialize(tag: CompoundTag): VEntity? {
         sPos1 = tag.getMyVector3d("sPos1")
         sPos2 = tag.getMyVector3d("sPos2")
         shipId1 = tag.getLong("shipId1")
         shipId2 = tag.getLong("shipId2")
 
-        ServerObjectsHolder.shipObjectWorld?.dimensionToGroundBodyIdImmutable?.let { map ->
-            shipId1 = map[lastDimensionIds[shipId1]] ?: shipId1
-            shipId2 = map[lastDimensionIds[shipId2]] ?: shipId2
-        }
-
-        return super.nbtDeserialize(tag, lastDimensionIds)
+        return super.nbtDeserialize(tag)
     }
 
     /**

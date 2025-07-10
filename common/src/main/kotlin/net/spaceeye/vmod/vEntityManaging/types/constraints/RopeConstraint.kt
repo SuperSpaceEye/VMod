@@ -1,10 +1,10 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
 import net.minecraft.server.level.ServerLevel
+import net.spaceeye.vmod.utils.Tuple
 import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
 import net.spaceeye.vmod.vEntityManaging.util.TwoShipsMConstraint
-import net.spaceeye.vmod.vEntityManaging.util.mc
 import net.spaceeye.vmod.utils.Vector3d
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import net.spaceeye.vmod.utils.vs.tryMovePosition
@@ -67,6 +67,13 @@ class RopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     }
 
     override fun iOnMakeVEntity(level: ServerLevel) = withFutures {
+        if (shipId1 == -1L && shipId2 == -1L) {throw AssertionError("Both shipId's are ground")}
+        val (shipId1, shipId2, sPos1, sPos2) = when (-1L) {
+            shipId1 -> Tuple.of(null   , shipId2, sPos1 + 0.5, sPos2)
+            shipId2 -> Tuple.of(null   , shipId1, sPos2 + 0.5, sPos1)
+            else    -> Tuple.of(shipId1, shipId2, sPos1      , sPos2)
+        }
+
         val maxForceTorque = if (maxForce < 0) {null} else {VSJointMaxForceTorque(maxForce, maxForce)}
         val stiffness = if (stiffness < 0) {null} else {stiffness}
         val damping = if (damping < 0) {null} else {damping}

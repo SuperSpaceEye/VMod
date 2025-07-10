@@ -7,7 +7,6 @@ object VMAttachments {
     @OptIn(VsBeta::class)
     fun register() {
         vsApi.registerAttachment(PhysgunController::class.java) { useTransientSerializer() }
-        vsApi.registerAttachment(ThrustersController::class.java) { useTransientSerializer() }
         vsApi.registerAttachment(AttachmentAccessor::class.java) { useTransientSerializer() }
         vsApi.registerAttachment(DebugAttachment::class.java) { useTransientSerializer() }
 
@@ -19,14 +18,12 @@ object VMAttachments {
         vsApi.shipLoadEvent.on { val ship = it.ship
             GravityController.getOrCreate(ship)
             PhysgunController.getOrCreate(ship)
-            ThrustersController.getOrCreate(ship)
             CustomMassSave.getOrCreate(ship)
             AttachmentAccessor.getOrCreate(ship)
         }
 
 
         PhysgunController
-        ThrustersController
         WeightSynchronizer
         CustomMassSave
         GravityController

@@ -72,7 +72,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
             shipId1, shipId2,
             maxForce, stiffness, damping,
             minLength, minLength + extensionDistance,
-            extensionSpeed, channel, connectionMode
+            extensionSpeed / 60f, channel, connectionMode
         ).addExtension(RenderableExtension(A2BRenderer(
             ship1?.id ?: -1L,
             ship2?.id ?: -1L,
@@ -115,7 +115,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                                 shipId1, shipId2,
                                 it.maxForce, it.stiffness, it.damping,
                                 paDistanceFromBlock.toFloat(), paDistanceFromBlock.toFloat() + it.extensionDistance,
-                                it.extensionSpeed, it.channel, it.connectionMode
+                                it.extensionSpeed / 60f, it.channel, it.connectionMode
                             ).addExtension(RenderableExtension(A2BRenderer(
                                 ship1?.id ?: -1L,
                                 ship2?.id ?: -1L,

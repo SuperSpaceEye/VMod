@@ -17,9 +17,8 @@ import org.valkyrienskies.mod.common.dimensionId
 import java.util.concurrent.CompletableFuture
 
 interface ExtendableVEntityIMethods {
-    fun iStillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean
-    // SHOULDN'T RETURN GROUND SHIPID
-    fun iAttachedToShips(dimensionIds: Collection<ShipId>): List<ShipId>
+    fun iStillExists(allShips: QueryableShipData<Ship>): Boolean
+    fun iAttachedToShips(): List<ShipId>
 
     // positions to which VEntity is "attached" to the ship/world
     // is needed for strip tool, moving VEntities on ship splitting
@@ -33,7 +32,7 @@ interface ExtendableVEntityIMethods {
     fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d)
 
     fun iNbtSerialize(): CompoundTag?
-    fun iNbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity?
+    fun iNbtDeserialize(tag: CompoundTag): VEntity?
 
     @Internal fun iOnMakeVEntity(level: ServerLevel): List<CompletableFuture<Boolean>>
     @Internal fun iOnDeleteVEntity(level: ServerLevel)
@@ -58,12 +57,12 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
     }
 
 
-    final override fun stillExists(allShips: QueryableShipData<Ship>, dimensionIds: Collection<ShipId>): Boolean {
-        return iStillExists(allShips, dimensionIds)
+    final override fun stillExists(allShips: QueryableShipData<Ship>, ): Boolean {
+        return iStillExists(allShips)
     }
 
-    final override fun attachedToShips(dimensionIds: Collection<ShipId>): List<ShipId> {
-        return iAttachedToShips(dimensionIds)
+    final override fun attachedToShips(): List<ShipId> {
+        return iAttachedToShips()
     }
 
     final override fun getAttachmentPoints(shipId: Long): List<Vector3d> {
@@ -113,18 +112,18 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
     }
 
     @NonExtendable
-    override fun nbtDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): VEntity? {
+    override fun nbtDeserialize(tag: CompoundTag): VEntity? {
         mID = tag.getInt("mID")
         dimensionId = tag.getString("dimensionId")
 
         val mainTag = tag.getCompound("Main")
-        val mc = iNbtDeserialize(mainTag, lastDimensionIds)
+        val mc = iNbtDeserialize(mainTag)
         _extensions.clear()
 
         val extensionsTag = tag.getCompound("Extensions")
         _extensions.addAll(extensionsTag.allKeys.mapNotNull { type ->
             val ext = VEntityExtension.fromType(type)
-            val success = ext.onDeserialize(extensionsTag.getCompound(type), lastDimensionIds)
+            val success = ext.onDeserialize(extensionsTag.getCompound(type))
             if (!success) return@mapNotNull null
             ext.onInit(this)
             ext

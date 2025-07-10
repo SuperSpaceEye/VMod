@@ -36,7 +36,6 @@ import net.spaceeye.vmod.utils.BlockPos
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
 import net.spaceeye.vmod.translate.ONE_OF_THE_SHIPS_IS_TOO_TALL
 import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_COPYING
 import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_PLACING
@@ -55,7 +54,6 @@ import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.isBlockInShipyard
 import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.mod.common.util.toJOML
-import org.valkyrienskies.mod.common.util.toMinecraft
 import org.valkyrienskies.mod.common.yRange
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap

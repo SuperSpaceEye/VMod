@@ -29,7 +29,7 @@ interface VEntityExtension {
     // will be called after VEntity is deserialized
     // if returns true then everything is ok
     // if returns false then it failed to deserialize and extension will not be added
-    fun onDeserialize(tag: CompoundTag, lastDimensionIds: Map<ShipId, String>): Boolean
+    fun onDeserialize(tag: CompoundTag): Boolean
 
     fun onMakeVEntity(level: ServerLevel)
     fun onDeleteVEntity(level: ServerLevel)

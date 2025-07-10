@@ -78,20 +78,14 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
      }
 
     override fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity? {
-        val new = ConnectionConstraint(
+        return ConnectionConstraint(
             tryMovePosition(sPos1, shipId1, centerPositions) ?: return null,
             tryMovePosition(sPos2, shipId2, centerPositions) ?: return null,
-            sDir1, sDir2, sRot1, sRot2,
+            sDir1.copy(), sDir2.copy(), sRot1.get(Quaterniond()), sRot2.get(Quaterniond()),
             mapped[shipId1] ?: return null,
             mapped[shipId2] ?: return null,
             maxForce, stiffness, damping, distance, connectionMode
         )
-        new.sDir1 = sDir1.copy()
-        new.sDir2 = sDir2.copy()
-        new.sRot1 = Quaterniond(sRot1)
-        new.sRot2 = Quaterniond(sRot2)
-
-        return new
     }
 
     override fun iOnScaleBy(level: ServerLevel, scaleBy: Double, scalingCenter: Vector3d) {

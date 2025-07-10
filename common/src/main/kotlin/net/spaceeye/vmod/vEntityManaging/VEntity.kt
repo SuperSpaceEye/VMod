@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.vEntityManaging
 
-import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
@@ -9,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.api.world.PhysLevel
 import org.valkyrienskies.core.apigame.joints.VSJoint
 import org.valkyrienskies.core.apigame.joints.VSJointId
 import org.valkyrienskies.core.apigame.world.PhysLevelCore
@@ -36,16 +36,17 @@ interface VEntity {
     fun stillExists(allShips: QueryableShipData<Ship>): Boolean
     fun attachedToShips(): List<ShipId>
 
-    // positions to which VEntity is "attached" to the ship/world
-    // is needed for strip tool, moving VEntities on ship splitting
+    //TODO maybe designate -1 as world, and have -2 as all?
     /**
      * By default (-1) should return all attachment positions
      * If given shipId, should only return positions belonging to that shipId
      */
     fun getAttachmentPoints(shipId: Long = -1): List<Vector3d>
 
-    // is called on ship splitting
-    fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId)
+    /**
+     * If false is returned, it will immediately stop all further actions
+     */
+    fun moveAttachmentPoints(level: ServerLevel, pointsToMove: List<Vector3d>, oldShipId: ShipId, newShipId: ShipId, oldCenter: Vector3d, newCenter: Vector3d): Boolean
 
     /**
      * @param centerPositions first is old, second is new
@@ -67,8 +68,8 @@ interface VEntity {
         class HelperFn {
             val futures = mutableListOf<CompletableFuture<Boolean>>()
 
-            fun mc(joint: VSJoint, cIDs: ConcurrentLinkedQueue<VSJointId>, level: ServerLevel) {
-                futures.add(net.spaceeye.vmod.vEntityManaging.util.mc(joint, cIDs, level))
+            fun mc(joint: VSJoint, cIDs: ConcurrentLinkedQueue<VSJointId>, level: ServerLevel, checkValid: ((VSJoint, PhysLevel) -> Boolean)? = null) {
+                futures.add(net.spaceeye.vmod.vEntityManaging.util.mc(joint, cIDs, level, checkValid))
             }
         }
 

@@ -12,6 +12,8 @@ import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
 import net.spaceeye.vmod.vEntityManaging.util.TickableVEntityExtension
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.Vector3d
+import net.spaceeye.vmod.vEntityManaging.makeVEntityWithId
+import net.spaceeye.vmod.vEntityManaging.removeVEntity
 import org.valkyrienskies.core.api.VsBeta
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
@@ -59,6 +61,13 @@ class ThrusterVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         val nPos = pos - oldCenter + newCenter
 
         return ThrusterVEntity(nShip.id, nPos, Vector3d(forceDir), force, channel)
+    }
+
+    override fun iMoveAttachmentPoints(level: ServerLevel, pointsToMove: List<Vector3d>, oldShipId: ShipId, newShipId: ShipId, oldCenter: Vector3d, newCenter: Vector3d): Boolean {
+        val copy = copyVEntity(level, mapOf(oldShipId to newShipId), mapOf(oldShipId to (oldCenter to newCenter)))!!
+        level.removeVEntity(this)
+        level.makeVEntityWithId(copy, mID) {}
+        return false
     }
 
     override fun iOnMakeVEntity(level: ServerLevel) = listOf(CompletableFuture<Boolean>().also { it.complete(level.shipObjectWorld.allShips.getById(shipId) != null) })

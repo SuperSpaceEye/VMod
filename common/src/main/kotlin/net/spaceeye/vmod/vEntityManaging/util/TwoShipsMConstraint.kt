@@ -7,10 +7,13 @@ import net.spaceeye.vmod.vEntityManaging.VEntity
 import net.spaceeye.vmod.vEntityManaging.VSJointUser
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.gtpa
+import net.spaceeye.vmod.vEntityManaging.makeVEntityWithId
+import net.spaceeye.vmod.vEntityManaging.removeVEntity
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.api.world.PhysLevel
 import org.valkyrienskies.core.apigame.joints.VSJoint
 import org.valkyrienskies.core.apigame.joints.VSJointId
 import java.util.concurrent.CompletableFuture
@@ -56,6 +59,28 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
             }
         }
 
+    override fun iMoveAttachmentPoints(
+        level: ServerLevel,
+        pointsToMove: List<Vector3d>,
+        oldShipId: ShipId,
+        newShipId: ShipId,
+        oldCenter: Vector3d,
+        newCenter: Vector3d
+    ): Boolean {
+        val (mapped, centers) = if (oldShipId == shipId1) {
+            Pair(mapOf(oldShipId to newShipId, shipId2 to shipId2),
+                 mapOf(oldShipId to (oldCenter to newCenter), shipId2 to (sPos2 to sPos2)))
+        } else {
+            Pair(mapOf(oldShipId to newShipId, shipId1 to shipId1),
+                 mapOf(oldShipId to (oldCenter to newCenter), shipId1 to (sPos1 to sPos1)))
+        }
+
+        val copy = copyVEntity(level, mapped, centers)!!
+        level.removeVEntity(this)
+        level.makeVEntityWithId(copy, mID) {}
+        return false
+    }
+
     @NonExtendable
     override fun nbtSerialize(): CompoundTag? {
         val tag = super.nbtSerialize() ?: return null
@@ -83,16 +108,19 @@ abstract class TwoShipsMConstraint(): ExtendableVEntity(), VSJointUser {
         cIDs.forEach { level.gtpa.removeJoint(it) }
     }
 
-    class HelperFn(val cIDs: ConcurrentLinkedQueue<VSJointId>) {
+    class HelperFn(val cIDs: ConcurrentLinkedQueue<VSJointId>, val checkValid: ((VSJoint, PhysLevel) -> Boolean)? = null) {
         val futures = mutableListOf<CompletableFuture<Boolean>>()
 
         fun mc(joint: VSJoint, level: ServerLevel) {
-            futures.add(mc(joint, cIDs, level))
+            futures.add(mc(joint, cIDs, level, checkValid))
         }
     }
 
     fun withFutures(fn: HelperFn.(TwoShipsMConstraint) -> Unit): List<CompletableFuture<Boolean>> {
-        val inst = HelperFn(cIDs)
+        val inst = HelperFn(cIDs) {joint, level ->
+               (joint.shipId0 == null || level.getShipById(joint.shipId0!!) != null)
+            && (joint.shipId1 == null || level.getShipById(joint.shipId1!!) != null)
+        }
         inst.fn(this)
         return inst.futures
     }

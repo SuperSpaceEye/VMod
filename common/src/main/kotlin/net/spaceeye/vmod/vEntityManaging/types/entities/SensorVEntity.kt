@@ -17,8 +17,9 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
+import net.spaceeye.vmod.vEntityManaging.makeVEntityWithId
+import net.spaceeye.vmod.vEntityManaging.removeVEntity
 import org.valkyrienskies.core.apigame.world.PhysLevelCore
-import org.valkyrienskies.core.impl.shadow.fu
 import org.valkyrienskies.mod.common.dimensionId
 import java.util.concurrent.CompletableFuture
 import kotlin.math.min
@@ -68,6 +69,13 @@ class SensorVEntity(): ExtendableVEntity(), Tickable, VEAutoSerializable {
         val nPos = pos - oldCenter + newCenter
 
         return SensorVEntity(nShip.id, nPos, lookDir, maxDistance, ignoreSelf, scale, channel)
+    }
+
+    override fun iMoveAttachmentPoints(level: ServerLevel, pointsToMove: List<Vector3d>, oldShipId: ShipId, newShipId: ShipId, oldCenter: Vector3d, newCenter: Vector3d): Boolean {
+        val copy = copyVEntity(level, mapOf(oldShipId to newShipId), mapOf(oldShipId to (oldCenter to newCenter)))!!
+        level.removeVEntity(this)
+        level.makeVEntityWithId(copy, mID) {}
+        return false
     }
 
     override fun iOnMakeVEntity(level: ServerLevel): List<CompletableFuture<Boolean>> =

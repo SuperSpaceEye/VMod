@@ -31,7 +31,8 @@ class MyGameToPhysicsAdapter {
 
     private val collisionChange = ConcurrentLinkedQueue<Tuple4<ShipId, ShipId, Boolean, CompletableFuture<Boolean>>>()
 
-    private val joints = ConcurrentLinkedQueue<Tuple3<VSJoint, ((VSJoint, PhysLevel) -> Boolean)?, CompletableFuture<VSJointId?>>>()
+    //todo not null
+    private val joints = ConcurrentLinkedQueue<Tuple3<VSJoint, ((VSJoint, PhysLevel) -> Boolean)?, CompletableFuture<VSJointId>>>()
     private val updatedJoints = ConcurrentLinkedQueue<Tuple3<VSJointId, VSJoint, CompletableFuture<Boolean>>>()
     private val deletedJoints = ConcurrentLinkedQueue<Pair<VSJointId, CompletableFuture<Boolean>>>()
 
@@ -58,7 +59,7 @@ class MyGameToPhysicsAdapter {
             )
         }
 
-        val rePoll = mutableListOf<Tuple3<VSJoint, ((VSJoint, PhysLevel) -> Boolean)?, CompletableFuture<VSJointId?>>>()
+        val rePoll = mutableListOf<Tuple3<VSJoint, ((VSJoint, PhysLevel) -> Boolean)?, CompletableFuture<VSJointId>>>()
         joints.pollUntilEmpty { (joint, predicate, future) ->
             if (predicate != null && predicate.invoke(joint, level) == false) {
                 rePoll.add(Tuple.of(joint, predicate, future))
@@ -84,7 +85,7 @@ class MyGameToPhysicsAdapter {
 
     fun setStatic(ship: ShipId, b: Boolean) { toBeStatic.add(ship to b) }
 
-    fun addJoint(joint: VSJoint, checkValid: ((VSJoint, PhysLevel) -> Boolean)? = null): CompletableFuture<VSJointId?> = CompletableFuture<VSJointId?>().also { joints.add(Tuple.of(joint, checkValid, it)) }
+    fun addJoint(joint: VSJoint, checkValid: ((VSJoint, PhysLevel) -> Boolean)? = null): CompletableFuture<VSJointId> = CompletableFuture<VSJointId>().also { joints.add(Tuple.of(joint, checkValid, it)) }
     fun updateJoint(id: VSJointId, joint: VSJoint): CompletableFuture<Boolean> = CompletableFuture<Boolean>().also { updatedJoints.add(Tuple.of(id, joint, it)) }
     fun removeJoint(id: VSJointId): CompletableFuture<Boolean> = CompletableFuture<Boolean>().also { deletedJoints.add(id to it) }
     fun disableCollisionBetweenBodies(id1: ShipId, id2: ShipId): CompletableFuture<Boolean> = CompletableFuture<Boolean>().also { collisionChange.add(Tuple.of(id1, id2, false, it)) }

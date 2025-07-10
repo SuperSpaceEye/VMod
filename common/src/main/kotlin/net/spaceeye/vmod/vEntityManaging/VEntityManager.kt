@@ -17,24 +17,23 @@ import net.spaceeye.vmod.vEntityManaging.VEntityTypes.getType
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.PosMapList
 import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.Tuple
 import net.spaceeye.vmod.utils.Tuple3
+import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.addCustomServerClosable
 import net.spaceeye.vmod.utils.vs.gtpa
 import org.apache.commons.lang3.tuple.MutablePair
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.joml.Vector3d
+import org.joml.Vector3ic
+import org.joml.primitives.AABBd
 import org.valkyrienskies.core.api.ships.QueryableShipData
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.world.properties.DimensionId
 import org.valkyrienskies.core.apigame.world.PhysLevelCore
-import org.valkyrienskies.core.impl.hooks.VSEvents
-import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
 import org.valkyrienskies.core.util.pollUntilEmpty
 import org.valkyrienskies.mod.api.vsApi
 import org.valkyrienskies.mod.common.dimensionId
@@ -189,7 +188,7 @@ open class VEntityManager: SavedData() {
     }
 
     private fun createVEntities() {
-        VSEvents.shipLoadEvent.on { (ship), handler ->
+        vsApi.shipLoadEvent.on { event, handler -> val ship = event.ship
             setLoadedId(ship)
             if (groupedToLoadVEntities.isEmpty()) {
                 handler.unregister()
@@ -278,6 +277,8 @@ open class VEntityManager: SavedData() {
 
     fun getAllVEntitiesIdOfId(shipId: ShipId): List<VEntityId> = shipToVEntity[shipId]?.map { it.mID } ?: emptyList()
 
+    fun idHasVEntities(shipId: ShipId): Boolean = shipToVEntity[shipId]?.isNotEmpty() == true
+
     @Internal
     fun makeVEntityWithId(level: ServerLevel, entity: VEntity, id: Int, callback: ((VEntityId?) -> Unit)) {
         if (id == -1) { throw AssertionError("makeVEntityWithId was called without a specific id") }
@@ -335,41 +336,62 @@ open class VEntityManager: SavedData() {
         return idToDisabledCollisions[shipId]?.map { (k, v) -> Pair(k, v.left) }?.toMap()
     }
 
-    //TODO redo when ship splitting actually happens
-    private fun shipWasSplitEvent(
-        originalShip: ServerShip,
-        newShip: ServerShip,
-        centerBlock: BlockPos,
-        blocks: DenseBlockPosSet) {
-        val constraints = getAllVEntitiesIdOfId(originalShip.id)
-        if (constraints.isEmpty()) { return }
+    //TODO optimize?
+    fun onBlocksMove(level: ServerLevel, oldShip: ServerShip?, newShip: ServerShip?, oldCenter: Vector3ic, newCenter: Vector3ic, blocks: List<BlockPos>) {
+        val hasVEntities = if (oldShip != null) { idHasVEntities(oldShip.id) } else { true }
+        if (!hasVEntities) {return}
 
-        val shipChunkX = newShip.chunkClaim.xMiddle
-        val shipChunkZ = newShip.chunkClaim.zMiddle
+        val oldId = oldShip?.id ?: -1L
+        val newId = newShip?.id ?: -1L
 
-        val worldChunkX = centerBlock.x shr 4
-        val worldChunkZ = centerBlock.z shr 4
+        val veToData = mutableMapOf<Int, Pair<VEntity, MutableMap<BlockPos, MutableList<Vector3d>>>>()
 
-        val deltaX = worldChunkX - shipChunkX
-        val deltaZ = worldChunkZ - shipChunkZ
+        //TODO for this part convert bpos to set, and check result of getAttachmentPoints against set
+        val visited = blocks.toMutableSet()
+        blocks.forEach { bpos ->
+            val vIds = posToMId.getItemsAt(bpos) ?: return@forEach
+            vIds.forEach { id ->
+                val ve = getVEntity(id) ?: return@forEach
+                val belong = ve.getAttachmentPoints(oldId).filter { it.toBlockPos() == bpos }
+                veToData.getOrPut(id) { Pair(ve, mutableMapOf()) }.second.getOrPut(bpos) { mutableListOf() }.addAll(belong)
+            }
+        }
 
-        blocks.forEachChunk { chunkX, chunkY, chunkZ, chunk ->
-            val sourceChunk = level!!.getChunk(chunkX, chunkZ)
-            val destChunk = level!!.getChunk(chunkX - deltaX, chunkZ - deltaZ)
+        //TODO maybe get points, convert to bpos, and check all in radius against set instead?
+        blocks.forEach { bPos ->
+            val mPos = Vector3d(bPos) + 0.5 // moved position
+            val box = AABBd((mPos - 0.501).toJomlVector3d(), (mPos + 0.501).toJomlVector3d())
+            for (y in -1 .. 1)
+            for (x in -1 .. 1)
+            for (z in -1 .. 1) {
+                val bpos = bPos.offset(x, y, z)
+                if (visited.contains(bpos)) continue
+                visited.add(bpos)
+                val vs = posToMId.getItemsAt(bpos) ?: continue
+                if (vs.isEmpty()) continue
 
-            chunk.forEach { x, y, z ->
-                val fromPos = BlockPos((sourceChunk.pos.x shl 4) + x, (chunkY shl 4) + y, (sourceChunk.pos.z shl 4) + z)
-                val toPos = BlockPos((destChunk.pos.x shl 4) + x, (chunkY shl 4) + y, (destChunk.pos.z shl 4) + z)
+                vs.forEach { id ->
+                    val ve = getVEntity(id) ?: return@forEach
+                    val inside = ve.getAttachmentPoints(oldId).filter { box.containsPoint(it.x, it.y, it.z) }
+                    if (inside.isEmpty()) {return@forEach}
 
-                for (id in posToMId.getItemsAt(fromPos) ?: return@forEach) {
-                    val constraint = getVEntity(id) ?: continue
-
-                    constraint.attachedToShips().forEach { shipToVEntity[it]?.remove(constraint) }
-                    constraint.moveShipyardPosition(level!!, fromPos, toPos, newShip.id)
-                    constraint.attachedToShips().forEach { shipToVEntity.getOrPut(it) { mutableListOf() }.add(constraint) }
-
-                    setDirty()
+                    veToData.getOrPut(id) { Pair(ve, mutableMapOf()) }.second.getOrPut(bpos) { mutableListOf() }.addAll(inside)
                 }
+            }
+        }
+
+        veToData.forEach { id, pair ->
+            val (vEntity, data) = pair
+            val pointsToMove = data.map { (_, positions) -> positions }.flatten()
+
+            vEntity.attachedToShips().forEach { shipToVEntity[it]?.remove(vEntity) }
+            vEntity.getAttachmentPoints(oldId).forEach { posToMId.removeItemFromPos(id, it.toBlockPos()) }
+
+            val res = vEntity.moveAttachmentPoints(level, pointsToMove, oldId, newId, Vector3d(oldCenter), Vector3d(newCenter))
+
+            if (res) {
+                vEntity.attachedToShips().forEach { shipToVEntity.getOrPut(it) { mutableListOf() }.add(vEntity) }
+                vEntity.getAttachmentPoints(newId).forEach { posToMId.addItemTo(id, it.toBlockPos()) }
             }
         }
     }
@@ -505,9 +527,9 @@ open class VEntityManager: SavedData() {
                 instance.physThreadTickable[event.world.dimension]?.forEach {k, ve -> ve.physTick(event.world as PhysLevelCore, event.delta) }
             }
 
-            AVSEvents.splitShip.on {
+            AVSEvents.blocksWereMovedEvent.on {
                 it, handler ->
-                instance?.shipWasSplitEvent(it.originalShip, it.newShip, it.centerBlock, it.blocks)
+                instance?.onBlocksMove(it.level, it.originalShip, it.newShip, it.oldCenter, it.newCenter, it.blocks)
             }
         }
     }

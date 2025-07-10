@@ -15,7 +15,7 @@ interface TickableVEntityExtension: VEntityExtension {
 interface VEntityExtension {
     fun onInit(obj: ExtendableVEntity)
 
-    fun onAfterMoveShipyardPositions(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
+    fun onAfterMoveAttachmentPoints(level: ServerLevel, pointsToMove: List<Vector3d>, oldShipId: ShipId, newShipId: ShipId, oldCenter: Vector3d, newCenter: Vector3d) {TODO()}
 
     fun onBeforeCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>) {}
     //should add new extension to new VEntity

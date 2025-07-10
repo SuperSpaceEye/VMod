@@ -2,6 +2,7 @@ package net.spaceeye.vmod.utils
 
 import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
+import org.joml.Vector3ic
 import org.joml.Vector4d
 import kotlin.math.max
 import kotlin.math.min
@@ -33,6 +34,7 @@ class Vector3d(x:Number, y:Number, z:Number) {
 
     constructor(): this(0, 0, 0)
     constructor(o: Vector3d): this(o.x, o.y, o.z)
+    constructor(o: Vector3ic): this(o.x(), o.y(), o.z())
     constructor(o: JVector3d): this(o.x, o.y, o.z)
     constructor(o: JVector3f): this(o.x, o.y, o.z)
     constructor(o: JVector3dc): this(o.x(), o.y(), o.z())
@@ -89,6 +91,8 @@ class Vector3d(x:Number, y:Number, z:Number) {
 
     fun sqrDist(): Double {return x*x + y*y + z*z}
     fun dist(): Double {return Math.sqrt(x*x + y*y + z*z)}
+
+    fun distTo(other: Vector3d): Double = (this - other).dist()
 
     fun sign(): Vector3d {
         return Vector3d(
@@ -251,4 +255,11 @@ class Vector3d(x:Number, y:Number, z:Number) {
     operator fun timesAssign(other: Number) { mul(other.toDouble(), this)}
     operator fun divAssign  (other: Number) { div(other.toDouble(), this)}
     operator fun remAssign  (other: Number) { rem(other.toDouble(), this)}
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is Vector3d) return super.equals(other)
+        if (super.equals(other)) return true
+
+        return x == other.x && y == other.y && z == other.z
+    }
 }

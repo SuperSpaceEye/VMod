@@ -20,12 +20,9 @@ interface ExtendableVEntityIMethods {
     fun iStillExists(allShips: QueryableShipData<Ship>): Boolean
     fun iAttachedToShips(): List<ShipId>
 
-    // positions to which VEntity is "attached" to the ship/world
-    // is needed for strip tool, moving VEntities on ship splitting
     fun iGetAttachmentPoints(shipId: Long): List<Vector3d>
 
-    // is called on ship splitting
-    fun iMoveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {TODO()}
+    fun iMoveAttachmentPoints(level: ServerLevel, pointsToMove: List<Vector3d>, oldShipId: ShipId, newShipId: ShipId, oldCenter: Vector3d, newCenter: Vector3d): Boolean
 
     fun iCopyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity?
 
@@ -69,10 +66,12 @@ abstract class ExtendableVEntity(): VEntity, ExtendableVEntityIMethods {
         return iGetAttachmentPoints(shipId)
     }
 
-    final override fun moveShipyardPosition(level: ServerLevel, previous: BlockPos, new: BlockPos, newShipId: ShipId) {
-        TODO()
-        iMoveShipyardPosition(level, previous, new, newShipId)
-        _extensions.forEach { it.onAfterMoveShipyardPositions(level, previous, new, newShipId) }
+    final override fun moveAttachmentPoints(level: ServerLevel, pointsToMove: List<Vector3d>, oldShipId: ShipId, newShipId: ShipId, oldCenter: Vector3d, newCenter: Vector3d): Boolean {
+        val res = iMoveAttachmentPoints(level, pointsToMove, oldShipId, newShipId, oldCenter, newCenter)
+        if (res) {
+            _extensions.forEach { it.onAfterMoveAttachmentPoints(level, pointsToMove, oldShipId, newShipId, oldCenter, newCenter) }
+        }
+        return res
     }
 
     final override fun copyVEntity(level: ServerLevel, mapped: Map<ShipId, ShipId>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): VEntity? {

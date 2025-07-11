@@ -336,7 +336,6 @@ open class VEntityManager: SavedData() {
         return idToDisabledCollisions[shipId]?.map { (k, v) -> Pair(k, v.left) }?.toMap()
     }
 
-    //TODO optimize?
     fun onBlocksMove(level: ServerLevel, oldShip: ServerShip?, newShip: ServerShip?, oldCenter: Vector3ic, newCenter: Vector3ic, blocks: List<BlockPos>) {
         val hasVEntities = if (oldShip != null) { idHasVEntities(oldShip.id) } else { true }
         if (!hasVEntities) {return}
@@ -346,37 +345,67 @@ open class VEntityManager: SavedData() {
         val newId = newShip?.id ?: -1L
 
         val veToData = mutableMapOf<Int, Pair<VEntity, MutableMap<BlockPos, MutableList<Vector3d>>>>()
+        val vEntities = getAllVEntitiesIdOfId(oldId).mapNotNull { getVEntity(it) }
 
-        //TODO for this part convert bpos to set, and check result of getAttachmentPoints against set
-        val visited = blocks.toMutableSet()
-        blocks.forEach { bpos ->
-            val vIds = posToMId.getItemsAt(bpos) ?: return@forEach
-            vIds.forEach { id ->
-                val ve = getVEntity(id) ?: return@forEach
-                val belong = ve.getAttachmentPoints(oldId).filter { it.toBlockPos() == bpos }
-                veToData.getOrPut(id) { Pair(ve, mutableMapOf()) }.second.getOrPut(bpos) { mutableListOf() }.addAll(belong)
-            }
+        var minPos = BlockPos.MutableBlockPos(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
+        var maxPos = BlockPos.MutableBlockPos(Int.MIN_VALUE, Int.MIN_VALUE, Int.MIN_VALUE)
+
+        val movedPositions = mutableSetOf<BlockPos>()
+        blocks.forEach { pos ->
+            if (pos.x < minPos.x) minPos.x = pos.x
+            if (pos.y < minPos.y) minPos.y = pos.y
+            if (pos.z < minPos.z) minPos.z = pos.z
+            if (pos.x > maxPos.x) maxPos.x = pos.x
+            if (pos.y > maxPos.y) maxPos.y = pos.y
+            if (pos.z > maxPos.z) maxPos.z = pos.z
+            movedPositions.add(pos)
+        }
+        // minPos is correct but maxPos needs to be extended by 1 cuz ints
+        // also extending box by 1 cuz i need to capture near points that are not in blocks
+        minPos.setWithOffset(minPos, -1, -1, -1)
+        maxPos.setWithOffset(maxPos, 2, 2, 2)
+
+        val offsets = mutableListOf<Tuple3<Int, Int, Int>>()
+        for (y in -1 .. 1)
+        for (x in -1 .. 1)
+        for (z in -1 .. 1) {
+            if (x == 0 && y == 0 && z == 0) continue
+            offsets.add(Tuple.of(x, y, z))
         }
 
-        //TODO maybe get points, convert to bpos, and check all in radius against set instead?
-        blocks.forEach { bPos ->
-            val mPos = Vector3d(bPos) + 0.5 // moved position
-            val box = AABBd((mPos - 0.501).toJomlVector3d(), (mPos + 0.501).toJomlVector3d())
-            for (y in -1 .. 1)
-            for (x in -1 .. 1)
-            for (z in -1 .. 1) {
-                val bpos = bPos.offset(x, y, z)
-                if (visited.contains(bpos)) continue
-                visited.add(bpos)
-                val vs = posToMId.getItemsAt(bpos) ?: continue
-                if (vs.isEmpty()) continue
+        vEntities.forEach { ve ->
+            ve.getAttachmentPoints(oldId).forEach { pos ->
+                if (   pos.x < minPos.x
+                    || pos.y < minPos.y
+                    || pos.z < minPos.z
+                    || pos.x > maxPos.x
+                    || pos.y > maxPos.y
+                    || pos.z > maxPos.z
+                ) return@forEach
 
-                vs.forEach { id ->
-                    val ve = getVEntity(id) ?: return@forEach
-                    val inside = ve.getAttachmentPoints(oldId).filter { box.containsPoint(it.x, it.y, it.z) }
-                    if (inside.isEmpty()) {return@forEach}
+                val bPos = pos.toBlockPos()
+                if (movedPositions.contains(bPos)) {
+                    veToData.getOrPut(ve.mID) { Pair(ve, mutableMapOf()) }
+                            .second.getOrPut(bPos) { mutableListOf() }
+                            .add(pos)
+                    return@forEach
+                }
 
-                    veToData.getOrPut(id) { Pair(ve, mutableMapOf()) }.second.getOrPut(bpos) { mutableListOf() }.addAll(inside)
+                for ((x, y, z) in offsets) {
+                    val off = bPos.offset(x, y, z)
+                    if (!movedPositions.contains(off)) continue
+                    if (   off.x.toDouble() - 0.001 < pos.x
+                        && off.y.toDouble() - 0.001 < pos.y
+                        && off.z.toDouble() - 0.001 < pos.z
+                        && off.x.toDouble() + 1.001 > pos.x
+                        && off.y.toDouble() + 1.001 > pos.y
+                        && off.z.toDouble() + 1.001 > pos.z
+                    ) {
+                        veToData.getOrPut(ve.mID) { Pair(ve, mutableMapOf()) }
+                                .second.getOrPut(off) { mutableListOf() }
+                                .add(pos)
+                        break
+                    }
                 }
             }
         }

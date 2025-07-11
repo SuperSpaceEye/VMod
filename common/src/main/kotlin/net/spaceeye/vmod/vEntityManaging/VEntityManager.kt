@@ -70,7 +70,7 @@ open class VEntityManager: SavedData() {
     private val groupedToLoadVEntities = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
     private val shipDataStatus = mutableMapOf<ShipId, ShipData>()
 
-    private val posToMId = PosMapList<VEntityId>()
+    private val posToMId: MutableMap<String, PosMapList<VEntityId>> = mutableMapOf()
 
     fun saveActiveVEntities(tag: CompoundTag): CompoundTag {
         val vEntitiesTag = ListTag()
@@ -249,7 +249,7 @@ open class VEntityManager: SavedData() {
                 tickingVEntities.add(entity)
                 physThreadChanges.add(Tuple.of(entity.dimensionId!!, entity, true))
             }
-            entity.getAttachmentPoints().forEach { posToMId.addItemTo(entity.mID, it.toBlockPos()) }
+            entity.getAttachmentPoints().forEach { posToMId.getOrPut(entity.dimensionId!!) { PosMapList() }.addItemTo(entity.mID, it.toBlockPos()) }
 
             setDirty()
 
@@ -269,7 +269,7 @@ open class VEntityManager: SavedData() {
             tickingVEntities.remove(entity)
             physThreadChanges.add(Tuple.of(entity.dimensionId!!, entity, false))
         }
-        entity.getAttachmentPoints().forEach { posToMId.removeItemFromPos(entity.mID, it.toBlockPos()) }
+        entity.getAttachmentPoints().forEach { posToMId.getOrPut(entity.dimensionId!!) { PosMapList() }.removeItemFromPos(entity.mID, it.toBlockPos()) }
 
         setDirty()
         return true
@@ -295,14 +295,14 @@ open class VEntityManager: SavedData() {
                 tickingVEntities.add(entity)
                 physThreadChanges.add(Tuple.of(entity.dimensionId!!, entity, true))
             }
-            entity.getAttachmentPoints().forEach { posToMId.addItemTo(entity.mID, it.toBlockPos()) }
+            entity.getAttachmentPoints().forEach { posToMId.getOrPut(entity.dimensionId!!) { PosMapList() }.addItemTo(entity.mID, it.toBlockPos()) }
 
             setDirty()
             callback(entity.mID)
         }
     }
 
-    fun tryGetIdsOfPosition(pos: BlockPos): List<VEntityId>? = posToMId.getItemsAt(pos)
+    fun tryGetIdsOfPosition(dimensionId: DimensionId, pos: BlockPos): List<VEntityId>? = posToMId.getOrPut(dimensionId) { PosMapList() }.getItemsAt(pos)
 
     fun disableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId, callback: (() -> Unit)? = null): CompletableFuture<Boolean> {
         idToDisabledCollisions.getOrPut(shipId1) { mutableMapOf() }.compute (shipId2) { _, pair-> if (pair == null) { MutablePair(1, mutableListOf(callback)) } else { pair.left++; pair.right.add(callback); pair } }
@@ -340,6 +340,7 @@ open class VEntityManager: SavedData() {
     fun onBlocksMove(level: ServerLevel, oldShip: ServerShip?, newShip: ServerShip?, oldCenter: Vector3ic, newCenter: Vector3ic, blocks: List<BlockPos>) {
         val hasVEntities = if (oldShip != null) { idHasVEntities(oldShip.id) } else { true }
         if (!hasVEntities) {return}
+        val posToMId = posToMId.getOrPut(level.dimensionId) { PosMapList() }
 
         val oldId = oldShip?.id ?: -1L
         val newId = newShip?.id ?: -1L
@@ -394,6 +395,8 @@ open class VEntityManager: SavedData() {
                 vEntity.getAttachmentPoints(newId).forEach { posToMId.addItemTo(id, it.toBlockPos()) }
             }
         }
+
+        setDirty()
     }
 
     companion object {

@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.transformProviders
 
-import net.minecraft.client.Minecraft
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import org.joml.AxisAngle4d
@@ -12,7 +11,6 @@ import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.ClientShipTransformProvider
 import org.valkyrienskies.core.api.ships.properties.ShipTransform
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
-import org.valkyrienskies.mod.common.getShipObjectManagingPos
 
 class RotationAssistTransformProvider(
     var ship1: ClientShip,
@@ -27,7 +25,7 @@ class RotationAssistTransformProvider(
     constructor(placementTransform: PlacementAssistTransformProvider, angle: Ref<Double>):
             this(
                 placementTransform.ship1,
-                Minecraft.getInstance().level.getShipObjectManagingPos(placementTransform.rresult2.blockPosition),
+                placementTransform.rresult2.ship as? ClientShip,
                 placementTransform.spoint1,
                 placementTransform.spoint2,
                 placementTransform.gdir1,

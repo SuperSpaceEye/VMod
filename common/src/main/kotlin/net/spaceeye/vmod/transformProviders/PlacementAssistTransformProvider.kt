@@ -60,7 +60,8 @@ class PlacementAssistTransformProvider(
 
         if (secondResult.state.isAir) {return null}
 
-        var rotation = (secondResult.ship as ClientShip?)?.renderTransform?.rotation?.get(Quaterniond()) ?: Quaterniond()
+        val ship2 = (secondResult.ship as ClientShip?)
+        var rotation = (ship2?.renderTransform?.rotation?.get(Quaterniond()) ?: Quaterniond())
             .mul(getQuatFromDir(gdir2))
             .mul(getQuatFromDir(gdir1))
             .normalize()
@@ -72,9 +73,10 @@ class PlacementAssistTransformProvider(
         // ship transform modifies both position in world AND rotation, but while we don't care about position in world,
         // rotation is incredibly important
 
+        val transform = ship1.renderTransform.rebuild{this.rotation(rotation)}
         val point = rpoint2 - (
-            posShipToWorldRender(ship1, spoint1, ship1.renderTransform.rebuild{this.rotation(rotation)}) -
-            posShipToWorldRender(ship1, Vector3d(ship1.renderTransform.positionInShip), ship1.renderTransform.rebuild{this.rotation(rotation)})
+            posShipToWorldRender(null, spoint1, transform) -
+            posShipToWorldRender(null, Vector3d(ship1.renderTransform.positionInShip), transform)
         )
 
         return ShipTransformImpl.create(

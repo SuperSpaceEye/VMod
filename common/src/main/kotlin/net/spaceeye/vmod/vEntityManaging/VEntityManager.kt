@@ -57,7 +57,7 @@ open class VEntityManager: SavedData() {
     private val groupedToLoadVEntities = mutableMapOf<ShipId, MutableList<LoadingGroup>>()
     private val shipDataStatus = mutableMapOf<ShipId, ShipData>()
 
-    private val posToMId = PosMapList<VEntityId>()
+    private val posToMId: MutableMap<String, PosMapList<VEntityId>> = mutableMapOf()
 
     fun saveActiveVEntities(tag: CompoundTag): CompoundTag {
         val dimensionIds = dimensionToGroundBodyIdImmutable!!.values
@@ -254,7 +254,7 @@ open class VEntityManager: SavedData() {
             entity.attachedToShips(dimensionToGroundBodyIdImmutable!!.values).forEach { shipToVEntity.computeIfAbsent(it) { mutableListOf() }.add(entity) }
             idToVEntity[entity.mID] = entity
             if (entity is Tickable) { tickingVEntities.add(entity) }
-            entity.getAttachmentPoints().forEach { posToMId.addItemTo(entity.mID, it.toBlockPos()) }
+            entity.getAttachmentPoints().forEach { posToMId.getOrPut(entity.dimensionId!!) { PosMapList() }.addItemTo(entity.mID, it.toBlockPos()) }
 
             setDirty()
 
@@ -271,7 +271,7 @@ open class VEntityManager: SavedData() {
         entity.onDeleteVEntity(level)
         idToVEntity.remove(id)
         if (entity is Tickable) { tickingVEntities.remove(entity) }
-        entity.getAttachmentPoints().forEach { posToMId.removeItemFromPos(entity.mID, it.toBlockPos()) }
+        entity.getAttachmentPoints().forEach { posToMId.getOrPut(entity.dimensionId!!) { PosMapList() }.removeItemFromPos(entity.mID, it.toBlockPos()) }
 
         setDirty()
         return true
@@ -292,14 +292,14 @@ open class VEntityManager: SavedData() {
             if (idToVEntity.contains(entity.mID)) { ELOG("OVERWRITING AN ALREADY EXISTING VEntity IN makeVEntityWithId. SOMETHING PROBABLY WENT WRONG AS THIS SHOULDN'T HAPPEN.") }
             idToVEntity[entity.mID] = entity
             if (entity is Tickable) { tickingVEntities.add(entity) }
-            entity.getAttachmentPoints().forEach { posToMId.addItemTo(entity.mID, it.toBlockPos()) }
+            entity.getAttachmentPoints().forEach { posToMId.getOrPut(entity.dimensionId!!) { PosMapList() }.addItemTo(entity.mID, it.toBlockPos()) }
 
             setDirty()
             callback(entity.mID)
         }
     }
 
-    fun tryGetIdsOfPosition(pos: BlockPos): List<VEntityId>? = posToMId.getItemsAt(pos)
+    fun tryGetIdsOfPosition(dimensionId: DimensionId, pos: BlockPos): List<VEntityId>? = posToMId.getOrPut(dimensionId) { PosMapList() }.getItemsAt(pos)
 
     fun disableCollisionBetween(level: ServerLevel, shipId1: ShipId, shipId2: ShipId, callback: (() -> Unit)? = null): Boolean {
         if (!level.shipObjectWorld.disableCollisionBetweenBodies(shipId1, shipId2)) { return false }
@@ -333,47 +333,6 @@ open class VEntityManager: SavedData() {
 
     fun getAllDisabledCollisionsOfId(shipId: ShipId): Map<ShipId, Int>? {
         return idToDisabledCollisions[shipId]?.map { (k, v) -> Pair(k, v.left) }?.toMap()
-    }
-
-    //TODO redo when ship splitting actually happens
-    private fun shipWasSplitEvent(
-        originalShip: ServerShip,
-        newShip: ServerShip,
-        centerBlock: BlockPos,
-        blocks: DenseBlockPosSet) {
-        val constraints = getAllVEntitiesIdOfId(originalShip.id)
-        if (constraints.isEmpty()) { return }
-
-        val shipChunkX = newShip.chunkClaim.xMiddle
-        val shipChunkZ = newShip.chunkClaim.zMiddle
-
-        val worldChunkX = centerBlock.x shr 4
-        val worldChunkZ = centerBlock.z shr 4
-
-        val deltaX = worldChunkX - shipChunkX
-        val deltaZ = worldChunkZ - shipChunkZ
-
-        val dimensionIds = level.shipObjectWorld.dimensionToGroundBodyIdImmutable.values
-
-        blocks.forEachChunk { chunkX, chunkY, chunkZ, chunk ->
-            val sourceChunk = level!!.getChunk(chunkX, chunkZ)
-            val destChunk = level!!.getChunk(chunkX - deltaX, chunkZ - deltaZ)
-
-            chunk.forEach { x, y, z ->
-                val fromPos = BlockPos((sourceChunk.pos.x shl 4) + x, (chunkY shl 4) + y, (sourceChunk.pos.z shl 4) + z)
-                val toPos = BlockPos((destChunk.pos.x shl 4) + x, (chunkY shl 4) + y, (destChunk.pos.z shl 4) + z)
-
-                for (id in posToMId.getItemsAt(fromPos) ?: return@forEach) {
-                    val constraint = getVEntity(id) ?: continue
-
-                    constraint.attachedToShips(dimensionIds).forEach { shipToVEntity[it]?.remove(constraint) }
-                    constraint.moveShipyardPosition(level!!, fromPos, toPos, newShip.id)
-                    constraint.attachedToShips(dimensionIds).forEach { shipToVEntity.getOrPut(it) { mutableListOf() }.add(constraint) }
-
-                    setDirty()
-                }
-            }
-        }
     }
 
     companion object {
@@ -461,11 +420,6 @@ open class VEntityManager: SavedData() {
                 }
                 instance!!.tickingVEntities.removeAll(toRemove)
                 setDirty()
-            }
-
-            AVSEvents.splitShip.on {
-                it, handler ->
-                instance?.shipWasSplitEvent(it.originalShip, it.newShip, it.centerBlock, it.blocks)
             }
         }
     }

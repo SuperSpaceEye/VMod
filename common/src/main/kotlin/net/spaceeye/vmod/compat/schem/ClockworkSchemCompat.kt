@@ -34,13 +34,13 @@ class ClockworkSchemCompat(): SchemCompatItem {
         tag.putByteArray("vmod schem compat", getMapper().writeValueAsBytes(data))
     }
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, tagTransformer: (((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
         if (state.block != ClockworkBlocks.PHYS_BEARING.get()) {return}
-        delayLoading(true) { tag ->
+        tagTransformer { tag ->
             val id = tag!!.getLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID)
-            val mapped = oldToNewId[id] ?: return@delayLoading tag
-            val ship = level.shipObjectWorld.loadedShips.getById(mapped) ?: return@delayLoading tag
-            if (!tag.contains("vmod schem compat")) {return@delayLoading tag}
+            val mapped = oldToNewId[id] ?: return@tagTransformer tag
+            val ship = level.shipObjectWorld.loadedShips.getById(mapped) ?: return@tagTransformer tag
+            if (!tag.contains("vmod schem compat")) {return@tagTransformer tag}
             val data = getMapper().readValue(tag.getByteArray("vmod schem compat"), PhysBearingData::class.java)
             val beShipId = tag.getLong("vmod schem compat bearingShipId")
 

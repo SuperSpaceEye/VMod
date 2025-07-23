@@ -30,6 +30,7 @@ object ToolgunModes: Registry<BaseMode>() {
         if (Platform.isDevelopmentEnvironment()) {
             register(TestMode::class)
             register(FunnyMode::class)
+            register(IdkMode::class)
         }
 
         ToolgunExtensions

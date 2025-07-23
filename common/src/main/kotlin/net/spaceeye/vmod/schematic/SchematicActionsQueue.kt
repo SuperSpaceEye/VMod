@@ -17,6 +17,7 @@ import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.EntityBlock
+import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.LevelChunk
 import net.minecraft.world.phys.AABB
 import net.spaceeye.valkyrien_ship_schematics.SchematicRegistry
@@ -31,18 +32,17 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
+import net.spaceeye.vmod.compat.schem.ExternalVSchemCompatProvider
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.utils.BlockPos
 import net.spaceeye.vmod.events.SessionEvents
-import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.translate.ONE_OF_THE_SHIPS_IS_TOO_TALL
-import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_COPYING
-import net.spaceeye.vmod.translate.SCHEMATIC_HAD_ERROR_DURING_PLACING
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
+import org.apache.logging.log4j.Logger
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -60,6 +60,40 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
 
 object SchematicActionsQueue: ServerClosable() {
+    data class PasteSchematicSettings(
+        var loadContainers: Boolean = true,
+        var loadEntities: Boolean = true,
+
+        var allowChunkPlacementInterruption: Boolean = true,
+        var allowUpdateInterruption: Boolean = true,
+
+        var blacklistMode: Boolean = true,
+        var nbtLoadingBlacklist: Set<Block> = emptySet(),
+        var nbtLoadingWhitelist: Set<Block> = emptySet(),
+
+        //TODO do i really need it?
+        var statePlacedCallback: ((pos: BlockPos, state: BlockState) -> Unit)? = null,
+        var externalVSchemSupportProvider: ExternalVSchemCompatProvider = SchemCompatObj,
+
+        var logger: Logger? = null,
+        var nonfatalErrorsHandler: (numErrors: Int, schematic: IShipSchematicDataV1, player: ServerPlayer?) -> Unit = {_, _, _->}
+    )
+
+    data class CopySchematicSettings(
+        var saveContainers: Boolean = true,
+        var saveEntities: Boolean = true,
+
+        var allowChunkCopyingInterruption: Boolean = true,
+
+        var blacklistMode: Boolean = true,
+        var nbtSavingBlacklist: Set<Block> = emptySet(),
+        var nbtSavingWhitelist: Set<Block> = emptySet(),
+
+        var externalVSchemSupportProvider: ExternalVSchemCompatProvider = SchemCompatObj,
+
+        var logger: Logger? = null
+    )
+
     init {
         //why here? idk
         SchematicRegistry.register(VModShipSchematicV2::class)
@@ -79,7 +113,14 @@ object SchematicActionsQueue: ServerClosable() {
 
     fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
 
-    fun queueShipsCreationEvent(level: ServerLevel, player: ServerPlayer?, uuid: UUID, ships: List<Pair<() -> ServerShip, Long>>, schematicV1: IShipSchematicDataV1, settings: PasteSchematicSettings, postPlacementFn: (ships: List<Pair<Long, ServerShip>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit) {
+    fun queueShipsCreationEvent(
+        level: ServerLevel,
+        player: ServerPlayer?,
+        uuid: UUID,
+        ships: List<Pair<() -> ServerShip, Long>>,
+        schematicV1: IShipSchematicDataV1,
+        settings: PasteSchematicSettings,
+        postPlacementFn: (ships: List<Pair<Long, ServerShip>>, centerPositions: Map<ShipId, Pair<JVector3d, JVector3d>>, entityCreationFn: () -> Unit) -> Unit) {
         placeData[uuid] = SchemPlacementItem(level, player, schematicV1, ships, postPlacementFn, settings)
     }
 
@@ -126,6 +167,7 @@ object SchematicActionsQueue: ServerClosable() {
                 level.getChunkAt(pos).also {
                     it.setBlockState(pos, state, false)
                     if (!blacklisted) it.removeBlockEntity(pos)
+                    settings.statePlacedCallback?.invoke(pos, state)
                 }
                 if (!blacklisted && it.extraDataId != -1) {
                     val tag = flatTagData[it.extraDataId]
@@ -134,7 +176,7 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.putInt("z", pos.z)
 
                     var callbacks = mutableListOf<((CompoundTag?) -> CompoundTag?)>()
-                    val cb = SchemCompatObj.onPaste(level, oldToNewId, centerPositions, tag, pos, state) { _, fn -> fn?.let{callbacks.add(it)} }
+                    val cb = settings.externalVSchemSupportProvider.onPaste(level, oldToNewId, centerPositions, tag, pos, state) {fn -> fn?.let{callbacks.add(it)} }
 
                     delayedBlockEntityLoading.add(pos.x, pos.y, pos.z) {
                         //refreshing block entities as a long time may pass between its creation and fn call
@@ -146,7 +188,7 @@ object SchematicActionsQueue: ServerClosable() {
                         var tag = if (block is ICopyableBlock) {block.onPaste(level, pos, state, oldToNewId, centerPositions, tag) ?: tag} else tag
                         callbacks.forEach { tag = it(tag) ?: tag }
 
-                        if (be is Container? && !settings.loadContainers) { return@add }
+                        if (be is Container && !settings.loadContainers) { return@add }
 
                         be?.load(tag)
                         cb?.let { afterPasteCallbacks.add { it(be) } }
@@ -288,7 +330,7 @@ object SchematicActionsQueue: ServerClosable() {
                     tag.put("Pos", posTag)
                     tag.remove("UUID")
 
-                    SchemCompatObj.onEntityPaste(level, oldToNewId, tag, Vector3d(newPos), shipCenter)
+                    settings.externalVSchemSupportProvider.onEntityPaste(level, oldToNewId, tag, Vector3d(newPos), shipCenter)
                     val entity = EntityType.create(tag, level).get()
                     entity.moveTo(newPos.x, newPos.y, newPos.z)
                     if (entity is Mob) {
@@ -311,8 +353,9 @@ object SchematicActionsQueue: ServerClosable() {
         ships: List<ServerShip>,
         schematicV1: IShipSchematicDataV1,
         padBoundary: Boolean,
+        settings: CopySchematicSettings,
         postPlacementFn: () -> Unit) {
-        saveData[uuid] = SchemSaveItem(level, player, schematicV1, ships, postPlacementFn, padBoundary)
+        saveData[uuid] = SchemSaveItem(level, player, schematicV1, ships, postPlacementFn, padBoundary, settings)
     }
 
     private class SchemSaveItem(
@@ -321,7 +364,8 @@ object SchematicActionsQueue: ServerClosable() {
         val schematicV1: IShipSchematicDataV1,
         val ships: List<ServerShip>,
         val postCopyFn: () -> Unit,
-        val padBoundary: Boolean
+        val padBoundary: Boolean,
+        val settings: CopySchematicSettings
     ) {
         var centerPositions: Map<Long, JVector3d>? = null
 
@@ -356,15 +400,12 @@ object SchematicActionsQueue: ServerClosable() {
                 var tag: CompoundTag? = if (block is ICopyableBlock) {block.onCopy(level, cpos, state, be, ships, centerPositions!!)} else {null}
                 if (tag == null) {tag = be?.saveWithFullMetadata()}
 
-                val fed = if (tag == null) {-1} else {
+                val cancel = settings.externalVSchemSupportProvider.onCopy(level, bePos, state, ships, centerPositions!!, be, tag)
+                if (cancel) { continue }
+
+                val fed = if (tag == null || (be is Container && !settings.saveContainers)) {-1} else {
                     flatExtraData.add(tag)
                     flatExtraData.size - 1
-                }
-
-                val cancel = SchemCompatObj.onCopy(level, bePos, state, ships, centerPositions!!, be, tag)
-                if (cancel) {
-                    if (fed != -1) { flatExtraData.removeLast() }
-                    continue
                 }
 
                 val id = blockPalette.toId(state)
@@ -436,7 +477,7 @@ object SchematicActionsQueue: ServerClosable() {
 
                         saveChunk(level, level.getChunk(cx, cz), ships, data, fed, blockPalette, shipCenter, cx, cz, minX, maxX, minZ, maxZ, b.minY, b.maxY)
                         cz++
-                        if (getNow_ms() - start > timeout) { return false }
+                        if (getNow_ms() - start > timeout && settings.allowChunkCopyingInterruption) { return false }
                     }
                     cz = minCz
                     cx++
@@ -447,7 +488,7 @@ object SchematicActionsQueue: ServerClosable() {
             }
             currentShip = 0
             val savedEntities = mutableSetOf<UUID>()
-            while (currentShip < ships.size) {
+            if (settings.saveEntities) while (currentShip < ships.size) {
                 val ship = ships[currentShip]
                 val aabb = ship.shipAABB!!.toAABBd(AABBd())
                 val worldEntities = level.getEntitiesOfClass(Entity::class.java, AABB(aabb.minX(), aabb.minY(), aabb.minZ(), aabb.maxX(), aabb.maxY(), aabb.maxZ())) { it !is Player }
@@ -472,7 +513,7 @@ object SchematicActionsQueue: ServerClosable() {
 
                     EntityItem(pos.toJomlVector3d(), CompoundTag().also {
                         tag -> it.save(tag)
-                        SchemCompatObj.onEntityCopy(level, it, tag, pos, shipCenter)
+                        settings.externalVSchemSupportProvider.onEntityCopy(level, it, tag, pos, shipCenter)
                     })
                 }
 
@@ -507,7 +548,7 @@ object SchematicActionsQueue: ServerClosable() {
                 }
 
                 val item = placeData[placeLastKeys[placeLastPosition]]
-                val result = try {item?.place(start, timeout)} catch (e: Exception) { SELOG("Failed to place item with exception:\n${e.stackTraceToString()}", item?.player, SCHEMATIC_HAD_ERROR_DURING_PLACING); null}
+                val result = try {item?.place(start, timeout)} catch (e: Exception) { item?.settings?.logger?.error("Failed to place item with exception:\n${e.stackTraceToString()}"); null}
                 if (result == null) {
                     placeData.remove(placeLastKeys[placeLastPosition])
                 } else if (result) {
@@ -539,7 +580,7 @@ object SchematicActionsQueue: ServerClosable() {
                 }
 
                 val item = saveData[saveLastKeys[saveLastPosition]]
-                val result = try {item?.save(start, timeout)} catch (e: Exception) {SELOG("Failed to copy item with exception:\n${e.stackTraceToString()}", item?.player, SCHEMATIC_HAD_ERROR_DURING_COPYING); null}
+                val result = try {item?.save(start, timeout)} catch (e: Exception) {item?.settings?.logger?.error("Failed to copy item with exception:\n${e.stackTraceToString()}"); null}
                 if (result == null || result) {
                     item!!.postCopyFn()
                     saveData.remove(saveLastKeys[saveLastPosition])

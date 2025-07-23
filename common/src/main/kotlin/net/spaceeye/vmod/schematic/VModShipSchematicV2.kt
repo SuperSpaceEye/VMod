@@ -4,7 +4,6 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.level.block.Block
 import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.*
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
@@ -58,21 +57,6 @@ class VModShipSchematicV2(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
     override var info: IShipSchematicInfo? = null
 //    override var entityData: MutableMap<ShipId, List<EntityItem>> = mutableMapOf()
 }
-
-data class PasteSchematicSettings(
-    var loadContainers: Boolean = true,
-    var loadEntities: Boolean = true,
-
-    var allowChunkPlacementInterruption: Boolean = true,
-    var allowUpdateInterruption: Boolean = true,
-
-    var blacklistMode: Boolean = true,
-    var nbtLoadingBlacklist: Set<Block> = emptySet(),
-    var nbtLoadingWhitelist: Set<Block> = emptySet(),
-
-    var logger: Logger? = null,
-    var nonfatalErrorsHandler: (numErrors: Int, schematic: IShipSchematicDataV1, player: ServerPlayer?) -> Unit = {_, _, _->}
-)
 
 @OptIn(VsBeta::class)
 fun IShipSchematicDataV1.placeAt(
@@ -265,7 +249,9 @@ fun IShipSchematicDataV1.verifyBlockDataIsValid(
     return true
 }
 
-fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
+fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uuid: UUID, originShip: ServerShip, settings: CopySchematicSettings = CopySchematicSettings(
+    logger = VM.logger
+), postSaveFn: () -> Unit): Boolean {
     val traversed = traverseGetAllTouchingShips(level, originShip.id)
 
     // this is needed so that schem doesn't try copying phys entities
@@ -285,7 +271,7 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uui
     (this as IShipSchematic).saveShipData(ships, originShip)
     this.saveAttachments(ships, level, centerPositions) // should always be saved last
     // copy ship blocks separately
-    SchematicActionsQueue.queueShipsSavingEvent(level, player, uuid, ships, this, true, postSaveFn)
+    SchematicActionsQueue.queueShipsSavingEvent(level, player, uuid, ships, this, true, settings, postSaveFn)
     return true
 }
 

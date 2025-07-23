@@ -61,6 +61,7 @@ class PlacementAssistTransformProvider(
         if (secondResult.state.isAir) {return null}
         val ship2 = (secondResult.ship as ClientShip?)
 
+        val ship2 = (secondResult.ship as ClientShip?)
         var rotation = (ship2?.renderTransform?.rotation?.get(Quaterniond()) ?: Quaterniond())
             .mul(getQuatFromDir(gdir2))
             .mul(getQuatFromDir(gdir1))

@@ -13,10 +13,10 @@ import org.valkyrienskies.core.api.ships.ServerShip
 class CreateKineticsCompat: SchemCompatItem {
     override fun onCopy(level: ServerLevel, pos: BlockPos, state: BlockState, ships: List<ServerShip>, centerPositions: Map<Long, JVector3d>, be: BlockEntity?, tag: CompoundTag?, cancelBlockCopying: () -> Unit) {}
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((BlockEntity?) -> Unit) -> Unit) {
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, tagTransformer: (((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((BlockEntity?) -> Unit) -> Unit) {
         if (state.block !is IBE<*>) {return}
-        delayLoading(false) { tag ->
-            level.getBlockEntity(pos) as? KineticBlockEntity ?: return@delayLoading tag
+        tagTransformer { tag ->
+            level.getBlockEntity(pos) as? KineticBlockEntity ?: return@tagTransformer tag
             tag?.remove("Speed")
             tag?.remove("Sequence")
             tag?.remove("Source")

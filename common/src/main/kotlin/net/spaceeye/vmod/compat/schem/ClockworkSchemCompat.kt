@@ -35,9 +35,7 @@ class ClockworkSchemCompat(): SchemCompatItem {
 //        tag.putByteArray("vmod schem compat", getMapper().writeValueAsBytes(data))
     }
 
-    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, delayLoading: (delay: Boolean, ((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
-    //TODO
-
+    override fun onPaste(level: ServerLevel, oldToNewId: Map<Long, Long>, centerPositions: Map<Long, Pair<JVector3d, JVector3d>>, tag: CompoundTag, pos: BlockPos, state: BlockState, tagTransformer: (((CompoundTag?) -> CompoundTag?)?) -> Unit, afterPasteCallbackSetter: ((be: BlockEntity?) -> Unit) -> Unit) {
     //        if (state.block != ClockworkBlocks.PHYS_BEARING.get()) {return}
 //        delayLoading(true) { tag ->
 //            val id = tag!!.getLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID)

@@ -15,6 +15,8 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.SchemSerializeDataV1Impl
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.schematic.SchematicActionsQueue.CopySchematicSettings
+import net.spaceeye.vmod.schematic.SchematicActionsQueue.PasteSchematicSettings
 import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
@@ -197,9 +199,8 @@ private fun loadAttachments(level: ServerLevel, ships: Map<Long, ServerShip>, ce
         val loadedShip = level.shipObjectWorld.loadedShips.getById(ships[oldId]!!.id) ?: return@forEach
         attachments.forEach {
             if (it == null) return@forEach
-            //TODO remove this after 2.5.0. for some god forsaken reason VS allows you to add multiple separate attachments to one ship
             loadedShip.removeAttachment(it.javaClass)
-            loadedShip.setAttachment(it.javaClass)
+            loadedShip.setAttachment(it)
             it.onPaste({level}, loadedShip, ships, centerPositions)
         }
     }

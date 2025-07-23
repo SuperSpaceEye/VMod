@@ -113,11 +113,9 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
                 maxForceTorque, distance, distance, stiffness = stiffness, damping = damping
             )
         } else {
-            val rot1 = getHingeRotation(sDir1.normalize())
-            val rot2 = getHingeRotation(sDir2.normalize())
             VSD6Joint(
-                shipId1, VSJointPose(sPos1.toJomlVector3d(), rot1),
-                shipId2, VSJointPose(sPos2.toJomlVector3d(), rot2),
+                shipId1, VSJointPose(sPos1.toJomlVector3d(), getHingeRotation(sDir1.normalize())),
+                shipId2, VSJointPose(sPos2.toJomlVector3d(), getHingeRotation(sDir2.normalize())),
                 motions = EnumMap(mapOf(
                     Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.LIMITED),
 
@@ -137,11 +135,9 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         //TODO do i want limits to rotation constraint?
         val rotationConstraint = when(connectionMode) {
             ConnectionModes.FIXED_ORIENTATION -> {
-                val rot1 = sRot1.invert(Quaterniond())
-                val rot2 = sRot2.invert(Quaterniond())
                 VSD6Joint(
-                    shipId1, VSJointPose(sPos1.toJomlVector3d(), rot1),
-                    shipId2, VSJointPose(sPos2.toJomlVector3d(), rot2),
+                    shipId1, VSJointPose(sPos1.toJomlVector3d(), sRot1.invert(Quaterniond())),
+                    shipId2, VSJointPose(sPos2.toJomlVector3d(), sRot2.invert(Quaterniond())),
                     motions = EnumMap(mapOf(
                         Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
                         Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),
@@ -151,11 +147,9 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
                 )
             }
             ConnectionModes.HINGE_ORIENTATION -> {
-                val rot1 = getHingeRotation(sDir1)
-                val rot2 = getHingeRotation(sDir2)
                 VSD6Joint(
-                    shipId1, VSJointPose(sPos1.toJomlVector3d(), rot1),
-                    shipId2, VSJointPose(sPos2.toJomlVector3d(), rot2),
+                    shipId1, VSJointPose(sPos1.toJomlVector3d(), getHingeRotation(sDir1)),
+                    shipId2, VSJointPose(sPos2.toJomlVector3d(), getHingeRotation(sDir2)),
                     motions = EnumMap(mapOf(
                         Pair(VSD6Joint.D6Axis.X, VSD6Joint.D6Motion.FREE),
                         Pair(VSD6Joint.D6Axis.Y, VSD6Joint.D6Motion.FREE),

@@ -25,7 +25,7 @@ interface RopeGUI: GUIBuilder, EGUIBuilder {
 
         makeTextEntry(MAX_FORCE.get(),      ::maxForce,      offset, offset, parentWindow, limits.maxForce)
         makeTextEntry(STIFFNESS.get(),      ::stiffness,     offset, offset, parentWindow, limits.stiffness)
-//        makeTextEntry(DAMPING.get(),        ::damping,       offset, offset, parentWindow, limits.damping)
+        makeTextEntry(DAMPING.get(),        ::damping,       offset, offset, parentWindow, limits.damping)
         makeTextEntry(FIXED_DISTANCE.get(), ::fixedDistance, offset, offset, parentWindow, limits.fixedDistance)
         makeTextEntry(WIDTH.get(),          ::width,         offset, offset, parentWindow, ClientLimits.instance.ropeRendererWidth)
         makeCheckBox(FULLBRIGHT.get(),      ::fullbright,    offset, offset, parentWindow)

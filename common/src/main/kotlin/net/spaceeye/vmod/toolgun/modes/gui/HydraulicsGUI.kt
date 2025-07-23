@@ -32,7 +32,7 @@ interface HydraulicsGUI: GUIBuilder, EGUIBuilder {
 
         makeTextEntry(MAX_FORCE.get(), ::maxForce, offset, offset, parentWindow, limits.maxForce)
         makeTextEntry(STIFFNESS.get(), ::stiffness, offset, offset, parentWindow, limits.stiffness)
-//        makeTextEntry(DAMPING.get(), ::damping, offset, offset, parentWindow, limits.damping)
+        makeTextEntry(DAMPING.get(), ::damping, offset, offset, parentWindow, limits.damping)
 
         makeTextEntry(FIXED_DISTANCE.get(), ::fixedMinLength, offset, offset, parentWindow)
 

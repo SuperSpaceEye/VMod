@@ -24,6 +24,7 @@ import net.spaceeye.vmod.physgun.ServerPhysgunState
 import net.spaceeye.vmod.rendering.RenderingTypes
 import net.spaceeye.vmod.rendering.initRenderingData
 import net.spaceeye.vmod.schematic.SchematicActionsQueue
+import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.shipAttachments.VMAttachments
 import net.spaceeye.vmod.toolgun.*
 import net.spaceeye.vmod.toolgun.clientSettings.ClientSettingsTypes
@@ -33,6 +34,7 @@ import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
 import net.spaceeye.vmod.utils.vs.MyGameToPhysicsAdapter
+import net.spaceeye.vmod.vsStuff.PhysRaycastingScheduler
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -62,11 +64,26 @@ object VM {
         ServerToolGunState
         ServerPhysgunState
         SchemCompatObj
+        PhysRaycastingScheduler
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientToolGunState
             ClientPhysgunState
             ClientSettingsTypes
         } }
+
+        vsApi.shipLoadEvent.on { val ship = it.ship
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+            GravityController.getOrCreate(ship)
+        }
 
         VMBlocks.register()
         VMBlockEntities.register()

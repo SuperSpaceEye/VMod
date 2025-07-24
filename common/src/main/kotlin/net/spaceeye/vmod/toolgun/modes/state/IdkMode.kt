@@ -14,8 +14,6 @@ import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.toolgun.modes.gui.IdkModeGUI
-import net.spaceeye.vmod.toolgun.modes.util.SimpleHUD
-import net.spaceeye.vmod.translate.makeFake
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Tuple

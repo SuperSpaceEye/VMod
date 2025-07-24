@@ -64,7 +64,7 @@ object VM {
         ServerToolGunState
         ServerPhysgunState
         SchemCompatObj
-        PhysRaycastingScheduler
+//        PhysRaycastingScheduler //TODO
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientToolGunState
             ClientPhysgunState

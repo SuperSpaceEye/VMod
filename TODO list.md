@@ -2,9 +2,6 @@
 
 * Rework permission level and player roles
 
-by talking_snow
-* someone should make a parody of eureka where the ship assembly code makes every individual block  its own ship instead of what it normally does so everything immediatly falls apart
-
 # Maybe
 
 * Mode to change COM (set mass of all blocks to 0 and set mass of target block to total mass)
@@ -13,6 +10,7 @@ by talking_snow
 
 # Do Eventually
 
+* Make vmod stuff work with phys entities (making constraints, grabbing them, etc)
 * Add a way for addons to add their own client/server settings
 
 # Gravity Changer

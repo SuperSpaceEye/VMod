@@ -188,6 +188,7 @@ object ClientToolGunState : ClientClosable() {
     internal fun init() {
         gui = MainToolgunGUIWindow()
         externalWindows.forEach { gui.addWindow(it.first, it.second) }
+        gui.initGUI()
     }
 
     override fun close() {

@@ -15,7 +15,7 @@ import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
 class MainToolgunGUIWindow(
-    drawTopButtons: Boolean = true
+    val drawTopButtons: Boolean = true
 ): WindowScreen(ElementaVersion.V8) {
     class ButtonsXConstraint(
         val mainWindow: UIBlock,
@@ -114,7 +114,7 @@ class MainToolgunGUIWindow(
 
     }
 
-    init {
+    fun initGUI() {
         currentWindow = ToolgunGUI(mainWindow.constrain())
         if (drawTopButtons) {
             buildButtons()

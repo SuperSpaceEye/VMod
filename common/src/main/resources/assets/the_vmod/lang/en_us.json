@@ -27,7 +27,7 @@
   "vmod.gui.tabs.main": "Main",
   "vmod.gui.tabs.client_settings": "Client Settings",
   "vmod.gui.tabs.server_settings": "Server Settings",
-  "vmod.gui.tabs.setting_presets": "Setting Presets",
+  "vmod.gui.tabs.settings_presets": "Settings Presets",
 
   "vmod.gui.setting.max_force": "Max Force",
   "vmod.gui.setting.fixed_distance": "Fixed Distance",

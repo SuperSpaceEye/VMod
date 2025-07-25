@@ -14,6 +14,7 @@ import net.spaceeye.vmod.vEntityManaging.VEntityTypes
 import net.spaceeye.vmod.vEntityManaging.VEExtensionTypes
 import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.events.SessionEvents
+import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.SimpleMessagerNetworking
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.MessageTypes
@@ -62,6 +63,7 @@ object VM {
         SchemCompatObj
         VSMasslessShipProcessor
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+            ScreenWindow
             ClientToolGunState
             ClientPhysgunState
             ClientSettingsTypes
@@ -130,7 +132,6 @@ object VM {
         }
         }}
 
-        ToolgunItem.makeEvents()
         PhysgunItem.makeEvents()
     }
 }

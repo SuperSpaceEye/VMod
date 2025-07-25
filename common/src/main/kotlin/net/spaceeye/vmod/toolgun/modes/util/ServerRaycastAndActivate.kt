@@ -7,7 +7,6 @@ import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.rendering.Effects
-import net.spaceeye.vmod.toolgun.PlayerToolgunState
 import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState.verifyPlayerAccessLevel
@@ -25,18 +24,19 @@ fun <T: BaseMode> BaseMode.serverTryActivate(
     supplier: Supplier<BaseMode>,
     fn: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit
 ) = verifyPlayerAccessLevel(player as ServerPlayer, clazz as Class<BaseMode>) {
-    var serverMode = ServerToolGunState.playersStates.getOrPut(player.uuid) { PlayerToolgunState(supplier.get()) }
-    if (!clazz.isInstance(serverMode.mode)) { serverMode = PlayerToolgunState(supplier.get()); ServerToolGunState.playersStates[player.uuid] = serverMode }
+    var serverMode = ServerToolGunState.playersStates.getOrPut(player.uuid) { supplier.get() }
+    if (!clazz.isInstance(serverMode)) { serverMode = supplier.get(); ServerToolGunState.playersStates[player.uuid] = serverMode }
 
     try {
-        serverMode.mode.init(BaseNetworking.EnvType.Server)
-        serverMode.mode.deserialize(buf)
-        serverMode.mode.serverSideVerifyLimits()
+        //TODO activate only one time?
+        serverMode.init(BaseNetworking.EnvType.Server)
+        serverMode.deserialize(buf)
+        serverMode.serverSideVerifyLimits()
 
         SessionEvents.serverAfterTick.on { _, unsubscribe ->
             unsubscribe()
             try {
-                fn(serverMode.mode as T, player.level as ServerLevel, player)
+                fn(serverMode as T, player.level as ServerLevel, player)
             } catch (e: Exception) {
                 SELOG("Failed to activate function of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}", player, TOOLGUN_MODE_ACTIVATION_HAS_FAILED)
             }

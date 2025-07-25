@@ -7,6 +7,7 @@ import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.events.PersistentEvents
+import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ScreenWindowAddition
 import net.spaceeye.vmod.guiElements.ScrollMenu
 import net.spaceeye.vmod.toolgun.ClientToolGunState
@@ -62,7 +63,7 @@ object PresetsAddition: ScreenWindowAddition {
                     fromJsonStr(jsonStr, items)
                 } catch (e: Exception) {
                     ELOG(e.stackTraceToString())
-                    ClientToolGunState.addHUDError(SOMETHING_WENT_WRONG.get())
+                    ScreenWindow.addHUDError(SOMETHING_WENT_WRONG.get())
                 }
             }
 

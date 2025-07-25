@@ -67,8 +67,7 @@ class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
             try {
                 File("${filename}.json").canonicalPath
             } catch (e: Exception) {
-                ClientToolGunState.closeGUI()
-                ClientToolGunState.addHUDError(INVALID_FILENAME.get())
+                ClientToolGunState.closeWithError(INVALID_FILENAME.get())
                 return@Button
             }
 
@@ -81,8 +80,7 @@ class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
             try {
                 Files.writeString(Paths.get("VMod-Presets/${obj::class.simpleName}/${filename}.json"), json)
             } catch (e: Exception) {
-                ClientToolGunState.closeGUI()
-                ClientToolGunState.addHUDError(FAILED_TO_MAKE_PRESET.get())
+                ClientToolGunState.closeWithError(FAILED_TO_MAKE_PRESET.get())
             }
         }.constrain {
             x = 2.pixels()
@@ -200,8 +198,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
                     fromJsonStr(jsonStr, items)
                 } catch (e: Exception) {
                     ELOG(e.stackTraceToString())
-                    ClientToolGunState.closeGUI()
-                    ClientToolGunState.addHUDError(SOMETHING_WENT_WRONG.get())
+                    ClientToolGunState.closeWithError(SOMETHING_WENT_WRONG.get())
                 }
             } constrain {
                 x = SiblingConstraint(2f) + 1.pixels

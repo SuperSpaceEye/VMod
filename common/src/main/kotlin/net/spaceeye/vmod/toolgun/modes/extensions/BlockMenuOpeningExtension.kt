@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.toolgun.modes.extensions
 
 import net.minecraft.network.chat.Component
+import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
@@ -23,7 +24,7 @@ class BlockMenuOpeningExtension<T: ExtendableToolgunMode>(val failMsg: Component
         if (!keyPressed) {return false}
 
         val block = predicate(inst as T)
-        if (block && failMsg != null) { ClientToolGunState.addHUDError(failMsg.get()) }
+        if (block && failMsg != null) { ScreenWindow.addHUDError(failMsg.get()) }
         return block
     }
 }

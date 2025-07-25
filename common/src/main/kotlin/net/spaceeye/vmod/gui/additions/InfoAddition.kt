@@ -19,6 +19,7 @@ import net.spaceeye.vmod.shipAttachments.CustomMassSave
 import net.spaceeye.vmod.shipAttachments.GravityController
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
+import net.spaceeye.vmod.toolgun.ToolgunKeybinds
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
@@ -57,7 +58,7 @@ object InfoAddition: ScreenWindowAddition {
 
             val isPressed = action == GLFW.GLFW_PRESS
 
-            if (isPressed && ClientToolGunState.TOOLGUN_TOGGLE_HUD_INFO_KEY.matches(keyCode, scanCode)) {
+            if (isPressed && ToolgunKeybinds.TOOLGUN_TOGGLE_HUD_INFO_KEY.matches(keyCode, scanCode)) {
                 render = !render
                 return@on true
             }

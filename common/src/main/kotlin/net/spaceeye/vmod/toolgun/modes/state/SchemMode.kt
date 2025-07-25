@@ -57,8 +57,7 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
     val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
     return if (bytes[3].toInt() == 1) {
         if (Minecraft.getInstance()?.player != null) {
-            ClientToolGunState.closeGUI()
-            ClientToolGunState.addHUDError("Couldn't load schematic")
+            ClientToolGunState.closeWithError("Couldn't load schematic") //TODO
             Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
         }
         null
@@ -66,8 +65,7 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
         when (buf.readUtf()) {
             "VModShipSchematicV1" -> {
                 if (Minecraft.getInstance()?.player != null) {
-                    ClientToolGunState.closeGUI()
-                    ClientToolGunState.addHUDError("Couldn't load schematic")
+                    ClientToolGunState.closeWithError("Couldn't load schematic") //TODO
                     Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
                 }
                 null

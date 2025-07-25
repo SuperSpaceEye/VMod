@@ -372,12 +372,6 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float, val 
 
         mySources.buffers.forEach { (type, buf) ->
             val actualBuffer = sources.getBuffer(type)
-//            actualBuffer as BufferBuilderAccessor
-//
-//            val vertexSize = (actualBuffer as BufferBuilderAccessor).`vmod$getVertexFormat`().vertexSize
-//            var size = buf.vertices.size * vertexSize
-//            (actualBuffer as BufferBuilderAccessor).`vmod$ensureCapacity`(size)
-
             buf.apply(actualBuffer, matrices)
         }
 

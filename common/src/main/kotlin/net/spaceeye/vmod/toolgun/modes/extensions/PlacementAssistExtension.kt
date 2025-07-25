@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.vEntityManaging.VEntity
 import net.spaceeye.vmod.vEntityManaging.addFor
@@ -19,7 +20,6 @@ import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.networking.regS2C
-import net.spaceeye.vmod.toolgun.CELOG
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.util.*
@@ -236,7 +236,7 @@ interface PlacementAssistClient {
         paAngle.it = 0.0
         try {
             paCaughtShip.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle)
-        } catch (e: Exception) { CELOG("HOW TF DID YOU DO THIS???????????????????????????\n${e.stackTraceToString()}", "HOW TF DID YOU DO THIS????"); paClientResetState(); return}
+        } catch (e: Exception) { ELOG("HOW TF DID YOU DO THIS???????????????????????????\n${e.stackTraceToString()}"); paClientResetState(); return}
 
         val shipObjectWorld = Minecraft.getInstance().shipObjectWorld
         paCaughtShips.forEach {

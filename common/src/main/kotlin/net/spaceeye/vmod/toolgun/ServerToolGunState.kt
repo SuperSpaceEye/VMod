@@ -23,8 +23,6 @@ import net.spaceeye.vmod.utils.ServerClosable
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class PlayerToolgunState(var mode: BaseMode)
-
 fun SELOG(s: String, player: ServerPlayer, toSend: String, translatable: Boolean = true) {
     ELOG(s)
     ServerToolGunState.sendErrorTo(player, toSend, translatable)
@@ -32,7 +30,7 @@ fun SELOG(s: String, player: ServerPlayer, toSend: String, translatable: Boolean
 fun SELOG(s: String, player: ServerPlayer?, toSend: TranslatableComponent) = player?.also { SELOG(s, player, toSend.getTranslationKey(), true) } ?: ELOG(s)
 
 object ServerToolGunState: ServerClosable() {
-    val playersStates = ConcurrentHashMap<UUID, PlayerToolgunState>()
+    val playersStates = ConcurrentHashMap<UUID, BaseMode>()
     val playersVEntitiesStack = ConcurrentHashMap<UUID, MutableList<VEntityId>>()
 
     data class S2CErrorHappened(var errorStr: String, var translatable: Boolean = true, var closeGUI: Boolean = false): AutoSerializable
@@ -41,8 +39,7 @@ object ServerToolGunState: ServerClosable() {
         SessionEvents.clientOnTick.on { _, unsub -> unsub.invoke()
             ClientToolGunState.currentMode?.resetState()
             ClientToolGunState.currentMode?.refreshHUD()
-            ClientToolGunState.addHUDError(if (translate) errorStr.translate() else errorStr)
-            ClientToolGunState.closeGUI()
+            ClientToolGunState.closeWithError(if (translate) errorStr.translate() else errorStr)
         }
     }
 
@@ -54,7 +51,7 @@ object ServerToolGunState: ServerClosable() {
     }
 
     val c2sToolgunWasReset = regC2S<EmptyPacket>("toolgun_was_reset", "server_toolgun") {pkt, player ->
-        playersStates[player.uuid]?.mode?.resetState()
+        playersStates[player.uuid]?.resetState()
     }
 
     fun sendErrorTo(player: ServerPlayer, errorStr: String, translatable: Boolean = true, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr, translatable, closeGUI))

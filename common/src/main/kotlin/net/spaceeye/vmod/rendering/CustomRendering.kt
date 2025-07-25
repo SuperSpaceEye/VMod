@@ -18,15 +18,12 @@ import net.spaceeye.vmod.mixin.BlockRenderDispatcherAccessor
 import net.spaceeye.vmod.rendering.types.BlockRenderer
 import net.spaceeye.vmod.rendering.types.PositionDependentRenderer
 import net.spaceeye.vmod.rendering.types.TimedRenderer
-import net.spaceeye.vmod.toolgun.CELOG
-import net.spaceeye.vmod.translate.RENDERING_HAS_THROWN_AN_EXCEPTION
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.getNow_ms
 import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
 import java.util.*
-import kotlin.ConcurrentModificationException
 
 object ReservedRenderingPages {
     const val TimedRenderingObjects = -1L
@@ -128,7 +125,7 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
         }
     }
     // let's hope that it never happens, but if it does, then do nothing
-    } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION);
+    //TODO show that error happened to player?
     } catch (e: Exception) { ELOG("Renderer raised exception:\n${e.stackTraceToString()}")
     } catch (e: Error) { ELOG("Renderer raised error!!!\n${e.stackTraceToString()}") }
 }
@@ -140,7 +137,8 @@ private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlock
     val toDelete = mutableListOf<Int>()
     val page = RenderingData.client.getData()[ReservedRenderingPages.TimedRenderingObjects] ?: return
     for ((idx, render) in page) {
-        if (render !is TimedRenderer || render !is PositionDependentRenderer) { toDelete.add(idx); CELOG("Found renderer in ${render.javaClass.simpleName} in renderTimedObjects that didn't implement interface TimedRenderingData or PositionDependentRenderingData.", RENDERING_HAS_THROWN_AN_EXCEPTION); continue }
+        //TODO show that error happened to player?
+        if (render !is TimedRenderer || render !is PositionDependentRenderer) { toDelete.add(idx); ELOG("Found renderer in ${render.javaClass.simpleName} in renderTimedObjects that didn't implement interface TimedRenderingData or PositionDependentRenderingData."); continue }
         if (!render.wasActivated && render.activeFor_ms == -1L) { render.timestampOfBeginning = now }
         if (render.activeFor_ms + render.timestampOfBeginning < now) { toDelete.add(idx); continue }
         if ((render.renderingPosition - cpos).sqrDist() > RenderingSettings.renderingArea*RenderingSettings.renderingArea) { continue }
@@ -171,7 +169,7 @@ private fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, render
         }
     }
     // let's hope that it never happens, but if it does, then do nothing
-    } catch (e: ConcurrentModificationException) { CELOG("Got ConcurrentModificationException while rendering.\n${e.stackTraceToString()}", RENDERING_HAS_THROWN_AN_EXCEPTION);
+    //TODO show that error happened to player?
     } catch (e: Exception) { ELOG("Renderer raised exception:\n${e.stackTraceToString()}")
     } catch (e: Error) { ELOG("Renderer raised error!!!\n${e.stackTraceToString()}") }
 }

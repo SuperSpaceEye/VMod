@@ -4,6 +4,7 @@ import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
+import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.toolgun.ClientToolGunState
@@ -94,8 +95,7 @@ class DimensionalGravitySettings: ServerSettingsGUIBuilder {
         }
 
         val s2cDimensionalGravityUpdateWasRejected = regS2C<EmptyPacket>("dimensional_gravity_update_was_rejected", "gravity_settings") {
-            ClientToolGunState.closeGUI()
-            ClientToolGunState.addHUDError(DIMENSIONAL_GRAVITY_UPDATE_WAS_REJECTED.get())
+            ClientToolGunState.closeWithError(DIMENSIONAL_GRAVITY_UPDATE_WAS_REJECTED.get())
         }
     }
 }

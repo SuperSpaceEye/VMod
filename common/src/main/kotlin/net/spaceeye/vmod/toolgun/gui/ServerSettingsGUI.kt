@@ -5,12 +5,13 @@ import gg.essential.elementa.components.UIText
 import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.dsl.*
 import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.ToolgunInstance
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsTypes
 import net.spaceeye.vmod.translate.YOU_DONT_HAVE_ACCESS_TO_THIS
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
-class ServerSettingsGUI(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) {
+class ServerSettingsGUI(val mainWindow: UIBlock, val instance: ToolgunInstance): BaseToolgunGUIWindow(mainWindow) {
     init {
         onGUIOpen()
         makeScrollComponents(ServerSettingsTypes.asList().map { it.get() }) { component ->
@@ -22,7 +23,7 @@ class ServerSettingsGUI(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindo
     override fun onGUIOpen() {
         mainWindow.clearChildren()
 
-        ServerToolGunState.checkIfIHaveAccess(ServerToolGunState.AccessTo.ServerSettings) {
+        instance.server.checkIfIHaveAccess(ServerToolGunState.AccessTo.ServerSettings) {
             if (!it) {
                 UIText(YOU_DONT_HAVE_ACCESS_TO_THIS.get(), false) constrain {
                     x = CenterConstraint()

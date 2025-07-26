@@ -4,6 +4,7 @@ import dev.architectury.event.EventResult
 import gg.essential.elementa.components.UIContainer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.reflectable.SubReflectable
+import net.spaceeye.vmod.toolgun.ToolgunInstance
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
@@ -37,6 +38,7 @@ interface ToolgunModeExtension: MSerializable, EBase, EClientEventsHandler, EGUI
 }
 
 abstract class ExtendableToolgunMode: BaseMode, EBase, EGUIBuilder, EHUDBuilder, EClientEventsHandler {
+    final override lateinit var instance: ToolgunInstance
     @SubReflectable val linearExtensions = mutableListOf<ToolgunModeExtension>()
     private val _extensions = mutableSetOf<ToolgunModeExtension>()
     val extensions: Collection<ToolgunModeExtension> get() = _extensions

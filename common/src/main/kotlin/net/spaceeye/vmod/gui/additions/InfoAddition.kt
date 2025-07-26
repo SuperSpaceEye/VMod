@@ -12,13 +12,13 @@ import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.gui.ScreenWindowAddition
 import net.spaceeye.vmod.guiElements.makeText
+import net.spaceeye.vmod.networking.C2SConnection
+import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.shipAttachments.CustomMassSave
 import net.spaceeye.vmod.shipAttachments.GravityController
-import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.ToolgunKeybinds
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
@@ -32,7 +32,7 @@ import org.valkyrienskies.mod.common.util.toBlockPos
 import org.valkyrienskies.mod.common.util.toJOML
 import java.awt.Color
 
-object InfoAddition: ScreenWindowAddition {
+class InfoAddition: ScreenWindowAddition() {
     private lateinit var screenContainer: UIContainer
     private var lastShipId = -1L
 
@@ -54,7 +54,7 @@ object InfoAddition: ScreenWindowAddition {
     init {
         PersistentEvents.keyPress.on {
             (keyCode, scanCode, action, modifiers), _ ->
-            if (!playerIsUsingToolgun()) return@on false
+            if (!instance.client.playerIsUsingToolgun()) return@on false
 
             val isPressed = action == GLFW.GLFW_PRESS
 
@@ -72,10 +72,13 @@ object InfoAddition: ScreenWindowAddition {
 
         screenContainer.addChild(infoContainer)
         infoContainer.hide()
+
+        s2cShipInfoQueryResponse
+        c2sQueryShipInfo
     }
 
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
-        if (!render || !playerIsUsingToolgun()) {
+        if (!render || !instance.client.playerIsUsingToolgun()) {
             infoContainer.hide()
             return
         }
@@ -136,7 +139,7 @@ object InfoAddition: ScreenWindowAddition {
 
             infoContainer.unhide()
         } }
-        c2sQueryShipInfo.sendToServer(C2SQueryShipInfo(lastShipId))
+        c2sQueryShipInfo!!.sendToServer(C2SQueryShipInfo(lastShipId))
     }
 
     private var queryShipId = -1L
@@ -153,41 +156,51 @@ object InfoAddition: ScreenWindowAddition {
         var numVEntities: Int = 0,
     ): AutoSerializable
 
-    val c2sQueryShipInfo = regC2S<C2SQueryShipInfo>("query_ship_info", "info_addition",
-        //TODO sus?
-        {pkt, player ->
-            val level = player.level as ServerLevel
-            val ship = level.shipObjectWorld.loadedShips.getById(pkt.shipId) ?: return@regC2S false
-            ship.transform.positionInWorld.distance(player.position().toJOML()) < 100.0
-        }
-    ) { pkt, player ->
-        val level = player.level as ServerLevel
-        val ship = level.shipObjectWorld.loadedShips.getById(pkt.shipId) ?: return@regC2S
-
-        val customMassSave = CustomMassSave.getOrCreate(ship)
-        val changedMassData = customMassSave.massSave
-        val originalMass = changedMassData?.let {
-            it.fold(ship.inertiaData.mass) { mass, (pos, new) ->
-                val state = level.getBlockState(pos.toBlockPos())
-                val (defaultMass, _) = BlockStateInfo.get(state)!!
-
-                mass - new + defaultMass
+    var c2sQueryShipInfo: C2SConnection<C2SQueryShipInfo>? = null
+        get() {
+            if (field != null) return field
+        field = regC2S<C2SQueryShipInfo>(instance.modId, "query_ship_info", "info_addition",
+            //TODO sus?
+            {pkt, player ->
+                val level = player.level as ServerLevel
+                val ship = level.shipObjectWorld.loadedShips.getById(pkt.shipId) ?: return@regC2S false
+                ship.transform.positionInWorld.distance(player.position().toJOML()) < 100.0
             }
-        } ?: ship.inertiaData.mass
+        ) { pkt, player ->
+            val level = player.level as ServerLevel
+            val ship = level.shipObjectWorld.loadedShips.getById(pkt.shipId) ?: return@regC2S
 
-        s2cShipInfoQueryResponse.sendToClient(player, S2CShipInfoQueryResponse(
-            pkt.shipId,
-            ship.inertiaData.mass,
-            GravityController.getOrCreate(ship).effectiveGravity(),
-            changedMassData != null,
-            originalMass,
-            VSJointsTracker.getIdsOfShip(ship.id).size,
-            level.getAllVEntityIdsOfShipId(ship.id).size
-        ))
+            val customMassSave = CustomMassSave.getOrCreate(ship)
+            val changedMassData = customMassSave.massSave
+            val originalMass = changedMassData?.let {
+                it.fold(ship.inertiaData.mass) { mass, (pos, new) ->
+                    val state = level.getBlockState(pos.toBlockPos())
+                    val (defaultMass, _) = BlockStateInfo.get(state)!!
+
+                    mass - new + defaultMass
+                }
+            } ?: ship.inertiaData.mass
+
+            s2cShipInfoQueryResponse!!.sendToClient(player, S2CShipInfoQueryResponse(
+                pkt.shipId,
+                ship.inertiaData.mass,
+                GravityController.getOrCreate(ship).effectiveGravity(),
+                changedMassData != null,
+                originalMass,
+                VSJointsTracker.getIdsOfShip(ship.id).size,
+                level.getAllVEntityIdsOfShipId(ship.id).size
+            ))
+        }
+        return field
     }
 
-    val s2cShipInfoQueryResponse = regS2C<S2CShipInfoQueryResponse>("ship_info_query_response", "info_addition") { pkt ->
-        if (queryShipId != pkt.shipId) return@regS2C
-        callback(pkt)
-    }
+    var s2cShipInfoQueryResponse: S2CConnection<S2CShipInfoQueryResponse>? = null
+        get() {
+            if (field != null) return field
+            field = regS2C<S2CShipInfoQueryResponse>(instance.modId, "ship_info_query_response", "info_addition") { pkt ->
+                if (queryShipId != pkt.shipId) return@regS2C
+                callback(pkt)
+            }
+            return field
+        }
 }

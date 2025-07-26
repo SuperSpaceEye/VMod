@@ -6,65 +6,61 @@ import dev.architectury.event.events.client.ClientRawInputEvent
 import dev.architectury.utils.Env
 import dev.architectury.utils.EnvExecutor
 import gg.essential.elementa.components.UIBlock
+import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.gui.ScreenWindow
+import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
-import net.spaceeye.vmod.toolgun.gui.ClientSettingsGUI
 import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
-import net.spaceeye.vmod.toolgun.gui.ServerSettingsGUI
-import net.spaceeye.vmod.toolgun.gui.SettingPresets
 import net.spaceeye.vmod.toolgun.gui.ToolgunGUI
 import net.spaceeye.vmod.toolgun.gui.ToolgunWindow
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
-import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.state.VEntityChangerGui
-import net.spaceeye.vmod.translate.CLIENT_SETTINGS
-import net.spaceeye.vmod.translate.MAIN
-import net.spaceeye.vmod.translate.SERVER_SETTINGS
-import net.spaceeye.vmod.translate.SETTINGS_PRESETS
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.EmptyPacket
 import org.lwjgl.glfw.GLFW
 
-object ClientToolGunState : ClientClosable() {
-    val modes = ToolgunModes.asList().map { it.get() }.map { it.init(BaseNetworking.EnvType.Client); it }
+open class ClientToolGunState(
+    var instance: ToolgunInstance,
+    val GUI_MENU_OPEN_OR_CLOSE     :KeyMapping = ToolgunKeybinds.GUI_MENU_OPEN_OR_CLOSE,
+    val TOOLGUN_REMOVE_TOP_VENTITY :KeyMapping = ToolgunKeybinds.TOOLGUN_REMOVE_TOP_VENTITY,
+    val TOOLGUN_RESET_KEY          :KeyMapping = ToolgunKeybinds.TOOLGUN_RESET_KEY,
+    val TOOLGUN_TOGGLE_HUD_KEY     :KeyMapping = ToolgunKeybinds.TOOLGUN_TOGGLE_HUD_KEY,
+    val TOOLGUN_CHANGE_PRESET_KEY  :KeyMapping = ToolgunKeybinds.TOOLGUN_CHANGE_PRESET_KEY,
+) : ClientClosable() {
+    open val modes = instance.modeTypes.asList().map { it.get().also { it.instance = instance } }.map { it.init(BaseNetworking.EnvType.Client); it }
 
-    var currentMode: BaseMode? = null
+    open var currentMode: BaseMode? = null
         set(value) {
             field?.onCloseMode()
             field = value
             field?.onOpenMode()
         }
 
-    private val externalWindows = mutableListOf<Pair<TranslatableComponent, (UIBlock) -> ToolgunWindow>>()
+    protected open val externalWindows = mutableListOf<Pair<TranslatableComponent, (UIBlock) -> ToolgunWindow>>()
 
-    fun addWindow(name: TranslatableComponent, windowConstructor: (UIBlock) -> ToolgunWindow) {
+    open fun addWindow(name: TranslatableComponent, windowConstructor: (UIBlock) -> ToolgunWindow) {
         externalWindows.add(name to windowConstructor)
     }
 
-    init {
-        addWindow(MAIN) { ToolgunGUI(it) }
-        addWindow(CLIENT_SETTINGS) {ClientSettingsGUI(it)}
-        addWindow(SERVER_SETTINGS) {ServerSettingsGUI(it)}
-        addWindow(SETTINGS_PRESETS) {SettingPresets(it)}
-
+    open fun initEvents() {
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientPlayerEvent.CLIENT_PLAYER_JOIN.register {
                 if (it != Minecraft.getInstance().player) {return@register}
                 currentMode = null
-                refreshHUD()
+                HUDAddition.refreshHUD()
             }
 
             PersistentEvents.keyPress.on {
                     (keyCode, scanCode, action, modifiers), _ ->
                 if (!playerIsUsingToolgun()) {return@on false}
-                if (otherGuiIsOpened()) {return@on false}
+                if (Minecraft.getInstance().screen != null && !toolgunGuiIsOpened()) {return@on false}
 
-                val guiIsOpened = guiIsOpened()
+                val guiIsOpened = toolgunGuiIsOpened()
                 val isPressed = action == GLFW.GLFW_PRESS
 
                 // we do it like this because we need for toolgun to handle keys first to prevent
@@ -111,56 +107,41 @@ object ClientToolGunState : ClientClosable() {
             ClientPlayerEvent.CLIENT_PLAYER_JOIN.register {
                 init()
             }
-
-            //todo why did i do this
-//            var inited = false
-//            ClientLifecycleEvent.CLIENT_LEVEL_LOAD.register {
-//                if (inited) { return@register }
-//                init()
-//                inited = true
-//            }
-//            ClientPlayerEvent.CLIENT_PLAYER_QUIT.register {
-//                if (it != Minecraft.getInstance().player || it == null) {return@register}
-//                inited = false
-//            }
         }}
     }
 
-    fun refreshHUD() { ScreenWindow.screen?.getExtensionOfType<HUDAddition>()?.refreshHUD() }
+    init {
+        instance.client = this
+        initEvents()
+    }
 
-    val GUI_MENU_OPEN_OR_CLOSE = ToolgunKeybinds.GUI_MENU_OPEN_OR_CLOSE
-    val TOOLGUN_REMOVE_TOP_VENTITY = ToolgunKeybinds.TOOLGUN_REMOVE_TOP_VENTITY
-    val TOOLGUN_RESET_KEY = ToolgunKeybinds.TOOLGUN_RESET_KEY
-    val TOOLGUN_TOGGLE_HUD_KEY = ToolgunKeybinds.TOOLGUN_TOGGLE_HUD_KEY
-    val TOOLGUN_CHANGE_PRESET_KEY = ToolgunKeybinds.TOOLGUN_CHANGE_PRESET_KEY
-
-    fun openGUI() {
+    open fun openGUI() {
         gui.onGUIOpen()
         Minecraft.getInstance().setScreen(gui)
     }
 
-    fun closeGUI() {
+    open fun closeGUI() {
         Minecraft.getInstance().setScreen(null)
     }
 
-    fun closeWithError(error: String) {
+    open fun closeWithError(error: String) {
         closeGUI()
-        ScreenWindow.addHUDError(error)
+        ErrorAddition.addHUDError(error)
     }
 
-    internal fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): Boolean {
+    internal open fun handleKeyEvent(keyCode: Int, scanCode: Int, action: Int, modifiers: Int): Boolean {
         val cancel = if (currentMode == null) { false } else { currentMode!!.onKeyEvent(keyCode, scanCode, action, modifiers) }
         if (cancel) { return true }
 
         if (action == GLFW.GLFW_PRESS && TOOLGUN_REMOVE_TOP_VENTITY.matches(keyCode, scanCode)) {
-            ServerToolGunState.c2sRequestRemoveLastVEntity.sendToServer(EmptyPacket())
+            instance.server.c2sRequestRemoveLastVEntity.sendToServer(EmptyPacket())
             return true
         }
 
         return false
     }
 
-    internal fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {
+    internal open fun handleMouseButtonEvent(button:Int, action:Int, modifiers:Int): EventResult {
         if (currentMode == null) {
             return when(button) {
                 GLFW.GLFW_MOUSE_BUTTON_LEFT -> EventResult.interruptFalse()
@@ -170,23 +151,21 @@ object ClientToolGunState : ClientClosable() {
         return currentMode!!.onMouseButtonEvent(button, action, modifiers)
     }
 
-    internal fun handleMouseScrollEvent(amount: Double): EventResult {
+    internal open fun handleMouseScrollEvent(amount: Double): EventResult {
         if (currentMode == null) { return EventResult.pass() }
         return currentMode!!.onMouseScrollEvent(amount)
     }
 
-    private lateinit var gui: MainToolgunGUIWindow
+    protected open lateinit var gui: MainToolgunGUIWindow
 
     //TODO redo this
-    internal fun guiIsOpened() = Minecraft.getInstance().screen.let { it is MainToolgunGUIWindow || it is VEntityChangerGui }
-    internal fun otherGuiIsOpened() = Minecraft.getInstance().screen.let { it != null && it !is MainToolgunGUIWindow && it !is VEntityChangerGui }
-    fun playerIsUsingToolgun(): Boolean {
-        val player = Minecraft.getInstance().player ?: return false
-        return player.mainHandItem.item == VMItems.TOOLGUN.get().asItem()
-    }
+    open fun toolgunGuiIsOpened() = Minecraft.getInstance().screen.let { it is MainToolgunGUIWindow || it is VEntityChangerGui }
+    //TODO i don't like this
+    open fun playerIsUsingToolgun(): Boolean = Minecraft.getInstance().player?.mainHandItem?.item == VMItems.TOOLGUN.get().asItem()
 
-    internal fun init() {
+    internal open fun init() {
         gui = MainToolgunGUIWindow()
+        gui.currentWindow = ToolgunGUI(gui.mainWindow, this)
         externalWindows.forEach { gui.addWindow(it.first, it.second) }
         gui.initGUI()
     }

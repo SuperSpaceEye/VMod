@@ -4,12 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.addForVMod
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.vEntityManaging.types.constraints.SliderConstraint
 import net.spaceeye.vmod.limits.ServerLimits
-import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.modes.gui.SliderGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SliderHUD
 import net.spaceeye.vmod.toolgun.modes.util.*
@@ -80,13 +79,13 @@ class SliderMode: ExtendableToolgunMode(), SliderGUI, SliderHUD {
             Quaterniond(shipRes1.ship?.transform?.shipToWorldRotation ?: Quaterniond()),
             axisRes1.shipId, shipRes1.shipId,
             maxForce, connectionMode
-        ).addExtension(Strippable())) {it.addFor(player)}
+        ).addExtension(Strippable())) {it.addForVMod(player)}
 
         sresetState(player)
     }
 
     fun sresetState(player: ServerPlayer) {
-        ServerToolGunState.s2cToolgunWasReset.sendToClient(player, EmptyPacket())
+        instance.server.s2cToolgunWasReset.sendToClient(player, EmptyPacket())
         resetState()
     }
 

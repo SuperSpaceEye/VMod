@@ -12,69 +12,66 @@ import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
-import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes.getPermission
 import net.spaceeye.vmod.translate.REMOVED
 import net.spaceeye.vmod.translate.YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN
 import net.spaceeye.vmod.translate.getTranslationKey
 import net.spaceeye.vmod.translate.translate
 import net.spaceeye.vmod.utils.EmptyPacket
+import net.spaceeye.vmod.utils.Registry
 import net.spaceeye.vmod.utils.ServerClosable
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 fun SELOG(s: String, player: ServerPlayer, toSend: String, translatable: Boolean = true) {
     ELOG(s)
-    ServerToolGunState.sendErrorTo(player, toSend, translatable)
+    VMToolgun.server.sendErrorTo(player, toSend, translatable)
 }
 fun SELOG(s: String, player: ServerPlayer?, toSend: TranslatableComponent) = player?.also { SELOG(s, player, toSend.getTranslationKey(), true) } ?: ELOG(s)
 
-object ServerToolGunState: ServerClosable() {
-    val playersStates = ConcurrentHashMap<UUID, BaseMode>()
-    val playersVEntitiesStack = ConcurrentHashMap<UUID, MutableList<VEntityId>>()
+open class ServerToolGunState(var instance: ToolgunInstance): ServerClosable() {
+    open val playersStates = ConcurrentHashMap<UUID, BaseMode>()
+    open val playersVEntitiesStack = ConcurrentHashMap<UUID, MutableList<VEntityId>>()
 
     data class S2CErrorHappened(var errorStr: String, var translatable: Boolean = true, var closeGUI: Boolean = false): AutoSerializable
 
-    val s2cErrorHappened = regS2C<S2CErrorHappened>("error_happened_reset_toolgun", "server_toolgun") { (errorStr, translate, closeGUI) ->
+    open val s2cErrorHappened = regS2C<S2CErrorHappened>(instance.modId, "error_happened_reset_toolgun", "server_toolgun") { (errorStr, translate, closeGUI) ->
         SessionEvents.clientOnTick.on { _, unsub -> unsub.invoke()
-            ClientToolGunState.currentMode?.resetState()
-            ClientToolGunState.currentMode?.refreshHUD()
-            ClientToolGunState.closeWithError(if (translate) errorStr.translate() else errorStr)
+            instance.client.currentMode?.resetState()
+            instance.client.currentMode?.refreshHUD()
+            instance.client.closeWithError(if (translate) errorStr.translate() else errorStr)
         }
     }
 
-    val s2cToolgunWasReset = regS2C<EmptyPacket>("toolgun_was_reset", "server_toolgun") {
+    open val s2cToolgunWasReset = regS2C<EmptyPacket>(instance.modId, "toolgun_was_reset", "server_toolgun") {
         SessionEvents.clientOnTick.on { _, unsub -> unsub.invoke()
-            ClientToolGunState.currentMode?.resetState()
-            ClientToolGunState.currentMode?.refreshHUD()
+            instance.client.currentMode?.resetState()
+            instance.client.currentMode?.refreshHUD()
         }
     }
 
-    val c2sToolgunWasReset = regC2S<EmptyPacket>("toolgun_was_reset", "server_toolgun") {pkt, player ->
+    open val c2sToolgunWasReset = regC2S<EmptyPacket>(instance.modId, "toolgun_was_reset", "server_toolgun") {pkt, player ->
         playersStates[player.uuid]?.resetState()
     }
 
-    fun sendErrorTo(player: ServerPlayer, errorStr: String, translatable: Boolean = true, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr, translatable, closeGUI))
-    fun sendErrorTo(player: ServerPlayer, errorStr: TranslatableComponent, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr.getTranslationKey(), true, closeGUI))
+    open fun sendErrorTo(player: ServerPlayer, errorStr: String, translatable: Boolean = true, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr, translatable, closeGUI))
+    open fun sendErrorTo(player: ServerPlayer, errorStr: TranslatableComponent, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr.getTranslationKey(), true, closeGUI))
 
     init {
+        instance.server = this
         // it needs to initialize all c2s and s2c receivers
-        ToolgunModes.asList().forEach { it.get().init(BaseNetworking.EnvType.Server) }
+        instance.modeTypes.asList().forEach { it.get().also { it.instance = instance }.init(BaseNetworking.EnvType.Server) }
     }
 
-    @JvmStatic fun playerHasAccess(player: ServerPlayer): Boolean {
+    open fun playerHasAccess(player: ServerPlayer): Boolean {
         return player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_TOOLGUN_PERMISSION_LEVEL)
     }
 
-    @JvmStatic fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
-        if (!PlayerAccessManager.hasPermission(player, clazz.getPermission())) {
-            s2cErrorHappened.sendToClient(player, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))
-            return
-        }
-        fn()
+    open fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
+        verifyPlayerAccessLevel(player, clazz.getPermission(), fn)
     }
 
-    @JvmStatic fun verifyPlayerAccessLevel(player: ServerPlayer, permission: String, fn: () -> Unit) {
+    open fun verifyPlayerAccessLevel(player: ServerPlayer, permission: String, fn: () -> Unit) {
         if (!PlayerAccessManager.hasPermission(player, permission)) {
             s2cErrorHappened.sendToClient(player, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))
             return
@@ -82,14 +79,14 @@ object ServerToolGunState: ServerClosable() {
         fn()
     }
 
-    @JvmStatic fun playerHasPermission(player: ServerPlayer, clazz: Class<BaseMode>): Boolean = PlayerAccessManager.hasPermission(player, clazz.getPermission())
+    open fun playerHasPermission(player: ServerPlayer, clazz: Class<BaseMode>): Boolean = PlayerAccessManager.hasPermission(player, clazz.getPermission())
 
     override fun close() {
         playersStates.clear()
         playersVEntitiesStack.clear()
     }
 
-    val c2sRequestRemoveLastVEntity = regC2S<EmptyPacket>("request_remove_last_ventity", "server_toolgun",
+    open val c2sRequestRemoveLastVEntity = regC2S<EmptyPacket>(instance.modId, "request_remove_last_ventity", "server_toolgun",
         { pkt, player -> PlayerAccessManager.hasPermission(player, "request_remove_last_ventity")},
         { pkt, player -> s2cErrorHappened.sendToClient(player, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))}
         ) { pkt, player->
@@ -122,15 +119,15 @@ object ServerToolGunState: ServerClosable() {
 
     data class C2SAskIfIHaveAccess(var accessTo: AccessTo, var callbackId: UUID): AutoSerializable
 
-    private val callbacks = mutableMapOf<UUID, (Boolean) -> Unit>()
+    protected open val callbacks = mutableMapOf<UUID, (Boolean) -> Unit>()
 
-    fun checkIfIHaveAccess(accessTo: AccessTo, callback: (Boolean) -> Unit) {
+    open fun checkIfIHaveAccess(accessTo: AccessTo, callback: (Boolean) -> Unit) {
         val askUUID = UUID.randomUUID()
         callbacks[askUUID] = callback
         c2sAskIfIHaveAccess.sendToServer(C2SAskIfIHaveAccess(accessTo, askUUID))
     }
 
-    private val c2sAskIfIHaveAccess = regC2S<C2SAskIfIHaveAccess>("ask_if_i_have_access", "server_toolgun") {pkt, player ->
+    protected open val c2sAskIfIHaveAccess = regC2S<C2SAskIfIHaveAccess>(instance.modId, "ask_if_i_have_access", "server_toolgun") {pkt, player ->
         val generalAccess = playerHasAccess(player)
 
         if (!generalAccess) { return@regC2S s2cResponseToAccessRequest.sendToClient(player, S2CResponseToAccessRequest(pkt.accessTo, pkt.callbackId, false)) }
@@ -145,7 +142,7 @@ object ServerToolGunState: ServerClosable() {
 
     data class S2CResponseToAccessRequest(var accessTo: AccessTo, val callbackId: UUID, var response: Boolean): AutoSerializable
 
-    private val s2cResponseToAccessRequest = regS2C<S2CResponseToAccessRequest>("response_to_access_request", "server_toolgun") {
+    protected open val s2cResponseToAccessRequest = regS2C<S2CResponseToAccessRequest>(instance.modId, "response_to_access_request", "server_toolgun") {
         callbacks[it.callbackId]?.invoke(it.response)
     }
 }

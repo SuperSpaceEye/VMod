@@ -15,6 +15,7 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematicInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.networking.*
@@ -33,6 +34,7 @@ import net.spaceeye.vmod.rendering.types.special.SchemRenderer
 import net.spaceeye.vmod.schematic.VModShipSchematicV2
 import net.spaceeye.vmod.schematic.makeFrom
 import net.spaceeye.vmod.schematic.placeAt
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -57,7 +59,7 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
     val buf = FriendlyByteBuf(Unpooled.wrappedBuffer(bytes))
     return if (bytes[3].toInt() == 1) {
         if (Minecraft.getInstance()?.player != null) {
-            ClientToolGunState.closeWithError("Couldn't load schematic") //TODO
+            VMToolgun.client.closeWithError("Couldn't load schematic") //TODO
             Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
         }
         null
@@ -65,7 +67,7 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
         when (buf.readUtf()) {
             "VModShipSchematicV1" -> {
                 if (Minecraft.getInstance()?.player != null) {
-                    ClientToolGunState.closeWithError("Couldn't load schematic") //TODO
+                    VMToolgun.client.closeWithError("Couldn't load schematic") //TODO
                     Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
                 }
                 null
@@ -90,14 +92,14 @@ object PlayerSchematics: ServerClosable() {
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Save Schem Transmission Failed") }
 
-        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = ServerToolGunState.playerHasAccess(ctx.player as ServerPlayer)
+        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = VMToolgun.server.playerHasAccess(ctx.player as ServerPlayer)
         override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
         }
 
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder, ctx: NetworkManager.PacketContext) {
-            ClientToolGunState.currentMode?.let {
+            VMToolgun.client.currentMode?.let {
                 if (it !is SchemMode) {return@let}
                 it.schem = bcGetSchematicFromBytes(data.data.array())
                 it.saveSchem(listSchematics())
@@ -116,14 +118,14 @@ object PlayerSchematics: ServerClosable() {
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) {}
 
-        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = ServerToolGunState.playerHasAccess(ctx.player as ServerPlayer)
+        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = VMToolgun.server.playerHasAccess(ctx.player as ServerPlayer)
         override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
         }
 
         override fun receiverDataTransmitted(uuid: UUID, data: SchemHolder, ctx: NetworkManager.PacketContext) {
-            ClientToolGunState.currentMode?.let {
+            VMToolgun.client.currentMode?.let {
                 if (it !is SchemMode) {return@let}
                 it.schem = bcGetSchematicFromBytes(data.data.array())
             }
@@ -141,7 +143,7 @@ object PlayerSchematics: ServerClosable() {
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Load Schem Transmission Failed") }
 
         override fun transmitterRequestProcessor(req: SendLoadRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
-            val res = ClientToolGunState.currentMode?.let { mode ->
+            val res = VMToolgun.client.currentMode?.let { mode ->
                 if (mode !is SchemMode) { return@let null }
                 mode.schem?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!, req.requestUUID) }
             }
@@ -234,7 +236,7 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
     }
 
     // transmitter can't begin transmitting data to receiver by itself
-    val c2sLoadSchematic = regC2S<EmptyPacket>("load_schematic", networkName, { pkt, player ->
+    val c2sLoadSchematic = regC2S<EmptyPacket>(MOD_ID, "load_schematic", networkName, { pkt, player ->
         val lastReq = PlayerSchematics.loadRequests[player.uuid]
         lastReq == null || getNow_ms() - lastReq > 10000L
     }) {pkt, player ->
@@ -242,8 +244,8 @@ object SchemNetworking: BaseNetworking<SchemMode>() {
         PlayerSchematics.loadSchemStream.r2tRequestData.transmitData(SendLoadRequest(player.uuid), FakePacketContext(player))
     }
 
-    val s2cSendSchem = regS2C<EmptyPacket>("send_schem", networkName) {pkt ->
-        ClientToolGunState.currentMode?.let {
+    val s2cSendSchem = regS2C<EmptyPacket>(MOD_ID, "send_schem", networkName) {pkt ->
+        VMToolgun.client.currentMode?.let {
             if (it !is SchemMode) {return@let}
             it.schem = null
         }

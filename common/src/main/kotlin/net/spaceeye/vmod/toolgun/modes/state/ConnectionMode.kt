@@ -3,8 +3,9 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.compat.vsBackwardsCompat.scaling
-import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.addForVMod
 import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
@@ -67,7 +68,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
             ship2?.id ?: -1L,
             spoint1, spoint2,
             color, width, fullbright, RenderingUtils.whiteTexture
-        ))).addExtension(Strippable())){it.addFor(player)}
+        ))).addExtension(Strippable())){it.addForVMod(player)}
 
         resetState()
     }
@@ -78,7 +79,7 @@ class ConnectionMode: ExtendableToolgunMode(), ConnectionGUI, ConnectionHUD {
     }
 
     companion object {
-        val paNetworkingObj = PlacementAssistNetworking("connection_networking")
+        val paNetworkingObj = PlacementAssistNetworking("connection_networking", MOD_ID)
         init {
             //"it" IS THE SAME ON CLIENT BUT ON SERVER IT CREATES NEW INSTANCE OF THE MODE
             ToolgunModes.registerWrapper(ConnectionMode::class) {

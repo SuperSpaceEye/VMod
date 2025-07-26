@@ -13,10 +13,6 @@ import gg.essential.elementa.constraints.*
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.PlatformUtils
 import net.spaceeye.vmod.gui.additions.ErrorAddition
-import net.spaceeye.vmod.gui.additions.HUDAddition
-import net.spaceeye.vmod.gui.additions.InfoAddition
-import net.spaceeye.vmod.gui.additions.PresetsAddition
-import net.spaceeye.vmod.gui.additions.VEntityChangerWorldMenu
 
 //TODO maybe make it a class so that i can hot reload when elementa crashes
 object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = false) {
@@ -31,13 +27,10 @@ object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = fa
         return this
     }
 
-    inline fun <reified T: ScreenWindowAddition> getExtensionOfType(): T {
-        return extensions.filterIsInstance<T>().first()
-    }
-
-    fun <T: ScreenWindowAddition> getExtensionOfType(type: Class<T>): T {
-        return extensions.filterIsInstance(type).first()
-    }
+    inline fun <reified T: ScreenWindowAddition> getExtensionsOfType(): List<T> = extensions.filterIsInstance<T>()
+    fun <T: ScreenWindowAddition> getExtensionsOfType(type: Class<T>): List<T> = extensions.filterIsInstance(type)
+    inline fun <reified T: ScreenWindowAddition> getExtensionOfType(): T = extensions.filterIsInstance<T>().first()
+    fun <T: ScreenWindowAddition> getExtensionOfType(type: Class<T>): T = extensions.filterIsInstance(type).first()
 
     val screenContainer = UIContainer().constrain {
         x = CenterConstraint()
@@ -54,12 +47,9 @@ object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = fa
     }
 
     private val additions = mutableListOf<() -> ScreenWindowAddition>()
+    fun addScreenAddition(constructor: () -> ScreenWindowAddition) { additions.add(constructor) }
+
     private var initialized = false
-
-    fun addScreenAddition(constructor: () -> ScreenWindowAddition) {
-        additions.add(constructor)
-    }
-
     fun makeScreen(): ScreenWindow {
         if (!initialized) {
             additions.forEach { addExtension(it.invoke()) }
@@ -70,11 +60,7 @@ object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = fa
     }
 
     init {
-        addScreenAddition { HUDAddition() }
         addScreenAddition { ErrorAddition() }
-        addScreenAddition { VEntityChangerWorldMenu }
-        addScreenAddition { InfoAddition }
-        addScreenAddition { PresetsAddition }
 
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientLifecycleEvent.CLIENT_STARTED.register { initScreen() }
@@ -86,22 +72,15 @@ object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = fa
 
     @JvmStatic fun onRenderHUD(stack: PoseStack, delta: Float) {
         if (screen?.renderHud == false) {return}
-        try {
-            (screen ?: let {
-                initScreen()
-                screen!!
-            }).renderHUD(stack, delta)
+        try { (screen ?: initScreen()).renderHUD(stack, delta)
         } catch (e: Exception) { ELOG("HUD rendering failed\n${e.stackTraceToString()}")
         } catch (e: Error) { ELOG("HUD rendering failed\n${e.stackTraceToString()}") }
     }
 
-    @JvmStatic fun initScreen() {
+    @JvmStatic fun initScreen(): ScreenWindow {
         screen = makeScreen()
         // why? it doesn't correctly remap in dev env when added as a dependency for another project for some reason, this works though
         PlatformUtils.initScreen(screen!!)
-    }
-
-    @JvmStatic fun addHUDError(str: String) {
-        screen?.getExtensionOfType<ErrorAddition>()?.addError(str)
+        return screen!!
     }
 }

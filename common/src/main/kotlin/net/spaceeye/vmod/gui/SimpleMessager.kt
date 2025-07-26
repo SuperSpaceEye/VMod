@@ -14,13 +14,15 @@ import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.MOD_ID
+import net.spaceeye.vmod.VM
 import net.spaceeye.vmod.blockentities.SimpleMessagerBlockEntity
 import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.network.*
 import net.spaceeye.vmod.networking.*
-import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.translate.*
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.Vector3d
@@ -144,7 +146,7 @@ object SimpleMessagerNetworking {
 
     }
 
-    val c2sRequestState = regC2S<C2SRequestStatePacket>("request_state", "simple_messager") {pkt, player ->
+    val c2sRequestState = regC2S<C2SRequestStatePacket>(MOD_ID, "request_state", "simple_messager") { pkt, player ->
         val level = player.level
 
         var succeeded = (Vector3d(player.position()) - Vector3d(pkt.pos) + 0.5).sqrDist() <= 64
@@ -170,7 +172,7 @@ object SimpleMessagerNetworking {
         }
     }
 
-    val s2cRequestStateResponse = regS2C<S2CRequestStateResponse>("request_state_response", "simple_messager") {pkt ->
+    val s2cRequestStateResponse = regS2C<S2CRequestStateResponse>(MOD_ID, "request_state_response", "simple_messager") {pkt ->
         if (!pkt.succeeded) {
             SimpleMessagerGUI.updateNoSuccess()
             return@regS2C
@@ -180,7 +182,7 @@ object SimpleMessagerNetworking {
         SimpleMessagerGUI.open()
     }
 
-    val c2sSendStateUpdate = regC2S<C2SSendStateUpdate>("send_state_update", "simple_messager") {pkt, player ->
+    val c2sSendStateUpdate = regC2S<C2SSendStateUpdate>(MOD_ID, "send_state_update", "simple_messager") {pkt, player ->
         val level = player.getLevel()
 
         var succeeded = (Vector3d(player.position()) - Vector3d(pkt.pos) + 0.5).sqrDist() <= 64
@@ -211,7 +213,7 @@ object SimpleMessagerNetworking {
         }
     }
 
-    val s2cStateUpdatedResponse = regS2C<S2CStateUpdatedResponse>("state_update_response", "simple_messager") {pkt ->
+    val s2cStateUpdatedResponse = regS2C<S2CStateUpdatedResponse>(MOD_ID, "state_update_response", "simple_messager") {pkt ->
         if (!pkt.succeeded) {
             Minecraft.getInstance().setScreen(null)
             return@regS2C
@@ -273,7 +275,7 @@ object SimpleMessagerGUI: ClientClosable() {
         PersistentEvents.keyPress.on {
                 (keyCode, scanCode, action, modifiers), _ ->
             if (gui != null && Minecraft.getInstance().screen == gui) {
-                if (action == GLFW.GLFW_PRESS && (ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
+                if (action == GLFW.GLFW_PRESS && (VMToolgun.client.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
                     Minecraft.getInstance().setScreen(null)
                     return@on true
                 }

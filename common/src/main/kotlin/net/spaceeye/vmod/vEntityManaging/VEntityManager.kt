@@ -16,7 +16,7 @@ import net.spaceeye.vmod.WLOG
 import net.spaceeye.vmod.vEntityManaging.VEntityTypes.getType
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.events.SessionEvents
-import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.utils.PosMapList
 import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.addCustomServerClosable
@@ -28,7 +28,6 @@ import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.apigame.world.properties.DimensionId
 import org.valkyrienskies.core.impl.hooks.VSEvents
-import org.valkyrienskies.core.util.datastructures.DenseBlockPosSet
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.*
@@ -38,8 +37,8 @@ internal const val SAVE_TAG_NAME_STRING = "vmod_VEntities"
 
 typealias VEntityId = Int
 
-fun VEntityId?.addFor(player: Player): VEntityId? {
-    ServerToolGunState.playersVEntitiesStack.getOrPut(player.uuid) { mutableListOf() }.add(this ?: return null)
+fun VEntityId?.addForVMod(player: Player): VEntityId? {
+    VMToolgun.server.playersVEntitiesStack.getOrPut(player.uuid) { mutableListOf() }.add(this ?: return null)
     return this
 }
 

@@ -130,13 +130,10 @@ inline fun <reified T: Serializable>makeS2C(id: ResourceLocation, crossinline fn
         }
     }
 
-/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ @Suppress inline fun <reified T: Serializable>regC2S(modId: String, name: String, connName: String, crossinline doProcess: (T, ServerPlayer) -> Boolean, crossinline rejectCallback: (T, ServerPlayer) -> Unit = {_,_->}, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(modId, "c2s_${connName}_$it"), doProcess, rejectCallback, fn)}
-/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ @Suppress inline fun <reified T: Serializable>regC2S(modId: String, name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(modId, "c2s_${connName}_$it"), fn)}
-/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ @Suppress inline fun <reified T: Serializable>regS2C(modId: String, name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C( ResourceLocation(modId, "s2c_${connName}_$it"), fn)}
+@Suppress inline fun <reified T: Serializable>regC2S(modId: String, name: String, connName: String, crossinline doProcess: (T, ServerPlayer) -> Boolean, crossinline rejectCallback: (T, ServerPlayer) -> Unit = {_,_->}, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(modId, "c2s_${connName}_$it"), doProcess, rejectCallback, fn)}
+@Suppress inline fun <reified T: Serializable>regC2S(modId: String, name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(modId, "c2s_${connName}_$it"), fn)}
+@Suppress inline fun <reified T: Serializable>regS2C(modId: String, name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C( ResourceLocation(modId, "s2c_${connName}_$it"), fn)}
 
-/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ @Suppress inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline doProcess: (T, ServerPlayer) -> Boolean, crossinline rejectCallback: (T, ServerPlayer) -> Unit = {_,_->}, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(VM.MOD_ID, "c2s_${connName}_$it"), doProcess, rejectCallback, fn)}
-/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ @Suppress inline fun <reified T: Serializable>regC2S(name: String, connName: String, crossinline fn: (pkt: T, player: ServerPlayer) -> Unit) = name idWithConnc { makeC2S(ResourceLocation(VM.MOD_ID, "c2s_${connName}_$it"), fn)}
-/** SHOULDN'T BE USED OUTSIDE VMOD. MAKE YOUR OWN VERSION */ @Suppress inline fun <reified T: Serializable>regS2C(name: String, connName: String, crossinline fn: (pkt: T) -> Unit) = name idWithConns { makeS2C( ResourceLocation(VM.MOD_ID, "s2c_${connName}_$it"), fn)}
 
 abstract class TRConnection<T : Serializable>(val invocationSide: Side): Connection {
     override val side: Side = invocationSide

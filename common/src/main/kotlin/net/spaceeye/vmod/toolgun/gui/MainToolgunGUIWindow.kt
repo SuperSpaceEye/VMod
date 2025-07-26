@@ -115,7 +115,6 @@ class MainToolgunGUIWindow(
     }
 
     fun initGUI() {
-        currentWindow = ToolgunGUI(mainWindow.constrain())
         if (drawTopButtons) {
             buildButtons()
             buttons[0].setDisplay(true)

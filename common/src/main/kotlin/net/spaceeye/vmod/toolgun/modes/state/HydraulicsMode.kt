@@ -3,8 +3,9 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.compat.vsBackwardsCompat.scaling
-import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.addForVMod
 import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.SignalActivator
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
@@ -29,8 +30,6 @@ import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import java.awt.Color
-
-object HydraulicsNetworking: PlacementAssistNetworking("hydraulics_networking")
 
 class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
     @JsonIgnore private var i = 0
@@ -81,7 +80,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
             color, width, fullbright, RenderingUtils.whiteTexture
         ))).addExtension(SignalActivator(
             "channel", "targetPercentage"
-        )).addExtension(Strippable())){it.addFor(player)}
+        )).addExtension(Strippable())){it.addForVMod(player)}
 
         resetState()
     }
@@ -93,6 +92,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
 
     companion object {
         init {
+            val paNetworking = PlacementAssistNetworking("hydraulics_networking", MOD_ID)
             ToolgunModes.registerWrapper(HydraulicsMode::class) {
                 it.addExtension {
                     BasicConnectionExtension<HydraulicsMode>("hydraulics_mode"
@@ -103,7 +103,7 @@ class HydraulicsMode: ExtendableToolgunMode(), HydraulicsGUI, HydraulicsHUD {
                 }.addExtension{
                     BlockMenuOpeningExtension<HydraulicsMode> { inst -> inst.primaryFirstRaycast || inst.paMiddleFirstRaycast }
                 }.addExtension {
-                    PlacementAssistExtension(true, HydraulicsNetworking,
+                    PlacementAssistExtension(true, paNetworking,
                         { (it as HydraulicsMode).primaryFirstRaycast },
                         { (it as HydraulicsMode).connectionMode == HydraulicsConstraint.ConnectionMode.HINGE_ORIENTATION },
                         { spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double ->

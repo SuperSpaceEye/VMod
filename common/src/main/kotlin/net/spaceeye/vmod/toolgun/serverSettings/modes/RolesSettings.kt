@@ -9,6 +9,7 @@ import gg.essential.elementa.constraints.ChildBasedSizeConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import net.minecraft.network.FriendlyByteBuf
+import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.guiElements.*
 import net.spaceeye.vmod.limits.StrLimit
 import net.spaceeye.vmod.reflectable.AutoSerializable
@@ -174,17 +175,17 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
         var dataCallback: ((RolePermissionsData) -> Unit)? = null
         var callback: (() -> Unit)? = null
 
-        val c2sRequestRoleData = regC2S<EmptyPacket>("request_role_data", "player_roles_settings") { pkt, player ->
+        val c2sRequestRoleData = regC2S<EmptyPacket>(MOD_ID, "request_role_data", "player_roles_settings") { pkt, player ->
             s2cSendRoleData.sendToClient(player, RolePermissionsData())
         }
 
-        val s2cSendRoleData = regS2C<RolePermissionsData>("send_role_data", "player_roles_settings") {pkt ->
+        val s2cSendRoleData = regS2C<RolePermissionsData>(MOD_ID, "send_role_data", "player_roles_settings") {pkt ->
             state = pkt
             dataCallback!!(pkt)
             dataCallback = null
         }
 
-        val c2sTryUpdateRolesSettings = regC2S<C2SRolesSettingsUpdate>("try_update_roles_settings", "player_roles_settings",
+        val c2sTryUpdateRolesSettings = regC2S<C2SRolesSettingsUpdate>(MOD_ID, "try_update_roles_settings", "player_roles_settings",
             { pkt, player -> player.hasPermissions(4) }) {pkt, player ->
             synchronized(PlayerAccessManager.rolesPermissions) {
                 pkt.rolesPermissions.forEach { (k, v) ->
@@ -193,24 +194,24 @@ class RolesPermissionsSettings: ServerSettingsGUIBuilder {
             }
         }
 
-        val c2sTryRemoveRole = regC2S<C2SRemoveRole>("try_remove_role", "player_roles_settings",
+        val c2sTryRemoveRole = regC2S<C2SRemoveRole>(MOD_ID, "try_remove_role", "player_roles_settings",
             { pkt, player -> player.hasPermissions(4) }) {(roleName), player ->
             PlayerAccessManager.removeRole(roleName)
             s2cRoleWasRemoved.sendToClient(player, EmptyPacket())
         }
 
-        val s2cRoleWasRemoved = regS2C<EmptyPacket>("role_was_removed", "player_roles_settings") {
+        val s2cRoleWasRemoved = regS2C<EmptyPacket>(MOD_ID, "role_was_removed", "player_roles_settings") {
             callback?.invoke()
             callback = null
         }
 
-        val c2sTryAddNewRole = regC2S<C2SNewRole>("try_add_new_role", "player_roles_settings",
+        val c2sTryAddNewRole = regC2S<C2SNewRole>(MOD_ID, "try_add_new_role", "player_roles_settings",
             { pkt, player ->  player.hasPermissions(4) }) {(name), player ->
             PlayerAccessManager.addRole(name)
             s2cRoleWasAdded.sendToClient(player, EmptyPacket())
         }
 
-        val s2cRoleWasAdded = regS2C<EmptyPacket>("role_was_added", "player_roles_settings") {
+        val s2cRoleWasAdded = regS2C<EmptyPacket>(MOD_ID, "role_was_added", "player_roles_settings") {
             callback?.invoke()
             callback = null
         }

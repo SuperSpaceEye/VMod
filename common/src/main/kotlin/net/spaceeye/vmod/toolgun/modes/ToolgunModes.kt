@@ -37,9 +37,6 @@ object ToolgunModes: Registry<BaseMode>() {
         initAccessPermissions()
     }
 
-    @JvmStatic
-    fun <T: BaseMode> getMode(clazz: KClass<T>) = this.typeToSupplier(clazz)
-
     private fun initAccessPermissions() {
         asTypesList().forEach {
             PlayerAccessManager.addPermission("Allow ${it.simpleName}")

@@ -49,8 +49,7 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.rendering.types.BaseRenderer
 import net.spaceeye.vmod.rendering.types.BlockRenderer
-import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.toolgun.modes.state.SchemMode
 import net.spaceeye.vmod.utils.DummyChunkSource
 import net.spaceeye.vmod.utils.DummyLevelEntityGetter
@@ -189,6 +188,7 @@ class FakeLevel(
     override fun getFluidTicks(): LevelTickAccess<Fluid?>? { throw AssertionError("Shouldn't be called")  }
 }
 
+//TODO is there a better way to do this?
 class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
     val vertices = mutableListOf<Vertex>()
 
@@ -423,24 +423,24 @@ class SchematicRenderer(val schem: IShipSchematic, val transparency: Float, val 
     }
 }
 
-class SchemRenderer(
+open class SchemRenderer(
     val schem: IShipSchematic,
     val rotationAngle: Ref<Double>,
     var transparency: Float = 0.5f,
-    var renderBlockEntities: Boolean
+    var renderBlockEntities: Boolean,
+    var doRender: () -> Boolean = { VMToolgun.client.currentMode is SchemMode && VMToolgun.client.playerIsUsingToolgun() }
 ): BlockRenderer() {
     var renderer: SchematicRenderer? = null
 
-    init {
-        Thread {
-            renderer = SchematicRenderer(schem, transparency, renderBlockEntities)
-        }.start()
+    init { init() }
+
+    open fun init() {
+        Thread { renderer = SchematicRenderer(schem, transparency, renderBlockEntities) }.start()
     }
 
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, sources: MultiBufferSource, timestamp: Long) {
-        val mode = ClientToolGunState.currentMode
-        if (mode !is SchemMode) {return}
-        if (!playerIsUsingToolgun()) {return}
+        if (!doRender()) {return}
+        if (renderer == null) {return}
         val level = Minecraft.getInstance().level!!
 
         val raycastResult = RaycastFunctions.renderRaycast(
@@ -454,9 +454,13 @@ class SchemRenderer(
 
         val pos = (raycastResult.worldHitPos ?: return) + (raycastResult.worldNormalDirection ?: return) * schem.info!!.maxObjectPos.y
 
+        renderBlocks(poseStack, sources, camera, pos, raycastResult.worldNormalDirection!!, rotationAngle.it)
+    }
+
+    open fun renderBlocks(poseStack: PoseStack, sources: MultiBufferSource, camera: Camera, pos: Vector3d, worldNormal: Vector3d, rotationAroundNormal: Double) {
         val rotation = Quaterniond()
-            .mul(Quaterniond(AxisAngle4d(rotationAngle.it, raycastResult.worldNormalDirection!!.toJomlVector3d())))
-            .mul(getQuatFromDir(raycastResult.worldNormalDirection!!))
+            .mul(Quaterniond(AxisAngle4d(rotationAroundNormal, worldNormal.toJomlVector3d())))
+            .mul(getQuatFromDir(worldNormal))
             .normalize()
 
         poseStack.pushPose()

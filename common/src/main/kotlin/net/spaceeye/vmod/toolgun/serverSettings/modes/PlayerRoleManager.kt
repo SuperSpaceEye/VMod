@@ -4,6 +4,7 @@ import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.components.UIText
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
+import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.makeDropDown
 import net.spaceeye.vmod.guiElements.makeText
@@ -81,15 +82,15 @@ class PlayerRoleManager: ServerSettingsGUIBuilder {
 
     companion object {
         var callback: ((PlayersRolesData) -> Unit)? = null
-        val c2sRequestPlayersRolesData = regC2S<EmptyPacket>("request_players_roles_data", "player_role_manager") {pkt, player ->
+        val c2sRequestPlayersRolesData = regC2S<EmptyPacket>(MOD_ID, "request_players_roles_data", "player_role_manager") {pkt, player ->
             s2cSendPlayersRolesData.sendToClient(player, PlayersRolesData())
         }
-        val s2cSendPlayersRolesData = regS2C<PlayersRolesData>("send_players_roles_data", "player_role_manager") {pkt ->
+        val s2cSendPlayersRolesData = regS2C<PlayersRolesData>(MOD_ID, "send_players_roles_data", "player_role_manager") {pkt ->
             callback!!(pkt)
             callback = null
         }
 
-        val c2sChangePlayerRole = regC2S<C2SChangePlayerRole>("try_change_player_role", "player_role_manager",
+        val c2sChangePlayerRole = regC2S<C2SChangePlayerRole>(MOD_ID, "try_change_player_role", "player_role_manager",
             { pkt, player -> player.hasPermissions(4)}) {pkt, player ->
             PlayerAccessManager.setPlayerRole(pkt.uuid, pkt.newRole)
             s2cSendPlayersRolesData.sendToClient(player, PlayersRolesData())

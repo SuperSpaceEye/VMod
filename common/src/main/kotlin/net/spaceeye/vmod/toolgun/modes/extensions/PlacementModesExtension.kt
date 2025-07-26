@@ -22,10 +22,11 @@ open class PlacementModesExtension(
 ): ToolgunModeExtension, ReflectableObject {
     private var precisePlacementAssistRendererId: Int = -1
     private var type: BaseNetworking.EnvType = BaseNetworking.EnvType.Server
+    private lateinit var inst: ExtendableToolgunMode
 
     override fun onInit(mode: ExtendableToolgunMode, type: BaseNetworking.EnvType) {
-        super.onInit(mode, type)
         this.type = type
+        this.inst = mode
     }
 
     var posMode: PositionModes by get(0, PositionModes.NORMAL).presettable()
@@ -34,7 +35,7 @@ open class PlacementModesExtension(
         .setSetWrapper { old, new ->
             if (type == BaseNetworking.EnvType.Client && posMode == PositionModes.PRECISE_PLACEMENT) {
                 RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
-                precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(new))
+                precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(new) {inst.instance.client.playerIsUsingToolgun()})
             }
             new
         }
@@ -60,7 +61,7 @@ open class PlacementModesExtension(
     override fun eOnOpenMode() {
         if (posMode != PositionModes.PRECISE_PLACEMENT) {return}
         RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
-        precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
+        precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum) {inst.instance.client.playerIsUsingToolgun()})
     }
 
     override fun eOnCloseMode() {
@@ -79,7 +80,7 @@ open class PlacementModesExtension(
                 DItem(PRECISE_PLACEMENT.get(), posMode == PositionModes.PRECISE_PLACEMENT) {
                     posMode = PositionModes.PRECISE_PLACEMENT
                     RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
-                    precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
+                    precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum) {inst.instance.client.playerIsUsingToolgun()})
                 })
             )
         } else {
@@ -89,7 +90,7 @@ open class PlacementModesExtension(
                 DItem(PRECISE_PLACEMENT.get(), posMode == PositionModes.PRECISE_PLACEMENT) {
                     posMode = PositionModes.PRECISE_PLACEMENT
                     RenderingData.client.removeClientsideRenderer(precisePlacementAssistRendererId)
-                    precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum))
+                    precisePlacementAssistRendererId = RenderingData.client.addClientsideRenderer(PrecisePlacementAssistRenderer(precisePlacementAssistSideNum) {inst.instance.client.playerIsUsingToolgun()})
                 })
             )
         }

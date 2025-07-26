@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.createSpacedPoints
@@ -26,12 +26,12 @@ import java.awt.Color
 class PrecisePlacementAssistRenderer(
     var precisePlacementAssistSideNum: Int,
     var distance: Double = 20.0,
-    var doRender: () -> Boolean = {playerIsUsingToolgun()}
+    var doWork: () -> Boolean,
 ): BaseRenderer() {
     val level = Minecraft.getInstance().level!!
 
     override fun renderData(poseStack: PoseStack, camera: Camera, timestamp: Long) {
-        if (!doRender()) {return}
+        if (!doWork()) {return}
 
         val raycastResult = RaycastFunctions.renderRaycast(level,
             RaycastFunctions.Source(

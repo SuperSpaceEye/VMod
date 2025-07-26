@@ -35,7 +35,9 @@ import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.compat.schem.ExternalVSchemCompatProvider
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.events.SessionEvents
+import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
 import net.spaceeye.vmod.translate.ONE_OF_THE_SHIPS_IS_TOO_TALL
 import net.spaceeye.vmod.utils.JVector3d
@@ -226,7 +228,7 @@ object SchematicActionsQueue: ServerClosable() {
                     .also { it.forEach {
                         val bounds = it.value.centeredShipAABB
                         if (bounds.maxY() - bounds.minY() > level.yRange.size) {
-                            player?.let { ServerToolGunState.sendErrorTo(it, ONE_OF_THE_SHIPS_IS_TOO_TALL) }
+                            player?.let { ErrorAddition.sendErrorTo(it, ONE_OF_THE_SHIPS_IS_TOO_TALL) }
                             return null
                     } } }
                     .also { shipsInfo = it }

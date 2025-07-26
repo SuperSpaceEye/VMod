@@ -30,6 +30,7 @@ import net.spaceeye.vmod.schematic.SchematicActionsQueue.CopySchematicSettings
 import net.spaceeye.vmod.schematic.SchematicActionsQueue.PasteSchematicSettings
 import net.spaceeye.vmod.shipAttachments.AttachmentAccessor
 import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
 import net.spaceeye.vmod.translate.makeFake
 import net.spaceeye.vmod.utils.vs.posShipToWorld
@@ -64,7 +65,7 @@ fun IShipSchematicDataV1.placeAt(
      settings: PasteSchematicSettings = PasteSchematicSettings(
          logger = VM.logger,
          //TODO think of a way to make str into translatable
-         nonfatalErrorsHandler = { numErrors, _, player -> player?.let { ServerToolGunState.sendErrorTo(it, "Schematic had $numErrors nonfatal errors") } }
+         nonfatalErrorsHandler = { numErrors, _, player -> player?.let { VMToolgun.server.sendErrorTo(it, "Schematic had $numErrors nonfatal errors") } }
      ), postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
     extraData.forEach { (_, bytes) -> bytes.setIndex(0, bytes.accessByteBufWithCorrectSize().size) }
 

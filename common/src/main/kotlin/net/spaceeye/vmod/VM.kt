@@ -45,6 +45,8 @@ fun WLOG(s: String) = VM.logger.warn(s)
 fun DLOG(s: String) = VM.logger.debug(s)
 fun ELOG(s: String) = VM.logger.error(s)
 
+const val MOD_ID = "the_vmod"
+
 object VM {
     const val MOD_ID = "the_vmod"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!
@@ -58,13 +60,12 @@ object VM {
 
         SimpleMessagerNetworking
         ServerLimits
-        ServerToolGunState
         ServerPhysgunState
         SchemCompatObj
         VSMasslessShipProcessor
+        VMToolgun
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ScreenWindow
-            ClientToolGunState
             ClientPhysgunState
             ClientSettingsTypes
             ClientCommandRegistrationEvent.EVENT.register { VMClientCommands.registerClientCommands(it) }

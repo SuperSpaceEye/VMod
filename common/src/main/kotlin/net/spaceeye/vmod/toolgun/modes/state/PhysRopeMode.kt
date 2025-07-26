@@ -20,7 +20,7 @@ import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycast2PointsFnActivation
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
-import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.addForVMod
 import net.spaceeye.vmod.vEntityManaging.extensions.PhysRopeRenderable
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
@@ -79,7 +79,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
             dist, segments, totalMass / segments, radius, Math.toRadians(angleLimit)
         )   .also { it.addExtension(PhysRopeRenderable(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, up1, up2, right1, right2, Color(255, 255, 255), sides, fullbright, listOf(), RenderingUtils.ropeTexture))) }
             .addExtension(Strippable())
-            .also {level.makeVEntity(it) {it.addFor(player)} }
+            .also {level.makeVEntity(it) {it.addForVMod(player)} }
 
         resetState()
     }

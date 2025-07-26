@@ -46,7 +46,7 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
-class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
+class SaveForm(val obj: ReflectableObject, client: ClientToolGunState): UIBlock(Color.GRAY.brighter()) {
     var filename = ""
 
     init {
@@ -67,7 +67,7 @@ class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
             try {
                 File("${filename}.json").canonicalPath
             } catch (e: Exception) {
-                ClientToolGunState.closeWithError(INVALID_FILENAME.get())
+                client.closeWithError(INVALID_FILENAME.get())
                 return@Button
             }
 
@@ -80,7 +80,7 @@ class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
             try {
                 Files.writeString(Paths.get("VMod-Presets/${obj::class.simpleName}/${filename}.json"), json)
             } catch (e: Exception) {
-                ClientToolGunState.closeWithError(FAILED_TO_MAKE_PRESET.get())
+                client.closeWithError(FAILED_TO_MAKE_PRESET.get())
             }
         }.constrain {
             x = 2.pixels()
@@ -110,7 +110,7 @@ class Presettable: ToolgunModeExtension {
 
         val btn = Button(Color(150, 150, 150), MAKE_PRESET.get()) {
             val mode = mode as ReflectableObject
-            SaveForm(mode) childOf parentWindow
+            SaveForm(mode, this.mode.instance.client) childOf parentWindow
         }
 
         val children = parentWindow.allChildren.map { it }
@@ -135,7 +135,7 @@ class Presettable: ToolgunModeExtension {
     }
 }
 
-class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) {
+class SettingPresets(val mainWindow: UIBlock, val client: ClientToolGunState): BaseToolgunGUIWindow(mainWindow) {
     init { init() }
 
     fun init() {
@@ -198,7 +198,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
                     fromJsonStr(jsonStr, items)
                 } catch (e: Exception) {
                     ELOG(e.stackTraceToString())
-                    ClientToolGunState.closeWithError(SOMETHING_WENT_WRONG.get())
+                    client.closeWithError(SOMETHING_WENT_WRONG.get())
                 }
             } constrain {
                 x = SiblingConstraint(2f) + 1.pixels
@@ -212,7 +212,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
                     if (!Files.deleteIfExists(chosenPreset)) return@Button
                 } catch (e: Exception) {
                     ELOG(e.stackTraceToString())
-                    ClientToolGunState.closeGUI()
+                    client.closeGUI()
                     return@Button
                 }
                 settingsScrollComponent.clearChildren()

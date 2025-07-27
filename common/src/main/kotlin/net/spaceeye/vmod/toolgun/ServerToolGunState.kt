@@ -18,7 +18,6 @@ import net.spaceeye.vmod.translate.YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN
 import net.spaceeye.vmod.translate.getTranslationKey
 import net.spaceeye.vmod.translate.translate
 import net.spaceeye.vmod.utils.EmptyPacket
-import net.spaceeye.vmod.utils.Registry
 import net.spaceeye.vmod.utils.ServerClosable
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap

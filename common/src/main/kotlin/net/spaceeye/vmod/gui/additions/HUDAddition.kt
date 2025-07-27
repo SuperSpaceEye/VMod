@@ -13,6 +13,9 @@ import net.spaceeye.vmod.toolgun.modes.DefaultHUD
 class HUDAddition: ScreenWindowAddition() {
     private lateinit var hudContainer: UIContainer
     private var refreshHUD = true
+    var renderHUD = true
+
+    var defaultHUD = DefaultHUD()
 
     fun refreshHUD() {
         refreshHUD = true
@@ -29,6 +32,7 @@ class HUDAddition: ScreenWindowAddition() {
     }
 
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
+        if (!renderHUD) {return}
         if (!instance.client.playerIsUsingToolgun()) {
             hudContainer.clearChildren()
             refreshHUD = true
@@ -45,8 +49,6 @@ class HUDAddition: ScreenWindowAddition() {
     }
 
     companion object {
-        private val defaultHUD = DefaultHUD()
-
         fun refreshHUD() { ScreenWindow.screen?.getExtensionsOfType<HUDAddition>()?.forEach { it.refreshHUD() } }
     }
 }

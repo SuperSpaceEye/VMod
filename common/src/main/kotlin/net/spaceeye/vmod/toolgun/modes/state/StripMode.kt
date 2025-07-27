@@ -67,8 +67,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     }
     @JsonIgnore private var i = 0
 
-
-    var radius: Double by get(i++, 1.0, {ServerLimits.instance.stripRadius.get(it)})
+    var radius: Double by get(i++, 1.0) { ServerLimits.instance.stripRadius.get(it) }
     var mode: StripModes by get(i++, StripModes.StripAll)
 
     private var render = false

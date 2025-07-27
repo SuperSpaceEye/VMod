@@ -33,15 +33,15 @@ private var instance: ToolgunInstance? = null
 
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             field!!.client = ClientToolGunState(field!!)
-
             field!!.client.instance = field!!
+            field!!.client.initState()
+
             field!!.client.addWindow(MAIN) {ToolgunGUI(it, field!!.client)}
             field!!.client.addWindow(CLIENT_SETTINGS) {ClientSettingsGUI(it)}
             field!!.client.addWindow(SERVER_SETTINGS) {ServerSettingsGUI(it, field!!)}
             field!!.client.addWindow(SETTINGS_PRESETS) {SettingPresets(it, field!!.client)}
 
             ScreenWindow.addScreenAddition { PresetsAddition()       .also { it.instance = field!! } }
-            ScreenWindow.addScreenAddition { HUDAddition()           .also { it.instance = field!! } }
             ScreenWindow.addScreenAddition { VEntityChangerWorldMenu .also { it.instance = field!! } }
             ScreenWindow.addScreenAddition { InfoAddition()          .also { it.instance = field!! } }
         } }

@@ -22,6 +22,7 @@ import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.state.VEntityChangerGui
 import net.spaceeye.vmod.utils.ClientClosable
 import net.spaceeye.vmod.utils.EmptyPacket
+import net.spaceeye.vmod.utils.FakeKProperty
 import org.lwjgl.glfw.GLFW
 
 open class ClientToolGunState(
@@ -47,7 +48,21 @@ open class ClientToolGunState(
         externalWindows.add(name to windowConstructor)
     }
 
-    open fun initEvents() {
+    lateinit var renderHud: FakeKProperty<Boolean>
+    var initHudAddition = {
+        val hudAddition = HUDAddition().also { it.instance = instance }
+        ScreenWindow.addScreenAddition { hudAddition }
+        renderHud = FakeKProperty({hudAddition.renderHUD}) {hudAddition.renderHUD = it}
+    }
+
+    var init = {
+        gui = MainToolgunGUIWindow()
+        gui.currentWindow = ToolgunGUI(gui.mainWindow, this)
+        externalWindows.forEach { gui.addWindow(it.first, it.second) }
+        gui.initGUI()
+    }
+
+    var initEvents = {
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientPlayerEvent.CLIENT_PLAYER_JOIN.register {
                 if (it != Minecraft.getInstance().player) {return@register}
@@ -76,7 +91,7 @@ open class ClientToolGunState(
                 }
 
                 if (!guiIsOpened && isPressed && TOOLGUN_TOGGLE_HUD_KEY.matches(keyCode, scanCode)) {
-                    ScreenWindow.renderHud = !ScreenWindow.renderHud
+                    renderHud.set(!renderHud.get())
                     return@on true
                 }
 
@@ -110,9 +125,13 @@ open class ClientToolGunState(
         }}
     }
 
+    var initState = {
+        initHudAddition()
+        initEvents()
+    }
+
     init {
         instance.client = this
-        initEvents()
     }
 
     open fun openGUI() {
@@ -158,17 +177,8 @@ open class ClientToolGunState(
 
     protected open lateinit var gui: MainToolgunGUIWindow
 
-    //TODO redo this
-    open fun toolgunGuiIsOpened() = Minecraft.getInstance().screen.let { it is MainToolgunGUIWindow || it is VEntityChangerGui }
-    //TODO i don't like this
-    open fun playerIsUsingToolgun(): Boolean = Minecraft.getInstance().player?.mainHandItem?.item == VMItems.TOOLGUN.get().asItem()
-
-    internal open fun init() {
-        gui = MainToolgunGUIWindow()
-        gui.currentWindow = ToolgunGUI(gui.mainWindow, this)
-        externalWindows.forEach { gui.addWindow(it.first, it.second) }
-        gui.initGUI()
-    }
+    var toolgunGuiIsOpened: () -> Boolean = {Minecraft.getInstance().screen.let { it is MainToolgunGUIWindow || it is VEntityChangerGui }}
+    var playerIsUsingToolgun: () -> Boolean = {Minecraft.getInstance().player?.mainHandItem?.item == VMItems.TOOLGUN.get().asItem()}
 
     override fun close() {
         currentMode = null

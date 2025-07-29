@@ -24,7 +24,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
 
-class PresetsAddition: ScreenWindowAddition() {
+class PresetsAddition(): ScreenWindowAddition() {
     private lateinit var screenContainer: UIContainer
 
     private var presetsContainer = ScrollMenu(10, Color(50, 50, 50, 220), Color.WHITE)
@@ -44,7 +44,7 @@ class PresetsAddition: ScreenWindowAddition() {
             if (mode.getExtensionsOfType<Presettable>().isEmpty()) return@on false
 
             if (action == GLFW.GLFW_PRESS) {
-                val presets = listPresets(mode::class.simpleName!!).toMutableList()
+                val presets = listPresets(mode::class.simpleName!!, this.instance.instanceStorage["Presettable-dir-name"] as String).toMutableList()
                 if (presets.isEmpty()) return@on false
 
                 presets.add(0, Path.of("No Preset"))

@@ -38,7 +38,6 @@ import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.toolgun.ToolgunInstance
-import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistNetworking.S2CSendTraversalInfo
 import org.valkyrienskies.core.api.ships.ClientShip
@@ -55,12 +54,13 @@ enum class ThreeClicksActivationSteps {
     FINALIZATION
 }
 
-class PlacementAssistExtension(
+open class PlacementAssistExtension(
     showCenteredInBlock: Boolean,
     override val paNetworkingObject: PlacementAssistNetworking,
     val blockPredicate: (mode: ExtendableToolgunMode) -> Boolean,
     val canUseJoinMode: (inst: ExtendableToolgunMode) -> Boolean,
-    override val paVEntityBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> VEntity
+    override val paVEntityBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> VEntity,
+    override val doActivate: (level: ServerLevel, player: ServerPlayer, inst: PlacementAssistServerPart, pr: RaycastFunctions.RaycastResult, rr: RaycastFunctions.RaycastResult) -> Boolean = {_, _, _, _, _ -> true}
 ): PlacementModesExtension(showCenteredInBlock),
     PlacementAssistClient, PlacementAssistServerPart, AutoSerializable {
     override lateinit var inst: ExtendableToolgunMode
@@ -225,7 +225,7 @@ interface PlacementAssistClient {
         val mode = if (posMode != PositionModes.CENTERED_IN_BLOCK) {posMode} else {PositionModes.CENTERED_ON_SIDE}
 
         paCaughtShip = (level.getShipManagingPos(raycastResult.blockPosition) ?: run {paClientResetState(); return}) as ClientShip
-        paCaughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, paCaughtShip!!, precisePlacementAssistSideNum) {VMToolgun.client.playerIsUsingToolgun()}
+        paCaughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, paCaughtShip!!, precisePlacementAssistSideNum) {instance.client.playerIsUsingToolgun()}
 
         paStage = ThreeClicksActivationSteps.SECOND_RAYCAST
         return
@@ -322,9 +322,11 @@ interface PlacementAssistServerPart {
     var previousResult: RaycastFunctions.RaycastResult?
     val inst: ExtendableToolgunMode
 
+    val doActivate: (level: ServerLevel, player: ServerPlayer, inst: PlacementAssistServerPart, pr: RaycastFunctions.RaycastResult, rr: RaycastFunctions.RaycastResult) -> Boolean
 
     fun activateMiddle(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivationBase(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || middleFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, {inst.resetState()}) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
+        if (!doActivate(level, player, this, prresult, rresult)) return@serverRaycast2PointsFnActivationBase handleFailure(player)
 
         if (previousResult!!.ship == null) {
             paFirstResult = rresult
@@ -368,12 +370,12 @@ interface PlacementAssistServerPart {
         }
     }
 
-    private fun handleFailure(player: Player) {
+    fun handleFailure(player: Player) {
         paNetworkingObject.s2cHandleFailure.sendToClient(player as ServerPlayer, EmptyPacket())
         paServerResetState()
     }
 
-    private fun paFunctionFirst(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+    fun paFunctionFirst(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (raycastResult.state.isAir) {return handleFailure(player)}
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return handleFailure(player)
         paFirstResult = raycastResult
@@ -381,7 +383,7 @@ interface PlacementAssistServerPart {
         paNetworkingObject.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, S2CSendTraversalInfo(traversed.toLongArray()))
     }
 
-    private fun paFunctionSecond(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+    fun paFunctionSecond(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (raycastResult.state.isAir) {return handleFailure(player) }
         val ship = level.getShipManagingPos(raycastResult.blockPosition)
         if (ship == level.getShipManagingPos(paFirstResult?.blockPosition ?: return handleFailure(player))) {return handleFailure(player)}
@@ -389,7 +391,7 @@ interface PlacementAssistServerPart {
     }
 
     @OptIn(VsBeta::class)
-    private fun paFunctionThird(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+    fun paFunctionThird(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (paFirstResult == null || paSecondResult == null) {return handleFailure(player)}
 
         val paFirstResult = paFirstResult!!
@@ -400,6 +402,7 @@ interface PlacementAssistServerPart {
 
         if (ship1 == null) {return handleFailure(player)}
         if (ship1 == ship2) {return handleFailure(player)}
+        if (!doActivate(level, player as ServerPlayer, this, paFirstResult, paSecondResult)) {return paServerResetState()}
 
         // not sure why i need to flip y, but it works
         val dir1 = paFirstResult .globalNormalDirection!!.let {it.copy().also{it.set(it.x, -it.y, it.z)}}

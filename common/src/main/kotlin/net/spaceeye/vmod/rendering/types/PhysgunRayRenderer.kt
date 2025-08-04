@@ -126,16 +126,16 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
 
         val num = 32
         var fpos = point1
-        var leftPoints = RenderingUtils.Quad.makePolygon(4, width, up, right, point1)
+        var leftPoints = RenderingUtils.Quad.makePolygonPoints(4, width, up, right, point1)
         for (i in 1 .. num) {
             val spos = quadBeizer(point1, middle, point2, i.toDouble() / num.toDouble())
 
             val dir = (fpos - spos).snormalize()
             right = dir.cross(up)
 
-            val rightPoints = RenderingUtils.Quad.makePolygon(4, width, up, right, spos)
+            val rightPoints = RenderingUtils.Quad.makePolygonPoints(4, width, up, right, spos)
 
-            RenderingUtils.Quad.drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, light, 0.0f, 0.0f, leftPoints, rightPoints)
+            RenderingUtils.Quad.drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, light, 0.0f, 1.0f, 0.0f, 0.1f, leftPoints, rightPoints)
 
             leftPoints = rightPoints
             fpos = spos

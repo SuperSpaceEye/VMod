@@ -18,7 +18,7 @@ import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.rendering.RenderSetups
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.RenderingUtils.Quad.drawPolygonTube
-import net.spaceeye.vmod.rendering.RenderingUtils.Quad.makePolygon
+import net.spaceeye.vmod.rendering.RenderingUtils.Quad.makePolygonPoints
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.posShipToWorldRender
 import net.spaceeye.vmod.utils.vs.updatePosition
@@ -154,9 +154,12 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
 
         var shape = entities[0].collisionShapeData as VSCapsuleCollisionShapeData
         var rPoints: List<Vector3d>
-        var lPoints = makePolygon(sides, shape.radius, up, right, ppos)
+        var lPoints = makePolygonPoints(sides, shape.radius, up, right, ppos)
 
         var scale = 0.75f
+
+        val widthUV = (shape.radius * 2).toFloat()
+        var leftUV = 0f
 
         for (entity in entities) {
             shape = entity.collisionShapeData as VSCapsuleCollisionShapeData
@@ -166,12 +169,13 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
 
             up = getUpFromQuat(entity.renderTransform.shipToWorldRotation)
             rPoints = makePoints(cpos, ppos, cpos, up, shape.radius)
+            val rightUV = leftUV + shape.length.toFloat()
 
             val leftLight  = if (fullbright) LightTexture.FULL_BRIGHT else ppos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
             val rightLight = if (fullbright) LightTexture.FULL_BRIGHT else cpos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
-            drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, 0.0f, scale, lPoints, rPoints)
-            scale = 1.0f
+            drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, 0f, widthUV, lPoints, rPoints)
 
+            leftUV = rightUV
             lPoints = rPoints
             ppos = cpos
         }
@@ -181,11 +185,12 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         up    = ship2?.shipToWorld?.transformDirection(up2   .toJomlVector3d())?.let { Vector3d(it) } ?: up2
         right = ship2?.shipToWorld?.transformDirection(right2.toJomlVector3d())?.let { Vector3d(it) } ?: right2
 
-        rPoints = makePolygon(sides, shape.radius, up, right, cpos)
+        rPoints = makePolygonPoints(sides, shape.radius, up, right, cpos)
+        val rightUV = leftUV + shape.length.toFloat()
 
         val leftLight  = if (fullbright) LightTexture.FULL_BRIGHT else ppos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
         val rightLight = if (fullbright) LightTexture.FULL_BRIGHT else cpos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
-        drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, 0.0f, 0.25f, lPoints, rPoints)
+        drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, 0f, widthUV, lPoints, rPoints)
 
         tesselator.end()
         poseStack.popPose()
@@ -193,7 +198,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         RenderSetups.clearFullRendering()
     }
 
-    private fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = with(data) { return@with makePolygon(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse) }
+    private fun makePoints(cpos: Vector3d, ppos: Vector3d, posToUse: Vector3d, up: Vector3d, width: Double) = with(data) { return@with makePolygonPoints(sides, width, up, (cpos - ppos).snormalize().scross(up), posToUse) }
 
     override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = with(data) {
         return PhysRopeRenderer(

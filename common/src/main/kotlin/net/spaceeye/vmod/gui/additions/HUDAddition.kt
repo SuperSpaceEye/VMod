@@ -32,8 +32,7 @@ class HUDAddition: ScreenWindowAddition() {
     }
 
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
-        if (!renderHUD) {return}
-        if (!instance.client.playerIsUsingToolgun()) {
+        if (!renderHUD || !instance.client.playerIsUsingToolgun()) {
             hudContainer.clearChildren()
             refreshHUD = true
             return

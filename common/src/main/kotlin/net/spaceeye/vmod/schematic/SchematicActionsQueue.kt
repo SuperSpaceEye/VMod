@@ -36,9 +36,6 @@ import net.spaceeye.vmod.compat.schem.ExternalVSchemCompatProvider
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.gui.additions.ErrorAddition
-import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.toolgun.VMToolgun
-import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
 import net.spaceeye.vmod.translate.ONE_OF_THE_SHIPS_IS_TOO_TALL
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.ServerClosable
@@ -302,8 +299,6 @@ object SchematicActionsQueue: ServerClosable() {
 
                     if (getNow_ms() - start > timeout && settings.allowUpdateInterruption) { return false }
                 }
-
-                (ship.transformProvider as? SchemTempPositionSetter)?.work = true
 
                 currentChunk = 0
                 currentShip++

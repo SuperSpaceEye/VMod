@@ -156,8 +156,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         var rPoints: List<Vector3d>
         var lPoints = makePolygonPoints(sides, shape.radius, up, right, ppos)
 
-        var scale = 0.75f
-
+        //TODO make widthUV more configurable
         val widthUV = (shape.radius * 2).toFloat()
         var leftUV = 0f
 
@@ -173,7 +172,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
 
             val leftLight  = if (fullbright) LightTexture.FULL_BRIGHT else ppos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
             val rightLight = if (fullbright) LightTexture.FULL_BRIGHT else cpos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
-            drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, 0f, widthUV, lPoints, rPoints)
+            drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, widthUV, lPoints, rPoints)
 
             leftUV = rightUV
             lPoints = rPoints
@@ -190,7 +189,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
 
         val leftLight  = if (fullbright) LightTexture.FULL_BRIGHT else ppos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
         val rightLight = if (fullbright) LightTexture.FULL_BRIGHT else cpos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
-        drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, 0f, widthUV, lPoints, rPoints)
+        drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, widthUV, lPoints, rPoints)
 
         tesselator.end()
         poseStack.popPose()

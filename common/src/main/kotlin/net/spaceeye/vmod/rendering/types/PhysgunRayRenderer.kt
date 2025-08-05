@@ -135,7 +135,7 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
 
             val rightPoints = RenderingUtils.Quad.makePolygonPoints(4, width, up, right, spos)
 
-            RenderingUtils.Quad.drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, light, 0.0f, 1.0f, 0.0f, 0.1f, leftPoints, rightPoints)
+            RenderingUtils.Quad.drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, light, light, 0.0f, 1.0f, 1.0f, leftPoints, rightPoints)
 
             leftPoints = rightPoints
             fpos = spos

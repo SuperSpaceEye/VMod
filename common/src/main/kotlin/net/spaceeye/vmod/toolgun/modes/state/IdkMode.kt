@@ -120,9 +120,9 @@ class IdkMode: ExtendableToolgunMode(), IdkModeGUI, AutoSerializable {
             })
         }
 
-        val stiffness = if (stiffness <= 0f) Float.MAX_VALUE else stiffness
-        val damping = if (damping <= 0f) Float.MAX_VALUE else damping
-        val maxForceTorque = if (maxForce <= 0f) VSJointMaxForceTorque(Float.MAX_VALUE, Float.MAX_VALUE) else VSJointMaxForceTorque(maxForce, maxForce)
+        val stiffness = if (stiffness <= 0f) null else stiffness
+        val damping = if (damping <= 0f) null else damping
+        val maxForceTorque = if (maxForce <= 0f) null else VSJointMaxForceTorque(maxForce, maxForce)
 
         val zero = JVector3d(0.0, 0.0, 0.0)
         val rotation = Quaterniond()

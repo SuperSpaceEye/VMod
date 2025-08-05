@@ -71,20 +71,6 @@ object VM {
             ClientSettingsTypes
         } }
 
-        vsApi.shipLoadEvent.on { val ship = it.ship
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-            GravityController.getOrCreate(ship)
-        }
-
         VMBlocks.register()
         VMBlockEntities.register()
         VMItems.register()

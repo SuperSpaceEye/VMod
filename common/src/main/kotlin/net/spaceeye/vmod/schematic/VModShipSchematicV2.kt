@@ -15,6 +15,7 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.SchemSerializeDataV1Impl
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
@@ -29,7 +30,6 @@ import net.spaceeye.vmod.compat.vsBackwardsCompat.*
 import net.spaceeye.vmod.schematic.SchematicActionsQueue.CopySchematicSettings
 import net.spaceeye.vmod.schematic.SchematicActionsQueue.PasteSchematicSettings
 import net.spaceeye.vmod.shipAttachments.AttachmentAccessor
-import net.spaceeye.vmod.toolgun.ServerToolGunState
 import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
 import net.spaceeye.vmod.translate.makeFake
@@ -62,8 +62,10 @@ class VModShipSchematicV2(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
 @OptIn(VsBeta::class)
 fun IShipSchematicDataV1.placeAt(
     level: ServerLevel, player: ServerPlayer?, uuid: UUID, pos: Vector3d, rotation: Quaterniondc,
-     settings: PasteSchematicSettings = PasteSchematicSettings(
+    settings: PasteSchematicSettings = PasteSchematicSettings(
          logger = VM.logger,
+         allowChunkPlacementInterruption = VMConfig.SERVER.SCHEMATICS.ALLOW_CHUNK_PLACEMENT_INTERRUPTION,
+         allowUpdateInterruption = VMConfig.SERVER.SCHEMATICS.ALLOW_CHUNK_UPDATE_INTERRUPTION,
          //TODO think of a way to make str into translatable
          nonfatalErrorsHandler = { numErrors, _, player -> player?.let { VMToolgun.server.sendErrorTo(it, "Schematic had $numErrors nonfatal errors") } }
      ), postPlaceFn: (List<ServerShip>) -> Unit): Boolean {

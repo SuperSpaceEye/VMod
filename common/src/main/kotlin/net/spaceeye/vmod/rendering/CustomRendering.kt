@@ -132,6 +132,7 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
 
 private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {
     if (renderBlockRenderers) {return}
+    try {
     val cpos = Vector3d(Minecraft.getInstance().player!!.position())
     val now = getNow_ms()
     val toDelete = mutableListOf<Int>()
@@ -153,6 +154,8 @@ private fun renderTimedObjects(poseStack: PoseStack, camera: Camera, renderBlock
 
     if (toDelete.isEmpty()) {return}
     RenderingData.client.removeTimedRenderers(toDelete)
+    } catch (e: Exception) { ELOG("Renderer raised exception:\n${e.stackTraceToString()}")
+    } catch (e: Error) { ELOG("Renderer raised error!!!\n${e.stackTraceToString()}") }
 }
 
 private fun renderClientsideObjects(poseStack: PoseStack, camera: Camera, renderBlockRenderers: Boolean, timestamp: Long) {

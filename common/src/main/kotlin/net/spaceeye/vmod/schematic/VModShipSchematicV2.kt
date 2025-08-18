@@ -88,7 +88,8 @@ fun IShipSchematicDataV1.placeAt(
         }
 
         createdShips.zip(newTransforms).forEach { (it, transform) ->
-            val b = it.shipAABB!!
+            //TODO add ?: to nonfatal errors
+            val b = it.shipAABB ?: AABBi(0, 0, 0, 0, 0, 0)
             var offset = MVector3d(it.transform.positionInModel) - MVector3d(
                 (b.maxX() - b.minX()) / 2.0 + b.minX(),
                 (b.maxY() - b.minY()) / 2.0 + b.minY(),

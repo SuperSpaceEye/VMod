@@ -76,6 +76,7 @@ object SchematicActionsQueue: ServerClosable() {
         var externalVSchemSupportProvider: ExternalVSchemCompatProvider = SchemCompatObj,
 
         var logger: Logger? = null,
+        //TODO add callback for fatal errors
         var nonfatalErrorsHandler: (numErrors: Int, schematic: IShipSchematicDataV1, player: ServerPlayer?) -> Unit = {_, _, _->}
     )
 
@@ -554,7 +555,10 @@ object SchematicActionsQueue: ServerClosable() {
                     SessionEvents.serverOnTick.on { (server), unsubscribe ->
                         tick++
                         if (tick > 2) {
-                            item!!.postPlacementFn(item.createdShips, item.centerPositions, item.entityCreationFn)
+                            try {
+                                item!!.postPlacementFn(item.createdShips, item.centerPositions, item.entityCreationFn)
+                            } catch (e: Exception) { item?.settings?.logger?.error("Failed to call postPlacementFn with exception:\n${e.stackTraceToString()}")
+                            } catch (e: Error    ) { item?.settings?.logger?.error("Failed to call postPlacementFn with error:\n${e.stackTraceToString()}")}
                             unsubscribe()
                         }
                     }

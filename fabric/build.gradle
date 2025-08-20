@@ -25,6 +25,7 @@ repositories {
     maven {
         url = "https://repo.essential.gg/repository/maven-public"
     }
+    maven { url 'https://maven.blamejared.com' }
     maven { url = "https://mvn.devos.one/snapshots/" } // Create Fabric, Porting Lib, Forge Tags, Milk Lib, Registrate Fabric
     mavenCentral()
 }
@@ -71,6 +72,8 @@ dependencies {
     modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
 
     modCompileOnlyApi(files("vs_jars/takeoff-fabric-1.0.0-beta1+308678c5c5.jar"))
+
+    modRuntimeOnly "vazkii.patchouli:Patchouli:1.18.2-71.1-FABRIC"
 }
 
 processResources {
@@ -78,6 +81,10 @@ processResources {
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version
+    }
+
+    from(rootProject.file("common/src/main/resources")) {
+        include("data/*/patchouli_books/")
     }
 }
 

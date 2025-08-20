@@ -13,12 +13,13 @@ import org.jgrapht.graph.Multigraph
 import org.jgrapht.graph.concurrent.AsSynchronizedGraph
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.utils.ServerClosable
 import org.valkyrienskies.mod.common.shipObjectWorld
 
-object VSJointsTracker {
-    private val graph = DefaultListenableGraph(AsSynchronizedGraph(Multigraph<Long, DefaultEdge>(DefaultEdge::class.java)))
-    private val inspector = MyConnectivityInspector(graph) //todo this is not optimal
-    private val edgeInfo = mutableMapOf<Set<Long>, Int>()
+object VSJointsTracker: ServerClosable() {
+    private var graph = DefaultListenableGraph(AsSynchronizedGraph(Multigraph<Long, DefaultEdge>(DefaultEdge::class.java)))
+    private var inspector = MyConnectivityInspector(graph) //todo this is not optimal
+    private val edgeInfo = mutableMapOf<Set<Long>, Int>() //TODO change to set of joint ids?
 
     val connectionAdded   = SafeEventEmitter<OnConnectionAdded>()
     val connectionRemoved = SafeEventEmitter<OnConnectionRemoved>()
@@ -33,6 +34,15 @@ object VSJointsTracker {
         AVSEvents.serverShipRemoveEvent.on { (ship), _ ->
             graph.removeVertex(ship.id)
         }
+    }
+
+    override fun close() {
+        graph = DefaultListenableGraph(AsSynchronizedGraph(Multigraph<Long, DefaultEdge>(DefaultEdge::class.java)))
+        inspector = MyConnectivityInspector(graph)
+        edgeInfo.clear()
+
+        graph.addGraphListener(inspector)
+        inspector.connectedSets()
     }
 
     @JvmStatic

@@ -14,7 +14,8 @@
     "GameRendererMixin",
     "KeyboardHandlerMixin",
     "LevelRendererMixin",
-    "MixinMouseHandler"
+    "MixinMouseHandler",
+    "MixinLevelRendererVanillaMixin"
   ],
   "injectors": {
     "defaultRequire": 1

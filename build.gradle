@@ -35,6 +35,7 @@ subprojects {
                 includeGroup("com.jozufozu.flywheel")
             }
         }
+        maven { url = "https://maven.bawnorton.com/releases" } //mixin squared
     }
 
 //    tasks.named("ideaSyncTask").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":$project.name:build") }

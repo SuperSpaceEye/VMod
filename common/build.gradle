@@ -42,6 +42,8 @@ dependencies {
     modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
 
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.0-beta.2"))
+
+    implementation(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.3.5-beta.2"))
 }
 
 //Renames .kotlin_module of common so that it's not overwrited during forge/fabric compilation

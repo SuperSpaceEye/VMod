@@ -2,9 +2,11 @@ package net.spaceeye.vmod.toolgun.modes.state
 
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.rendering.ShipsColorModulator
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.ConstantClientRaycastingExtension
 import net.spaceeye.vmod.toolgun.modes.util.SimpleHUD
 import net.spaceeye.vmod.translate.SHIP_REMOVER
 import net.spaceeye.vmod.translate.SHIP_REMOVER_HUD_1
@@ -25,6 +27,12 @@ class ShipRemoverMode: ExtendableToolgunMode(), SimpleHUD {
         makeText(SHIP_REMOVER_HUD_1.get())
     }
 
+    var clientLastShipId = -1L
+
+    override fun eOnCloseMode() {
+        ShipsColorModulator.deleteColor(clientLastShipId)
+    }
+
     companion object {
         init {
             ToolgunModes.registerWrapper(ShipRemoverMode::class) {
@@ -32,6 +40,14 @@ class ShipRemoverMode: ExtendableToolgunMode(), SimpleHUD {
                     BasicConnectionExtension<ShipRemoverMode>("ship_remover"
                         ,leftFunction = { mode, level, player, rr -> mode.activatePrimaryFunction(level, player, rr) }
                     )
+                }.addExtension {
+                    ConstantClientRaycastingExtension<ShipRemoverMode>({ mode, rr ->
+                        if (mode.clientLastShipId != rr.shipId) {
+                            ShipsColorModulator.deleteColor(mode.clientLastShipId)
+                            ShipsColorModulator.setColor(rr.shipId, floatArrayOf(1f, 0.5f, 0.5f, 1f))
+                            mode.clientLastShipId = rr.shipId
+                        }
+                    })
                 }
             }
         }

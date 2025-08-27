@@ -5,6 +5,7 @@ import dev.architectury.utils.Env
 import net.spaceeye.vmod.rendering.types.*
 import net.spaceeye.vmod.rendering.types.TimedA2BRenderer
 import net.spaceeye.vmod.rendering.types.debug.DebugPointRenderer
+import net.spaceeye.vmod.rendering.types.debug.RainbowRenderer
 import net.spaceeye.vmod.utils.Registry
 import kotlin.reflect.KClass
 
@@ -22,6 +23,7 @@ object RenderingTypes: Registry<BaseRenderer>(false) {
         register(PhysEntityBlockRenderer::class)
 
         register(DebugPointRenderer::class)
+        register(RainbowRenderer::class)
     }
     @JvmStatic fun BaseRenderer.getType() = typeToString(this::class.java)
 }

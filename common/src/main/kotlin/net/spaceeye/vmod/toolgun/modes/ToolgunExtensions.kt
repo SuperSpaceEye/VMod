@@ -5,18 +5,17 @@ import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.networking.Serializable
 import net.spaceeye.vmod.networking.regS2C
-import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistExtension
-import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
+import net.spaceeye.vmod.toolgun.modes.extensions.*
 import net.spaceeye.vmod.utils.Registry
 
+//TODO only register extensions that need syncing
 object ToolgunExtensions: Registry<ToolgunModeExtension>() {
     init {
         register(BasicConnectionExtension::class)
         register(PlacementModesExtension::class)
         register(PlacementAssistExtension::class)
         register(BlockMenuOpeningExtension::class)
+        register(ConstantClientRaycastingExtension::class)
 
         makeEvents()
     }

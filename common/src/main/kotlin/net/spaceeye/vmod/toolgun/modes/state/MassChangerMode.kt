@@ -14,8 +14,10 @@ import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.shipAttachments.WeightSynchronizer
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.rendering.ShipsColorModulator
 import net.spaceeye.vmod.toolgun.gui.Presettable
 import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
+import net.spaceeye.vmod.toolgun.modes.extensions.ConstantClientRaycastingExtension
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.shipObjectWorld
 
@@ -61,6 +63,13 @@ class MassChangerMode: ExtendableToolgunMode(), MassChangerGUI, MassChangerHUD {
         WeightSynchronizer.updateMass(level, ship, true, false, -1.0, -1.0)
     }
 
+    var clientLastShipId = -1L
+
+    override fun eOnCloseMode() {
+        ShipsColorModulator.deleteColor(clientLastShipId)
+        clientLastShipId = -1L
+    }
+
     companion object {
         init {
             ToolgunModes.registerWrapper(MassChangerMode::class) {
@@ -69,6 +78,14 @@ class MassChangerMode: ExtendableToolgunMode(), MassChangerGUI, MassChangerHUD {
                         ,leftFunction  = { inst, level, player, rr -> inst.activatePrimaryFunction(level, player, rr) }
                         ,rightFunction = { inst, level, player, rr -> inst.activateSecondaryFunction(level, player, rr) }
                     )
+                }.addExtension {
+                    ConstantClientRaycastingExtension<MassChangerMode>({ mode, rr ->
+                        if (mode.clientLastShipId != rr.shipId) {
+                            ShipsColorModulator.deleteColor(mode.clientLastShipId)
+                            ShipsColorModulator.setColor(rr.shipId, floatArrayOf(0.5f, 1f, 0.5f, 1f))
+                            mode.clientLastShipId = rr.shipId
+                        }
+                    })
                 }.addExtension { Presettable() }
             }
         }

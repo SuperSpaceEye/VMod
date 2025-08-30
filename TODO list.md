@@ -11,7 +11,6 @@
 # Do Eventually
 
 * Add a way for addons to add their own client/server settings
-* (Petrode) make it so the "Open or Close Toolgun GUI" keybind is ignored while writing in the parameter space? otherwise its quite annoying when you bind it to a letter or a number key
 * Patchouli guide book
 
 # Gravity Changer

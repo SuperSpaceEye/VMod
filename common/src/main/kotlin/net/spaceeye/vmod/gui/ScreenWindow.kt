@@ -13,6 +13,22 @@ import gg.essential.elementa.constraints.*
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.PlatformUtils
 import net.spaceeye.vmod.gui.additions.ErrorAddition
+import net.spaceeye.vmod.gui.additions.ErrorAdditionNetworking
+import net.spaceeye.vmod.toolgun.ToolgunInstance
+import net.spaceeye.vmod.toolgun.VMToolgun
+
+fun addScreenAddition(constructor: () -> ScreenWindowAddition) {
+    EnvExecutor.runInEnv(Env.CLIENT) {Runnable {
+        ScreenWindow.additions.add(constructor)
+    }}
+}
+
+fun <T: ServersideNetworking> addScreenAddition(instance: ToolgunInstance, obj: T, constructor: () -> ScreenWindowAddition) {
+    obj.initConnections(instance)
+    EnvExecutor.runInEnv(Env.CLIENT) {Runnable {
+        ScreenWindow.additions.add(constructor)
+    }}
+}
 
 //TODO maybe make it a class so that i can hot reload when elementa crashes
 object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = false) {
@@ -46,8 +62,7 @@ object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = fa
         PlatformUtils.renderScreen(this, stack, 0, 0, delta)
     }
 
-    private val additions = mutableListOf<() -> ScreenWindowAddition>()
-    fun addScreenAddition(constructor: () -> ScreenWindowAddition) { additions.add(constructor) }
+    internal val additions = mutableListOf<() -> ScreenWindowAddition>()
 
     private var initialized = false
     fun makeScreen(): ScreenWindow {
@@ -60,7 +75,7 @@ object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = fa
     }
 
     init {
-        addScreenAddition { ErrorAddition() }
+        addScreenAddition(VMToolgun, ErrorAdditionNetworking) { ErrorAddition() }
 
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ClientLifecycleEvent.CLIENT_STARTED.register { initScreen() }

@@ -22,8 +22,12 @@ import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ScreenWindowAddition
+import net.spaceeye.vmod.gui.ServersideNetworking
+import net.spaceeye.vmod.gui.additions.ErrorAddition.Companion.addHUDError
+import net.spaceeye.vmod.gui.additions.ErrorAdditionNetworking.s2cErrorHappened
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.toolgun.ServerToolGunState.S2CErrorHappened
+import net.spaceeye.vmod.toolgun.ToolgunInstance
 import net.spaceeye.vmod.translate.getTranslationKey
 import net.spaceeye.vmod.translate.translate
 import net.spaceeye.vmod.utils.LimitDeque
@@ -161,11 +165,15 @@ class ErrorAddition: ScreenWindowAddition() {
 
         @JvmStatic fun sendErrorTo(player: ServerPlayer, errorStr: String, translatable: Boolean = true, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr, translatable, closeGUI))
         @JvmStatic fun sendErrorTo(player: ServerPlayer, errorStr: TranslatableComponent, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr.getTranslationKey(), true, closeGUI))
+    }
+}
 
-        val s2cErrorHappened = regS2C<S2CErrorHappened>(MOD_ID, "error_happened", "error_addition") { (errorStr, translate, closeGUI) ->
-            SessionEvents.clientOnTick.on { _, unsub -> unsub.invoke()
-                addHUDError(if (translate) errorStr.translate() else errorStr)
-            }
+object ErrorAdditionNetworking: ServersideNetworking {
+    val s2cErrorHappened = regS2C<S2CErrorHappened>(MOD_ID, "error_happened", "error_addition") { (errorStr, translate, closeGUI) ->
+        SessionEvents.clientOnTick.on { _, unsub -> unsub.invoke()
+            addHUDError(if (translate) errorStr.translate() else errorStr)
         }
     }
+
+    override fun initConnections(instance: ToolgunInstance) {}
 }

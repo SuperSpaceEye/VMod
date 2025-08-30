@@ -11,9 +11,10 @@ import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.events.PersistentEvents
-import net.spaceeye.vmod.gui.ScreenWindow
+import net.spaceeye.vmod.gui.addScreenAddition
 import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.gui.additions.HUDAddition
+import net.spaceeye.vmod.guiElements.TextEntry
 import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
 import net.spaceeye.vmod.toolgun.gui.ToolgunGUI
 import net.spaceeye.vmod.toolgun.gui.ToolgunWindow
@@ -51,7 +52,7 @@ open class ClientToolGunState(
     lateinit var renderHud: FakeKProperty<Boolean>
     var initHudAddition = {
         val hudAddition = HUDAddition().also { it.instance = instance }
-        ScreenWindow.addScreenAddition { hudAddition }
+        addScreenAddition { hudAddition }
         renderHud = FakeKProperty({hudAddition.renderHUD}) {hudAddition.renderHUD = it}
     }
 
@@ -77,6 +78,7 @@ open class ClientToolGunState(
 
                 val guiIsOpened = toolgunGuiIsOpened()
                 val isPressed = action == GLFW.GLFW_PRESS
+                val focused = TextEntry.focused
 
                 // we do it like this because we need for toolgun to handle keys first to prevent
                 // user from opening menu or smth in the middle of using some mode
@@ -84,7 +86,7 @@ open class ClientToolGunState(
                     val cancel = handleKeyEvent(keyCode, scanCode, action, modifiers)
                     if (cancel) {return@on true}
 
-                    if (isPressed && GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
+                    if (isPressed && !focused && GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
                         openGUI()
                         return@on true
                     }
@@ -95,7 +97,7 @@ open class ClientToolGunState(
                     return@on true
                 }
 
-                if (guiIsOpened && isPressed && (GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
+                if (guiIsOpened && isPressed && ((!focused && GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
                     closeGUI()
                     return@on true
                 }

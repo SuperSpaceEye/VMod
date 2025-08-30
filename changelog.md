@@ -1,3 +1,6 @@
+# 1.7.0
+* "Open or Close Toolgun GUI" keybind is now ignored while writing in the parameter space
+
 # 1.6.1
 * Fixed precise placement assist side num not updating after changing preset
 * Fixed game crashing on pressing delete in Settings Preset menu without choosing preset

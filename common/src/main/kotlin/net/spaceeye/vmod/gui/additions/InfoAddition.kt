@@ -11,14 +11,17 @@ import net.minecraft.client.Minecraft
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.gui.ScreenWindowAddition
+import net.spaceeye.vmod.gui.ServersideNetworking
+import net.spaceeye.vmod.gui.additions.InfoAdditionNetworking.C2SQueryShipInfo
+import net.spaceeye.vmod.gui.additions.InfoAdditionNetworking.S2CShipInfoQueryResponse
 import net.spaceeye.vmod.guiElements.makeText
 import net.spaceeye.vmod.networking.C2SConnection
-import net.spaceeye.vmod.networking.S2CConnection
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.shipAttachments.CustomMassSave
 import net.spaceeye.vmod.shipAttachments.GravityController
+import net.spaceeye.vmod.toolgun.ToolgunInstance
 import net.spaceeye.vmod.toolgun.ToolgunKeybinds
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
@@ -31,6 +34,7 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.mod.common.util.toBlockPos
 import org.valkyrienskies.mod.common.util.toJOML
 import java.awt.Color
+import kotlin.collections.set
 
 class InfoAddition: ScreenWindowAddition() {
     private lateinit var screenContainer: UIContainer
@@ -73,8 +77,7 @@ class InfoAddition: ScreenWindowAddition() {
         screenContainer.addChild(infoContainer)
         infoContainer.hide()
 
-        s2cShipInfoQueryResponse
-        c2sQueryShipInfo
+        instance.instanceStorage["infoAddition_clientReceiver"] = {pkt: S2CShipInfoQueryResponse -> clientFn(pkt) }
     }
 
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
@@ -145,6 +148,20 @@ class InfoAddition: ScreenWindowAddition() {
     private var queryShipId = -1L
     private var callback: (S2CShipInfoQueryResponse) -> Unit = {}
 
+    var c2sQueryShipInfo: C2SConnection<C2SQueryShipInfo>? = null
+        get() {
+            if (field != null) return field
+        field = instance.instanceStorage["infoAddition_query_ship_info"] as C2SConnection<C2SQueryShipInfo>
+        return field
+    }
+
+    fun clientFn(pkt: S2CShipInfoQueryResponse) {
+        if (queryShipId != pkt.shipId) return
+        callback(pkt)
+    }
+}
+
+object InfoAdditionNetworking: ServersideNetworking {
     data class C2SQueryShipInfo(var shipId: Long = -1L): AutoSerializable
     data class S2CShipInfoQueryResponse(
         var shipId: Long,
@@ -156,10 +173,13 @@ class InfoAddition: ScreenWindowAddition() {
         var numVEntities: Int = 0,
     ): AutoSerializable
 
-    var c2sQueryShipInfo: C2SConnection<C2SQueryShipInfo>? = null
-        get() {
-            if (field != null) return field
-        field = regC2S<C2SQueryShipInfo>(instance.modId, "query_ship_info", "info_addition",
+    override fun initConnections(instance: ToolgunInstance) {
+        val s2cShipInfoQueryResponse = regS2C<S2CShipInfoQueryResponse>(instance.modId, "ship_info_query_response", "info_addition") { pkt ->
+            (instance.instanceStorage["infoAddition_clientReceiver"] as (S2CShipInfoQueryResponse) -> Unit ).invoke(pkt)
+        }
+
+        instance.instanceStorage["infoAddition_ship_info_query_response"] = s2cShipInfoQueryResponse
+        instance.instanceStorage["infoAddition_query_ship_info"] = regC2S<C2SQueryShipInfo>(instance.modId, "query_ship_info", "info_addition",
             //TODO sus?
             {pkt, player ->
                 val level = player.level as ServerLevel
@@ -181,7 +201,7 @@ class InfoAddition: ScreenWindowAddition() {
                 }
             } ?: ship.inertiaData.mass
 
-            s2cShipInfoQueryResponse!!.sendToClient(player, S2CShipInfoQueryResponse(
+            s2cShipInfoQueryResponse.sendToClient(player, S2CShipInfoQueryResponse(
                 pkt.shipId,
                 ship.inertiaData.mass,
                 GravityController.getOrCreate(ship).effectiveGravity(),
@@ -191,16 +211,5 @@ class InfoAddition: ScreenWindowAddition() {
                 level.getAllVEntityIdsOfShipId(ship.id).size
             ))
         }
-        return field
     }
-
-    var s2cShipInfoQueryResponse: S2CConnection<S2CShipInfoQueryResponse>? = null
-        get() {
-            if (field != null) return field
-            field = regS2C<S2CShipInfoQueryResponse>(instance.modId, "ship_info_query_response", "info_addition") { pkt ->
-                if (queryShipId != pkt.shipId) return@regS2C
-                callback(pkt)
-            }
-            return field
-        }
 }

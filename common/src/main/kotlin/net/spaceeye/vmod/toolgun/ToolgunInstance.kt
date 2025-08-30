@@ -3,9 +3,9 @@ package net.spaceeye.vmod.toolgun
 import dev.architectury.utils.Env
 import dev.architectury.utils.EnvExecutor
 import net.spaceeye.vmod.MOD_ID
-import net.spaceeye.vmod.gui.ScreenWindow
-import net.spaceeye.vmod.gui.additions.HUDAddition
+import net.spaceeye.vmod.gui.addScreenAddition
 import net.spaceeye.vmod.gui.additions.InfoAddition
+import net.spaceeye.vmod.gui.additions.InfoAdditionNetworking
 import net.spaceeye.vmod.gui.additions.PresetsAddition
 import net.spaceeye.vmod.gui.additions.VEntityChangerWorldMenu
 import net.spaceeye.vmod.toolgun.gui.ClientSettingsGUI
@@ -43,11 +43,13 @@ private var instance: ToolgunInstance? = null
             //TODO think of a better way
             field!!.instanceStorage.put("Presettable-dir-name", "VMod-Presets")
             field!!.client.addWindow(SETTINGS_PRESETS) {SettingPresets(it, field!!)}
-            ScreenWindow.addScreenAddition { PresetsAddition()       .also { it.instance = field!! } }
 
-            ScreenWindow.addScreenAddition { VEntityChangerWorldMenu .also { it.instance = field!! } }
-            ScreenWindow.addScreenAddition { InfoAddition()          .also { it.instance = field!! } }
         } }
+
+        addScreenAddition { PresetsAddition()       .also { it.instance = field!! } }
+        addScreenAddition { VEntityChangerWorldMenu .also { it.instance = field!! } }
+
+        addScreenAddition(field!!, InfoAdditionNetworking) { InfoAddition().also { it.instance = field!! } }
 
         return field
     }

@@ -117,6 +117,17 @@ interface ReflectableObject {
 
         return delegates
     }
+
+    @JsonIgnore
+    @ApiStatus.NonExtendable
+    fun setFromVararg(items: Array<out Any?>) {
+        val properties = getAllReflectableItems()
+        items.forEachIndexed { i, arg ->
+            if (arg == null) return@forEachIndexed
+            val item = properties[i]
+            if (item.it!!::class == arg::class) { item.setValue(null, null, arg) } else { throw AssertionError("vararg items do not match") }
+        }
+    }
 }
 
 object ReflectableItem {

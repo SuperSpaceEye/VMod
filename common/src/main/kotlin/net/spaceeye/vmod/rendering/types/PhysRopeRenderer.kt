@@ -53,47 +53,19 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         var shipIds: LongArray by get(i++, longArrayOf())
 
         var texture: ResourceLocation by get(i++, RenderingUtils.ropeTexture)
+
+        var lengthUVStart: Float by get(i++, 0f)
+        var lengthUVIncMultiplier: Float by get(i++, 1f)
+        var widthUVStart: Float by get(i++, 0f)
+        var widthUVMultiplier: Float by get(i++, 1f)
     }
     var data = Data()
     override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 
-    constructor(
-        shipId1: ShipId,
-        shipId2: ShipId,
-        point1: Vector3d,
-        point2: Vector3d,
-        up1: Vector3d,
-        up2: Vector3d,
-        right1: Vector3d,
-        right2: Vector3d,
-        color: Color, sides: Int,
-        fullbright: Boolean,
-        shipIds: List<Long>,
-        texture: ResourceLocation
-    ): this() { with(data) {
-        this.shipId1 = shipId1
-        this.shipId2 = shipId2
-
-        this.point1 = point1
-        this.point2 = point2
-
-        this.up1 = up1
-        this.up2 = up2
-
-        this.right1 = right1
-        this.right2 = right2
-
-        this.color = color
-        this.sides = sides
-
-        this.fullbright = fullbright
-
-        this.shipIds = shipIds.toLongArray()
-
-        this.texture = texture
-    } }
+    //Same order as data
+    constructor(vararg items: Any?): this() { data.setFromVararg(items) }
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {
@@ -157,8 +129,8 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
         var lPoints = makePolygonPoints(sides, shape.radius, up, right, ppos)
 
         //TODO make widthUV more configurable
-        val widthUV = (shape.radius * 2).toFloat()
-        var leftUV = 0f
+        val widthUV = (shape.radius * 2f * widthUVMultiplier).toFloat()
+        var leftUV = lengthUVStart
 
         for (entity in entities) {
             shape = entity.collisionShapeData as VSCapsuleCollisionShapeData
@@ -168,11 +140,11 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
 
             up = getUpFromQuat(entity.renderTransform.shipToWorldRotation)
             rPoints = makePoints(cpos, ppos, cpos, up, shape.radius)
-            val rightUV = leftUV + shape.length.toFloat()
+            val rightUV = leftUV + shape.length.toFloat() * lengthUVIncMultiplier
 
             val leftLight  = if (fullbright) LightTexture.FULL_BRIGHT else ppos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
             val rightLight = if (fullbright) LightTexture.FULL_BRIGHT else cpos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
-            drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, widthUV, lPoints, rPoints)
+            drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, widthUVStart, widthUV, lPoints, rPoints)
 
             leftUV = rightUV
             lPoints = rPoints
@@ -189,7 +161,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
 
         val leftLight  = if (fullbright) LightTexture.FULL_BRIGHT else ppos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
         val rightLight = if (fullbright) LightTexture.FULL_BRIGHT else cpos.toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
-        drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, widthUV, lPoints, rPoints)
+        drawPolygonTube(vBuffer, matrix, color.red, color.green, color.blue, color.alpha, leftLight, rightLight, leftUV, rightUV, 0f, widthUV, lPoints, rPoints)
 
         tesselator.end()
         poseStack.popPose()
@@ -206,7 +178,7 @@ class PhysRopeRenderer(): BaseRenderer(), ReflectableObject {
             centerPositions[shipId1]?.let { (old, new) -> updatePosition(point1, old, new) } ?: point1,
             centerPositions[shipId2]?.let { (old, new) -> updatePosition(point2, old, new) } ?: point2,
             up1.copy(), up2.copy(), right1.copy(), right2.copy(),
-            color, sides, fullbright, listOf(), texture
+            color, sides, fullbright, longArrayOf(), texture
         )
     }
     override fun scaleBy(by: Double) {}

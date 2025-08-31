@@ -2,6 +2,7 @@ package net.spaceeye.vmod.toolgun.modes.gui
 
 import gg.essential.elementa.components.UIContainer
 import net.spaceeye.vmod.guiElements.makeCheckBox
+import net.spaceeye.vmod.guiElements.makeFolder
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.toolgun.modes.EGUIBuilder
@@ -26,5 +27,12 @@ interface PhysRopeGUI: GUIBuilder, EGUIBuilder {
         makeTextEntry(ANGLE_LIMIT.get(),    ::angleLimit,    offset, offset, parentWindow, limits.physRopeAngleLimit)
         makeTextEntry(SIDES.get(),          ::sides,         offset, offset, parentWindow, limits.physRopeSides)
         makeCheckBox(FULLBRIGHT.get(),      ::fullbright,    offset, offset, parentWindow)
+
+        makeFolder(TEXTURE_OPTIONS.get(), parentWindow, offset, offset) { parentWindow ->
+            makeTextEntry(LENGTH_UV_START.get(),           ::lengthUVStart, offset, offset, parentWindow)
+            makeTextEntry(LENGTH_UV_STEP_MULTIPLIER.get(), ::lengthUVIncMultiplier, offset, offset, parentWindow)
+            makeTextEntry(WIDTH_UV_START.get(),            ::widthUVStart, offset, offset, parentWindow)
+            makeTextEntry(WIDTH_UV_MULTIPLIER.get(),       ::widthUVMultiplier, offset, offset, parentWindow)
+        }
     }
 }

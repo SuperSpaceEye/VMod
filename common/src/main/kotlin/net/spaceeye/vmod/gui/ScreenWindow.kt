@@ -85,7 +85,7 @@ object ScreenWindow: WindowScreen(ElementaVersion.V8, drawDefaultBackground = fa
     }
 
     @JvmStatic fun onRenderHUD(stack: PoseStack, delta: Float) {
-        try { (screen ?: initScreen()).renderHUD(stack, delta)
+        try { (screen ?: initScreen()).onRenderHUD(stack, delta)
         } catch (e: Exception) { ELOG("HUD rendering failed\n${e.stackTraceToString()}")
         } catch (e: Error) { ELOG("HUD rendering failed\n${e.stackTraceToString()}") }
     }

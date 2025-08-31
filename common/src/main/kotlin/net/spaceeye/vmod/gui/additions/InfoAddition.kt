@@ -182,12 +182,12 @@ object InfoAdditionNetworking: ServersideNetworking {
         instance.instanceStorage["infoAddition_query_ship_info"] = regC2S<C2SQueryShipInfo>(instance.modId, "query_ship_info", "info_addition",
             //TODO sus?
             {pkt, player ->
-                val level = player.level as ServerLevel
+                val level = player.serverLevel()
                 val ship = level.shipObjectWorld.loadedShips.getById(pkt.shipId) ?: return@regC2S false
                 ship.transform.positionInWorld.distance(player.position().toJOML()) < 100.0
             }
         ) { pkt, player ->
-            val level = player.level as ServerLevel
+            val level = player.serverLevel()
             val ship = level.shipObjectWorld.loadedShips.getById(pkt.shipId) ?: return@regC2S
 
             val customMassSave = CustomMassSave.getOrCreate(ship)

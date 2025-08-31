@@ -1,7 +1,6 @@
 package net.spaceeye.vmod.toolgun.modes.state
 
 import net.minecraft.core.BlockPos
-import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.block.state.BlockState
@@ -39,7 +38,7 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 class IdkMode: ExtendableToolgunMode(), SimpleHUD {
-    override val itemName: TranslatableComponent get() = makeFake("IDK")
+    override val itemName get() = makeFake("IDK")
     override fun makeSubText(makeText: (String) -> Unit) {
         makeText("IDK Mode")
     }

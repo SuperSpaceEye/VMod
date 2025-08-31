@@ -60,7 +60,7 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
     return if (bytes[3].toInt() == 1) {
         if (Minecraft.getInstance()?.player != null) {
             VMToolgun.client.closeWithError("Couldn't load schematic") //TODO
-            Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
+            Minecraft.getInstance().player!!.sendSystemMessage(COULDNT_LOAD_VMODSCHEM_V1)
         }
         null
     } else if (buf.readUtf() == "vschem") {
@@ -68,7 +68,7 @@ private fun bcGetSchematicFromBytes(bytes: ByteArray): IShipSchematic? {
             "VModShipSchematicV1" -> {
                 if (Minecraft.getInstance()?.player != null) {
                     VMToolgun.client.closeWithError("Couldn't load schematic") //TODO
-                    Minecraft.getInstance().player!!.sendMessage(COULDNT_LOAD_VMODSCHEM_V1, null)
+                    Minecraft.getInstance().player!!.sendSystemMessage(COULDNT_LOAD_VMODSCHEM_V1)
                 }
                 null
             }

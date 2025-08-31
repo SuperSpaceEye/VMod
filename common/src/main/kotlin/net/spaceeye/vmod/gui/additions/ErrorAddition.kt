@@ -16,7 +16,7 @@ import gg.essential.elementa.dsl.percent
 import gg.essential.elementa.dsl.pixels
 import gg.essential.elementa.dsl.plus
 import gg.essential.elementa.dsl.toConstraint
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.events.SessionEvents
@@ -26,7 +26,6 @@ import net.spaceeye.vmod.gui.ServersideNetworking
 import net.spaceeye.vmod.gui.additions.ErrorAddition.Companion.addHUDError
 import net.spaceeye.vmod.gui.additions.ErrorAdditionNetworking.s2cErrorHappened
 import net.spaceeye.vmod.networking.regS2C
-import net.spaceeye.vmod.toolgun.ServerToolGunState.S2CErrorHappened
 import net.spaceeye.vmod.toolgun.ToolgunInstance
 import net.spaceeye.vmod.translate.getTranslationKey
 import net.spaceeye.vmod.translate.translate
@@ -34,6 +33,7 @@ import net.spaceeye.vmod.utils.LimitDeque
 import net.spaceeye.vmod.utils.MPair
 import net.spaceeye.vmod.utils.getNow_ms
 import java.awt.Color
+import net.spaceeye.vmod.toolgun.ServerToolGunState.S2CErrorHappened
 
 class ErrorAddition: ScreenWindowAddition() {
     var maxErrorTime = 3000L
@@ -164,7 +164,7 @@ class ErrorAddition: ScreenWindowAddition() {
         }
 
         @JvmStatic fun sendErrorTo(player: ServerPlayer, errorStr: String, translatable: Boolean = true, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr, translatable, closeGUI))
-        @JvmStatic fun sendErrorTo(player: ServerPlayer, errorStr: TranslatableComponent, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr.getTranslationKey(), true, closeGUI))
+        @JvmStatic fun sendErrorTo(player: ServerPlayer, errorStr: Component, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr.getTranslationKey(), true, closeGUI))
     }
 }
 

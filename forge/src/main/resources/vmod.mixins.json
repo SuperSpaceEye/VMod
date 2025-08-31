@@ -4,7 +4,6 @@
   "package": "net.spaceeye.vmod.forge.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "TakeoffBearingMixin"
   ],
   "client": [
   ],

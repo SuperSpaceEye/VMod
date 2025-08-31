@@ -100,8 +100,6 @@ dependencies {
     modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }
     modCompileOnly("com.tterrag.registrate:Registrate:${registrate_forge_version}")
     modCompileOnly("com.jozufozu.flywheel:flywheel-forge-${flywheel_forge_minecraft_version}:${flywheel_forge_version}")
-
-    modCompileOnlyApi(files("vs_jars/takeoff-forge-1.0.0-beta1+308678c5c5.jar"))
 }
 
 processResources {

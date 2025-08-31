@@ -8,7 +8,7 @@ import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.resolution.ConstraintVisitor
 import gg.essential.elementa.dsl.*
-import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.network.chat.Component
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.ToggleButton
 import net.spaceeye.vmod.translate.get
@@ -72,7 +72,7 @@ class MainToolgunGUIWindow(
     private var windows: MutableList<DItem> = mutableListOf()
     private var buttons = mutableListOf<ToggleButton>()
 
-    fun addWindow(name: TranslatableComponent, constructor: (UIBlock) -> ToolgunWindow) {
+    fun addWindow(name: Component, constructor: (UIBlock) -> ToolgunWindow) {
         windows.add(DItem(name.get(), false) { currentWindow = constructor(mainWindow.constrain()) })
     }
 

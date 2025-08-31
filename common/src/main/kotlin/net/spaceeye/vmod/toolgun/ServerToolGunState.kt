@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 fun SELOG(s: String, player: ServerPlayer, toSend: String, translatable: Boolean = true) {
     ELOG(s)
-    VMToolgun.server.sendErrorTo(player, toSend, translatable)
+    VMToolgun.server.sendErrorTo(player, toSend, translatable, true)
 }
 fun SELOG(s: String, player: ServerPlayer?, toSend: Component) = player?.also { SELOG(s, player, toSend.getTranslationKey(), true) } ?: ELOG(s)
 

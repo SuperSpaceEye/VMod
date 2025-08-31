@@ -103,7 +103,7 @@ class GravChangerMode: ExtendableToolgunMode(), GravChangerHUD, GravChangerGUI {
             val result = if (!pkt.alsoTouching) {
                 traverseGetConnectedShips(pkt.shipId).traversedShipIds
             } else {
-                traverseGetAllTouchingShips(player.level as ServerLevel, pkt.shipId)
+                traverseGetAllTouchingShips(player.serverLevel(), pkt.shipId)
             }
             s2cQueryResponse.sendToClient(player, S2CQueryResponse(result.toLongArray()))
         }

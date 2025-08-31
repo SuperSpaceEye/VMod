@@ -47,9 +47,9 @@ open class ClientToolGunState(
             field?.onOpenMode()
         }
 
-    protected open val externalWindows = mutableListOf<Pair<TranslatableComponent, (UIBlock) -> ToolgunWindow>>()
+    protected open val externalWindows = mutableListOf<Pair<Component, (UIBlock) -> ToolgunWindow>>()
 
-    open fun addWindow(name: TranslatableComponent, windowConstructor: (UIBlock) -> ToolgunWindow) {
+    open fun addWindow(name: Component, windowConstructor: (UIBlock) -> ToolgunWindow) {
         externalWindows.add(name to windowConstructor)
     }
 
@@ -184,7 +184,7 @@ open class ClientToolGunState(
     protected open lateinit var gui: MainToolgunGUIWindow
 
     var toolgunGuiIsOpened: () -> Boolean = {Minecraft.getInstance().screen.let { it is MainToolgunGUIWindow || it is VEntityChangerGui }}
-    var playerIsUsingToolgun: () -> Boolean = {Minecraft.getInstance().player?.mainHandItem?.item == VMItems.TOOLGUN.get().asItem()}
+    var playerIsUsingToolgun: () -> Boolean = {Minecraft.getInstance().player?.mainHandItem?.item == VMItems.TOOLGUN.get()}
 
     override fun close() {
         currentMode = null

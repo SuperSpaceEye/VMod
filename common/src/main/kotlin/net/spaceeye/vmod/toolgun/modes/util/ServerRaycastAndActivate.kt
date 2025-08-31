@@ -34,7 +34,7 @@ fun <T: BaseMode> BaseMode.serverTryActivate(
         SessionEvents.serverAfterTick.on { _, unsubscribe ->
             unsubscribe()
             try {
-                fn(serverMode.mode as T, player.level() as ServerLevel, player)
+                fn(serverMode as T, player.serverLevel(), player)
             } catch (e: Exception) {
                 SELOG("Failed to activate function of ${serverMode.javaClass.simpleName} called by player ${player.name.contents} because of \n${e.stackTraceToString()}", player, TOOLGUN_MODE_ACTIVATION_HAS_FAILED)
             }

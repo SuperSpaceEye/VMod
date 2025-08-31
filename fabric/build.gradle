@@ -34,10 +34,15 @@ repositories {
 }
 
 dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+    modApi "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    // Remove the next line if you don't want to depend on the API
+    modApi("dev.architectury:architectury-fabric:${project.architectury_version}")
+
     include modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.minecraft_version-$project.name:$project.vss_version") {transitive = false}
     include implementation("org.jgrapht:jgrapht-core:1.5.2")
 
-    include(implementation(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.3.5-beta.2")) { transitive = false })
+    include(implementation(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.3.5-beta.2")))
 
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
@@ -52,26 +57,15 @@ dependencies {
     compileOnly("org.valkyrienskies.core:impl:${project.vs_core_version}") { transitive = false }
 
     // Kotlin
-    modImplementation("net.fabricmc:fabric-language-kotlin:1.10.10+kotlin.1.9.10")
-    api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21"
-    api "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
+    modImplementation("net.fabricmc:fabric-language-kotlin:1.10.10+kotlin.1.9.10") { transitive = false }
+    api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0"
+    api "org.jetbrains.kotlin:kotlin-reflect:2.1.0"
 
     implementation(include("gg.essential:elementa:${project.elementaVersion}"))
     modImplementation(include("gg.essential:universalcraft-1.20.1-fabric:${project.ucVersion}"))
 
-    modApi "curse.maven:forge-config-api-port-fabric-547434:4583000"
-
-    // Configured
-    modLocalRuntime "curse.maven:configured-fabric-667378:4166864"    // Configured version 2.0.2 for Minecraft 1.19.3
-    // Mod Menu
-    modLocalRuntime "com.terraformersmc:modmenu:5.0.2"
-
+    modApi("curse.maven:forge-config-api-port-fabric-547434:4583000") { transitive = false }
     modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}") { transitive = false }
-
-    modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
-    modApi "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-    // Remove the next line if you don't want to depend on the API
-    modApi("dev.architectury:architectury-fabric:${project.architectury_version}")
 }
 
 processResources {

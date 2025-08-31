@@ -40,7 +40,13 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
     var sides: Int by get(i++, 8) { ServerLimits.instance.physRopeSides.get(it) }.presettable()
     var fullbright: Boolean by get(i++, false).presettable()
 
+    var lengthUVStart: Float by get(i++, 0f).presettable()
+    var lengthUVIncMultiplier: Float by get(i++, 1f).presettable()
+    var widthUVStart: Float by get(i++, 0f).presettable()
+    var widthUVMultiplier: Float by get(i++, 1f).presettable()
+
     var primaryFirstRaycast: Boolean by get(i++, false)
+
 
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
     val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementModesExtension>().precisePlacementAssistSideNum
@@ -77,7 +83,7 @@ class PhysRopeMode: ExtendableToolgunMode(), PhysRopeGUI, PhysRopeHUD {
             shipId1, shipId2,
             stiffness, maxForce,
             dist, segments, totalMass / segments, radius, Math.toRadians(angleLimit)
-        )   .also { it.addExtension(PhysRopeRenderable(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, up1, up2, right1, right2, Color(255, 255, 255), sides, fullbright, listOf(), RenderingUtils.ropeTexture))) }
+        )   .also { it.addExtension(PhysRopeRenderable(PhysRopeRenderer(shipId1, shipId2, spoint1, spoint2, up1, up2, right1, right2, Color(255, 255, 255), sides, fullbright, longArrayOf(), RenderingUtils.ropeTexture, lengthUVStart, lengthUVIncMultiplier, widthUVStart, widthUVMultiplier))) }
             .addExtension(Strippable())
             .also {level.makeVEntity(it) {it.addForVMod(player)} }
 

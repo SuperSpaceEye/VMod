@@ -1,5 +1,12 @@
 # 1.7.0
 * "Open or Close Toolgun GUI" keybind is now ignored while writing in the parameter space
+* New config values for schematic control
+* Added experimental ship highlighting (doesn't work with sodium)
+* Added texture options for rope and phys rope
+* Fixed inconsistent texture width and length in ropes
+* Fixed HUD not hiding
+* Fixed VMod sometimes incorrectly thinking that two ships are connected when they are actually not 
+* Internal changes and bugfixes
 
 # 1.6.1
 * Fixed precise placement assist side num not updating after changing preset

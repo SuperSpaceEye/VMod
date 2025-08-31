@@ -107,6 +107,10 @@ class ToggleButton(
     }
 
     init {
+        constrain {
+            width = ChildBasedMaxSizeConstraint() + 4.pixels()
+            height = ChildBasedMaxSizeConstraint() + 4.pixels()
+        }
         onMouseEnter {
             animate {
                 setColorAnimation(

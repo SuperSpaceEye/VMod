@@ -55,56 +55,19 @@ class TubeRopeRenderer(): BaseRenderer(), ReflectableObject {
         var useDefinedUpRight: Boolean by get(i++, false)
 
         var texture: ResourceLocation by get(i++, RenderingUtils.ropeTexture)
+
+        var lengthUVStart: Float by get(i++, 0f)
+        var lengthUVIncMultiplier: Float by get(i++, 1f)
+        var widthUVStart: Float by get(i++, 0f)
+        var widthUVMultiplier: Float by get(i++, 1f)
     }
     private var data = Data()
     override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 
-    constructor(
-        shipId1: Long,
-        shipId2: Long,
-        point1: Vector3d,
-        point2: Vector3d,
-        up1: Vector3d,
-        up2: Vector3d,
-        right1: Vector3d,
-        right2: Vector3d,
-        length: Double,
-        color: Color,
-        width: Double,
-        sides: Int,
-        segments: Int,
-        fullbright: Boolean,
-        lerpBetweenRotations: Boolean,
-        useDefinedUpRight: Boolean,
-        texture: ResourceLocation
-    ): this() {
-        with(data) {
-            this.shipId1 = shipId1
-            this.shipId2 = shipId2
-
-            this.point1 = point1
-            this.point2 = point2
-
-            this.up1 = up1
-            this.up2 = up2
-
-            this.right1 = right1
-            this.right2 = right2
-
-            this.length = length
-            this.color = color
-            this.width = width
-            this.sides = sides
-            this.segments = segments
-            this.fullbright = fullbright
-            this.lerpBetweenRotations = lerpBetweenRotations
-            this.useDefinedUpRight = useDefinedUpRight
-
-            this.texture = texture
-        }
-    }
+    //Same order as data
+    constructor(vararg items: Any?): this() { data.setFromVararg(items) }
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {
@@ -115,7 +78,6 @@ class TubeRopeRenderer(): BaseRenderer(), ReflectableObject {
     override fun highlightUntilRenderingTicks(until: Long) {
         if (until > highlightTick) highlightTick = until
     }
-
 
     override fun renderData(
         poseStack: PoseStack,
@@ -154,6 +116,7 @@ class TubeRopeRenderer(): BaseRenderer(), ReflectableObject {
         drawTubeRope(
             vBuffer, matrix, color.red, color.green, color.blue, color.alpha, width, segments, sides,
             length, rPos1, rPos2, up1, right1, up2, right2, lerpBetweenRotations, useDefinedUpRight,
+            lengthUVStart, lengthUVIncMultiplier, widthUVStart, widthUVMultiplier,
             if (fullbright) { _ -> LightTexture.FULL_BRIGHT } else { pos ->
                 pos.toBlockPos().let {
                     LightTexture.pack(
@@ -178,7 +141,8 @@ class TubeRopeRenderer(): BaseRenderer(), ReflectableObject {
             centerPositions[shipId1]?.let { (old, new) -> updatePosition(point1, old, new) } ?: point1,
             centerPositions[shipId2]?.let { (old, new) -> updatePosition(point2, old, new) } ?: point2,
             up1.copy(), up2.copy(), right1.copy(), right2.copy(),
-            length, color, width, sides, segments, fullbright, lerpBetweenRotations, useDefinedUpRight, texture
+            length, color, width, sides, segments, fullbright, lerpBetweenRotations, useDefinedUpRight, texture,
+            lengthUVStart, lengthUVIncMultiplier, widthUVStart, widthUVMultiplier
         )
     }
 

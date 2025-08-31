@@ -26,7 +26,6 @@ import net.spaceeye.vmod.toolgun.modes.extensions.BlockMenuOpeningExtension
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementModesExtension
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
-import java.awt.Color
 
 class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     @JsonIgnore private var i = 0
@@ -41,6 +40,11 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
     var sides: Int by get(i++, 4).presettable()
     var width: Double by get(i++, .2).presettable()
     var fullbright: Boolean by get(i++, false).presettable()
+
+    var lengthUVStart: Float by get(i++, 0f).presettable()
+    var lengthUVIncMultiplier: Float by get(i++, 1f).presettable()
+    var widthUVStart: Float by get(i++, 0f).presettable()
+    var widthUVMultiplier: Float by get(i++, 1f).presettable()
 
     var useTubeRenderer: Boolean by get(i++, false).presettable()
     var allowTwisting by get(i++, false).presettable()
@@ -75,8 +79,8 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
             maxForce, stiffness, damping, length
         ).addExtension(RenderableExtension(
             when (useTubeRenderer) {
-                true  -> TubeRopeRenderer(ship1?.id ?: -1L, ship2?.id ?: -1L, sPos1, sPos2, up1, up2, right1, right2, length.toDouble(), Color.WHITE, width, sides, segments, fullbright, allowTwisting, onTheOutside, RenderingUtils.ropeTexture)
-                false -> RopeRenderer(ship1?.id ?: -1L, ship2?.id ?: -1L, sPos1, sPos2, length.toDouble(), width, segments, fullbright, RenderingUtils.ropeTexture)
+                true  -> TubeRopeRenderer(ship1?.id ?: -1L, ship2?.id ?: -1L, sPos1, sPos2, up1, up2, right1, right2, length.toDouble(), null, width, sides, segments, fullbright, allowTwisting, onTheOutside, RenderingUtils.ropeTexture, lengthUVStart, lengthUVIncMultiplier, widthUVStart, widthUVMultiplier)
+                false -> RopeRenderer(ship1?.id ?: -1L, ship2?.id ?: -1L, sPos1, sPos2, length.toDouble(), null, width, segments, fullbright, RenderingUtils.ropeTexture, lengthUVStart, lengthUVIncMultiplier, widthUVStart, widthUVMultiplier)
             }
         )).addExtension(Strippable())){it.addForVMod(player)}
 

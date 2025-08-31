@@ -105,11 +105,11 @@ object RenderingUtils {
 
         @JvmStatic fun drawPolygonTube(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int,
                                        leftLight: Int, rightLight: Int,
-                                       luv0: Float, luv1: Float, maxWidthUV: Float,
+                                       luv0: Float, luv1: Float, wuvStart: Float, maxWidthUV: Float,
                                        lpoints: List<Vector3d>, rpoints: List<Vector3d>) {
             val times = lpoints.size
 
-            var lastUV = 0f
+            var lastUV = wuvStart
             for (i in 0 until times-1) {
                 val nextUV = lastUV + maxWidthUV / times
                 drawQuad(buf, matrix, r, g, b, a, leftLight, rightLight,
@@ -164,10 +164,13 @@ object RenderingUtils {
             buf: VertexConsumer, matrix: Matrix4f,
             r: Int, g: Int, b: Int, a: Int,
             width: Double, segments: Int, initialLength: Double,
-            pos1: Vector3d, pos2: Vector3d, lightmapUVFn: (Vector3d) -> Int,
+            pos1: Vector3d, pos2: Vector3d,
+            luvStart: Float = 0f, luvIncMultiplier: Float = 1f,
+            wuvStart: Float = 0f, wuvMultiplier: Float = 1f,
+            lightmapUVFn: (Vector3d) -> Int,
         ) {
-            var lastUV = 0f
-            val widthUV = (width * 2).toFloat()
+            var lastUV = luvStart
+            val widthUV = (width * 2f * wuvMultiplier).toFloat()
         ropePointsCreator(pos1, pos2, segments, initialLength) { i, last, current, up0, up1 ->
             val lu =  up0 * width + last
             val ld = -up0 * width + last
@@ -177,10 +180,10 @@ object RenderingUtils {
             val prev = lightmapUVFn(last)
             val curr = lightmapUVFn(current)
 
-            var inc = (current - last).dist().toFloat()
+            var inc = (current - last).dist().toFloat() * luvIncMultiplier
             var nextUV = lastUV + inc
 
-            drawQuad(buf, matrix, r, g, b, a, prev, curr, lu, ld, rd, ru, lastUV, nextUV, 0f, widthUV)
+            drawQuad(buf, matrix, r, g, b, a, prev, curr, lu, ld, rd, ru, lastUV, nextUV, wuvStart, widthUV)
 
             lastUV = nextUV
         } }
@@ -193,6 +196,8 @@ object RenderingUtils {
             up1: Vector3d, right1: Vector3d, up2: Vector3d, right2: Vector3d,
             lerpBetweenShipRotations: Boolean,
             useDefinedUpRight: Boolean,
+            luvStart: Float = 0f, luvIncMultiplier: Float = 1f,
+            wuvStart: Float = 0f, wuvMultiplier: Float = 1f,
             lightmapUVFn: (Vector3d) -> Int,
         ) {
             val rot1 = Matrix4d(right1.toJomlVector4d(), up1.toJomlVector4d(), right1.cross(up1).toJomlVector4d(), Vector4d())
@@ -221,8 +226,8 @@ object RenderingUtils {
             lPoints = makePolygonPoints(sides, radius, up, right, pos1)
 
             //TODO make widthUV more configurable
-            val widthUV = (radius * 2).toFloat()
-            var leftUV = 0f
+            val widthUV = (radius * 2f * wuvMultiplier).toFloat()
+            var leftUV = luvStart
 
             ropePointsCreator(pos1, pos2, segments, initialLength) { i, last, current, up0, up1 ->
                 if ((current - pos2).sqrDist() < 0.001 && useDefinedUpRight) {
@@ -242,9 +247,9 @@ object RenderingUtils {
                 rPoints = makePolygonPoints(sides, radius, up, right, current)
 
                 val rLight = lightmapUVFn(current)
-                val rightUV = leftUV + (current - last).dist().toFloat()
+                val rightUV = leftUV + (current - last).dist().toFloat() * luvIncMultiplier
 
-                drawPolygonTube(buf, matrix, r, g, b, a, lLight, rLight, leftUV, rightUV, widthUV, lPoints, rPoints)
+                drawPolygonTube(buf, matrix, r, g, b, a, lLight, rLight, leftUV, rightUV, wuvStart, widthUV, lPoints, rPoints)
 
                 leftUV = rightUV
                 lPoints = rPoints

@@ -45,33 +45,19 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         var fullbright: Boolean by get(i++, false, true) { ClientLimits.instance.lightingMode.get(it) }
 
         var texture: ResourceLocation by get(i++, RenderingUtils.ropeTexture)
+
+        var lengthUVStart: Float by get(i++, 0f)
+        var lengthUVIncMultiplier: Float by get(i++, 1f)
+        var widthUVStart: Float by get(i++, 0f)
+        var widthUVMultiplier: Float by get(i++, 1f)
     }
     private var data = Data()
     override val reflectObjectOverride: ReflectableObject? get() = data
     override fun serialize() = data.serialize()
     override fun deserialize(buf: FriendlyByteBuf) { data.deserialize(buf) }
 
-    constructor(
-        shipId1: Long,
-        shipId2: Long,
-        point1: Vector3d,
-        point2: Vector3d,
-        length: Double,
-        width: Double,
-        segments: Int,
-        fullbright: Boolean,
-        texture: ResourceLocation
-    ): this() { with(data) {
-        this.shipId1 = shipId1
-        this.shipId2 = shipId2
-        this.point1 = point1
-        this.point2 = point2
-        this.length = length
-        this.width = width
-        this.segments = segments
-        this.fullbright = fullbright
-        this.texture = texture
-    } }
+    //Same order as data
+    constructor(vararg items: Any?): this() { data.setFromVararg(items) }
 
     private var highlightTimestamp = 0L
     override fun highlightUntil(until: Long) {
@@ -113,6 +99,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
             color.red, color.green, color.blue, color.alpha,
             width, segments, length,
             tpos1, tpos2,
+            lengthUVStart, lengthUVIncMultiplier, widthUVStart, widthUVMultiplier,
             if (fullbright) { { LightTexture.FULL_BRIGHT} } else { pos -> (pos + cameraPos).toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) } }
         )
 
@@ -129,7 +116,7 @@ class RopeRenderer(): BaseRenderer(), ReflectableObject {
         val newId1 = if (shipId1 != -1L) {oldToNew[shipId1]!!.id} else {-1}
         val newId2 = if (shipId2 != -1L) {oldToNew[shipId2]!!.id} else {-1}
 
-        return RopeRenderer(newId1, newId2, spoint1, spoint2, length, width, segments, fullbright, texture)
+        return RopeRenderer(newId1, newId2, spoint1, spoint2, length, color, width, segments, fullbright, texture, lengthUVStart, lengthUVIncMultiplier, widthUVStart, widthUVMultiplier)
     }
 
     override fun scaleBy(by: Double) = with(data) {

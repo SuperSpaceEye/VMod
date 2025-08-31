@@ -8,13 +8,14 @@ import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.gui.additions.HUDAddition
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
-import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ToolgunInstance
 import net.spaceeye.vmod.toolgun.modes.util.serverRaycastAndActivate
 import net.spaceeye.vmod.toolgun.modes.util.serverTryActivate
 import net.spaceeye.vmod.utils.RaycastFunctions
+import java.util.function.Supplier
 
 interface GUIBuilder {
     val itemName: Component
@@ -41,28 +42,32 @@ interface MSerializable: AutoSerializable {
 }
 
 interface BaseMode : MSerializable, GUIBuilder, HUDBuilder, ClientEventsHandler {
+    var instance: ToolgunInstance
+
     fun resetState() {}
 
     fun init(type: BaseNetworking.EnvType) {}
 
-    fun refreshHUD() { ClientToolGunState.refreshHUD() }
+    fun refreshHUD() { HUDAddition.refreshHUD() }
 }
 
 fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, toExecute: (item: T, level: ServerLevel, player: ServerPlayer, rr: RaycastFunctions.RaycastResult) -> Unit) =
     name idWithConnc {
+        val instance = this.instance
         object : C2SConnection<T>() {
-            override val id = ResourceLocation(VM.MOD_ID, "c2s_toolgun_command_$it")
+            override val id = ResourceLocation(mode.instance.modId, "c2s_toolgun_command_$it")
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
-                serverRaycastAndActivate<T>(context.player, buf, mode::class.java, ToolgunModes.getMode(mode::class), toExecute)
+                serverRaycastAndActivate<T>(context.player, buf, mode::class.java, instance.modeTypes.typeToSupplier(mode::class).let{Supplier{it.get().also{it.instance = instance}}}, toExecute)
         }
     }
 
 fun <T: BaseMode> BaseMode.registerConnection(mode: T, name: String, toExecute: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit) =
     name idWithConnc {
+        val instance = this.instance
         object : C2SConnection<T>() {
-            override val id = ResourceLocation(VM.MOD_ID, "c2s_toolgun_command_$it")
+            override val id = ResourceLocation(mode.instance.modId, "c2s_toolgun_command_$it")
             override fun serverHandler(buf: FriendlyByteBuf, context: NetworkManager.PacketContext) =
-                serverTryActivate<T>(context.player, buf, mode::class.java, ToolgunModes.getMode(mode::class), toExecute)
+                serverTryActivate<T>(context.player, buf, mode::class.java, instance.modeTypes.typeToSupplier(mode::class).let{Supplier{it.get().also{it.instance = instance}}}, toExecute)
         }
     }
 

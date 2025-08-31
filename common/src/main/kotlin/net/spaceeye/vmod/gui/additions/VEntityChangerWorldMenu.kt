@@ -10,14 +10,12 @@ import gg.essential.elementa.dsl.pixels
 import net.spaceeye.vmod.gui.ScreenWindowAddition
 import net.spaceeye.vmod.guiElements.ScrollMenu
 import net.spaceeye.vmod.rendering.RenderingData
-import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.modes.state.VEntityChanger
 import net.spaceeye.vmod.utils.separateTypeName
 import net.spaceeye.vmod.vEntityManaging.VEntityTypes.getType
 import java.awt.Color
 
-object VEntityChangerWorldMenu: ScreenWindowAddition {
+object VEntityChangerWorldMenu: ScreenWindowAddition() {
     private val scrollMenu = ScrollMenu(10, Color(50, 50, 50, 127), Color.WHITE)
 
     override fun init(screenContainer: UIContainer) {
@@ -28,7 +26,7 @@ object VEntityChangerWorldMenu: ScreenWindowAddition {
     val lastIds = mutableSetOf<Int>()
 
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
-        if (!playerIsUsingToolgun() || ClientToolGunState.currentMode !is VEntityChanger) {return scrollMenu.hide()}
+        if (!instance.client.playerIsUsingToolgun() || instance.client.currentMode !is VEntityChanger) {return scrollMenu.hide()}
         if (scrollMenu.scrollComponent.allChildren.isNotEmpty()) {
             scrollMenu.unhide()
         }

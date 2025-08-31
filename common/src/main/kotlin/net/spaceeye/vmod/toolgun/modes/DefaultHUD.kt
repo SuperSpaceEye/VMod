@@ -8,12 +8,12 @@ import gg.essential.elementa.constraints.ChildBasedMaxSizeConstraint
 import gg.essential.elementa.constraints.ChildBasedSizeConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
-import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ToolgunKeybinds
 import net.spaceeye.vmod.translate.DEFAULT_HUD_GUI
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
-class DefaultHUD: HUDBuilder {
+class DefaultHUD(val name: String = "VMod", val subtextMaker: () -> String = {DEFAULT_HUD_GUI.get().replace("==GUI_MENU_OPEN_OR_CLOSE==", ToolgunKeybinds.GUI_MENU_OPEN_OR_CLOSE.translatedKeyMessage.string)}): HUDBuilder {
     override fun makeHUD(screen: UIContainer) {
         val background = GradientComponent(
             Color(40, 40, 40),
@@ -34,7 +34,7 @@ class DefaultHUD: HUDBuilder {
             height = ChildBasedSizeConstraint()
         } childOf background
 
-        UIText("VMod", false) constrain {
+        UIText(name, false) constrain {
             x = 5.pixels
             y = 5.pixels
 
@@ -51,6 +51,6 @@ class DefaultHUD: HUDBuilder {
             Unit
         }
 
-        makeText(DEFAULT_HUD_GUI.get().replace("==GUI_MENU_OPEN_OR_CLOSE==", ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.translatedKeyMessage.string))
+        makeText(subtextMaker())
     }
 }

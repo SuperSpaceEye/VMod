@@ -62,7 +62,7 @@ val CLIENT_LIMITS = v("Client Limits")
 val MAIN = a("Main")
 val CLIENT_SETTINGS = a("Client Settings")
 val SERVER_SETTINGS = a("Server Settings")
-val SETTING_PRESETS = a("Setting Presets")
+val SETTINGS_PRESETS = a("Settings Presets")
 
 val MAX_FORCE = s("Max Force")
 val FIXED_DISTANCE = s("Fixed Distance")

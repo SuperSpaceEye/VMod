@@ -42,13 +42,13 @@ class BasicConnectionExtension<T: ExtendableToolgunMode>(
         leftConn   = leftFunction  ?.let { inst.registerConnection(inst, name + "_left_connection")   { item, level, player, rr -> it(item as T, level, player, rr) } } as C2SConnection<T>?
         rightConn  = rightFunction ?.let { inst.registerConnection(inst, name + "_right_connection")  { item, level, player, rr -> it(item as T, level, player, rr) } } as C2SConnection<T>?
         middleConn = middleFunction?.let { inst.registerConnection(inst, name + "_middle_connection") { item, level, player, rr -> it(item as T, level, player, rr) } } as C2SConnection<T>?
-        resetConn = if (allowResetting) ServerToolGunState.c2sToolgunWasReset else null
+        resetConn = if (allowResetting) inst.instance.server.c2sToolgunWasReset else null
     }
 
     override fun eOnKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         if (action != GLFW.GLFW_PRESS) {return false}
 
-        if (ClientToolGunState.TOOLGUN_RESET_KEY.matches(key, scancode) && resetConn != null) {
+        if (inst.instance.client.TOOLGUN_RESET_KEY.matches(key, scancode) && resetConn != null) {
             resetClientCallback?.invoke(inst as T)
             resetConn!!.sendToServer(EmptyPacket())
             return true

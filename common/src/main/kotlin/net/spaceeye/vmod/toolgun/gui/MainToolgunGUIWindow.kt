@@ -8,16 +8,14 @@ import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.constraints.*
 import gg.essential.elementa.constraints.resolution.ConstraintVisitor
 import gg.essential.elementa.dsl.*
+import net.minecraft.network.chat.TranslatableComponent
 import net.spaceeye.vmod.guiElements.DItem
 import net.spaceeye.vmod.guiElements.ToggleButton
-import net.spaceeye.vmod.translate.CLIENT_SETTINGS
-import net.spaceeye.vmod.translate.MAIN
-import net.spaceeye.vmod.translate.SERVER_SETTINGS
 import net.spaceeye.vmod.translate.get
 import java.awt.Color
 
 class MainToolgunGUIWindow(
-    drawTopButtons: Boolean = true
+    val drawTopButtons: Boolean = true
 ): WindowScreen(ElementaVersion.V8) {
     class ButtonsXConstraint(
         val mainWindow: UIBlock,
@@ -71,15 +69,12 @@ class MainToolgunGUIWindow(
     }
 
     internal var currentWindow: ToolgunWindow? = null
-
-    internal var windows = mutableListOf(
-        DItem(MAIN.get(), true) {currentWindow = ToolgunGUI(mainWindow.constrain())},
-        DItem(CLIENT_SETTINGS.get(), false) {currentWindow = ClientSettingsGUI(mainWindow.constrain())},
-        DItem(SERVER_SETTINGS.get(), false) {currentWindow = ServerSettingsGUI(mainWindow.constrain())},
-        DItem("Settings Presets", false) { currentWindow = SettingPresets(mainWindow.constrain()) }
-    )
-
+    private var windows: MutableList<DItem> = mutableListOf()
     private var buttons = mutableListOf<ToggleButton>()
+
+    fun addWindow(name: TranslatableComponent, constructor: (UIBlock) -> ToolgunWindow) {
+        windows.add(DItem(name.get(), false) { currentWindow = constructor(mainWindow.constrain()) })
+    }
 
     fun onGUIOpen() {
         currentWindow?.onGUIOpen()
@@ -96,6 +91,7 @@ class MainToolgunGUIWindow(
                 btn!!.setDisplay(true)
                 btn!!.state = true
 
+                mainWindow.constrain()
                 state.fnToApply()
             } constrain {
                 width = ChildBasedSizeConstraint() + 2.pixels
@@ -118,8 +114,7 @@ class MainToolgunGUIWindow(
 
     }
 
-    init {
-        currentWindow = ToolgunGUI(mainWindow.constrain())
+    fun initGUI() {
         if (drawTopButtons) {
             buildButtons()
             buttons[0].setDisplay(true)

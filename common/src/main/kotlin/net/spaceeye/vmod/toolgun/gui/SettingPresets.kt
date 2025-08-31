@@ -17,7 +17,7 @@ import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.StrLimit
 import net.spaceeye.vmod.reflectable.ReflectableItemDelegate
 import net.spaceeye.vmod.reflectable.ReflectableObject
-import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.toolgun.ToolgunInstance
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModeExtension
@@ -46,7 +46,7 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
-class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
+class SaveForm(val obj: ReflectableObject, instance: ToolgunInstance): UIBlock(Color.GRAY.brighter()) {
     var filename = ""
 
     init {
@@ -63,12 +63,12 @@ class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
 
         Button(Color.GRAY.brighter().brighter(), SAVE.get()) {
             parent.removeChild(this)
+            var dirName = instance.instanceStorage["Presettable-dir-name"] as String
 
             try {
                 File("${filename}.json").canonicalPath
             } catch (e: Exception) {
-                ClientToolGunState.closeGUI()
-                ClientToolGunState.addHUDError(INVALID_FILENAME.get())
+                instance.client.closeWithError(INVALID_FILENAME.get())
                 return@Button
             }
 
@@ -76,13 +76,12 @@ class SaveForm(val obj: ReflectableObject): UIBlock(Color.GRAY.brighter()) {
             val json = SettingPresets.toJsonStr(objData)
 
             try {
-                Files.createDirectories(Paths.get("VMod-Presets/${obj::class.simpleName}"))
+                Files.createDirectories(Paths.get("$dirName/${obj::class.simpleName}"))
             } catch (e: IOException) {}
             try {
-                Files.writeString(Paths.get("VMod-Presets/${obj::class.simpleName}/${filename}.json"), json)
+                Files.writeString(Paths.get("$dirName/${obj::class.simpleName}/${filename}.json"), json)
             } catch (e: Exception) {
-                ClientToolGunState.closeGUI()
-                ClientToolGunState.addHUDError(FAILED_TO_MAKE_PRESET.get())
+                instance.client.closeWithError(FAILED_TO_MAKE_PRESET.get())
             }
         }.constrain {
             x = 2.pixels()
@@ -112,7 +111,7 @@ class Presettable: ToolgunModeExtension {
 
         val btn = Button(Color(150, 150, 150), MAKE_PRESET.get()) {
             val mode = mode as ReflectableObject
-            SaveForm(mode) childOf parentWindow
+            SaveForm(mode, this.mode.instance) childOf parentWindow
         }
 
         val children = parentWindow.allChildren.map { it }
@@ -127,9 +126,10 @@ class Presettable: ToolgunModeExtension {
         children.forEach { parentWindow.addChild(it) }
     }
 
-    companion object {
-        val modes = mutableMapOf<String, ExtendableToolgunMode>()
+    val modes: MutableMap<String, ExtendableToolgunMode>
+        get() = this.mode.instance.instanceStorage.getOrPut("Presettable") { mutableMapOf<String, ExtendableToolgunMode>() } as MutableMap<String, ExtendableToolgunMode>
 
+    companion object {
         fun <T : Any> ReflectableItemDelegate<T>.presettable(): ReflectableItemDelegate<T> {
             this.metadata["presettable"] = true
             return this
@@ -137,8 +137,11 @@ class Presettable: ToolgunModeExtension {
     }
 }
 
-class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) {
+class SettingPresets(val mainWindow: UIBlock, val instance: ToolgunInstance): BaseToolgunGUIWindow(mainWindow) {
     init { init() }
+
+    val pModes: MutableMap<String, ExtendableToolgunMode>
+        get() = this.instance.instanceStorage.getOrPut("Presettable") { mutableMapOf<String, ExtendableToolgunMode>() } as MutableMap<String, ExtendableToolgunMode>
 
     fun init() {
         settingsComponent constrain {
@@ -151,8 +154,8 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
             height = 100.percent() - 4.percent()
         }
 
-        val presets = listPresets()
-        val modes = presets.filterKeys { Presettable.modes.contains(it) }
+        val presets = listPresets(this.instance.instanceStorage["Presettable-dir-name"] as String)
+        val modes = presets.filterKeys { pModes.contains(it) }
 
         if (modes.isEmpty()) {
             val text = makeText(NO_PRESETS.get(), Color.BLACK, 2f, 2f, settingsScrollComponent)
@@ -170,7 +173,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
             val presets = modes[typeName]!!
             var chosenPreset = Paths.get("")
 
-            val mode = Presettable.modes[typeName]!!
+            val mode = pModes[typeName]!!
 
             val holder = UIContainer() constrain {
                 x = 2.pixels
@@ -200,8 +203,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
                     fromJsonStr(jsonStr, items)
                 } catch (e: Exception) {
                     ELOG(e.stackTraceToString())
-                    ClientToolGunState.closeGUI()
-                    ClientToolGunState.addHUDError(SOMETHING_WENT_WRONG.get())
+                    instance.client.closeWithError(SOMETHING_WENT_WRONG.get())
                 }
             } constrain {
                 x = SiblingConstraint(2f) + 1.pixels
@@ -215,7 +217,7 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
                     if (!Files.deleteIfExists(chosenPreset)) return@Button
                 } catch (e: Exception) {
                     ELOG(e.stackTraceToString())
-                    ClientToolGunState.closeGUI()
+                    instance.client.closeGUI()
                     return@Button
                 }
                 settingsScrollComponent.clearChildren()
@@ -232,18 +234,18 @@ class SettingPresets(val mainWindow: UIBlock): BaseToolgunGUIWindow(mainWindow) 
     override fun onGUIOpen() {}
 
     companion object {
-        @JvmStatic fun listPresets(mode: String): List<Path> {
-            if (!Files.exists(Paths.get("VMod-Presets"))) return emptyList()
-            if (!Files.exists(Paths.get("VMod-Presets/${mode}"))) return emptyList()
+        @JvmStatic fun listPresets(mode: String, dirName: String): List<Path> {
+            if (!Files.exists(Paths.get(dirName))) return emptyList()
+            if (!Files.exists(Paths.get("$dirName/${mode}"))) return emptyList()
             return Files
-                .list(Paths.get("VMod-Presets/${mode}")).toList().toList()
+                .list(Paths.get("$dirName/${mode}")).toList().toList()
                 .filter { it.isRegularFile() && it.extension == "json" }
         }
 
-        @JvmStatic fun listPresets(): Map<String, List<Path>> {
-            if (!Files.exists(Paths.get("VMod-Presets"))) return emptyMap()
+        @JvmStatic fun listPresets(dirName: String): Map<String, List<Path>> {
+            if (!Files.exists(Paths.get(dirName))) return emptyMap()
             return Files
-                .list(Paths.get("VMod-Presets")).toList().toList()
+                .list(Paths.get(dirName)).toList().toList()
                 .filter { it.isDirectory() && Files.list(it).toList().toList().any { it.extension == "json" }}
                 .associate { Pair(it.name, Files.list(it).toList().toList().filter { it.extension == "json" }) }
         }

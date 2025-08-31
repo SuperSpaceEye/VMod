@@ -9,9 +9,10 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.vEntityManaging.VEntity
-import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.addForVMod
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.guiElements.makeTextEntry
 import net.spaceeye.vmod.limits.DoubleLimit
@@ -19,7 +20,6 @@ import net.spaceeye.vmod.limits.ServerLimits
 import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.networking.regS2C
-import net.spaceeye.vmod.toolgun.CELOG
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.util.*
@@ -37,6 +37,7 @@ import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.joml.AxisAngle4d
 import org.joml.Quaterniond
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.toolgun.ToolgunInstance
 import net.spaceeye.vmod.toolgun.gui.Presettable.Companion.presettable
 import net.spaceeye.vmod.toolgun.modes.extensions.PlacementAssistNetworking.S2CSendTraversalInfo
 import org.valkyrienskies.core.api.ships.ClientShip
@@ -53,15 +54,18 @@ enum class ThreeClicksActivationSteps {
     FINALIZATION
 }
 
-class PlacementAssistExtension(
+open class PlacementAssistExtension(
     showCenteredInBlock: Boolean,
     override val paNetworkingObject: PlacementAssistNetworking,
     val blockPredicate: (mode: ExtendableToolgunMode) -> Boolean,
     val canUseJoinMode: (inst: ExtendableToolgunMode) -> Boolean,
-    override val paVEntityBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> VEntity
+    override val paVEntityBuilder: (spoint1: Vector3d, spoint2: Vector3d, rpoint1: Vector3d, rpoint2: Vector3d, ship1: ServerShip, ship2: ServerShip?, shipId1: ShipId, shipId2: ShipId, rresults: Pair<RaycastFunctions.RaycastResult, RaycastFunctions.RaycastResult>, paDistanceFromBlock: Double) -> VEntity,
+    override val doActivate: (level: ServerLevel, player: ServerPlayer, inst: PlacementAssistServerPart, pr: RaycastFunctions.RaycastResult, rr: RaycastFunctions.RaycastResult) -> Boolean = {_, _, _, _, _ -> true}
 ): PlacementModesExtension(showCenteredInBlock),
     PlacementAssistClient, PlacementAssistServerPart, AutoSerializable {
     override lateinit var inst: ExtendableToolgunMode
+
+    override val instance get() = inst.instance
 
     //TODO clean this up?
     override fun preInit(inst: ExtendableToolgunMode, type: BaseNetworking.EnvType) {
@@ -189,6 +193,8 @@ interface PlacementAssistClient {
         get() {return Math.toDegrees(paScrollAngle)}
         set(value) {paScrollAngle = Math.toRadians(value)}
 
+    val instance: ToolgunInstance
+
     fun clientHandleMouseClickPA() {
         when (paStage) {
             ThreeClicksActivationSteps.FIRST_RAYCAST  -> clientPlacementAssistFirst()
@@ -219,7 +225,7 @@ interface PlacementAssistClient {
         val mode = if (posMode != PositionModes.CENTERED_IN_BLOCK) {posMode} else {PositionModes.CENTERED_ON_SIDE}
 
         paCaughtShip = (level.getShipManagingPos(raycastResult.blockPosition) ?: run {paClientResetState(); return}) as ClientShip
-        paCaughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, paCaughtShip!!, precisePlacementAssistSideNum)
+        paCaughtShip!!.transformProvider = PlacementAssistTransformProvider(raycastResult, mode, paCaughtShip!!, precisePlacementAssistSideNum) {instance.client.playerIsUsingToolgun()}
 
         paStage = ThreeClicksActivationSteps.SECOND_RAYCAST
         return
@@ -235,8 +241,8 @@ interface PlacementAssistClient {
 
         paAngle.it = 0.0
         try {
-            paCaughtShip.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle)
-        } catch (e: Exception) { CELOG("HOW TF DID YOU DO THIS???????????????????????????\n${e.stackTraceToString()}", "HOW TF DID YOU DO THIS????"); paClientResetState(); return}
+            paCaughtShip.transformProvider = RotationAssistTransformProvider(placementTransform, paAngle) {instance.client.playerIsUsingToolgun()}
+        } catch (e: Exception) { ELOG("HOW TF DID YOU DO THIS???????????????????????????\n${e.stackTraceToString()}"); paClientResetState(); return}
 
         val shipObjectWorld = Minecraft.getInstance().shipObjectWorld
         paCaughtShips.forEach {
@@ -262,13 +268,13 @@ interface PlacementAssistClient {
     }
 }
 
-open class PlacementAssistNetworking(networkName: String): BaseNetworking<ExtendableToolgunMode>() {
-    val s2cHandleFailure = regS2C<EmptyPacket>("handle_failure", networkName) {
+open class PlacementAssistNetworking(networkName: String, modId: String): BaseNetworking<ExtendableToolgunMode>() {
+    val s2cHandleFailure = regS2C<EmptyPacket>(modId, "handle_failure", networkName) {
         clientObj?.resetState()
     }
 
     // Client has no information about VEntities, so server should send it to the client
-    val s2cSendTraversalInfo = regS2C<S2CSendTraversalInfo>("send_traversal_info", networkName) {pkt->
+    val s2cSendTraversalInfo = regS2C<S2CSendTraversalInfo>(modId, "send_traversal_info", networkName) {pkt->
         val mobj = clientObj!!
         val obj = mobj.getExtensionOfType<PlacementAssistExtension>()
 
@@ -316,9 +322,11 @@ interface PlacementAssistServerPart {
     var previousResult: RaycastFunctions.RaycastResult?
     val inst: ExtendableToolgunMode
 
+    val doActivate: (level: ServerLevel, player: ServerPlayer, inst: PlacementAssistServerPart, pr: RaycastFunctions.RaycastResult, rr: RaycastFunctions.RaycastResult) -> Boolean
 
     fun activateMiddle(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) = serverRaycast2PointsFnActivationBase(posMode, precisePlacementAssistSideNum, level, raycastResult, { if (previousResult == null || middleFirstRaycast) { previousResult = it; Pair(false, null) } else { Pair(true, previousResult) } }, {inst.resetState()}) {
             level, shipId1, shipId2, ship1, ship2, spoint1, spoint2, rpoint1, rpoint2, prresult, rresult ->
+        if (!doActivate(level, player, this, prresult, rresult)) return@serverRaycast2PointsFnActivationBase handleFailure(player)
 
         if (previousResult!!.ship == null) {
             paFirstResult = rresult
@@ -349,7 +357,7 @@ interface PlacementAssistServerPart {
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
         val ventity = paVEntityBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult), paDistanceFromBlock)
-        level.makeVEntity(ventity){it.addFor(player)}
+        level.makeVEntity(ventity){it.addForVMod(player)}
         paServerResetState()
     }
 
@@ -362,12 +370,12 @@ interface PlacementAssistServerPart {
         }
     }
 
-    private fun handleFailure(player: Player) {
+    fun handleFailure(player: Player) {
         paNetworkingObject.s2cHandleFailure.sendToClient(player as ServerPlayer, EmptyPacket())
         paServerResetState()
     }
 
-    private fun paFunctionFirst(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+    fun paFunctionFirst(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (raycastResult.state.isAir) {return handleFailure(player)}
         val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return handleFailure(player)
         paFirstResult = raycastResult
@@ -375,7 +383,7 @@ interface PlacementAssistServerPart {
         paNetworkingObject.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, S2CSendTraversalInfo(traversed.toLongArray()))
     }
 
-    private fun paFunctionSecond(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+    fun paFunctionSecond(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (raycastResult.state.isAir) {return handleFailure(player) }
         val ship = level.getShipManagingPos(raycastResult.blockPosition)
         if (ship == level.getShipManagingPos(paFirstResult?.blockPosition ?: return handleFailure(player))) {return handleFailure(player)}
@@ -383,7 +391,7 @@ interface PlacementAssistServerPart {
     }
 
     @OptIn(VsBeta::class)
-    private fun paFunctionThird(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+    fun paFunctionThird(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
         if (paFirstResult == null || paSecondResult == null) {return handleFailure(player)}
 
         val paFirstResult = paFirstResult!!
@@ -394,6 +402,7 @@ interface PlacementAssistServerPart {
 
         if (ship1 == null) {return handleFailure(player)}
         if (ship1 == ship2) {return handleFailure(player)}
+        if (!doActivate(level, player as ServerPlayer, this, paFirstResult, paSecondResult)) {return paServerResetState()}
 
         // not sure why i need to flip y, but it works
         val dir1 = paFirstResult .globalNormalDirection!!.let {it.copy().also{it.set(it.x, -it.y, it.z)}}
@@ -429,7 +438,7 @@ interface PlacementAssistServerPart {
         val shipId2: ShipId = ship2?.id ?: level.shipObjectWorld.dimensionToGroundBodyIdImmutable[level.dimensionId]!!
 
         val ventity = paVEntityBuilder(spoint1, spoint2, rpoint1, rpoint2, ship1, ship2, shipId1, shipId2, Pair(paFirstResult, paSecondResult), paDistanceFromBlock)
-        level.makeVEntity(ventity){it.addFor(player)}
+        level.makeVEntity(ventity){it.addForVMod(player)}
         paServerResetState()
     }
     fun paServerResetState() {

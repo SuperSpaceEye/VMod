@@ -39,6 +39,8 @@ import gg.essential.elementa.dsl.*
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.Minecraft
 import net.minecraft.core.BlockPos
+import net.spaceeye.vmod.MOD_ID
+import net.spaceeye.vmod.gui.additions.HUDAddition
 import net.spaceeye.vmod.guiElements.Button
 import net.spaceeye.vmod.guiElements.makeCheckBox
 import net.spaceeye.vmod.guiElements.makeDropDown
@@ -50,6 +52,7 @@ import net.spaceeye.vmod.reflectable.AutoSerializable
 import net.spaceeye.vmod.reflectable.ReflectableItemDelegate
 import net.spaceeye.vmod.toolgun.ClientToolGunState
 import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.toolgun.gui.ConfirmationForm
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.gui.VEntityChangerGUI
@@ -70,7 +73,7 @@ import org.joml.Quaterniondc
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.UUID
 
-class VEntityChangerGui(val constraint: VEntity): WindowScreen(ElementaVersion.V8) {
+class VEntityChangerGui(val constraint: VEntity, val client: ClientToolGunState): WindowScreen(ElementaVersion.V8) {
     internal val mainWindow = UIBlock(Color(240, 240, 240)).constrain {
         x = CenterConstraint()
         y = CenterConstraint()
@@ -102,7 +105,7 @@ class VEntityChangerGui(val constraint: VEntity): WindowScreen(ElementaVersion.V
         Button(Color(140, 140, 140), DELETE.get()) {
             ConfirmationForm(ARE_YOU_SURE_YOU_WANT_TO_DELETE_IT.get(), YES.get(), NO.get(), {
                 VEntityChanger.c2sRemoveVEntity.sendToServer(VEntityChanger.Companion.RemoveVEntity(constraint.mID))
-                ClientToolGunState.closeGUI()
+                client.closeGUI()
             }) childOf scrollWindow
         } constrain {
             x = 2.pixels
@@ -191,7 +194,7 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
     }
 
     fun entryConfirmation() {
-        Minecraft.getInstance().setScreen(VEntityChangerGui(clientVEntities[cursorPos].first))
+        Minecraft.getInstance().setScreen(VEntityChangerGui(clientVEntities[cursorPos].first, instance.client))
     }
 
     companion object {
@@ -227,9 +230,9 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
                 }
             }
         }
-        val s2cSendVEntities = regS2C<S2CSendVEntities>("send_ventities", "ventity_changer") {
+        val s2cSendVEntities = regS2C<S2CSendVEntities>(MOD_ID, "send_ventities", "ventity_changer") {
             clientVEntities = it.data
-            ClientToolGunState.refreshHUD()
+            HUDAddition.refreshHUD()
         }
 
         class C2SSendUpdate(): Serializable {
@@ -253,9 +256,9 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
                     .nbtDeserialize(data.tag!!, mapOf())!!
             }
         }
-        val c2sSendUpdate = regC2S<C2SSendUpdate>("send_update", "ventity_changer",
-            { pkt, player -> ServerToolGunState.playerHasPermission(player, VEntityChanger::class.java as Class<BaseMode>) },
-            { pkt, player -> ServerToolGunState.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(
+        val c2sSendUpdate = regC2S<C2SSendUpdate>(MOD_ID, "send_update", "ventity_changer",
+            { pkt, player -> VMToolgun.server.playerHasPermission(player, VEntityChanger::class.java as Class<BaseMode>) },
+            { pkt, player -> VMToolgun.server.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(
                 YOU_DONT_HAVE_ACCESS_TO_THIS.string, true, true)) }
         ) { pkt, player ->
             val level = player.level() as ServerLevel
@@ -267,9 +270,9 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
             level.makeVEntityWithId(ventity, ventity.mID) {  }
         }
         data class RemoveVEntity(var id: Int = -1): AutoSerializable
-        val c2sRemoveVEntity = regC2S<RemoveVEntity>("remove_ventity", "ventity_changer",
-            { pkt, player -> ServerToolGunState.playerHasPermission(player, VEntityChanger::class.java as Class<BaseMode>) },
-            { pkt, player -> ServerToolGunState.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(
+        val c2sRemoveVEntity = regC2S<RemoveVEntity>(MOD_ID, "remove_ventity", "ventity_changer",
+            { pkt, player -> VMToolgun.server.playerHasPermission(player, VEntityChanger::class.java as Class<BaseMode>) },
+            { pkt, player -> VMToolgun.server.s2cErrorHappened.sendToClient(player, ServerToolGunState.S2CErrorHappened(
                 YOU_DONT_HAVE_ACCESS_TO_THIS.string, true, true)) }
             ) { pkt, player ->
             val level = player.level() as ServerLevel
@@ -277,7 +280,7 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
             s2cRemovedVEntity.sendToClient(player, pkt)
         }
 
-        val s2cRemovedVEntity = regS2C<RemoveVEntity>("removed_ventity", "ventity_changer") { pkt ->
+        val s2cRemovedVEntity = regS2C<RemoveVEntity>(MOD_ID, "removed_ventity", "ventity_changer") { pkt ->
             val idx = clientVEntities.indexOfFirst { it.first.mID == pkt.id }
             if (idx == -1) return@regS2C
             clientVEntities.removeAt(idx)

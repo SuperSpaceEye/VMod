@@ -17,6 +17,7 @@ import kotlin.math.sin
 object RenderingUtils {
     @JvmStatic val ropeTexture  = ResourceLocation(VM.MOD_ID, "textures/misc/rope.png")
     @JvmStatic val whiteTexture = ResourceLocation(VM.MOD_ID, "textures/misc/white.png")
+    @JvmStatic val testTexture = ResourceLocation(VM.MOD_ID, "textures/misc/test_texture.png")
     @JvmStatic fun tof(n: Double) = n.toFloat()
     object Line {
         @JvmStatic fun renderLine(buf: VertexConsumer, matrix: Matrix4f, color: Color,
@@ -55,32 +56,6 @@ object RenderingUtils {
     }
 
     object Quad {
-        @JvmStatic fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,
-                               r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
-                               b1: Vector3d, b2: Vector3d, b3: Vector3d, b4: Vector3d,
-                               t1: Vector3d, t2: Vector3d, t3: Vector3d, t4: Vector3d,
-                               ) {
-            buf.vertex(matrix,  tof(b1.x), tof(b1.y), tof(b1.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(t1.x), tof(t1.y), tof(t1.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(t2.x), tof(t2.y), tof(t2.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(b2.x), tof(b2.y), tof(b2.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-
-            buf.vertex(matrix,  tof(b2.x), tof(b2.y), tof(b2.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(t2.x), tof(t2.y), tof(t2.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(t3.x), tof(t3.y), tof(t3.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(b3.x), tof(b3.y), tof(b3.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-
-            buf.vertex(matrix,  tof(b3.x), tof(b3.y), tof(b3.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(t3.x), tof(t3.y), tof(t3.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(t4.x), tof(t4.y), tof(t4.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(b4.x), tof(b4.y), tof(b4.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-
-            buf.vertex(matrix,  tof(b4.x), tof(b4.y), tof(b4.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(t4.x), tof(t4.y), tof(t4.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(t1.x), tof(t1.y), tof(t1.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-            buf.vertex(matrix,  tof(b1.x), tof(b1.y), tof(b1.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
-        }
-
         @JvmStatic fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
                                        lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d) {
             buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv2(lightmapUV).endVertex()
@@ -91,6 +66,7 @@ object RenderingUtils {
 
         @JvmStatic fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int, lightmapUV: Int, overlayUV: Int,
                                        lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d, normal: Vector3d) {
+            //u is width, v is length
             buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(0f, 0f).overlayCoords(overlayUV).uv2(lightmapUV).normal(tof(normal.x), tof(normal.y), tof(normal.z)).endVertex()
             buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(0f, 0f).overlayCoords(overlayUV).uv2(lightmapUV).normal(tof(normal.x), tof(normal.y), tof(normal.z)).endVertex()
             buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(0f, 0f).overlayCoords(overlayUV).uv2(lightmapUV).normal(tof(normal.x), tof(normal.y), tof(normal.z)).endVertex()
@@ -98,15 +74,24 @@ object RenderingUtils {
         }
 
         @JvmStatic fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int,
-                                       leftLight: Int, rightLight: Int,
-                                       lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d, uv0: Float, uv1: Float) {
-            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(uv0, 1.0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(leftLight).normal(0f, 1f, 0f).endVertex()
-            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(uv0, 0.0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(leftLight).normal(0f, 1f, 0f).endVertex()
-            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(uv1, 0.0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(rightLight).normal(0f, 1f, 0f).endVertex()
-            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(uv1, 1.0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(rightLight).normal(0f, 1f, 0f).endVertex()
+                                leftLight: Int, rightLight: Int,
+                                lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d,
+                                luv0: Float, luv1: Float, wuv0: Float, wuv1: Float) {
+            drawQuad(buf, matrix, r, g, b, a, leftLight, rightLight, lu, ld, rd, ru, luv0, luv1, wuv0, wuv1, 0f, 1f, 0f)
         }
 
-        @JvmStatic fun makePolygon(sides: Int, radius: Double, up: Vector3d, right: Vector3d, pos: Vector3d): List<Vector3d> {
+        @JvmStatic fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int,
+                                leftLight: Int, rightLight: Int,
+                                lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d,
+                                luv0: Float, luv1: Float, wuv0: Float, wuv1: Float,
+                                nx: Float, ny: Float, nz: Float) {
+            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(wuv0, luv0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(leftLight ).normal(nx, ny, nz).endVertex()
+            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(wuv1, luv0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(leftLight ).normal(nx, ny, nz).endVertex()
+            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(wuv1, luv1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(rightLight).normal(nx, ny, nz).endVertex()
+            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(wuv0, luv1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(rightLight).normal(nx, ny, nz).endVertex()
+        }
+
+        @JvmStatic fun makePolygonPoints(sides: Int, radius: Double, up: Vector3d, right: Vector3d, pos: Vector3d): List<Vector3d> {
             val segment = PI * 2.0 / sides
             val points = mutableListOf<Vector3d>()
             for (i in 0 until sides) {
@@ -118,57 +103,23 @@ object RenderingUtils {
             return points
         }
 
-        @JvmStatic fun makePolygonTube(sides: Int, radius: Double,
-                                          pos1: Vector3d, pos2: Vector3d, up: Vector3d?): Pair<List<Vector3d>, List<Vector3d>> {
-            val ndir = (pos2 - pos1).snormalize()
-            val sdir = ndir.add(ndir.y, ndir.z, ndir.x).snormalize()
-
-            val up = up ?: sdir.cross(ndir)
-            val right = ndir.cross(up)
-
-            val lpoints = makePolygon(sides, radius, up, right, pos1)
-            val rpoints = makePolygon(sides, radius, up, right, pos2)
-
-            return Pair(lpoints, rpoints)
-        }
-
         @JvmStatic fun drawPolygonTube(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int,
-                                              leftLight: Int, rightLight: Int,
-                                              uv0: Float, uv1: Float, lpoints: List<Vector3d>, rpoints: List<Vector3d>) {
+                                       leftLight: Int, rightLight: Int,
+                                       luv0: Float, luv1: Float, maxWidthUV: Float,
+                                       lpoints: List<Vector3d>, rpoints: List<Vector3d>) {
             val times = lpoints.size
 
+            var lastUV = 0f
             for (i in 0 until times-1) {
+                val nextUV = lastUV + maxWidthUV / times
                 drawQuad(buf, matrix, r, g, b, a, leftLight, rightLight,
-                    lpoints[i], lpoints[i+1], rpoints[i+1], rpoints[i],
-                    uv0, uv1)
+                    lpoints[i], lpoints[i+1], rpoints[i], rpoints[i+1],
+                    luv0, luv1, lastUV, nextUV)
+                lastUV = nextUV
             }
             drawQuad(buf, matrix, r, g, b, a, leftLight, rightLight,
-                lpoints[times-1], lpoints[0], rpoints[0], rpoints[times-1],
-                uv0, uv1)
-        }
-
-        @JvmStatic fun makeBoxTube(buf: VertexConsumer, matrix: Matrix4f,
-                               r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
-                               width: Double,
-                               pos1: Vector3d, pos2: Vector3d) {
-            val ndir = (pos2 - pos1).snormalize()
-            val sdir = ndir.add(ndir.y, ndir.z, ndir.x).snormalize()
-
-            val up = sdir.cross(ndir)
-            val right = ndir.cross(up)
-
-            //left down bottom
-            val ldb = (-up -right) * width + pos1
-            val lub = ( up -right) * width + pos1
-            val rub = ( up +right) * width + pos1
-            val rdb = (-up +right) * width + pos1
-
-            val ldt = (-up -right) * width + pos2
-            val lut = ( up -right) * width + pos2
-            val rut = ( up +right) * width + pos2
-            val rdt = (-up +right) * width + pos2
-
-            makeBoxTube(buf, matrix, r, g, b, a, lightmapUV, ldb, lub, rub, rdb, ldt, lut, rut, rdt)
+                lpoints[times-1], lpoints[0], rpoints[times-1], rpoints[0],
+                luv0, luv1, lastUV, maxWidthUV)
         }
 
         @JvmStatic fun makeFlatRectFacingCamera(buf: VertexConsumer, matrix: Matrix4f,
@@ -198,52 +149,6 @@ object RenderingUtils {
             drawQuad(buf, matrix, r, g, b, a, lightmapUV, OverlayTexture.NO_OVERLAY, lu, ld, rd, ru, up)
         }
 
-        @JvmStatic fun makeFlatRectFacingCameraTexture(buf: VertexConsumer, matrix: Matrix4f,
-                                                       r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
-                                                       width: Double,
-                                                       pos1: Vector3d, pos2: Vector3d
-        ) {
-            // wdir = worldPos2 - worldPos1
-            // t = (cameraPos - worldPos1).dot(wdir) / wdir.dot(wdir)
-            // closestPointToCameraOnLine = worldPos1 + wdir * t
-            // perpendicularVector = (cameraPos - closestPointToCameraOnLine).snormalize()
-            //
-            // cameraPos should be origin, so it becomes
-
-            val wdir = pos2 - pos1
-            // perpendicular direction
-            val pdir = (-pos1 - wdir * ((-pos1).dot(wdir) / wdir.dot(wdir))).snormalize()
-
-            val up = pdir.cross(wdir.normalize())
-
-            val lu =  up * width + pos1
-            val ld = -up * width + pos1
-
-            val ru = -up * width + pos2
-            val rd =  up * width + pos2
-
-            drawQuad(buf, matrix, r, g, b, a, lightmapUV, lightmapUV, lu, ld, ru, rd, 0.0f, 1.0f)
-        }
-
-        @JvmStatic fun makeFlatRectFacingCameraTexture(
-            buf: VertexConsumer, matrix: Matrix4f,
-            r: Int, g: Int, b: Int, a: Int, lightmapUV: Int,
-            width: Double,
-            lu: Vector3d, ld: Vector3d, pos1: Vector3d, pos2: Vector3d
-        ): Pair<Vector3d, Vector3d> {
-            val wdir = pos2 - pos1
-            // perpendicular direction
-            val pdir = (-pos1 - wdir * ((-pos1).dot(wdir) / wdir.dot(wdir))).snormalize()
-
-            val up = pdir.cross(wdir.normalize())
-
-            val ru = -up * width + pos2
-            val rd =  up * width + pos2
-
-            drawQuad(buf, matrix, r, g, b, a, lightmapUV, lightmapUV, lu, ld, ru, rd, 0.0f, 1.0f)
-            return Pair(ru, rd)
-        }
-
         @JvmStatic fun lerp(a: Vector3d, b: Vector3d, f: Double) : Vector3d {
 			return a + (b - a) * f
 		}
@@ -260,7 +165,10 @@ object RenderingUtils {
             r: Int, g: Int, b: Int, a: Int,
             width: Double, segments: Int, initialLength: Double,
             pos1: Vector3d, pos2: Vector3d, lightmapUVFn: (Vector3d) -> Int,
-        ) = ropePointsCreator(pos1, pos2, segments, initialLength) { i, last, current, up0, up1 ->
+        ) {
+            var lastUV = 0f
+            val widthUV = (width * 2).toFloat()
+        ropePointsCreator(pos1, pos2, segments, initialLength) { i, last, current, up0, up1 ->
             val lu =  up0 * width + last
             val ld = -up0 * width + last
             val ru = -up1 * width + current
@@ -269,11 +177,13 @@ object RenderingUtils {
             val prev = lightmapUVFn(last)
             val curr = lightmapUVFn(current)
 
-            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(0f, 0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(prev).normal(0f, 1f, 0f).endVertex()
-            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(0f, 1f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(prev).normal(0f, 1f, 0f).endVertex()
-            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(1f, 1f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(curr).normal(0f, 1f, 0f).endVertex()
-            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(1f, 0f).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(curr).normal(0f, 1f, 0f).endVertex()
-        }
+            var inc = (current - last).dist().toFloat()
+            var nextUV = lastUV + inc
+
+            drawQuad(buf, matrix, r, g, b, a, prev, curr, lu, ld, rd, ru, lastUV, nextUV, 0f, widthUV)
+
+            lastUV = nextUV
+        } }
 
         @JvmStatic fun drawTubeRope(
             buf: VertexConsumer, matrix: Matrix4f,
@@ -308,7 +218,11 @@ object RenderingUtils {
 
             var lLight = lightmapUVFn(pos1)
 
-            lPoints = makePolygon(sides, radius, up, right, pos1)
+            lPoints = makePolygonPoints(sides, radius, up, right, pos1)
+
+            //TODO make widthUV more configurable
+            val widthUV = (radius * 2).toFloat()
+            var leftUV = 0f
 
             ropePointsCreator(pos1, pos2, segments, initialLength) { i, last, current, up0, up1 ->
                 if ((current - pos2).sqrDist() < 0.001 && useDefinedUpRight) {
@@ -325,12 +239,14 @@ object RenderingUtils {
                     up = right.cross(forward).snormalize()
                 }
 
-                rPoints = makePolygon(sides, radius, up, right, current)
+                rPoints = makePolygonPoints(sides, radius, up, right, current)
 
                 val rLight = lightmapUVFn(current)
+                val rightUV = leftUV + (current - last).dist().toFloat()
 
-                drawPolygonTube(buf, matrix, r, g, b, a, lLight, rLight, 0f, 1f, lPoints, rPoints)
+                drawPolygonTube(buf, matrix, r, g, b, a, lLight, rLight, leftUV, rightUV, widthUV, lPoints, rPoints)
 
+                leftUV = rightUV
                 lPoints = rPoints
                 lLight = rLight
             }

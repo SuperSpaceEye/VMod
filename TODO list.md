@@ -2,9 +2,6 @@
 
 * Rework permission level and player roles
 
-by talking_snow
-* someone should make a parody of eureka where the ship assembly code makes every individual block  its own ship instead of what it normally does so everything immediatly falls apart
-
 # Maybe
 
 * Mode to change COM (set mass of all blocks to 0 and set mass of target block to total mass)
@@ -14,6 +11,7 @@ by talking_snow
 # Do Eventually
 
 * Add a way for addons to add their own client/server settings
+* Patchouli guide book
 
 # Gravity Changer
 * rework saving/loading
@@ -31,9 +29,6 @@ by talking_snow
 ## Constraint disabler
 * An extension that will enable/disable it when signal is given
 * Maybe also a variant that removes them?
-
-## Toolgun settings presets menu
-* maybe when pressing alt or smth it will show all presets for this mode, and allow player to cycle them
 
 ## Add a "wire" thing maybe as an addon to vmod
 
@@ -56,12 +51,6 @@ by talking_snow
 ## Toolgun Menu
 * Expand menu with more GUI components (sliders, drop down options, etc)
 * Make menu look better
-
-## Custom Access Levels
-* Make special commands for op users
-    * Clean every mconstraint of acc level.
-    * Set limit for total mconstraints of acc level.
-    * Some other commands idk
 
 ## Motor Constraint
 * Code below kinda works, but idk how to get angle from initial rotation, and it's very buggy (might get better on physx)

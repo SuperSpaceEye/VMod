@@ -72,6 +72,9 @@ dependencies {
     forgeRuntimeLibrary include("org.apfloat:apfloat:1.14.0")
     forgeRuntimeLibrary include("org.jheaps:jheaps:0.14")
 
+    compileOnly(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-common:0.3.5-beta.2"))
+    implementation(include("com.github.bawnorton.mixinsquared:mixinsquared-forge:0.3.5-beta.2"))
+
     api 'org.joml:joml-primitives:1.10.0'
     api 'org.joml:joml:1.10.4'
 

@@ -4,7 +4,6 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.level.block.Block
 import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.*
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
@@ -16,6 +15,7 @@ import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.SchemSerializeDataV1Impl
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.toolgun.SELOG
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.rotateAroundCenter
@@ -27,13 +27,13 @@ import org.joml.Vector3i
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBi
 import net.spaceeye.vmod.compat.vsBackwardsCompat.*
+import net.spaceeye.vmod.schematic.SchematicActionsQueue.CopySchematicSettings
+import net.spaceeye.vmod.schematic.SchematicActionsQueue.PasteSchematicSettings
 import net.spaceeye.vmod.shipAttachments.AttachmentAccessor
-import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.transformProviders.SchemTempPositionSetter
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.translate.makeFake
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
-import org.apache.logging.log4j.Logger
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
@@ -59,34 +59,22 @@ class VModShipSchematicV2(): IShipSchematic, IShipSchematicDataV1, SchemSerializ
 //    override var entityData: MutableMap<ShipId, List<EntityItem>> = mutableMapOf()
 }
 
-data class PasteSchematicSettings(
-    var loadContainers: Boolean = true,
-    var loadEntities: Boolean = true,
-
-    var allowChunkPlacementInterruption: Boolean = true,
-    var allowUpdateInterruption: Boolean = true,
-
-    var blacklistMode: Boolean = true,
-    var nbtLoadingBlacklist: Set<Block> = emptySet(),
-    var nbtLoadingWhitelist: Set<Block> = emptySet(),
-
-    var logger: Logger? = null,
-    var nonfatalErrorsHandler: (numErrors: Int, schematic: IShipSchematicDataV1, player: ServerPlayer?) -> Unit = {_, _, _->}
-)
-
 @OptIn(VsBeta::class)
 fun IShipSchematicDataV1.placeAt(
     level: ServerLevel, player: ServerPlayer?, uuid: UUID, pos: Vector3d, rotation: Quaterniondc,
-     settings: PasteSchematicSettings = PasteSchematicSettings(
+    settings: PasteSchematicSettings = PasteSchematicSettings(
          logger = VM.logger,
+         //TODO add to wiki or smth "if you have shitload of "Schematic had x nonfatal errors" then set those to false"
+         allowChunkPlacementInterruption = VMConfig.SERVER.SCHEMATICS.ALLOW_CHUNK_PLACEMENT_INTERRUPTION,
+         allowUpdateInterruption = VMConfig.SERVER.SCHEMATICS.ALLOW_CHUNK_UPDATE_INTERRUPTION,
          //TODO think of a way to make str into translatable
-         nonfatalErrorsHandler = { numErrors, _, player -> player?.let { ServerToolGunState.sendErrorTo(it, "Schematic had $numErrors nonfatal errors") } }
+         nonfatalErrorsHandler = { numErrors, _, player -> player?.let { VMToolgun.server.sendErrorTo(it, "Schematic had $numErrors nonfatal errors") } }
      ), postPlaceFn: (List<ServerShip>) -> Unit): Boolean {
     extraData.forEach { (_, bytes) -> bytes.setIndex(0, bytes.accessByteBufWithCorrectSize().size) }
 
     val newTransforms = mutableListOf<BodyTransform>()
 
-    val shipInitializers = (this as IShipSchematic).createShipConstructors(level, pos, rotation, newTransforms)
+    val shipInitializers = (this as IShipSchematic).createShipConstructors(level, rotation, newTransforms)
 
     if (!verifyBlockDataIsValid(shipInitializers.map { it.second }, player)) { return false }
 
@@ -101,15 +89,15 @@ fun IShipSchematicDataV1.placeAt(
         }
 
         createdShips.zip(newTransforms).forEach { (it, transform) ->
-            if (it.transformProvider is SchemTempPositionSetter) { it.transformProvider = null }
-            val b = it.shipAABB!!
+            //TODO add ?: to nonfatal errors
+            val b = it.shipAABB ?: AABBi(0, 0, 0, 0, 0, 0)
             var offset = MVector3d(it.transform.positionInModel) - MVector3d(
                 (b.maxX() - b.minX()) / 2.0 + b.minX(),
                 (b.maxY() - b.minY()) / 2.0 + b.minY(),
                 (b.maxZ() - b.minZ()) / 2.0 + b.minZ(),
             )
-            offset = transformDirectionShipToWorld(it, offset)
-            val toPos = MVector3d(transform.position) + MVector3d(pos) + offset
+            offset = transformDirectionShipToWorld(transform, offset)
+            val toPos = MVector3d(pos) + MVector3d(transform.position) + offset
             level.shipObjectWorld.teleportShip(it, ShipTeleportDataImpl(
                 toPos.toJomlVector3d(),
                 transform.rotation,
@@ -222,30 +210,22 @@ private fun loadAttachments(level: ServerLevel, ships: Map<Long, ServerShip>, ce
     }
 }
 
-private fun IShipSchematic.createShipConstructors(level: ServerLevel, pos: Vector3d, rotation: Quaterniondc, newTransforms: MutableList<BodyTransform>): List<Pair<() -> ServerShip, Long>> {
+private fun IShipSchematic.createShipConstructors(level: ServerLevel, rotation: Quaterniondc, newTransforms: MutableList<BodyTransform>): List<Pair<() -> ServerShip, Long>> {
     val shipData = info!!.shipsInfo
-    // during schem creation ship positions are normalized so that the center is at 0 0 0
-    val center = ShipTransformImpl.create(JVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0))
 
     return shipData.map { Pair({
-        val thisTransform = ShipTransformImpl.create(
-            it.relPositionToCenter,
-            JVector3d(),
-            it.rotation,
-            JVector3d(it.shipScale, it.shipScale, it.shipScale)
-        )
-        val temp = rotateAroundCenter(center, thisTransform, rotation)
+        val newRot = it.rotation.mul(rotation, Quaterniond())
+        val newTransform = ShipTransformImpl(
+            newRot.transform(it.relPositionToCenter.get(Vector3d())),
+            it.previousCenterPosition,
+            newRot, JVector3d(it.shipScale, it.shipScale, it.shipScale))
 
-        // reusing posInShip as it's useless
-        val newTransform = ShipTransformImpl(temp.position, it.previousCenterPosition, temp.rotation, JVector3d(it.shipScale, it.shipScale, it.shipScale))
         newTransforms.add(newTransform)
 
         val newShip = level.shipObjectWorld.createNewShipAtBlock(Vector3i(1000000000, 1000000000, 1000000000), false, it.shipScale, level.dimensionId)
         newShip.isStatic = true
 
-        //TODO i don't like this but idk what else to do
-        newShip.transformProvider = SchemTempPositionSetter(newShip, MVector3d(pos), MVector3d(newTransform.position), false)
-
+        //TODO ships will touch during assembly and that may activate blocks in them, maybe space them out?
         level.shipObjectWorld.teleportShip(newShip, ShipTeleportDataImpl(
             JVector3d(1000000000.0, 1000000000.0, 1000000000.0),
             newTransform.rotation,
@@ -269,7 +249,9 @@ fun IShipSchematicDataV1.verifyBlockDataIsValid(
     return true
 }
 
-fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uuid: UUID, originShip: ServerShip, postSaveFn: () -> Unit): Boolean {
+fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uuid: UUID, originShip: ServerShip, settings: CopySchematicSettings = CopySchematicSettings(
+    logger = VM.logger
+), postSaveFn: () -> Unit): Boolean {
     val traversed = traverseGetAllTouchingShips(level, originShip.id)
 
     // this is needed so that schem doesn't try copying phys entities
@@ -289,7 +271,7 @@ fun IShipSchematicDataV1.makeFrom(level: ServerLevel, player: ServerPlayer?, uui
     (this as IShipSchematic).saveShipData(ships, originShip)
     this.saveAttachments(ships, level, centerPositions) // should always be saved last
     // copy ship blocks separately
-    SchematicActionsQueue.queueShipsSavingEvent(level, player, uuid, ships, this, true, postSaveFn)
+    SchematicActionsQueue.queueShipsSavingEvent(level, player, uuid, ships, this, true, settings, postSaveFn)
     return true
 }
 

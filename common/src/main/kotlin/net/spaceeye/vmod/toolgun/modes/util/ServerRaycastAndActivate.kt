@@ -7,10 +7,7 @@ import net.minecraft.world.entity.player.Player
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.events.SessionEvents
 import net.spaceeye.vmod.rendering.Effects
-import net.spaceeye.vmod.toolgun.PlayerToolgunState
 import net.spaceeye.vmod.toolgun.SELOG
-import net.spaceeye.vmod.toolgun.ServerToolGunState
-import net.spaceeye.vmod.toolgun.ServerToolGunState.verifyPlayerAccessLevel
 import net.spaceeye.vmod.toolgun.modes.BaseMode
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.translate.TOOLGUN_MODE_ACTIVATION_HAS_FAILED
@@ -24,14 +21,15 @@ fun <T: BaseMode> BaseMode.serverTryActivate(
     clazz: Class<out T>,
     supplier: Supplier<BaseMode>,
     fn: (item: T, level: ServerLevel, player: ServerPlayer) -> Unit
-) = verifyPlayerAccessLevel(player as ServerPlayer, clazz as Class<BaseMode>) {
-    var serverMode = ServerToolGunState.playersStates.getOrPut(player.uuid) { PlayerToolgunState(supplier.get()) }
-    if (!clazz.isInstance(serverMode.mode)) { serverMode = PlayerToolgunState(supplier.get()); ServerToolGunState.playersStates[player.uuid] = serverMode }
+) = instance.server.verifyPlayerAccessLevel(player as ServerPlayer, clazz as Class<BaseMode>) {
+    var serverMode = instance.server.playersStates.getOrPut(player.uuid) { supplier.get() }
+    if (!clazz.isInstance(serverMode)) { serverMode = supplier.get(); instance.server.playersStates[player.uuid] = serverMode }
 
     try {
-        serverMode.mode.init(BaseNetworking.EnvType.Server)
-        serverMode.mode.deserialize(buf)
-        serverMode.mode.serverSideVerifyLimits()
+        //TODO activate only one time?
+        serverMode.init(BaseNetworking.EnvType.Server)
+        serverMode.deserialize(buf)
+        serverMode.serverSideVerifyLimits()
 
         SessionEvents.serverAfterTick.on { _, unsubscribe ->
             unsubscribe()

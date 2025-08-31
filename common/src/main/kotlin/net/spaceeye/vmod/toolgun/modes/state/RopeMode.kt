@@ -3,7 +3,7 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.addForVMod
 import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
@@ -78,7 +78,7 @@ class RopeMode: ExtendableToolgunMode(), RopeGUI, RopeHUD {
                 true  -> TubeRopeRenderer(ship1?.id ?: -1L, ship2?.id ?: -1L, sPos1, sPos2, up1, up2, right1, right2, length.toDouble(), Color.WHITE, width, sides, segments, fullbright, allowTwisting, onTheOutside, RenderingUtils.ropeTexture)
                 false -> RopeRenderer(ship1?.id ?: -1L, ship2?.id ?: -1L, sPos1, sPos2, length.toDouble(), width, segments, fullbright, RenderingUtils.ropeTexture)
             }
-        )).addExtension(Strippable())){it.addFor(player)}
+        )).addExtension(Strippable())){it.addForVMod(player)}
 
         resetState()
     }

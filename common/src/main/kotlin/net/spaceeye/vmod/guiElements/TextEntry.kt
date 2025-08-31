@@ -58,7 +58,16 @@ class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String
             color = Color.BLACK.toConstraint()
         }.onMouseClick {
             grabWindowFocus()
+        }.onFocus {
+            focused = true
+        }.onFocusLost {
+            focused = false
         }) as UITextInput).onUpdate { fnToApply(it, this) } childOf textHolder) as UITextInput
+    }
+
+    companion object {
+        var focused: Boolean = false
+            private set
     }
 }
 

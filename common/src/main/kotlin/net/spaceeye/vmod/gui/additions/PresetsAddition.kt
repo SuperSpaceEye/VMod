@@ -9,8 +9,6 @@ import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.gui.ScreenWindowAddition
 import net.spaceeye.vmod.guiElements.ScrollMenu
-import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.gui.Presettable
 import net.spaceeye.vmod.toolgun.gui.SettingPresets.Companion.fromJsonStr
 import net.spaceeye.vmod.toolgun.gui.SettingPresets.Companion.listPresets
@@ -26,7 +24,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
 
-object PresetsAddition: ScreenWindowAddition {
+class PresetsAddition(): ScreenWindowAddition() {
     private lateinit var screenContainer: UIContainer
 
     private var presetsContainer = ScrollMenu(10, Color(50, 50, 50, 220), Color.WHITE)
@@ -39,14 +37,14 @@ object PresetsAddition: ScreenWindowAddition {
 
     init {
         PersistentEvents.keyPress.on { (keyCode, scanCode, action, modifiers), _ ->
-            if (!ClientToolGunState.TOOLGUN_CHANGE_PRESET_KEY.matches(keyCode, scanCode)) { return@on false }
+            if (!instance.client.TOOLGUN_CHANGE_PRESET_KEY.matches(keyCode, scanCode)) { return@on false }
 
-            if (!playerIsUsingToolgun()) return@on false
-            val mode = ClientToolGunState.currentMode as? ExtendableToolgunMode ?: return@on false
+            if (!instance.client.playerIsUsingToolgun()) return@on false
+            val mode = instance.client.currentMode as? ExtendableToolgunMode ?: return@on false
             if (mode.getExtensionsOfType<Presettable>().isEmpty()) return@on false
 
             if (action == GLFW.GLFW_PRESS) {
-                val presets = listPresets(mode::class.simpleName!!).toMutableList()
+                val presets = listPresets(mode::class.simpleName!!, this.instance.instanceStorage["Presettable-dir-name"] as String).toMutableList()
                 if (presets.isEmpty()) return@on false
 
                 presets.add(0, Path.of("No Preset"))
@@ -62,7 +60,7 @@ object PresetsAddition: ScreenWindowAddition {
                     fromJsonStr(jsonStr, items)
                 } catch (e: Exception) {
                     ELOG(e.stackTraceToString())
-                    ClientToolGunState.addHUDError(SOMETHING_WENT_WRONG.get())
+                    ErrorAddition.addHUDError(SOMETHING_WENT_WRONG.get())
                 }
             }
 
@@ -72,7 +70,7 @@ object PresetsAddition: ScreenWindowAddition {
         ClientRawInputEvent.MOUSE_SCROLLED.register {
                 client, amount ->
             if (!render) {return@register EventResult.pass() }
-            if (!playerIsUsingToolgun()) {return@register EventResult.pass()}
+            if (!instance.client.playerIsUsingToolgun()) {return@register EventResult.pass()}
 
             //TODO O(n) but do i care?
             val curPos = presetPaths.indexOf(chosenPreset)
@@ -92,7 +90,7 @@ object PresetsAddition: ScreenWindowAddition {
     }
 
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
-        if (!render || !playerIsUsingToolgun()) {
+        if (!render || !instance.client.playerIsUsingToolgun()) {
             presetsContainer.hide()
             lastPresets = emptySet()
             return

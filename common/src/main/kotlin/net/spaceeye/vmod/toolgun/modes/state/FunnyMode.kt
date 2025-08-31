@@ -4,11 +4,10 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.block.state.BlockState
-import net.spaceeye.valkyrien_ship_schematics.ELOG
 import net.spaceeye.vmod.compat.vsBackwardsCompat.mass
+import net.spaceeye.vmod.compat.vsBackwardsCompat.rotation
 import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.types.PhysEntityBlockRenderer
-import net.spaceeye.vmod.toolgun.modes.EHUDBuilder
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -19,7 +18,6 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.joml.Matrix3d
-import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ShipForcesInducer
 import org.valkyrienskies.core.apigame.physics.PhysicsEntityData
@@ -52,6 +50,7 @@ class FunnyMode: ExtendableToolgunMode(), SimpleHUD {
         val ship = level.shipObjectWorld.loadedShips.getById(raycastResult.shipId) ?: return
         val aabb = ship.shipAABB ?: return
         val radius = 0.5
+        val shipRot = ship.transform.rotation
 
         val fakeBlocks = mutableListOf<Pair<Vector3d, BlockState>>()
 
@@ -62,10 +61,9 @@ class FunnyMode: ExtendableToolgunMode(), SimpleHUD {
             val state = level.getBlockState(bpos)
             if (state.isAir) {continue}
 
-            fakeBlocks.add(posShipToWorld(ship, Vector3d(x, y, z)) to state)
+            fakeBlocks.add(posShipToWorld(ship, Vector3d(x, y, z) + 0.5) to state)
         } } }
 
-        ELOG("${fakeBlocks.size}")
 
         level.shipObjectWorld.deleteShip(ship)
         fakeBlocks.forEach { (pos, state) ->
@@ -77,7 +75,7 @@ class FunnyMode: ExtendableToolgunMode(), SimpleHUD {
             ))
             val entity = level.shipObjectWorld.createPhysicsEntity(PhysicsEntityData(
                 newId,
-                ShipTransformImpl((pos + 0.5).toJomlVector3d(), JVector3d(), Quaterniond(), JVector3d(1.0, 1.0, 1.0)),
+                ShipTransformImpl(pos.toJomlVector3d(), JVector3d(), shipRot, JVector3d(1.0, 1.0, 1.0)),
                 ShipInertiaDataImpl(JVector3d(), mass, sphereInertiaTensor(mass, radius)),
                 JVector3d(), JVector3d(),
                 VSSphereCollisionShapeData(radius),

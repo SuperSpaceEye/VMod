@@ -37,8 +37,10 @@ dependencies {
     include modImplementation("net.spaceeye:valkyrien-ship-schematics-$project.minecraft_version-$project.name:$project.vss_version") {transitive false}
     include implementation("org.jgrapht:jgrapht-core:1.5.2")
 
-    compileOnlyApi 'org.joml:joml-primitives:1.10.0'
-    compileOnlyApi 'org.joml:joml:1.10.4'
+    include(implementation(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.3.5-beta.2")))
+
+    api 'org.joml:joml-primitives:1.10.0'
+    api 'org.joml:joml:1.10.4'
 
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
@@ -80,6 +82,10 @@ processResources {
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version
+    }
+
+    from(rootProject.file("common/src/main/resources")) {
+        include("data/*/patchouli_books/")
     }
 }
 

@@ -2,6 +2,7 @@ package net.spaceeye.vmod.physgun
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.VMConfig
 import net.spaceeye.vmod.VMItems
 import net.spaceeye.vmod.events.PersistentEvents
@@ -103,7 +104,7 @@ object ServerPhysgunState: ServerClosable() {
         var increaseDistanceBy: Double by get(i++, 0.0)
     }
 
-    val c2sPrimaryStateChanged = regC2S<C2SPhysgunStateChanged>("state_changed", "server_physgun") { pkt, player ->
+    val c2sPrimaryStateChanged = regC2S<C2SPhysgunStateChanged>(MOD_ID, "state_changed", "server_physgun") { pkt, player ->
         val state = playerStates.getOrPut(player.uuid) { PlayerPhysgunState() }
         synchronized(state.lock) {
             state.fromPkt(player, pkt)

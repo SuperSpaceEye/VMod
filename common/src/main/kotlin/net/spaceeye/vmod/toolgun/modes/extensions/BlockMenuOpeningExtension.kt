@@ -1,7 +1,7 @@
 package net.spaceeye.vmod.toolgun.modes.extensions
 
 import net.minecraft.network.chat.Component
-import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.gui.additions.ErrorAddition
 import net.spaceeye.vmod.toolgun.modes.BaseNetworking
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModeExtension
@@ -19,11 +19,11 @@ class BlockMenuOpeningExtension<T: ExtendableToolgunMode>(val failMsg: Component
     override fun eOnKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         if (action != GLFW.GLFW_PRESS) {return false}
 
-        val keyPressed = ClientToolGunState.GUI_MENU_OPEN_OR_CLOSE.matches(key, scancode)
+        val keyPressed = inst.instance.client.GUI_MENU_OPEN_OR_CLOSE.matches(key, scancode)
         if (!keyPressed) {return false}
 
         val block = predicate(inst as T)
-        if (block && failMsg != null) { ClientToolGunState.addHUDError(failMsg.get()) }
+        if (block && failMsg != null) { ErrorAddition.addHUDError(failMsg.get()) }
         return block
     }
 }

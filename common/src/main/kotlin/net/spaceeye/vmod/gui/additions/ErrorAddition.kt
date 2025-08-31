@@ -16,14 +16,26 @@ import gg.essential.elementa.dsl.percent
 import gg.essential.elementa.dsl.pixels
 import gg.essential.elementa.dsl.plus
 import gg.essential.elementa.dsl.toConstraint
+import net.minecraft.network.chat.TranslatableComponent
+import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.MOD_ID
+import net.spaceeye.vmod.events.SessionEvents
+import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ScreenWindowAddition
-import net.spaceeye.vmod.toolgun.ClientToolGunState
+import net.spaceeye.vmod.gui.ServersideNetworking
+import net.spaceeye.vmod.gui.additions.ErrorAddition.Companion.addHUDError
+import net.spaceeye.vmod.gui.additions.ErrorAdditionNetworking.s2cErrorHappened
+import net.spaceeye.vmod.networking.regS2C
+import net.spaceeye.vmod.toolgun.ServerToolGunState.S2CErrorHappened
+import net.spaceeye.vmod.toolgun.ToolgunInstance
+import net.spaceeye.vmod.translate.getTranslationKey
+import net.spaceeye.vmod.translate.translate
 import net.spaceeye.vmod.utils.LimitDeque
 import net.spaceeye.vmod.utils.MPair
 import net.spaceeye.vmod.utils.getNow_ms
 import java.awt.Color
 
-class ErrorAddition: ScreenWindowAddition {
+class ErrorAddition: ScreenWindowAddition() {
     var maxErrorTime = 3000L
 
     lateinit var errorsContainer: UIContainer
@@ -55,7 +67,7 @@ class ErrorAddition: ScreenWindowAddition {
         } childOf errorBlock
 
         toAdd.add(MPair(errorBlock, getNow_ms()))
-        ClientToolGunState.refreshHUD()
+        HUDAddition.refreshHUD()
     }
 
     var animating = false
@@ -144,4 +156,24 @@ class ErrorAddition: ScreenWindowAddition {
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
         checkErrorWindows()
     }
+
+    companion object {
+        @JvmStatic
+        fun addHUDError(str: String) {
+            ScreenWindow.screen?.getExtensionOfType<ErrorAddition>()?.addError(str)
+        }
+
+        @JvmStatic fun sendErrorTo(player: ServerPlayer, errorStr: String, translatable: Boolean = true, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr, translatable, closeGUI))
+        @JvmStatic fun sendErrorTo(player: ServerPlayer, errorStr: TranslatableComponent, closeGUI: Boolean = false) = s2cErrorHappened.sendToClient(player, S2CErrorHappened(errorStr.getTranslationKey(), true, closeGUI))
+    }
+}
+
+object ErrorAdditionNetworking: ServersideNetworking {
+    val s2cErrorHappened = regS2C<S2CErrorHappened>(MOD_ID, "error_happened", "error_addition") { (errorStr, translate, closeGUI) ->
+        SessionEvents.clientOnTick.on { _, unsub -> unsub.invoke()
+            addHUDError(if (translate) errorStr.translate() else errorStr)
+        }
+    }
+
+    override fun initConnections(instance: ToolgunInstance) {}
 }

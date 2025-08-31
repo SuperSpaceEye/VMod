@@ -3,7 +3,7 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.addForVMod
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.vEntityManaging.types.constraints.SyncRotationConstraint
@@ -36,7 +36,7 @@ class SyncRotation: ExtendableToolgunMode(), SyncRotationHUD, SyncRotationGUI {
                 (Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond())).invert(),
                 shipId1, shipId2, maxForce
             ).addExtension(Strippable())
-        ) { it.addFor(player) }
+        ) { it.addForVMod(player) }
 
         resetState()
     }

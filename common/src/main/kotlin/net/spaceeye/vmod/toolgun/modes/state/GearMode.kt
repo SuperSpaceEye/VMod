@@ -3,7 +3,7 @@ package net.spaceeye.vmod.toolgun.modes.state
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.spaceeye.vmod.vEntityManaging.addFor
+import net.spaceeye.vmod.vEntityManaging.addForVMod
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
 import net.spaceeye.vmod.vEntityManaging.makeVEntity
 import net.spaceeye.vmod.vEntityManaging.types.constraints.GearConstraint
@@ -46,7 +46,7 @@ class GearMode: ExtendableToolgunMode(), GearGUI, GearHUD {
             Quaterniond(ship1?.transform?.shipToWorldRotation ?: Quaterniond()),
             Quaterniond(ship2?.transform?.shipToWorldRotation ?: Quaterniond()),
             shipId1, shipId2, maxForce, gearRatio
-            ).addExtension(Strippable())){it.addFor(player)}
+            ).addExtension(Strippable())){it.addForVMod(player)}
 
         resetState()
     }

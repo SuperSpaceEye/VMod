@@ -9,6 +9,7 @@ import io.netty.buffer.Unpooled
 import net.fabricmc.api.EnvType
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
+import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.events.AVSEvents
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.AutoSerializable
@@ -75,7 +76,7 @@ class ClientSynchronisedRenderingData:
         remove(ReservedRenderingPages.ClientsideRenderingObjects, id)
     }
 
-    val s2cSetSchema = regS2C<ServerSetRenderingSchemaPacket>("rendering_data", "client_synchronised") {pkt ->
+    val s2cSetSchema = regS2C<ServerSetRenderingSchemaPacket>(MOD_ID, "rendering_data", "client_synchronised") { pkt ->
         RenderingTypes.setSchema(pkt.schema.map { Pair(it.value, it.key) }.toMap())
     }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import dev.architectury.event.events.common.LifecycleEvent
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.ELOG
+import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.config.ExternalDataUtil
 import net.spaceeye.vmod.networking.*
 import net.spaceeye.vmod.reflectable.ByteSerializableItem
@@ -12,7 +13,7 @@ import net.spaceeye.vmod.reflectable.ReflectableItem.get
 import net.spaceeye.vmod.reflectable.ReflectableObject
 import net.spaceeye.vmod.reflectable.deserialize
 import net.spaceeye.vmod.reflectable.serialize
-import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.translate.SERVER_LIMITS_UPDATE_WAS_REJECTED
 import net.spaceeye.vmod.utils.EmptyPacket
 import net.spaceeye.vmod.utils.getMapper
@@ -138,16 +139,16 @@ object ServerLimits {
     fun updateFromServer() { c2sRequestServerLimits.sendToServer(EmptyPacket()) }
     fun tryUpdateToServer() { c2sSendUpdatedServerLimits.sendToServer(instance.toPacket()) }
 
-    private val c2sRequestServerLimits = regC2S<EmptyPacket>("request_server_limits", "server_limits") {pkt, player ->
+    private val c2sRequestServerLimits = regC2S<EmptyPacket>(MOD_ID, "request_server_limits", "server_limits") { pkt, player ->
         s2cSendCurrentServerLimits.sendToClient(player, instance.toPacket())
     }
 
-    private val s2cSendCurrentServerLimits = regS2C<ServerLimitsPacket>("send_current_server_limits", "server_limits") {
+    private val s2cSendCurrentServerLimits = regS2C<ServerLimitsPacket>(MOD_ID, "send_current_server_limits", "server_limits") {
         instance = it.instance
     }
 
-    private val c2sSendUpdatedServerLimits = regC2S<ServerLimitsPacket>("send_updated_server_limits", "server_limits",
-        {pkt, player -> player.hasPermissions(4)}, { pkt, player -> ServerToolGunState.sendErrorTo(player, SERVER_LIMITS_UPDATE_WAS_REJECTED) }) { pkt, player ->
+    private val c2sSendUpdatedServerLimits = regC2S<ServerLimitsPacket>(MOD_ID, "send_updated_server_limits", "server_limits",
+        {pkt, player -> player.hasPermissions(4)}, { pkt, player -> VMToolgun.server.sendErrorTo(player, SERVER_LIMITS_UPDATE_WAS_REJECTED) }) { pkt, player ->
         instance = pkt.instance
     }
 }

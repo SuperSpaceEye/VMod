@@ -57,7 +57,7 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
             basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id, fullbright = fullbright
         ))).addExtension(SignalActivator(
             "channel", "percentage"
-        )).addExtension(Strippable())){it.addFor(player)}
+        )).addExtension(Strippable())){it.addForVMod(player)}
     }
 
     companion object {

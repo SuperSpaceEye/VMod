@@ -30,14 +30,12 @@ object ToolgunModes: Registry<BaseMode>() {
         if (Platform.isDevelopmentEnvironment()) {
             register(TestMode::class)
             register(FunnyMode::class)
+            register(IdkMode::class)
         }
 
         ToolgunExtensions
         initAccessPermissions()
     }
-
-    @JvmStatic
-    fun <T: BaseMode> getMode(clazz: KClass<T>) = this.typeToSupplier(clazz)
 
     private fun initAccessPermissions() {
         asTypesList().forEach {

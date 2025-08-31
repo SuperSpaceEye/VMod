@@ -6,14 +6,16 @@ import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.dsl.childOf
 import gg.essential.elementa.dsl.constrain
 import gg.essential.elementa.dsl.percent
+import net.spaceeye.vmod.gui.ScreenWindow
 import net.spaceeye.vmod.gui.ScreenWindowAddition
-import net.spaceeye.vmod.toolgun.ClientToolGunState
-import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
 import net.spaceeye.vmod.toolgun.modes.DefaultHUD
 
-class HUDAddition: ScreenWindowAddition {
+class HUDAddition: ScreenWindowAddition() {
     private lateinit var hudContainer: UIContainer
     private var refreshHUD = true
+    var renderHUD = true
+
+    var defaultHUD = DefaultHUD()
 
     fun refreshHUD() {
         refreshHUD = true
@@ -30,13 +32,13 @@ class HUDAddition: ScreenWindowAddition {
     }
 
     override fun onRenderHUD(stack: PoseStack, delta: Float) {
-        if (!playerIsUsingToolgun()) {
+        if (!renderHUD || !instance.client.playerIsUsingToolgun()) {
             hudContainer.clearChildren()
             refreshHUD = true
             return
         }
 
-        val currentMode = ClientToolGunState.currentMode ?: defaultHUD
+        val currentMode = instance.client.currentMode ?: defaultHUD
 
         if (refreshHUD) {
             hudContainer.clearChildren()
@@ -46,6 +48,6 @@ class HUDAddition: ScreenWindowAddition {
     }
 
     companion object {
-        private val defaultHUD = DefaultHUD()
+        fun refreshHUD() { ScreenWindow.screen?.getExtensionsOfType<HUDAddition>()?.forEach { it.refreshHUD() } }
     }
 }

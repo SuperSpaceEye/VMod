@@ -56,7 +56,7 @@ class SensorMode: ExtendableToolgunMode(), SensorGUI, SensorHUD {
             maxDistance, ignoreSelf, scale, channel
         ).addExtension(RenderableExtension(ConeBlockRenderer(
             basePos, getQuatFromDir(raycastResult.globalNormalDirection!!), scale.toFloat(), ship.id, Color(0, 255, 0), fullbright
-        ))).addExtension(Strippable())){it.addFor(player)}
+        ))).addExtension(Strippable())){it.addForVMod(player)}
     }
 
     companion object {

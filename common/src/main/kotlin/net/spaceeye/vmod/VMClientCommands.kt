@@ -7,6 +7,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import net.minecraft.client.Minecraft
 import net.minecraft.commands.CommandSourceStack
 import net.spaceeye.vmod.events.SessionEvents
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.toolgun.gui.ClientSettingsGUI
 import net.spaceeye.vmod.toolgun.gui.MainToolgunGUIWindow
 import net.spaceeye.vmod.toolgun.gui.ServerSettingsGUI
@@ -33,7 +34,7 @@ object VMClientCommands {
                     SessionEvents.clientOnTick.on { (_), unreg ->
                         unreg()
                         val gui = MainToolgunGUIWindow(false)
-                        gui.currentWindow = ServerSettingsGUI(gui.mainWindow)
+                        gui.currentWindow = ServerSettingsGUI(gui.mainWindow, VMToolgun)
                         Minecraft.getInstance().setScreen(gui)
                     }
                     0

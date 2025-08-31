@@ -5,6 +5,8 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.block.Blocks
+import net.spaceeye.vmod.rendering.RenderingData
+import net.spaceeye.vmod.rendering.types.debug.RainbowRenderer
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -26,6 +28,8 @@ class TestMode: ExtendableToolgunMode() {
         if (raycastResult.state.isAir) {return}
         val ship = raycastResult.ship as? ServerShip ?: return
         val lship = level.shipObjectWorld.loadedShips.getById(ship.id)
+
+        //RenderingData.server.addRenderer(listOf(ship.id), RainbowRenderer(ship.id))
 
         val aabb = ship.shipAABB ?: return
 

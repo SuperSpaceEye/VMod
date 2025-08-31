@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.extensions.RenderableExtension
 import net.spaceeye.vmod.vEntityManaging.extensions.Strippable
@@ -19,8 +20,7 @@ import net.spaceeye.vmod.reflectable.ByteSerializableItem.get
 import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.networking.regS2C
 import net.spaceeye.vmod.rendering.RenderingData
-import net.spaceeye.vmod.toolgun.ClientToolGunState.playerIsUsingToolgun
-import net.spaceeye.vmod.toolgun.ServerToolGunState
+import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -34,7 +34,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     init {
         PersistentEvents.clientPreRender.on { (timestamp), _ ->
             if (!render) {return@on}
-            if (!playerIsUsingToolgun()) {return@on}
+            if (!instance.client.playerIsUsingToolgun()) {return@on}
 
             val minecraft = Minecraft.getInstance()
             val camera = minecraft.gameRenderer.mainCamera
@@ -67,8 +67,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     }
     @JsonIgnore private var i = 0
 
-
-    var radius: Double by get(i++, 1.0, {ServerLimits.instance.stripRadius.get(it)})
+    var radius: Double by get(i++, 1.0) { ServerLimits.instance.stripRadius.get(it) }
     var mode: StripModes by get(i++, StripModes.StripAll)
 
     private var render = false
@@ -127,7 +126,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
 
         //TODO maybe instead of this create specialized channel for clients to query server?
         data class CS2QueryStrippableRendererIds(var shipId: Long): AutoSerializable
-        private val c2sQueryStrippableRendererIds = regC2S<CS2QueryStrippableRendererIds>("query_strippable_renderer_ids", "strip_mode", { pkt, player -> ServerToolGunState.playerHasAccess(player)}) {
+        private val c2sQueryStrippableRendererIds = regC2S<CS2QueryStrippableRendererIds>(MOD_ID, "query_strippable_renderer_ids", "strip_mode", { pkt, player -> VMToolgun.server.playerHasAccess(player)}) {
             pkt, player ->
             val level = ServerObjectsHolder.overworldServerLevel!!
             val ventities = level
@@ -151,7 +150,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
 
             var positions: List<Vector3d> by get(i++, listOf(), {it}, { it, buf -> buf.writeCollection(it){ buf, it -> buf.writeVector3d(it)}}) { buf -> buf.readCollection({mutableListOf()}){buf.readVector3d()}}
         }
-        private val s2cSendStrippableRendererIds = regS2C<S2CSendStrippableRendererIds>("send_strippable_renderer_ids", "strip_mode") {
+        private val s2cSendStrippableRendererIds = regS2C<S2CSendStrippableRendererIds>(MOD_ID, "send_strippable_renderer_ids", "strip_mode") {
             pkt ->
             if (pkt.shipid != currentQuery) {return@regS2C}
             queryIds = pkt.ids.zip(pkt.positions).toMap()

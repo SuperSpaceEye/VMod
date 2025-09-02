@@ -90,7 +90,7 @@ open class ClientToolGunState(
                     val cancel = handleKeyEvent(keyCode, scanCode, action, modifiers)
                     if (cancel) {return@on true}
 
-                    if (isPressed && !focused && GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
+                    if (isPressed && GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode)) {
                         openGUI()
                         return@on true
                     }
@@ -147,6 +147,7 @@ open class ClientToolGunState(
 
     open fun closeGUI() {
         Minecraft.getInstance().setScreen(null)
+        TextEntry.focused = false
     }
 
     open fun closeWithError(error: String) {

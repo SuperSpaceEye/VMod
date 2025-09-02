@@ -276,7 +276,8 @@ object SimpleMessagerGUI: ClientClosable() {
                 (keyCode, scanCode, action, modifiers), _ ->
             if (gui != null && Minecraft.getInstance().screen == gui) {
                 if (action == GLFW.GLFW_PRESS && (VMToolgun.client.GUI_MENU_OPEN_OR_CLOSE.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
-                    Minecraft.getInstance().setScreen(null)
+                    //TODO unified GUI.close() maybe?
+                    VMToolgun.client.closeGUI()
                     return@on true
                 }
             }

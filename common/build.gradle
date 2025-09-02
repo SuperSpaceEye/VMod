@@ -1,10 +1,28 @@
+plugins {
+    id "com.ssblur.mtp" version "1.0.1"
+}
+
 repositories {
+    mavenLocal()
     maven {
         url = "https://repo.essential.gg/repository/maven-public"
     }
     maven { url = "https://mvn.devos.one/snapshots/" } // Create Fabric, Porting Lib, Forge Tags, Milk Lib, Registrate Fabric
     mavenCentral()
 }
+
+mtp {
+    namespace "the_vmod"
+    bookId "vmod_guide"
+    input "patchouli/vmod_guide"
+    output "common/src/main/resources"
+}
+
+//tasks {
+//    jar {
+//        dependsOn convert
+//    }
+//}
 
 dependencies {
     modImplementation ("net.spaceeye:valkyrien-ship-schematics-$project.minecraft_version-$project.name:$project.vss_version") {transitive false}
@@ -30,11 +48,11 @@ dependencies {
     compileOnly("gg.essential:elementa:${project.elementaVersion}")
     modImplementation(include("gg.essential:universalcraft-1.20.1-fabric:${project.ucVersion}"))
 
-//    modCompileOnly("maven.modrinth:sodium:${sodium_version}")
+    //SODIUM
+    modCompileOnly("maven.modrinth:sodium:${project.sodium_version}")
 
     modCompileOnlyApi(files("vs_jars/clockwork-1.18.2-0.1.16-fabric-a0682a9698.jar"))
     modCompileOnlyApi(files("vs_jars/trackwork-1.20.1-1.1.1b.jar"))
-    modCompileOnlyApi(files("vs_jars/takeoff-fabric-1.0.0-beta1+308678c5c5.jar"))
 
     modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
 

@@ -1,0 +1,14 @@
+{
+  "id": "toolgun_modes/connection",
+  "icon": "minecraft:book",
+  "category": "the_vmod:toolgun_modes",
+  "sortnum": 1,
+  "name": "Connection",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "text text text ",
+      "title": "Connection"
+    }
+  ]
+}

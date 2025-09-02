@@ -35,7 +35,17 @@ subprojects {
                 includeGroup("com.jozufozu.flywheel")
             }
         }
+        maven {
+            url = "https://cursemaven.com"
+            content {
+                includeGroup "curse.maven"
+            }
+        }
         maven { url = "https://maven.bawnorton.com/releases" } //mixin squared
+        maven { url = "https://api.modrinth.com/maven" }
+        maven { url = "https://maven.terraformersmc.com/" }
+        maven { url = "https://repo.essential.gg/repository/maven-public" }
+        maven { url = "https://mvn.devos.one/snapshots/" } // Create Fabric, Porting Lib, Forge Tags, Milk Lib, Registrate Fabric
     }
 
 //    tasks.named("ideaSyncTask").configure { dependsOn gradle.includedBuild("Valkyrien-Ship-Schematics").task(":$project.name:build") }

@@ -67,7 +67,6 @@ class TextEntry(strName: String, text_scale: Float = 1f, fnToApply: (str: String
 
     companion object {
         var focused: Boolean = false
-            private set
     }
 }
 

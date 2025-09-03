@@ -9,6 +9,10 @@
       "type": "patchouli:text",
       "text": "text text text ",
       "title": "Connection"
+    },
+    {
+      "type": "the_vmod:gif_page",
+      "title": "Does it work?"
     }
   ]
 }

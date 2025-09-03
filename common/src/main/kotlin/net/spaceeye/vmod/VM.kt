@@ -1,11 +1,16 @@
 package net.spaceeye.vmod
 
+import com.mojang.blaze3d.systems.RenderSystem
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.event.events.common.CommandRegistrationEvent
 import dev.architectury.event.events.common.LifecycleEvent
+import dev.architectury.platform.Platform
 import dev.architectury.utils.Env
 import dev.architectury.utils.EnvExecutor
+import kotlinx.coroutines.Runnable
 import net.minecraft.client.Minecraft
+import net.minecraft.resources.ResourceLocation
+import net.spaceeye.vmod.compat.patchouli.PageGIF
 import net.spaceeye.vmod.compat.schem.SchemCompatObj
 import net.spaceeye.vmod.config.ConfigDelegateRegister
 import net.spaceeye.vmod.vEntityManaging.VEntityManager
@@ -37,7 +42,9 @@ import net.spaceeye.vmod.vsStuff.VSGravityManager
 import net.spaceeye.vmod.vsStuff.VSMasslessShipProcessor
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.lwjgl.opengl.GL20
 import org.valkyrienskies.mod.common.shipObjectWorld
+import vazkii.patchouli.client.book.ClientBookRegistry
 
 fun ILOG(s: String) = VM.logger.info(s)
 fun WLOG(s: String) = VM.logger.warn(s)
@@ -46,12 +53,31 @@ fun ELOG(s: String) = VM.logger.error(s)
 
 const val MOD_ID = "the_vmod"
 
+var GLMaxTextureSize: Int = -1
+    get() {
+    if (field != -1) return field
+        val arr = IntArray(1)
+        GL20.glGetIntegerv(GL20.GL_MAX_TEXTURE_SIZE, arr)
+        field = arr[0]
+        return field
+    }
+
 object VM {
     const val MOD_ID = "the_vmod"
     val logger: Logger = LogManager.getLogger(MOD_ID)!!
 
     @JvmStatic
     fun init() {
+        if (Platform.isModLoaded("patchouli")) {
+            EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+                ClientBookRegistry.INSTANCE.pageTypes.put(ResourceLocation(net.spaceeye.vmod.MOD_ID, "gif_page"), PageGIF::class.java)
+            } }
+        }
+
+        EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
+            RenderSystem.recordRenderCall { GLMaxTextureSize }
+        } }
+
         VMAttachments.register()
         ConfigDelegateRegister.initConfig()
         initRenderingData()

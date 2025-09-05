@@ -16,7 +16,7 @@ import org.lwjgl.system.MemoryUtil
 import java.awt.image.DataBufferInt
 import java.io.InputStream
 
-class IntArrayInputStream(val intArray: IntArray): InputStream() {
+class ARGB2RGBAInputStream(val intArray: IntArray): InputStream() {
     var pos = 0
     var posInInt = 0
     override fun read(): Int {
@@ -67,7 +67,7 @@ class SlidingFrameTexture(): AbstractTexture() {
 
     var time = 0f
 
-    fun loadFromStream(texture: GIFReader.TextureWithData) {
+    fun loadFromStream(texture: GIFReader.NativeTextureWithData) {
         delays = texture.delays
         width = texture.frameWidth
         height = texture.frameHeight
@@ -76,21 +76,7 @@ class SlidingFrameTexture(): AbstractTexture() {
         widthTiles = texture.widthTiles
         heightTiles = texture.heightTiles
         numFrames = texture.numFrames
-
-        val imgData = (texture.image.data.dataBuffer as DataBufferInt).data
-        val inputBytes = IntArrayInputStream(imgData)
-        val size = imgData.size * 4
-
-        val ptr = MemoryUtil.nmemAlloc(size.toLong())
-        val buf = MemoryUtil.memByteBuffer(ptr, size)
-
-        var next = inputBytes.read()
-        while (next != -1) {
-            buf.put(next.toByte())
-            next = inputBytes.read()
-        }
-
-        image = NativeImageInvoker.theConstructor(NativeImage.Format.RGBA, spriteWidth, spriteHeight, true, ptr)
+        image = texture.image
 
         val image = image!!
         TextureUtil.prepareImage(this.getId(), 0, image.width, image.height)

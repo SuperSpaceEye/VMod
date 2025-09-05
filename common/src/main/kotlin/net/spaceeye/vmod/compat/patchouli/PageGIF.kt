@@ -24,12 +24,12 @@ class PageGIF: PageWithText() {
 
     override fun onDisplayed(parent: GuiBookEntry?, left: Int, top: Int) {
         super.onDisplayed(parent, left, top)
-        TEST.test2.reset()
+        TEST.test1.reset()
     }
 
     override fun render(graphics: GuiGraphics, mouseX: Int, mouseY: Int, pticks: Float) {
-        TEST.test2.close()
-        TEST.test2 = GIFTexture().also { it.loadFromStream(Minecraft.getInstance().resourceManager.getResourceOrThrow(ResourceLocation(MOD_ID, "textures/test_gif2.gif")).open()) }
+//        TEST.test1.close()
+//        TEST.test1 = GIFTexture().also { it.loadFromStream(Minecraft.getInstance().resourceManager.getResourceOrThrow(ResourceLocation(MOD_ID, "textures/test_gif2.gif")).open()) }
         var x = GuiBook.PAGE_WIDTH / 2 - 53
         var y = 7
 
@@ -39,8 +39,8 @@ class PageGIF: PageWithText() {
 
         //ptick = delta / ms_per_tick
         //ms_per_tick = 50
-        TEST.test2.advanceTime(pticks * 50)
-        TEST.test2.blit(graphics.pose(), x*2+6, y*2+6, 200, 200)
+        TEST.test1.advanceTime(pticks * 50)
+        TEST.test1.blit(graphics.pose(), x*2+6, y*2+6, 200, 200)
 
         graphics.pose().scale(2f, 2f, 2f)
 

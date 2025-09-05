@@ -15,7 +15,7 @@ class GIFTexture(): AbstractTexture() {
     var currentFrame = 0
 
     fun loadFromStream(stream: InputStream) {
-        val textures = GIFReader.readGifToTextures(stream)
+        val textures = GIFReader.readGifToTexturesFaster(stream)
         for (texture in textures) {
             sprites.add(SlidingFrameTexture().also { it.loadFromStream(texture) })
             totalFrames += texture.numFrames

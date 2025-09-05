@@ -1,14 +1,19 @@
 package net.spaceeye.vmod.rendering.textures
 
+import com.mojang.blaze3d.platform.NativeImage
 import net.spaceeye.vmod.ELOG
 import net.spaceeye.vmod.GIFUtils
 import net.spaceeye.vmod.GLMaxTextureSize
+import net.spaceeye.vmod.mixin.NativeImageInvoker
+import org.lwjgl.system.MemoryUtil
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.awt.image.DataBuffer
+import java.awt.image.WritableRaster
 import java.io.ByteArrayInputStream
 import java.io.InputStream
+import java.nio.ByteBuffer
 import javax.imageio.ImageIO
 import javax.imageio.metadata.IIOMetadataNode
 
@@ -286,14 +291,111 @@ object GIFReader {
         return textures
     }
 
-    //TODO this doesnt fukcing work
-    @JvmStatic fun copyData(source: DataBuffer, dest: DataBuffer, start: Int, end: Int, sourceOffset: Int, destOffset: Int) {
-        for (i in start until end) {
-            dest.setElem(i + destOffset, source.getElem(i + sourceOffset))
+    data class NativeTextureWithData(
+        var image: NativeImage,
+        var buffer: ByteBuffer,
+        var ptr: Long,
+        var delays: MutableList<Int>,
+        var frameWidth: Int,
+        var frameHeight: Int,
+        var spriteWidth: Int,
+        var spriteHeight: Int,
+        var widthTiles: Int,
+        var heightTiles: Int,
+        var numFrames: Int,
+    )
+
+    class NativeTextureBuilder(
+        val frameWidth: Int,
+        val frameHeight: Int,
+        var maxWidth: Int,
+        var maxHeight: Int
+    ) {
+        data class Data(val spriteWidth: Int, val spriteHeight: Int, val widthTiles: Int, val heightTiles: Int, val numFrames: Int)
+        fun calculateDimensions(requiredFrames: Int): Data {
+            val maxWidthTiles = maxWidth / frameWidth
+            val maxHeightTiles = maxHeight / frameHeight
+
+            var remainderTiles = 0
+            val widthTiles = if (maxWidthTiles >= requiredFrames) { requiredFrames } else { maxWidthTiles }
+            val heightTiles = if (maxWidthTiles >= requiredFrames) { 1 } else {
+                if (maxWidthTiles * maxHeightTiles >= requiredFrames) {
+                    remainderTiles = requiredFrames % maxWidthTiles
+                    requiredFrames / maxWidthTiles + if (remainderTiles == 0) 0 else 1
+                } else {
+                    maxHeightTiles
+                }
+            }
+
+            val spriteWidth = widthTiles * frameWidth
+            val spriteHeight = heightTiles * frameHeight
+
+            val numFrames = if (remainderTiles == 0) {
+                widthTiles * heightTiles
+            } else {
+                widthTiles * (heightTiles - 1) + remainderTiles
+            }
+
+            return Data(spriteWidth, spriteHeight, widthTiles, heightTiles, numFrames)
+        }
+
+        fun makeEmpty(requiredFrames: Int): NativeTextureWithData {
+            val (spriteWidth, spriteHeight, widthTiles, heightTiles, numFrames) = calculateDimensions(requiredFrames)
+
+            val size = spriteWidth * spriteHeight * 4
+            val ptr = MemoryUtil.nmemAlloc(size.toLong())
+            val buf = MemoryUtil.memByteBuffer(ptr, size)
+            val img = NativeImageInvoker.theConstructor(NativeImage.Format.RGBA, spriteWidth, spriteHeight, false, ptr)
+
+            return NativeTextureWithData(
+                img, buf, ptr,
+                mutableListOf(),
+                frameWidth,
+                frameHeight,
+                spriteWidth,
+                spriteHeight,
+                widthTiles,
+                heightTiles,
+                numFrames
+            )
         }
     }
 
-    @JvmStatic fun readGifToTexturesFaster(originalStream: InputStream): MutableList<TextureWithData> {
+    var argbMasks = intArrayOf(
+        0b00000000111111110000000000000000,
+        0b00000000000000001111111100000000,
+        0b00000000000000000000000011111111,
+        0b11111111000000000000000000000000.toInt(),
+    )
+    var rgbaMasks = intArrayOf(
+        0b00000000000000000000000011111111,
+        0b11111111000000000000000000000000.toInt(),
+        0b00000000111111110000000000000000,
+        0b00000000000000001111111100000000,
+    )
+    var argb2rgbaShifts = mutableListOf(
+        2 * 8 to 0 * 8,
+        1 * 8 to 1 * 8,
+        0 * 8 to 2 * 8,
+        3 * 8 to 3 * 8,
+    )
+    var rgba2argbShifts = mutableListOf(
+        0 * 8 to 3 * 8,
+        3 * 8 to 2 * 8,
+        2 * 8 to 1 * 8,
+        1 * 8 to 0 * 8,
+    )
+
+    @JvmStatic fun convertColor(it: Int, mask: IntArray, shifts: MutableList<Pair<Int, Int>>): Int {
+        var ret = 0
+        ret = ret or ((it and mask[0]) shr shifts[0].first shl shifts[0].second)
+        ret = ret or ((it and mask[1]) shr shifts[1].first shl shifts[1].second)
+        ret = ret or ((it and mask[2]) shr shifts[2].first shl shifts[2].second)
+        ret = ret or ((it and mask[3]) shr shifts[3].first shl shifts[3].second)
+        return ret
+    }
+
+    @JvmStatic fun readGifToTexturesFaster(originalStream: InputStream): MutableList<NativeTextureWithData> {
         val bytes = originalStream.readAllBytes()
 
         var stream = ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
@@ -326,9 +428,8 @@ object GIFReader {
             }
         }
 
-        val textureBuilder = TextureBuilder(width, height, width, GLMaxTextureSize)
-        val textures = mutableListOf<TextureWithData>()
-        var textureGraphics: Graphics2D? = null
+        val textureBuilder = NativeTextureBuilder(width, height, width, GLMaxTextureSize)
+        val textures = mutableListOf<NativeTextureWithData>()
         val (_, _, _, _, framesPerTexture) = textureBuilder.calculateDimensions(numFrames)
 
         var disposals = mutableListOf<String>()
@@ -372,7 +473,6 @@ object GIFReader {
 
             val texture = textures.getOrNull(frameIndex / framesPerTexture) ?: run {
                 val texture = textureBuilder.makeEmpty(remainingFrames)
-                textureGraphics = texture.image.createGraphics()
                 textures.add(texture)
                 remainingFrames -= texture.numFrames
                 texture
@@ -382,7 +482,11 @@ object GIFReader {
             val inTexturePos = frameIndex % framesPerTexture
             val inFrameStart = inTexturePos * width * height
 
-            copyData(master.data.dataBuffer, texture.image.data.dataBuffer, 0, width * height, 0, inFrameStart)
+            val src = master.data.dataBuffer
+            val dst = texture.buffer
+            for (i in 0 until width * height) {
+                dst.putInt((inFrameStart + i) * 4, convertColor(src.getElem(i), argbMasks, argb2rgbaShifts))
+            }
 
             if (disposal == "restoreToPrevious") {
                 var from: Int = -1
@@ -396,7 +500,18 @@ object GIFReader {
                 val inTexturePos = from % framesPerTexture
                 val inFrameStart = inTexturePos * width * height
 
-                copyData(textures[from / framesPerTexture].image.data.dataBuffer, master.data.dataBuffer, 0, width * height, inFrameStart, 0)
+                val src = textures[from / framesPerTexture].buffer
+                val pixel = intArrayOf(0, 0, 0, 0)
+                var argb: Int
+                for (i in 0 until width * height) {
+                    argb = src.getInt((inFrameStart + i) * 4)
+                    pixel[0] = argb and rgbaMasks[0] shr rgba2argbShifts[0].first // a
+                    pixel[3] = argb and rgbaMasks[1] shr rgba2argbShifts[1].first // r
+                    pixel[2] = argb and rgbaMasks[2] shr rgba2argbShifts[2].first // g
+                    pixel[1] = argb and rgbaMasks[3] shr rgba2argbShifts[3].first // b
+
+                    master.raster.setPixel(i % width, i / width, pixel)
+                }
             } else if (disposal == "restoreToBackgroundColor") {
                 masterGraphics.clearRect(x, y, image.width, image.height)
             }

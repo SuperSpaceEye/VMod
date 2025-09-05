@@ -5,6 +5,7 @@ import javax.imageio.stream.ImageInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 
+//from GIFImageReader
 public class GIFUtils {
     public static boolean skipImage(ImageInputStream stream) throws IIOException {
         // Stream must be at the beginning of an image descriptor

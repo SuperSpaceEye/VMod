@@ -28,8 +28,6 @@ class PageGIF: PageWithText() {
     }
 
     override fun render(graphics: GuiGraphics, mouseX: Int, mouseY: Int, pticks: Float) {
-//        TEST.test1.close()
-//        TEST.test1 = GIFTexture().also { it.loadFromStream(Minecraft.getInstance().resourceManager.getResourceOrThrow(ResourceLocation(MOD_ID, "textures/test_gif2.gif")).open()) }
         var x = GuiBook.PAGE_WIDTH / 2 - 53
         var y = 7
 

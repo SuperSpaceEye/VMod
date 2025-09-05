@@ -15,7 +15,8 @@
     "KeyboardHandlerMixin",
     "LevelRendererMixin",
     "MixinLevelRendererVanillaMixin",
-    "MixinMouseHandler"
+    "MixinMouseHandler",
+    "NativeImageInvoker"
   ],
   "injectors": {
     "defaultRequire": 1

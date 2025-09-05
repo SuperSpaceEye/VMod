@@ -1,30 +1,25 @@
 package net.spaceeye.vmod.compat.patchouli
 
 import com.mojang.blaze3d.systems.RenderSystem
-import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.resources.ResourceLocation
 import net.spaceeye.vmod.MOD_ID
-import net.spaceeye.vmod.rendering.textures.GIFTexture
+import net.spaceeye.vmod.rendering.textures.GIFManager
 import vazkii.patchouli.client.book.gui.GuiBook
 import vazkii.patchouli.client.book.gui.GuiBookEntry
 import vazkii.patchouli.client.book.page.abstr.PageWithText
 
-object TEST {
-    var test1 = GIFTexture().also { it.loadFromStream(Minecraft.getInstance().resourceManager.getResourceOrThrow(ResourceLocation(MOD_ID, "textures/test_gif1.gif")).open()) }
-    var test2 = GIFTexture().also { it.loadFromStream(Minecraft.getInstance().resourceManager.getResourceOrThrow(ResourceLocation(MOD_ID, "textures/test_gif2.gif")).open()) }
-    var test3 = GIFTexture().also { it.loadFromStream(Minecraft.getInstance().resourceManager.getResourceOrThrow(ResourceLocation(MOD_ID, "textures/test_gif3.gif")).open()) }
-}
-
 class PageGIF: PageWithText() {
     var title: String? = null
     var border = false
+    //TODO it seems like this is loaded at the book creation, which is not great
+    val gifRef = GIFManager.getTextureFromLocation(ResourceLocation(MOD_ID, "textures/gif/test_gif2.gif"))
 
     override fun getTextHeight(): Int = 120
 
     override fun onDisplayed(parent: GuiBookEntry?, left: Int, top: Int) {
         super.onDisplayed(parent, left, top)
-        TEST.test1.reset()
+        gifRef.gif.reset()
     }
 
     override fun render(graphics: GuiGraphics, mouseX: Int, mouseY: Int, pticks: Float) {
@@ -37,8 +32,8 @@ class PageGIF: PageWithText() {
 
         //ptick = delta / ms_per_tick
         //ms_per_tick = 50
-        TEST.test1.advanceTime(pticks * 50)
-        TEST.test1.blit(graphics.pose(), x*2+6, y*2+6, 200, 200)
+        gifRef.gif.advanceTime(pticks * 50)
+        gifRef.gif.blit(graphics.pose(), x*2+6, y*2+6, 200, 200)
 
         graphics.pose().scale(2f, 2f, 2f)
 

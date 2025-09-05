@@ -76,19 +76,19 @@ object RenderingUtils {
         @JvmStatic fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int,
                                 leftLight: Int, rightLight: Int,
                                 lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d,
-                                luv0: Float, luv1: Float, wuv0: Float, wuv1: Float) {
-            drawQuad(buf, matrix, r, g, b, a, leftLight, rightLight, lu, ld, rd, ru, luv0, luv1, wuv0, wuv1, 0f, 1f, 0f)
+                                u0: Float, u1: Float, v0: Float, v1: Float) {
+            drawQuad(buf, matrix, r, g, b, a, leftLight, rightLight, lu, ld, rd, ru, u0, u1, v0, v1, 0f, 1f, 0f)
         }
 
         @JvmStatic fun drawQuad(buf: VertexConsumer, matrix: Matrix4f, r: Int, g: Int, b: Int, a: Int,
                                 leftLight: Int, rightLight: Int,
                                 lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d,
-                                luv0: Float, luv1: Float, wuv0: Float, wuv1: Float,
+                                u0: Float, u1: Float, v0: Float, v1: Float,
                                 nx: Float, ny: Float, nz: Float) {
-            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(wuv0, luv0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(leftLight ).normal(nx, ny, nz).endVertex()
-            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(wuv1, luv0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(leftLight ).normal(nx, ny, nz).endVertex()
-            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(wuv1, luv1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(rightLight).normal(nx, ny, nz).endVertex()
-            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(wuv0, luv1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(rightLight).normal(nx, ny, nz).endVertex()
+            buf.vertex(matrix, tof(lu.x), tof(lu.y), tof(lu.z)).color(r, g, b, a).uv(u0, v0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(leftLight ).normal(nx, ny, nz).endVertex()
+            buf.vertex(matrix, tof(ld.x), tof(ld.y), tof(ld.z)).color(r, g, b, a).uv(u0, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(leftLight ).normal(nx, ny, nz).endVertex()
+            buf.vertex(matrix, tof(rd.x), tof(rd.y), tof(rd.z)).color(r, g, b, a).uv(u1, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(rightLight).normal(nx, ny, nz).endVertex()
+            buf.vertex(matrix, tof(ru.x), tof(ru.y), tof(ru.z)).color(r, g, b, a).uv(u1, v0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(rightLight).normal(nx, ny, nz).endVertex()
         }
 
         @JvmStatic fun makePolygonPoints(sides: Int, radius: Double, up: Vector3d, right: Vector3d, pos: Vector3d): List<Vector3d> {
@@ -113,12 +113,12 @@ object RenderingUtils {
             for (i in 0 until times-1) {
                 val nextUV = lastUV + maxWidthUV / times
                 drawQuad(buf, matrix, r, g, b, a, leftLight, rightLight,
-                    lpoints[i], lpoints[i+1], rpoints[i], rpoints[i+1],
+                    lpoints[i], lpoints[i+1], rpoints[i+1], rpoints[i],
                     luv0, luv1, lastUV, nextUV)
                 lastUV = nextUV
             }
             drawQuad(buf, matrix, r, g, b, a, leftLight, rightLight,
-                lpoints[times-1], lpoints[0], rpoints[times-1], rpoints[0],
+                lpoints[times-1], lpoints[0], rpoints[0], rpoints[times-1],
                 luv0, luv1, lastUV, maxWidthUV)
         }
 
@@ -170,12 +170,13 @@ object RenderingUtils {
             lightmapUVFn: (Vector3d) -> Int,
         ) {
             var lastUV = luvStart
+            //TODO do i want width to determine V?
             val widthUV = (width * 2f * wuvMultiplier).toFloat()
         ropePointsCreator(pos1, pos2, segments, initialLength) { i, last, current, up0, up1 ->
             val lu =  up0 * width + last
             val ld = -up0 * width + last
-            val ru = -up1 * width + current
-            val rd =  up1 * width + current
+            val rd = -up1 * width + current
+            val ru =  up1 * width + current
 
             val prev = lightmapUVFn(last)
             val curr = lightmapUVFn(current)
@@ -225,7 +226,7 @@ object RenderingUtils {
 
             lPoints = makePolygonPoints(sides, radius, up, right, pos1)
 
-            //TODO make widthUV more configurable
+            //TODO do i want width to determine V?
             val widthUV = (radius * 2f * wuvMultiplier).toFloat()
             var leftUV = luvStart
 

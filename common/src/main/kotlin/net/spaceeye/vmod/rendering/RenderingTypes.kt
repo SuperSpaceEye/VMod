@@ -21,6 +21,7 @@ object RenderingTypes: Registry<BaseRenderer>(false) {
         register(PhysgunRayRenderer::class)
         register(TubeRopeRenderer::class)
         register(PhysEntityBlockRenderer::class)
+        register(A2BRendererAnimated::class)
 
         register(DebugPointRenderer::class)
         register(RainbowRenderer::class)

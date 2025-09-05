@@ -1,6 +1,5 @@
 package net.spaceeye.vmod.rendering.textures
 
-import com.mojang.blaze3d.platform.NativeImage
 import com.mojang.blaze3d.platform.TextureUtil
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.BufferUploader
@@ -11,6 +10,8 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.texture.AbstractTexture
 import net.minecraft.server.packs.resources.ResourceManager
+import net.spaceeye.vmod.rendering.RenderingUtils
+import net.spaceeye.vmod.utils.Vector3d
 
 class SlidingFrameTexture(
     texture: GIFReader.NativeTextureWithData
@@ -28,19 +29,18 @@ class SlidingFrameTexture(
     var heightTiles = texture.heightTiles
 
     var numFrames = texture.numFrames
-    var currentFrame = 0
-
-    var time = 0f
 
     init {
-        TextureUtil.prepareImage(this.getId(), 0, image.width, image.height)
-        image.upload(0, 0, 0, 0, 0, image.width, image.height, false, false, false, true)
+        RenderSystem.recordRenderCall {
+            TextureUtil.prepareImage(this.getId(), 0, image.width, image.height)
+            image.upload(0, 0, 0, 0, 0, image.width, image.height, false, false, false, true)
+        }
     }
 
     override fun load(resourceManager: ResourceManager?) {}
 
     override fun close() {
-        image!!.close()
+        image.close()
         this.releaseId()
     }
 
@@ -48,51 +48,38 @@ class SlidingFrameTexture(
         RenderSystem._setShaderTexture(0, this.getId())
     }
 
-    //https://usage.imagemagick.org/anim_basics/
-    //if frame was advanced, then true
-    fun advanceTime(delta: Float): Boolean {
-        time += delta / 10f
-
-        val delay = delays[currentFrame]
-        if (time <= delay) return false
-
-        time = 0f
-        currentFrame++
-
-        if (currentFrame < numFrames) return true
-        currentFrame = 0
-
-        return true
-    }
-
-    fun reset() {
-        time = 0f
-        currentFrame = 0
-    }
-
-    fun blit(pose: PoseStack, x: Int, y: Int, uWidth: Int, vHeight: Int) {
-        this.blit(pose, x, y, 0, uWidth, vHeight)
-    }
-
-    private fun blit(pose: PoseStack, x: Int, y: Int, blitOffset: Int, uWidth: Int, vHeight: Int) {
-        this.innerBlit(pose, x, x + uWidth, y, y + vHeight, blitOffset,
-            (width  * (currentFrame % widthTiles + 0)) / spriteWidth.toFloat(),
-            (width  * (currentFrame % widthTiles + 1)) / spriteWidth.toFloat(),
-            (height * (currentFrame / widthTiles + 0)) / spriteHeight.toFloat(),
-            (height * (currentFrame / widthTiles + 1)) / spriteHeight.toFloat()
+    fun blit(pose: PoseStack, frameNum: Int, x: Int, y: Int, uWidth: Int, vHeight: Int) {
+        setAsShaderTexture()
+        innerDraw(pose,
+            Vector3d(x,          y,           0),
+            Vector3d(x,          y + vHeight, 0),
+            Vector3d(x + uWidth, y + vHeight, 0),
+            Vector3d(x + uWidth, y          , 0),
+            (width  * (frameNum % widthTiles + 0)) / spriteWidth.toFloat(),
+            (width  * (frameNum % widthTiles + 1)) / spriteWidth.toFloat(),
+            (height * (frameNum / widthTiles + 0)) / spriteHeight.toFloat(),
+            (height * (frameNum / widthTiles + 1)) / spriteHeight.toFloat()
         )
     }
 
-    private fun innerBlit(pose: PoseStack, x1: Int, x2: Int, y1: Int, y2: Int, blitOffset: Int, minU: Float, maxU: Float, minV: Float, maxV: Float) {
+    fun draw(pose: PoseStack, frameNum: Int, lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d) {
         setAsShaderTexture()
-        RenderSystem.setShader(GameRenderer::getPositionTexShader)
-        val matrix4f = pose.last().pose();
-        val bufferBuilder = Tesselator.getInstance().getBuilder()
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferBuilder.vertex(matrix4f, x1.toFloat(), y1.toFloat(), blitOffset.toFloat()).uv(minU, minV).endVertex();
-        bufferBuilder.vertex(matrix4f, x1.toFloat(), y2.toFloat(), blitOffset.toFloat()).uv(minU, maxV).endVertex();
-        bufferBuilder.vertex(matrix4f, x2.toFloat(), y2.toFloat(), blitOffset.toFloat()).uv(maxU, maxV).endVertex();
-        bufferBuilder.vertex(matrix4f, x2.toFloat(), y1.toFloat(), blitOffset.toFloat()).uv(maxU, minV).endVertex();
-        BufferUploader.drawWithShader(bufferBuilder.end());
+        innerDraw(pose, lu, ld, rd, ru,
+            (width  * (frameNum % widthTiles + 0)) / spriteWidth.toFloat(),
+            (width  * (frameNum % widthTiles + 1)) / spriteWidth.toFloat(),
+            (height * (frameNum / widthTiles + 0)) / spriteHeight.toFloat(),
+            (height * (frameNum / widthTiles + 1)) / spriteHeight.toFloat()
+        )
+    }
+
+    companion object {
+        fun innerDraw(pose: PoseStack, lu: Vector3d, ld: Vector3d, rd: Vector3d, ru: Vector3d, minU: Float, maxU: Float, minV: Float, maxV: Float) {
+            RenderSystem.setShader(GameRenderer::getPositionTexShader)
+            val matrix4f = pose.last().pose()
+            val bufferBuilder = Tesselator.getInstance().builder
+            bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+            RenderingUtils.Quad.drawQuad(bufferBuilder, matrix4f, 255, 255, 255, 255, 0, 0, lu, ld, rd, ru, minU, maxU, minV, maxV)
+            BufferUploader.drawWithShader(bufferBuilder.end())
+        }
     }
 }

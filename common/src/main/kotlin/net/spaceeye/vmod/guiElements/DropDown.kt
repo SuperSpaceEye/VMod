@@ -71,7 +71,7 @@ class DropDown(
         val _this = this
         lateinit var itemsHolder: UIComponent
 
-        val largestName = dItems.maxBy { it.name.length }.name
+        val largestName = if (dItems.isNotEmpty()) dItems.maxBy { it.name.length }.name else "None"
         val largestWidth = max(largestName.width(text_scale), menuName.width()) + 8
 
         dropDownButton = Button(Color(150, 150, 150), menuName, text_scale) {

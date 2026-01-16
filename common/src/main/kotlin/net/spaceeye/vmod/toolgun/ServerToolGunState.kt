@@ -62,10 +62,9 @@ open class ServerToolGunState(var instance: ToolgunInstance): ServerClosable() {
         instance.server = this
         // it needs to initialize all c2s and s2c receivers
         instance.modeTypes.asList().forEach { it.get().also { it.instance = instance }.init(BaseNetworking.EnvType.Server) }
-    }
-
-    open fun playerHasAccess(player: ServerPlayer): Boolean {
-        return player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_TOOLGUN_PERMISSION_LEVEL)
+        try {
+            PlayerAccessManager.addPermission("Allow Removal of Last VEntity")
+        } catch (_: AssertionError) {}
     }
 
     open fun verifyPlayerAccessLevel(player: ServerPlayer, clazz: Class<BaseMode>, fn: () -> Unit) {
@@ -80,7 +79,7 @@ open class ServerToolGunState(var instance: ToolgunInstance): ServerClosable() {
         fn()
     }
 
-    open fun playerHasPermission(player: ServerPlayer, clazz: Class<BaseMode>): Boolean = PlayerAccessManager.hasPermission(player, clazz.getPermission())
+    open fun playerHasPermission(player: ServerPlayer, clazz: Class<*>): Boolean = PlayerAccessManager.hasPermission(player, clazz.getPermission())
 
     override fun close() {
         playersStates.clear()
@@ -88,7 +87,7 @@ open class ServerToolGunState(var instance: ToolgunInstance): ServerClosable() {
     }
 
     open val c2sRequestRemoveLastVEntity = regC2S<EmptyPacket>(instance.modId, "request_remove_last_ventity", "server_toolgun",
-        { pkt, player -> PlayerAccessManager.hasPermission(player, "request_remove_last_ventity")},
+        { pkt, player -> PlayerAccessManager.hasPermission(player, "Allow Removal of Last VEntity")},
         { pkt, player -> s2cErrorHappened.sendToClient(player, S2CErrorHappened(YOU_DONT_HAVE_PERMISSION_TO_USE_TOOLGUN.getTranslationKey()))}
         ) { pkt, player->
         val stack = playersVEntitiesStack[player.uuid] ?: return@regC2S
@@ -113,8 +112,8 @@ open class ServerToolGunState(var instance: ToolgunInstance): ServerClosable() {
     }
 
     //TODO this is dumb, redo
+    //TODO use this to know what modes player can use
     enum class AccessTo {
-        NormalToolgunUsage,
         ServerSettings
     }
 
@@ -129,12 +128,7 @@ open class ServerToolGunState(var instance: ToolgunInstance): ServerClosable() {
     }
 
     protected open val c2sAskIfIHaveAccess = regC2S<C2SAskIfIHaveAccess>(instance.modId, "ask_if_i_have_access", "server_toolgun") {pkt, player ->
-        val generalAccess = playerHasAccess(player)
-
-        if (!generalAccess) { return@regC2S s2cResponseToAccessRequest.sendToClient(player, S2CResponseToAccessRequest(pkt.accessTo, pkt.callbackId, false)) }
-
         val hasAccess = when (pkt.accessTo) {
-            AccessTo.NormalToolgunUsage -> generalAccess
             AccessTo.ServerSettings -> player.hasPermissions(VMConfig.SERVER.PERMISSIONS.VMOD_CHANGING_SERVER_SETTINGS_LEVEL)
         }
 

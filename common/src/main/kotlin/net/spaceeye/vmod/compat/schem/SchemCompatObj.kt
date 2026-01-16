@@ -16,7 +16,6 @@ import org.valkyrienskies.core.api.ships.ServerShip
 
 object SchemCompatObj: BaseVSchemCompatProvider(VM.logger) {
     init {
-        safeAdd("vs_clockwork") { ClockworkSchemCompat() }
         safeAdd("trackwork") { TrackworkSchemCompat() }
 
         safeAdd("create") { CreateContraptionsCompat() }

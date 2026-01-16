@@ -3,7 +3,8 @@
 * Rework permission level and player roles (not sure what i meant by that)
 * I don't think ventities will work correctly after being teleported to another dimension
 
-* Rename placement assist to "Snap Mode"
+* Rework "Disable Collisions"
+* Move PlayerAccessManager in ServerToolgunInstance
 
 # Maybe
 
@@ -24,6 +25,8 @@
 * Make vmod stuff work with phys entities (making constraints, grabbing them, etc)
 * Add a way for addons to add their own client/server settings
 * Finish Patchouli guide book
+
+* Custom drag
 
 # Gravity Changer
 * rework saving/loading

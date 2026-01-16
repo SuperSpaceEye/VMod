@@ -12,14 +12,18 @@ import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.translate.makeFake
 import net.spaceeye.vmod.utils.*
+import net.spaceeye.vmod.utils.vs.transformDirectionShipToWorld
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager
 import net.spaceeye.vmod.vsStuff.PhysRaycastingScheduler
+import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.api.dimensionId
 import org.valkyrienskies.mod.common.BlockStateInfo
 import org.valkyrienskies.mod.common.config.DimensionParametersResolver
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
+import kotlin.math.acos
+import kotlin.math.sin
 
 class TestMode: ExtendableToolgunMode() {
     override val itemName = makeFake("Test Mode")

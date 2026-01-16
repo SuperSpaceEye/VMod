@@ -26,7 +26,6 @@ import net.spaceeye.valkyrien_ship_schematics.containers.v1.BlockItem
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.ChunkyBlockData
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.EntityItem
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
-import net.spaceeye.valkyrien_ship_schematics.interfaces.ICopyableBlock
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.v1.IShipSchematicDataV1
@@ -50,6 +49,7 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.util.expand
 import org.valkyrienskies.core.util.toAABBd
+import org.valkyrienskies.mod.common.assembly.ICopyableBlock
 import org.valkyrienskies.mod.common.entity.VSPhysicsEntity
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.isBlockInShipyard

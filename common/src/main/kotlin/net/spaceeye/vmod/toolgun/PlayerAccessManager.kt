@@ -28,7 +28,8 @@ class RolePermissionsData(): Serializable {
             buf.writeCollection(PlayerAccessManager.allPermissionsList) { buf, it -> buf.writeUtf(it) }
             val schema = PlayerAccessManager.allPermissionsList.mapIndexed { i, item -> Pair(item, i) }.associate { it }
 
-            buf.writeCollection(PlayerAccessManager.rolesPermissions.toList()) { buf, it ->
+            val filtered = PlayerAccessManager.rolesPermissions.toList().map{ it.first to it.second.filter { schema.containsKey(it) }}
+            buf.writeCollection(filtered) { buf, it ->
                 buf.writeUtf(it.first)
                 buf.writeCollection(it.second) { buf, it -> buf.writeVarInt(schema[it]!!) }
             }
@@ -82,6 +83,7 @@ class PlayerAccessMangerState {
     var allRoles = mutableListOf<String>()
 }
 
+//TODO make an instance of ServerToolgunState
 object PlayerAccessManager {
     var state = PlayerAccessMangerState()
 

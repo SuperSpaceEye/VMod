@@ -44,5 +44,5 @@ object ToolgunModes: Registry<BaseMode>() {
     }
 
     @JvmStatic
-    fun Class<BaseMode>.getPermission() = "Allow ${this.simpleName}"
+    fun Class<*>.getPermission() = "Allow ${this.simpleName}"
 }

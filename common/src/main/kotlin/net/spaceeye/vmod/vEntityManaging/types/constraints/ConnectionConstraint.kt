@@ -125,12 +125,12 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
         when (connectionMode) {
             ConnectionModes.FIXED_ORIENTATION -> {
                 val d1 = VSFixedJoint(
-                    shipId1, VSJointPose(p11, sRot1.invert(Quaterniond())),
+                    shipId1, VSJointPose(p11, sRot1.invert(Quaterniond()).rotateAxis(Math.toRadians(0.0), sDir1.toJomlVector3d())),
                     shipId2, VSJointPose(p21, sRot2.invert(Quaterniond())),
                     maxForceTorque, compliance
                 )
                 val d2 = VSFixedJoint(
-                    shipId1, VSJointPose(p12, sRot1.invert(Quaterniond())),
+                    shipId1, VSJointPose(p12, sRot1.invert(Quaterniond()).rotateAxis(Math.toRadians(0.0), sDir1.toJomlVector3d())),
                     shipId2, VSJointPose(p22, sRot2.invert(Quaterniond())),
                     maxForceTorque, compliance
                 )

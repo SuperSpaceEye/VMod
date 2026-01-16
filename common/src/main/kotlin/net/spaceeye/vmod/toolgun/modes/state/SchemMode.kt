@@ -92,7 +92,7 @@ object PlayerSchematics: ServerClosable() {
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) { ELOG("Client Save Schem Transmission Failed") }
 
-        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = VMToolgun.server.playerHasAccess(ctx.player as ServerPlayer)
+        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = VMToolgun.server.playerHasPermission(ctx.player as ServerPlayer, SchemMode::class.java)
         override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }
@@ -118,7 +118,7 @@ object PlayerSchematics: ServerClosable() {
         override fun dataPacketConstructor() = SchemHolder()
         override fun receiverDataTransmissionFailed(failurePkt: RequestFailurePkt) {}
 
-        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = VMToolgun.server.playerHasAccess(ctx.player as ServerPlayer)
+        override fun uuidHasAccess(uuid: UUID, ctx: NetworkManager.PacketContext, req: SendSchemRequest): Boolean = VMToolgun.server.playerHasPermission(ctx.player as ServerPlayer, SchemMode::class.java)
         override fun transmitterRequestProcessor(req: SendSchemRequest, ctx: NetworkManager.PacketContext): Either<SchemHolder, RequestFailurePkt>? {
             val res = schematics[req.uuid] ?.let { SchemHolder(ShipSchematic.writeSchematicToBuffer(it)!!) }
             return if (res != null) { Either.Left(res) } else { Either.Right(RequestFailurePkt()) }

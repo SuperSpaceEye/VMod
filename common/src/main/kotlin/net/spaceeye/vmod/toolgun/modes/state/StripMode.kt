@@ -23,6 +23,7 @@ import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
+import net.spaceeye.vmod.toolgun.modes.ToolgunModes.getPermission
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
 import net.spaceeye.vmod.utils.*
 import org.valkyrienskies.mod.common.getShipManagingPos
@@ -126,7 +127,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
 
         //TODO maybe instead of this create specialized channel for clients to query server?
         data class CS2QueryStrippableRendererIds(var shipId: Long): AutoSerializable
-        private val c2sQueryStrippableRendererIds = regC2S<CS2QueryStrippableRendererIds>(MOD_ID, "query_strippable_renderer_ids", "strip_mode", { pkt, player -> VMToolgun.server.playerHasAccess(player)}) {
+        private val c2sQueryStrippableRendererIds = regC2S<CS2QueryStrippableRendererIds>(MOD_ID, "query_strippable_renderer_ids", "strip_mode", { pkt, player -> VMToolgun.server.playerHasPermission(player, StripMode::class.java)}) {
             pkt, player ->
             val level = ServerObjectsHolder.overworldServerLevel!!
             val ventities = level

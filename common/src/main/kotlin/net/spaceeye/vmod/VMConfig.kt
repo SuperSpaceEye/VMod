@@ -59,7 +59,6 @@ object VMConfig {
         class Permissions: ConfigSubDirectory() {
             var VMOD_COMMANDS_PERMISSION_LEVEL: Int by CInt(2, "No Comment", Pair(0, 4))
             var VMOD_OP_COMMANDS_PERMISSION_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
-            var VMOD_TOOLGUN_PERMISSION_LEVEL: Int by CInt(2, "No Comment", Pair(0, 4))
             var VMOD_CHANGING_SERVER_SETTINGS_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
         }
 

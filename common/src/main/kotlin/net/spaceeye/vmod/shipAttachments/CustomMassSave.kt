@@ -2,10 +2,10 @@ package net.spaceeye.vmod.shipAttachments
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.valkyrien_ship_schematics.interfaces.ICopyableForcesInducer
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager
 import org.joml.Vector3i
 import org.joml.Vector3d
+import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.LoadedServerShip
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -13,11 +13,12 @@ import org.valkyrienskies.core.api.ships.ShipPhysicsListener
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.world.PhysLevel
 import org.valkyrienskies.core.impl.hooks.VSEvents
+import org.valkyrienskies.mod.common.assembly.ICopyableAttachment
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Supplier
 import kotlin.math.roundToInt
 
-class CustomMassSave(): ShipPhysicsListener, ICopyableForcesInducer {
+class CustomMassSave(): ShipPhysicsListener, ICopyableAttachment {
     var wasCopied: Boolean = false
     @JsonIgnore private var tempMassData: List<Pair<Vector3i, Double>>? = null
     @JsonIgnore var lock = ReentrantLock()
@@ -37,12 +38,12 @@ class CustomMassSave(): ShipPhysicsListener, ICopyableForcesInducer {
             value?.forEach { (pos, mass) -> CustomBlockMassManager.loadCustomMass(dimensionId, shipId, pos.x, pos.y, pos.z, mass) }
         }
 
-    override fun onCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {
+    override fun onCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3dc>) {
         lock.lock()
         wasCopied = true
     }
 
-    override fun onAfterCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {
+    override fun onAfterCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3dc>) {
         lock.unlock()
     }
 
@@ -50,7 +51,7 @@ class CustomMassSave(): ShipPhysicsListener, ICopyableForcesInducer {
         level: Supplier<ServerLevel>,
         shipOn: LoadedServerShip,
         loadedShips: Map<Long, ServerShip>,
-        centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>
+        centerPositions: Map<ShipId, Pair<Vector3dc, Vector3dc>>
     ) {
         wasCopied = false
 

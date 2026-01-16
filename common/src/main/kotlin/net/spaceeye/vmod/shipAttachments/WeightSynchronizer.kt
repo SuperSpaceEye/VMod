@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.block.Blocks
-import net.spaceeye.valkyrien_ship_schematics.interfaces.ICopyableForcesInducer
 import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.vsStuff.CustomBlockMassManager
 import org.joml.Vector3d
+import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.LoadedServerShip
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -16,15 +16,15 @@ import org.valkyrienskies.core.api.ships.ServerTickListener
 import org.valkyrienskies.core.api.ships.ShipPhysicsListener
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.world.PhysLevel
-import org.valkyrienskies.core.internal.world.chunks.VsiBlockType
 import org.valkyrienskies.mod.common.BlockStateInfo
+import org.valkyrienskies.mod.common.assembly.ICopyableAttachment
 import org.valkyrienskies.mod.common.getShipObjectManagingPos
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.function.Supplier
 import kotlin.math.max
 import kotlin.math.min
 
-class WeightSynchronizer: ShipPhysicsListener, ServerTickListener, ICopyableForcesInducer {
+class WeightSynchronizer: ShipPhysicsListener, ServerTickListener, ICopyableAttachment {
     var shipId = -1L
     var dimensionId = ""
     var lastDimensionId = ""
@@ -55,12 +55,12 @@ class WeightSynchronizer: ShipPhysicsListener, ServerTickListener, ICopyableForc
             updateMass(level, ship, false, syncMassPerBlock, massPerBlock, targetTotalMass)
         }
     }
-    override fun onCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3d>) {}
+    override fun onCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, Vector3dc>) {}
     override fun onPaste(
         level: Supplier<ServerLevel>,
         shipOn: LoadedServerShip,
         loadedShips: Map<Long, ServerShip>,
-        centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>
+        centerPositions: Map<ShipId, Pair<Vector3dc, Vector3dc>>
     ) {
         shipId = shipOn.id
         dimensionId = shipOn.chunkClaimDimension

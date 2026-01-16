@@ -12,7 +12,6 @@ import net.minecraft.world.level.block.Block
 import net.spaceeye.valkyrien_ship_schematics.ShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.containers.v1.*
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IBlockStatePalette
-import net.spaceeye.valkyrien_ship_schematics.interfaces.ICopyableForcesInducer
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematic
 import net.spaceeye.valkyrien_ship_schematics.interfaces.IShipSchematicInfo
 import net.spaceeye.valkyrien_ship_schematics.interfaces.ISerializable
@@ -44,6 +43,7 @@ import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
 import org.valkyrienskies.core.util.toAABBd
 import org.valkyrienskies.mod.api.vsApi
+import org.valkyrienskies.mod.common.assembly.ICopyableAttachment
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.UUID
@@ -145,10 +145,10 @@ fun IShipSchematicDataV1.placeAt(
 }
 
 private class AttachmentsSerializable(): ISerializable {
-    lateinit var data: MutableList<Pair<Long, MutableList<ICopyableForcesInducer?>>>
+    lateinit var data: MutableList<Pair<Long, MutableList<ICopyableAttachment?>>>
 
-    constructor(data: MutableList<Pair<Long, MutableList<ICopyableForcesInducer>>>): this() {
-        this.data = data as MutableList<Pair<Long, MutableList<ICopyableForcesInducer?>>>
+    constructor(data: MutableList<Pair<Long, MutableList<ICopyableAttachment>>>): this() {
+        this.data = data as MutableList<Pair<Long, MutableList<ICopyableAttachment?>>>
     }
 
     override fun serialize(): FriendlyByteBuf {
@@ -192,7 +192,7 @@ private fun IShipSchematicDataV1.saveAttachments(ships: List<ServerShip>, level:
         .mapNotNull { level.shipObjectWorld.loadedShips.getById(it.id) }
         .map { ship ->
             Pair(ship, ship.getAllAttachments()
-            .filterIsInstance<ICopyableForcesInducer>()
+            .filterIsInstance<ICopyableAttachment>()
             .mapNotNull { ship.getAttachment(it.javaClass) }
             .toMutableList()
         ) }

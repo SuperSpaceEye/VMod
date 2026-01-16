@@ -7,12 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import net.minecraft.server.level.ServerLevel
-import net.spaceeye.valkyrien_ship_schematics.interfaces.ICopyableForcesInducer
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.vsStuff.VSGravityManager
 import org.valkyrienskies.core.api.ships.*
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.api.world.PhysLevel
+import org.valkyrienskies.mod.common.assembly.ICopyableAttachment
 import java.util.function.Supplier
 
 @JsonAutoDetect(
@@ -24,7 +24,7 @@ import java.util.function.Supplier
 @JsonIgnoreProperties(ignoreUnknown = true)
 class GravityController(
     var dimensionId: String,
-): ShipPhysicsListener, ICopyableForcesInducer {
+): ShipPhysicsListener, ICopyableAttachment {
     var useDimensionGravity = true
 
     @JsonIgnore
@@ -50,8 +50,8 @@ class GravityController(
 
     @JsonIgnore
     fun effectiveGravity() = if (useDimensionGravity) dimensionGravity else gravityVector
-    override fun onCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, org.joml.Vector3d>) {}
-    override fun onPaste(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, loadedShips: Map<Long, ServerShip>, centerPositions: Map<ShipId, Pair<org.joml.Vector3d, org.joml.Vector3d>>) {}
+    override fun onCopy(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, shipsToBeSaved: List<ServerShip>, centerPositions: Map<ShipId, org.joml.Vector3dc>) {}
+    override fun onPaste(level: Supplier<ServerLevel>, shipOn: LoadedServerShip, loadedShips: Map<Long, ServerShip>, centerPositions: Map<ShipId, Pair<org.joml.Vector3dc, org.joml.Vector3dc>>) {}
 
     companion object {
         fun getOrCreate(ship: LoadedServerShip) =

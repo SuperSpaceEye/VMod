@@ -4,8 +4,6 @@ import net.minecraft.server.level.ServerLevel
 import org.joml.Vector3d
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl
-import org.valkyrienskies.mod.common.shipObjectWorld
 
 internal data class ShipData(var isStatic: Boolean, var velocity: Vector3d, var omega: Vector3d) {
     companion object {
@@ -44,10 +42,6 @@ internal class LoadingGroup(
                 val data = shipDataStatus[ship.id] ?: continue
 
                 ship.isStatic = data.isStatic
-                level.shipObjectWorld.teleportShip(ship, ShipTeleportDataImpl(
-                    ship.transform.positionInWorld, ship.transform.shipToWorldRotation,
-                    data.velocity, data.omega, ship.chunkClaimDimension, ship.transform.shipToWorldScaling.x()
-                ))
 
                 shipDataStatus.remove(ship.id)
             }

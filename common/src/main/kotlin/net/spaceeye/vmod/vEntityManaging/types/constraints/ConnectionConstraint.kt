@@ -1,11 +1,14 @@
 package net.spaceeye.vmod.vEntityManaging.types.constraints
 
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.vEntityManaging.*
 import net.spaceeye.vmod.vEntityManaging.util.VEAutoSerializable
 import net.spaceeye.vmod.vEntityManaging.util.TwoShipsMConstraint
 import net.spaceeye.vmod.utils.*
 import net.spaceeye.vmod.utils.vs.*
+import net.spaceeye.vmod.vEntityManaging.extensions.IMotor
+import net.spaceeye.vmod.vEntityManaging.util.TickableVEntityExtension
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.properties.ShipId
 import org.valkyrienskies.core.internal.joints.VSDistanceJoint
@@ -13,8 +16,9 @@ import org.valkyrienskies.core.internal.joints.VSFixedJoint
 import org.valkyrienskies.core.internal.joints.VSJointMaxForceTorque
 import org.valkyrienskies.core.internal.joints.VSJointPose
 import org.valkyrienskies.core.internal.joints.VSRevoluteJoint
+import org.valkyrienskies.core.internal.world.VsiPhysLevel
 
-class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
+class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable, IMotor {
     //TODO unify and rename values (needs backwards compat)
     enum class ConnectionModes {
         FIXED_ORIENTATION,
@@ -33,11 +37,27 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     var damping: Float by get(i++, -1f)
     val compliance: Double by get(i++, 1e-100)
 
-    var sRot1: Quaterniond by get(i++, Quaterniond())
-    var sRot2: Quaterniond by get(i++, Quaterniond())
+    override var sRot1: Quaterniond by get(i++, Quaterniond())
+    override var sRot2: Quaterniond by get(i++, Quaterniond())
 
-    var sDir1: Vector3d by get(i++, Vector3d())
-    var sDir2: Vector3d by get(i++, Vector3d())
+    override var sDir1: Vector3d by get(i++, Vector3d())
+    override var sDir2: Vector3d by get(i++, Vector3d())
+
+    // ========== IMotor Stuff
+    override var rollAngle: Double by get(i++, 0.0)
+    override var pitchAngle: Double by get(i++, 0.0)
+    override var yawAngle: Double by get(i++, 0.0)
+
+    override var rollAngularSpeed: Double by get(i++, Math.toRadians(180.0))
+    override var pitchAngularSpeed: Double by get(i++, Math.toRadians(0.0))
+    override var yawAngularSpeed: Double by get(i++, Math.toRadians(0.0))
+
+    override var doWork: Boolean by get(i++, true)
+
+    var fixedJoint1: VSFixedJoint? = null
+    var fixedJoint2: VSFixedJoint? = null
+
+    var wasDeleted: Boolean = false
 
     constructor(
         sPos1: Vector3d,
@@ -124,19 +144,21 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
 
         when (connectionMode) {
             ConnectionModes.FIXED_ORIENTATION -> {
-                val d1 = VSFixedJoint(
-                    shipId1, VSJointPose(p11, sRot1.invert(Quaterniond()).rotateAxis(Math.toRadians(0.0), sDir1.toJomlVector3d())),
+                fixedJoint1 = VSFixedJoint(
+                    shipId1, VSJointPose(p11, sRot1.invert(Quaterniond())),
                     shipId2, VSJointPose(p21, sRot2.invert(Quaterniond())),
                     maxForceTorque, compliance
                 )
-                val d2 = VSFixedJoint(
-                    shipId1, VSJointPose(p12, sRot1.invert(Quaterniond()).rotateAxis(Math.toRadians(0.0), sDir1.toJomlVector3d())),
+                fixedJoint2 = VSFixedJoint(
+                    shipId1, VSJointPose(p12, sRot1.invert(Quaterniond())),
                     shipId2, VSJointPose(p22, sRot2.invert(Quaterniond())),
                     maxForceTorque, compliance
                 )
 
-                mc(d1, level)
-                mc(d2, level)
+                val (f1, f2) = makeRotatedJoints(fixedJoint1!!, fixedJoint2!!, distance.toDouble())
+
+                mc(f1, level)
+                mc(f2, level)
             }
             ConnectionModes.HINGE_ORIENTATION -> {
                 val d1 = VSDistanceJoint(
@@ -168,5 +190,29 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
             }
             ConnectionModes.FREE_ORIENTATION -> throw AssertionError()
         }
+    }
+
+    override fun physTick(level: VsiPhysLevel, delta: Double) {
+        val f1 = fixedJoint1 ?: return
+        val f2 = fixedJoint2 ?: return
+        if (cIDs.size != 2) return
+        if (!doWork) return
+
+        super.physTick(level, delta)
+
+        val (n1, n2) = makeRotatedJoints(f1, f2, distance.toDouble())
+
+        level.updateJoint(cIDs[0], n1)
+        level.updateJoint(cIDs[1], n2)
+    }
+
+    override fun serverTick(server: MinecraftServer, unregister: () -> Unit) {
+        if (wasDeleted) unregister()
+        getExtensionsOfType<TickableVEntityExtension>().forEach { it.tick(server) }
+    }
+
+    override fun iOnDeleteVEntity(level: ServerLevel) {
+        super.iOnDeleteVEntity(level)
+        wasDeleted = true
     }
 }

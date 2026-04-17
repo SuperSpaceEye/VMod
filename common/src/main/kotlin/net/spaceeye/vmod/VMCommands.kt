@@ -481,7 +481,7 @@ object VMCommands {
             ).then(
                 lt("schem")
                 .then(
-                    lt("save-to-sever").then(
+                    lt("save-to-server").then(
                         arg("name", StringArgumentType.string()).executes { saveSchemToServer(it) }
                     )
                 ).then(

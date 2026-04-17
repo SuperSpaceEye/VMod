@@ -8,9 +8,9 @@ import kotlin.reflect.KClass
 
 object ToolgunModes: Registry<BaseMode>() {
     init {
-        register(ConnectionMode::class)
-        register(RopeMode::class)
-        register(HydraulicsMode::class)
+//        register(ConnectionMode::class)
+//        register(RopeMode::class)
+//        register(HydraulicsMode::class)
 //        register(PhysRopeMode::class)
 //        register(SliderMode::class)
 //        register(SyncRotation::class)

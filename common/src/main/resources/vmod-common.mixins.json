@@ -7,10 +7,7 @@
     "ChunkStorageAccessor",
     "IOWorkerAccessor",
     "LevelChunkMixin",
-    "PhysLevelImpl",
-    "RegionFileStorageAccessor",
-    "ShipObjectClientWorldMixin",
-    "ShipObjectServerWorldMixin"
+    "RegionFileStorageAccessor"
   ],
   "client": [
     "BlockRenderDispatcherAccessor",

@@ -1,5 +1,9 @@
 # 1.9.1
-* Fixed some issues
+* Probably broke something
+* Fixed misspelling in command /vmod schem save-to-server
+* Removed VMOD_COMMANDS_PERMISSION_LEVEL
+* Default role now can't do anything with toolgun or commands (unless old config exists)
+* VSchematic now doesn't load block entities or containers by default (unless old config exists)
 
 # 1.9.0
 * Works on 2.4 VS

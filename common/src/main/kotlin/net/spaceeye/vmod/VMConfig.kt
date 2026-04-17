@@ -57,7 +57,6 @@ object VMConfig {
         }
 
         class Permissions: ConfigSubDirectory() {
-            var VMOD_COMMANDS_PERMISSION_LEVEL: Int by CInt(2, "No Comment", Pair(0, 4))
             var VMOD_OP_COMMANDS_PERMISSION_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
             var VMOD_CHANGING_SERVER_SETTINGS_LEVEL: Int by CInt(4, "No Comment", Pair(0, 4))
         }
@@ -67,15 +66,15 @@ object VMConfig {
 
             var ALLOW_CHUNK_PLACEMENT_INTERRUPTION: Boolean by CBool(false, "Allows ships to be created over several ticks (so that if you have a huge ship it won't freeze server). May be incompatible with some mods though.")
             var ALLOW_CHUNK_UPDATE_INTERRUPTION: Boolean by CBool(false, "Allows ships to be updated over several ticks (so that if you have a huge ship it won't freeze server). May be incompatible with some mods though.")
-            var LOAD_CONTAINERS: Boolean by CBool(true, "Determines whenever or not block entities implementing from Container (chests for example) will be loaded")
-            var LOAD_ENTITIES: Boolean by CBool(true, "Determines whenever or not entities will be loaded")
-            var BLACKLIST_MODE: Boolean by CBool(true, "If true, will load nbt of all block entities that are not in blacklist. If false, will only load nbt of whitelisted block entities")
+            var LOAD_CONTAINERS: Boolean by CBool(false, "Determines whenever or not block entities implementing from Container (chests for example) will be loaded")
+            var LOAD_ENTITIES: Boolean by CBool(false, "Determines whenever or not entities will be loaded")
+            var BLACKLIST_MODE: Boolean by CBool(false, "If true, will load nbt of all block entities that are not in blacklist. If false, will only load nbt of whitelisted block entities")
             var BLACKLIST: String by CString("", "Write resource location of blocks separated by commas, like \"minecraft:chest, some_mod:idk\"")
             var WHITELIST: String by CString("", "Write resource location of blocks separated by commas, like \"minecraft:chest, some_mod:idk\"")
         }
 
         class ShipyardPruner: ConfigSubDirectory() {
-            var CLEAR_SHIP_PLOT_ON_DELETION: Boolean by CBool(true, "Will automatically delete region files of deleted ships")
+            var CLEAR_SHIP_PLOT_ON_DELETION: Boolean by CBool(false, "Will automatically delete region files of deleted ships")
         }
     }
 }

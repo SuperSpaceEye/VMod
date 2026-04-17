@@ -39,7 +39,7 @@ object ToolgunModes: Registry<BaseMode>() {
 
     private fun initAccessPermissions() {
         asTypesList().forEach {
-            PlayerAccessManager.addPermission("Allow ${it.simpleName}")
+            PlayerAccessManager.addPermission("Allow ${it.simpleName}", false)
         }
     }
 

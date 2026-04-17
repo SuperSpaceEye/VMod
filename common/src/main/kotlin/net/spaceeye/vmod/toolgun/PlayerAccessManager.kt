@@ -92,7 +92,8 @@ object PlayerAccessManager {
     var playersRoles get() = state.playersRoles; set(value) {state.playersRoles = value}
     var allRoles get() = state.allRoles; set(value) {state.allRoles = value}
 
-    val allPermissions = mutableSetOf<String>()
+    private val allPermissions = mutableSetOf<String>()
+    private val defaultPermissions = mutableSetOf<Pair<String, Boolean>>()
     const val defaultRoleName = "default"
 
     init {
@@ -140,8 +141,8 @@ object PlayerAccessManager {
 
     @Synchronized fun addRole(role: String) {
         if (rolesPermissions.containsKey(role)) { return }
-        val permissions = mutableSetOf<String>();
-        permissions.addAll(allPermissions)
+        val permissions = mutableSetOf<String>()
+        permissions.addAll(defaultPermissions.filter {it.second}.map { it.first })
         rolesPermissions[role] = permissions
         allRoles.add(role)
     }
@@ -155,9 +156,10 @@ object PlayerAccessManager {
         return rolesPermissions.remove(role) != null
     }
 
-    @Synchronized fun addPermission(permission: String) {
+    @Synchronized fun addPermission(permission: String, defaultAllowed: Boolean = true) {
         if (allPermissions.contains(permission)) { throw AssertionError("Permission already exists") }
         allPermissions.add(permission)
+        defaultPermissions.add(permission to defaultAllowed)
         allPermissionsList.add(permission)
     }
 

@@ -79,16 +79,11 @@ object VMCommands {
     private fun lt(name: String) = LiteralArgumentBuilder.literal<CommandSourceStack>(name)
     private fun <T> arg(name: String, type: ArgumentType<T>) = RequiredArgumentBuilder.argument<CommandSourceStack, T>(name, type)
 
-    var permissionLevel: Int
-        get() = VMConfig.SERVER.PERMISSIONS.VMOD_COMMANDS_PERMISSION_LEVEL
-        set(value) {
-            VMConfig.SERVER.PERMISSIONS.VMOD_COMMANDS_PERMISSION_LEVEL = value
-        }
     //do not change
     const val permissionString = "Allow Command Usage"
 
     init {
-        PlayerAccessManager.addPermission(permissionString)
+        PlayerAccessManager.addPermission(permissionString, false)
     }
 
     //TODO this is stupid
@@ -96,7 +91,7 @@ object VMCommands {
         val player = try {
             it.playerOrException
         } catch (e: Exception) {
-            return false
+            return it.hasPermission(4)
         }
 
         return PlayerAccessManager.hasPermission(player, permissionString)
@@ -452,7 +447,7 @@ object VMCommands {
     fun registerServerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             lt("vmod")
-            .requires { it.hasPermission(permissionLevel) || hasPermission(it) }
+            .requires { hasPermission(it) }
             .then(
                 lt("teleport").then(
                     arg("ship", ShipArgument.ships()).then(
@@ -557,13 +552,6 @@ object VMCommands {
             ).then(
                 lt("op")
                 .requires { it.hasPermission(VMConfig.SERVER.PERMISSIONS.VMOD_OP_COMMANDS_PERMISSION_LEVEL) }
-                .then(
-                    lt("set-command-permission-level").then(
-                        arg("level", IntegerArgumentType.integer(0, 4)).executes {
-                            permissionLevel = IntegerArgumentType.getInteger(it, "level")
-                            0
-                        }
-                    )
 //                ).then(
 //                    lt("set-dimension-gravity").then(
 //                        arg("dimension", DimensionArgument.dimension()).then(
@@ -577,7 +565,7 @@ object VMCommands {
 //                            )
 //                        )
 //                    )
-                ).then(lt("clear-vmod-attachments").executes { OP.clearVmodAttachments(it) }
+                .then(lt("clear-vmod-attachments").executes { OP.clearVmodAttachments(it) }
 //                ).then(lt("delete-phys-entities").executes { OP.deletePhysEntities(it) }
                 ).then(lt("prune-shipyard-chunks").executes { OP.pruneShipyardChunks(it) }
                 )

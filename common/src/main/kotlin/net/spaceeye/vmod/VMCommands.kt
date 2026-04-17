@@ -55,8 +55,8 @@ import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ChunkClaim
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.mod.common.command.RelativeVector3Argument
-import org.valkyrienskies.mod.common.command.ShipArgument
+import org.valkyrienskies.mod.common.command.arguments.RelativeVector3Argument
+import org.valkyrienskies.mod.common.command.arguments.ShipArgument
 import org.valkyrienskies.mod.common.command.shipWorld
 import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getShipManagingPos

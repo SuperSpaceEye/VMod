@@ -48,11 +48,11 @@ class ConnectionConstraint(): TwoShipsMConstraint(), VEAutoSerializable, IMotor 
     override var pitchAngle: Double by get(i++, 0.0)
     override var yawAngle: Double by get(i++, 0.0)
 
-    override var rollAngularSpeed: Double by get(i++, Math.toRadians(180.0))
+    override var rollAngularSpeed: Double by get(i++, Math.toRadians(0.0))
     override var pitchAngularSpeed: Double by get(i++, Math.toRadians(0.0))
     override var yawAngularSpeed: Double by get(i++, Math.toRadians(0.0))
 
-    override var doWork: Boolean by get(i++, true)
+    override var doWork: Boolean by get(i++, false)
 
     var fixedJoint1: VSFixedJoint? = null
     var fixedJoint2: VSFixedJoint? = null

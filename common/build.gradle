@@ -53,7 +53,7 @@ dependencies {
 
     modCompileOnlyApi(files("vs_jars/trackwork-1.20.1-1.1.1b.jar"))
 
-    modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
+//    modCompileOnly("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}")
 
     modCompileOnly("maven.modrinth:patchouli:1.20.1-84.1-forge")
 

@@ -95,9 +95,9 @@ dependencies {
     shadow("gg.essential:universalcraft-1.20.1-forge:${rootProject.ucVersion}") { transitive = false }
 
     // Create and its dependencies
-    modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }
-    modCompileOnly("com.tterrag.registrate:Registrate:${registrate_forge_version}") {transitive = false}
-    modCompileOnly("com.jozufozu.flywheel:flywheel-forge-${flywheel_forge_minecraft_version}:${flywheel_forge_version}") {transitive = false}
+//    modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }
+//    modCompileOnly("com.tterrag.registrate:Registrate:${registrate_forge_version}") {transitive = false}
+//    modCompileOnly("com.jozufozu.flywheel:flywheel-forge-${flywheel_forge_minecraft_version}:${flywheel_forge_version}") {transitive = false}
 }
 
 processResources {

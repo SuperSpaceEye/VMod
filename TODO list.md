@@ -3,7 +3,7 @@
 * Rework permission level and player roles (not sure what i meant by that)
 * I don't think ventities will work correctly after being teleported to another dimension
 
-* Rework "Disable Collisions"
+* Rework "Disable Collisions", it also doesn't work with ship-ground, fix
 * Move PlayerAccessManager in ServerToolgunInstance
 
 # Maybe

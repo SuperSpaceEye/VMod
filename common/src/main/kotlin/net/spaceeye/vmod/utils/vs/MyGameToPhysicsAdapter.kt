@@ -2,6 +2,7 @@ package net.spaceeye.vmod.utils.vs
 
 import net.minecraft.server.level.ServerLevel
 import net.spaceeye.vmod.VM
+import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.Tuple
 import net.spaceeye.vmod.utils.Tuple3
 import net.spaceeye.vmod.utils.Tuple4
@@ -55,6 +56,9 @@ class MyGameToPhysicsAdapter {
 
         val rePollCollision = mutableListOf<Tuple5<ShipId, ShipId, Boolean, CompletableFuture<Boolean>, Int>>()
         collisionChange.pollUntilEmpty { (id1, id2, change, future, attempts) ->
+            val id1 = if (id1 == -1L) ServerObjectsHolder.shipObjectWorld!!.dimensionToGroundBodyIdImmutable[level.dimension]!! else id1
+            val id2 = if (id2 == -1L) ServerObjectsHolder.shipObjectWorld!!.dimensionToGroundBodyIdImmutable[level.dimension]!! else id2
+
             val res = when (change) {
                 true  -> level.enableCollisionBetween(id1, id2)
                 false -> level.disableCollisionBetween(id1, id2)

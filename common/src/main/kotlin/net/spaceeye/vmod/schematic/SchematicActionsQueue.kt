@@ -164,7 +164,7 @@ object SchematicActionsQueue: ServerClosable() {
                 val blacklisted = when (settings.blacklistMode) {
                     true  ->  settings.nbtLoadingBlacklist.contains(block)
                     false -> !settings.nbtLoadingWhitelist.contains(block)
-                } || block is ICopyableBlock
+                } || block !is ICopyableBlock
 
                 level.getChunkAt(pos).also {
                     it.setBlockState(pos, state, false)

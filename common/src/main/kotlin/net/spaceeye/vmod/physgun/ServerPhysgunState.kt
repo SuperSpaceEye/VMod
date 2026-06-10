@@ -394,7 +394,7 @@ object ServerPhysgunState: ServerClosable() {
                 state.playerPos = pos
                 state.playerDir = dir
 
-                val result = RaycastFunctions.fromPhysRaycast(player.uuid) //;/?: RaycastFunctions.raycast(player.level(), RaycastFunctions.Source(dir, pos))
+                val result = RaycastFunctions.fromPhysRaycast(player.uuid) ?: RaycastFunctions.raycast(player.level(), RaycastFunctions.Source(dir, pos))
 
                 val pageId = ReservedRenderingPages.TimedRenderingObjects
                 if (state.rID == -1) {

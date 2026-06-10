@@ -32,7 +32,6 @@ class MassChangerMode: ExtendableToolgunMode(), MassChangerGUI, MassChangerHUD {
     @JsonIgnore override var updateGuiFn: (Boolean) -> Unit = {}
 
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult)  {
-        if (raycastResult.state.isAir) {return}
         val ship = raycastResult.ship as? ServerShip ?: return
 
         val lShip = level.shipObjectWorld.loadedShips.getById(ship.id)!!
@@ -52,7 +51,6 @@ class MassChangerMode: ExtendableToolgunMode(), MassChangerGUI, MassChangerHUD {
     }
 
     fun activateSecondaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) {
-        if (raycastResult.state.isAir) {return}
         val ship = raycastResult.ship as? ServerShip ?: return
 
         val lShip = level.shipObjectWorld.loadedShips.getById(ship.id)

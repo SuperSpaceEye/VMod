@@ -6,7 +6,6 @@ import org.valkyrienskies.mod.api.vsApi
 object VMAttachments {
     @OptIn(VsBeta::class)
     fun register() {
-        vsApi.registerAttachment(PhysgunController::class.java) { useTransientSerializer() }
         vsApi.registerAttachment(DebugAttachment::class.java) { useTransientSerializer() }
 
         vsApi.registerAttachment(WeightSynchronizer::class.java)
@@ -16,12 +15,10 @@ object VMAttachments {
         //TODO remove later
         vsApi.shipLoadEvent.on { val ship = it.ship
             GravityController.getOrCreate(ship)
-            PhysgunController.getOrCreate(ship)
             CustomMassSave.getOrCreate(ship)
         }
 
 
-        PhysgunController
         WeightSynchronizer
         CustomMassSave
         GravityController

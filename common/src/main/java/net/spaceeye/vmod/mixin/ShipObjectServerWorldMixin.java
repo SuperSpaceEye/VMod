@@ -7,16 +7,15 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import org.valkyrienskies.core.api.ships.ServerShip;
-import org.valkyrienskies.core.impl.shadow.Er;
+import org.valkyrienskies.core.impl.shadow.Eh;
+import org.valkyrienskies.core.impl.shadow.Et;
 import org.valkyrienskies.core.internal.world.chunks.VsiBlockType;
 
 import java.util.Objects;
 
-@Mixin(Er.class)
+@Mixin(Et.class)
 abstract public class ShipObjectServerWorldMixin {
 //    @Shadow @Final public List<PhysicsEntityServer> l;
 
@@ -46,7 +45,7 @@ abstract public class ShipObjectServerWorldMixin {
     }
 
     @ModifyArg(method = "onSetBlock",
-            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/shadow/Et;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;DD)V"),
+            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/shadow/Ev;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;DD)V"),
             remap = false,
             index = 6
     )

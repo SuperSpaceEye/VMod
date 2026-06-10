@@ -12,26 +12,83 @@ import kotlin.math.max
 
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
-import net.minecraft.server.level.ServerLevel
 import net.minecraft.util.Mth
 import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.material.FluidState
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
+import net.spaceeye.vmod.events.PersistentEvents
 import net.spaceeye.vmod.utils.vs.*
 import org.joml.primitives.AABBd
 import org.joml.primitives.AABBdc
+import org.valkyrienskies.core.api.bodies.VsBody
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.mod.api.vsApi
 import org.valkyrienskies.mod.common.dimensionId
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
 import java.util.function.Function
 
 object RaycastFunctions {
+    private data class PhysRaycastQuery(val pos: JVector3dc, val direction: JVector3dc, val length: Double)
+    private val raycastQueries = ConcurrentHashMap<String, MutableMap<UUID, MPair<PhysRaycastQuery, RaycastResult?>>>()
+    private val airState = Blocks.AIR.defaultBlockState()
+    private val bpos = BlockPos(0, 0, 0)
+
+    fun fromPhysRaycast(uuid: UUID): RaycastResult? {
+        synchronized(raycastQueries) {
+            for ((_, res) in raycastQueries) {
+                return res[uuid]?.second ?: continue
+            }
+            return null
+        }
+    }
+
+    init {
+        PersistentEvents.serverOnTick.on { (server), _ ->
+            server.playerList.players.forEach { player ->
+                raycastQueries.getOrPut(player.level().dimensionId) {ConcurrentHashMap()}[player.uuid] = MPair(
+                    PhysRaycastQuery(player.eyePosition.toJOML(), player.lookAngle.toJOML(), 100.0), null)
+            }
+        }
+        vsApi.physTickEvent.on { it -> val level = it.world
+            synchronized(raycastQueries) {
+            val queries = raycastQueries[level.dimension] ?: return@on
+            val ids = queries.keys
+            for (id in ids) {
+                val mpair = queries[id] ?: continue
+                val query = mpair.first
+                val result = level.rayCast(query.pos, query.direction, query.length) ?: run {
+                    mpair.second = null
+//                    println("NULL WTF ${level.dimension}")
+                    return@on
+                }
+
+//                println("NOT NULL ${level.dimension} ${result.hitBody.id}")
+
+                val pos = Vector3d(query.pos)
+                val dir = Vector3d(query.direction)
+
+                val hitPos = pos + dir * result.distance
+                val gHitPos = Vector3d(result.hitBody.kinematics.toModel.transformPosition(hitPos.toJomlVector3d()))
+
+                val worldNormal = Vector3d(result.hitNormal)
+                val globalNormal = Vector3d(result.hitBody.kinematics.toModel.transformDirection(result.hitNormal, JVector3d()))
+
+                //TODO this is sus as fuck (server tick fn call from phys tick) but who cares
+                mpair.second = RaycastResult(airState, pos, dir, bpos, hitPos, gHitPos, hitPos, gHitPos, hitPos, gHitPos, null, worldNormal, globalNormal, null, vsApi.getServerShipWorld()!!.allBodies.getById(result.hitBody.id), result.hitBody.id)
+            }
+        }
+        }
+    }
+
     const val eps = 1e-200
     class RayIntersectBoxResult(@JvmField var intersects: Boolean, @JvmField var tToIn: Double, @JvmField var tToOut: Double)
 
@@ -52,6 +109,7 @@ object RaycastFunctions {
         var worldNormalDirection: Vector3d?,
         var globalNormalDirection: Vector3d?,
         var ship: Ship?,
+        var body: VsBody?,
         var shipId: ShipId
     )
 
@@ -124,7 +182,7 @@ object RaycastFunctions {
         )
 
         val state = level.getBlockState(clipResult.blockPos)
-        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null, null, null, null, -1) }
+        if (state.isAir) { return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, null, null, null, null, null, null, null, null, null, null, null, -1) }
 
         val ship = level.getShipManagingPos(clipResult.blockPos)
 
@@ -191,7 +249,7 @@ object RaycastFunctions {
             worldCenteredFaceHitPos = posShipToWorld(ship, worldCenteredFaceHitPos, null)
         }
 
-        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, worldCenteredFaceHitPos, globalCenteredFaceHitPos, normal, normalDirection, globalNormalDirection, ship, ship?.id ?: -1)
+        return RaycastResult(state, source.origin, unitLookVec, clipResult.blockPos, worldHitPos, globalHitPos, worldCenteredHitPos, globalCenteredHitPos, worldCenteredFaceHitPos, globalCenteredFaceHitPos, normal, normalDirection, globalNormalDirection, ship, ship?.body(), ship?.id ?: -1)
     }
 
     fun Level.clipIncludeShips(

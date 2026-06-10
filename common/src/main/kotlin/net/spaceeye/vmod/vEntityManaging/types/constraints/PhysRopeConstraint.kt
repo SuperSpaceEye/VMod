@@ -34,6 +34,62 @@ import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.concurrent.CompletableFuture
 import kotlin.math.PI
 
+//            val chunks = ShipActiveChunksSet.create()
+//            val updates = BlockPos2ObjectOpenHashMap<IVoxelShapeUpdate>()
+//            for (c in 0 until chunksPerShip) {
+//                val cx = c % side
+//                val cz = c / side
+//                chunks.add(cx, cz)
+//                val solidY0: IVoxelShapeUpdate = if (dense) {
+//                    DenseVoxelShapeUpdate(cx, 0, cz, IntArray(16 * 16 * 16) { SOLID_ID })
+//                } else {
+//                    SparseVoxelShapeUpdate(cx, 0, cz).also { it.addUpdate(0, 0, 0, SOLID_ID) }
+//                }
+//                updates.put(cx, 0, cz, solidY0)
+//                if (fillEmptyY) {
+//                    for (chunkY in 1..15) {
+//                        updates.put(cx, chunkY, cz, EmptyVoxelShapeUpdate(cx, chunkY, cz, false))
+//                    }
+//                }
+//            }
+//
+//            val shape = VSVoxelCollisionShapeData(
+//                minDefined = Vector3i(0, 0, 0),
+//                maxDefined = Vector3i((side - 1) * 16, 0, (side - 1) * 16),
+//                totalVoxelRegion = VOXEL_REGION,
+//                shipVoxelsFullyLoaded = true,
+//                chunksToLoad = chunks,
+//            )
+//
+// level.shipObjectWorld.addTerrainUpdates()
+
+//@JvmOverloads
+//fun LevelChunkSection.toDenseVoxelUpdate(chunkPos: Vector3ic, level: Level? = null): VsiTerrainUpdate {
+//    val update = vsCore.newDenseTerrainUpdateBuilder(chunkPos.x(), chunkPos.y(), chunkPos.z())
+//    val info = BlockStateInfo.cache
+//    val mutablePos = if (level == null) null else BlockPos.MutableBlockPos()
+//    val baseX = SectionPos.sectionToBlockCoord(chunkPos.x())
+//    val baseY = SectionPos.sectionToBlockCoord(chunkPos.y())
+//    val baseZ = SectionPos.sectionToBlockCoord(chunkPos.z())
+//    for (x in 0..15) {
+//        for (y in 0..15) {
+//            for (z in 0..15) {
+//                val blockState = getBlockState(x, y, z)
+//                val defaultBlockType = info.get(blockState)?.second ?: vsCore.blockTypes.air
+//                update.addBlock(
+//                    x, y, z,
+//                    blockState.resolvePhysicsBlockTypeForAirPocket(
+//                        level,
+//                        mutablePos?.set(baseX + x, baseY + y, baseZ + z),
+//                        defaultBlockType,
+//                    )
+//                )
+//            }
+//        }
+//    }
+//    return update.build()
+//}
+
 class PhysRopeConstraint(): TwoShipsMConstraint(), VEAutoSerializable {
     override var sPos1: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }
     override var sPos2: Vector3d by get(i++, Vector3d()).also { it.metadata["NoTagSerialization"] = true }

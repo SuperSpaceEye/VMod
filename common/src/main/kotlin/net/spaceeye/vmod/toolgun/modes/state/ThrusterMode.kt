@@ -40,11 +40,8 @@ class ThrusterMode: ExtendableToolgunMode(), ThrusterHUD, ThrusterGUI {
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
     val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementModesExtension>().precisePlacementAssistSideNum
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
-        if (raycastResult.state.isAir) {return}
-        level as ServerLevel
-
-        val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return
+    fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+        val ship = raycastResult.ship ?: return
 
         val pos = getModePosition(posMode, raycastResult, precisePlacementAssistSideNum)
         val basePos = pos + raycastResult.globalNormalDirection!! * 0.5

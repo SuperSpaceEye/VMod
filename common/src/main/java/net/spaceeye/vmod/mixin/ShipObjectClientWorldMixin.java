@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.valkyrienskies.core.impl.game.bodies.VsBodyDataCommon;
 import org.valkyrienskies.core.impl.game.ships.ShipObjectClientWorld;
 import org.valkyrienskies.core.impl.networking.impl.PhysEntityCreateData;
 
@@ -18,5 +19,15 @@ abstract public class ShipObjectClientWorldMixin {
     @Inject(method = "removePhysicsEntity", at = @At("HEAD"), remap = false)
     void vmod_onPhysEntityRemoval(long shipId, CallbackInfo ci) {
         AVSEvents.INSTANCE.getClientPhysEntityUnload().emit(shipId);
+    }
+
+    @Inject(method = "addBody", at = @At("HEAD"), remap = false)
+    void vmod_onBodyAdd(VsBodyDataCommon body, CallbackInfo ci) {
+        AVSEvents.INSTANCE.getClientBodyLoad().emit(body);
+    }
+
+    @Inject(method = "removeBody", at = @At("HEAD"), remap = false)
+    void vmod_onBodyRemoval(long shipId, CallbackInfo ci) {
+        AVSEvents.INSTANCE.getClientBodyUnload().emit(shipId);
     }
 }

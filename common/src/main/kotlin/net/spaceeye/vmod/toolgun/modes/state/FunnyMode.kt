@@ -16,6 +16,12 @@ import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.posShipToWorld
 import org.joml.Matrix3d
+import org.joml.Quaterniond
+import org.joml.Vector3i
+import org.joml.primitives.AABBi
+import org.valkyrienskies.core.api.bodies.VsBodyCreateData
+import org.valkyrienskies.core.api.bodies.properties.BodyInertia
+import org.valkyrienskies.core.api.bodies.shape.VoxelType
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ShipPhysicsListener
 import org.valkyrienskies.core.api.world.PhysLevel
@@ -24,9 +30,14 @@ import org.valkyrienskies.core.internal.physics.VSSphereCollisionShapeData
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
 import org.valkyrienskies.core.impl.game.ships.ShipInertiaDataImpl
 import org.valkyrienskies.core.impl.game.ships.ShipTransformImpl
+import org.valkyrienskies.core.impl.hooks.VSEvents
+import org.valkyrienskies.core.internal.game.StandaloneBodyCreateData
+import org.valkyrienskies.mod.api.vsApi
 import org.valkyrienskies.mod.common.BlockStateInfo
 import org.valkyrienskies.mod.common.dimensionId
+import org.valkyrienskies.mod.common.hooks.VSGameEvents
 import org.valkyrienskies.mod.common.shipObjectWorld
+import org.valkyrienskies.mod.common.vsCore
 import java.awt.Color
 
 class FunnyMode: ExtendableToolgunMode(), SimpleHUD {
@@ -36,13 +47,7 @@ class FunnyMode: ExtendableToolgunMode(), SimpleHUD {
     }
 
     private fun sphereInertiaTensor(mass: Double, radius: Double): Matrix3d {
-        val mat = Matrix3d()
-
-        mat.m00 = (2.0/5.0) * mass * radius * radius
-        mat.m11 = (2.0/5.0) * mass * radius * radius
-        mat.m22 = (2.0/5.0) * mass * radius * radius
-
-        return mat
+        return Matrix3d().identity().scale(mass)
     }
 
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) {
@@ -66,31 +71,52 @@ class FunnyMode: ExtendableToolgunMode(), SimpleHUD {
 
         level.shipObjectWorld.deleteShip(ship)
         fakeBlocks.forEach { (pos, state) ->
-            val newId = level.shipObjectWorld.allocateShipId(level.dimensionId)
-            val (mass, _) = BlockStateInfo.get(state)!!
+            val (mass, type) = BlockStateInfo.get(state)!!
+            val offset = 0.25
+            val body = level.shipObjectWorld.createBody(VsBodyCreateData(
+                level.dimensionId,
+                vsCore.newShipInertiaData(JVector3d(), mass, sphereInertiaTensor(mass, radius)),
+                vsCore.newBodyKinematics(JVector3d(), JVector3d(), (pos-offset).toJomlVector3d(), shipRot, JVector3d(1.0, 1.0, 1.0), JVector3d(0.0, 0.0, 0.0)),
+//                vsCore.newSphereBodyShape(0.5),
+                vsCore.newBoxBodyShape(JVector3d(1.0, 1.0, 1.0)),
+//                vsCore.newCompoundBodyShape(listOf(
+//                    vsCore.newCompoundBodyShapeChild(vsCore.newVoxelBodyShape(
+//                        Vector3i(0, 0, 0),
+//                        Vector3i(1, 1, 1),
+//                        AABBi(0, 0, 0, 1, 1, 1)
+//                    ))
+//                )),
+
+                staticFrictionCoefficient = 1.0,
+                dynamicFrictionCoefficient = 1.0,
+                restitutionCoefficient = 1.0
+            ))
+
+//            val segmentId = 0
+//
+//            val update = vsCore.newSparseVoxelUpdateBuilder(0, 0, 0)
+//                .apply { addBlock(0, 0, 0, type as VoxelType, mass) }
+//                .build()
+//
+//            body.applyVoxelSegmentUpdate(segmentId, update)
+
+            val newId = body.id
 
             RenderingData.server.addRenderer(listOf(newId), PhysEntityBlockRenderer(
                 newId, state, Color(255, 255, 255, 255), true
             ))
-            val entity = level.shipObjectWorld.createPhysicsEntity(PhysicsEntityData(
-                newId,
-                ShipTransformImpl.create(pos.toJomlVector3d(), JVector3d(), shipRot, JVector3d(1.0, 1.0, 1.0)),
-                ShipInertiaDataImpl(JVector3d(), mass, sphereInertiaTensor(mass, radius)),
-                JVector3d(), JVector3d(),
-                VSSphereCollisionShapeData(radius),
-            ), level.dimensionId)
 
-            entity.physicsListeners.add(object : ShipPhysicsListener {
-                override fun physTick(physShip: PhysShip, physLevel: PhysLevel) {
-                    physShip as PhysShipImpl
-
-                    val force = -Vector3d(physShip.velocity) * physShip.mass * 0.05
-                    val omega = -Vector3d(physShip.angularVelocity) * physShip.mass * 0.05
-
-                    physShip.applyInvariantForce(force.toJomlVector3d())
-                    physShip.applyInvariantTorque(omega.toJomlVector3d())
-                }
-            })
+//            entity.physicsListeners.add(object : ShipPhysicsListener {
+//                override fun physTick(physShip: PhysShip, physLevel: PhysLevel) {
+//                    physShip as PhysShipImpl
+//
+//                    val force = -Vector3d(physShip.velocity) * physShip.mass * 0.05
+//                    val omega = -Vector3d(physShip.angularVelocity) * physShip.mass * 0.05
+//
+//                    physShip.applyInvariantForce(force.toJomlVector3d())
+//                    physShip.applyInvariantTorque(omega.toJomlVector3d())
+//                }
+//            })
         }
     }
 

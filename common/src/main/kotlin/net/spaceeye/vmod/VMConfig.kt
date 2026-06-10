@@ -41,10 +41,9 @@ object VMConfig {
         val SHIPYARD_PRUNER = ShipyardPruner()
 
         class ServerPhysgunSettings(): ConfigSubDirectory() {
-            val GRAB_ALL_CONNECTED_SHIPS: Boolean by CBool(false, "A bit buggy.", false)
+            val GRAB_ALL_CONNECTED_SHIPS: Boolean by CBool(true, "A bit buggy.", false)
             val PCONST: Double   by CDouble(160.0, "a", 0.0 to Double.MAX_VALUE)
             val DCONST: Double   by CDouble(20.0 , "a", 0.0 to Double.MAX_VALUE)
-            val IDKCONST: Double by CDouble(90.0 , "a", 0.0 to Double.MAX_VALUE)
         }
 
         class ServerToolgunSettings: ConfigSubDirectory() {

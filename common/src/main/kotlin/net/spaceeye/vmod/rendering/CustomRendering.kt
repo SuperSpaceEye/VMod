@@ -117,7 +117,7 @@ private fun renderShipObjects(poseStack: PoseStack, camera: Camera, renderBlockR
     //TODO why tf does try wrap everything and not individual objects
     try {
     val data = RenderingData.client.getData()
-    val ids = level.shipObjectWorld.loadedShips.map { it.id }.toMutableList()
+    val ids = (level.shipObjectWorld as ShipObjectClientWorld).allBodies.map { it.id }.toMutableList()
     ids.addAll((level.shipObjectWorld as ShipObjectClientWorld).physicsEntities.map { it.key })
     for (id in ids) {
         for ((_, render) in data[id] ?: continue) {

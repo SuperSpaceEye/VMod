@@ -80,16 +80,15 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
         render = false
     }
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
-        if (raycastResult.state.isAir) {return}
+    fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         when (mode) {
-            StripModes.StripAll -> stripAll(level as ServerLevel, raycastResult)
-            StripModes.StripInRadius -> stripInRadius(level as ServerLevel, raycastResult)
+            StripModes.StripAll -> stripAll(level, raycastResult)
+            StripModes.StripInRadius -> stripInRadius(level, raycastResult)
         }
     }
 
     private fun stripAll(level: ServerLevel, raycastResult: RaycastFunctions.RaycastResult) {
-        val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return
+        val ship = raycastResult.ship ?: return
 
         level.getAllVEntityIdsOfShipId(ship.id).forEach {
             val mc = level.getVEntity(it)
@@ -99,6 +98,7 @@ class StripMode: ExtendableToolgunMode(), StripGUI, StripHUD {
     }
 
     private fun stripInRadius(level: ServerLevel, raycastResult: RaycastFunctions.RaycastResult) {
+        if (raycastResult.state.isAir) {return}
         val b = raycastResult.blockPosition
         val r = max(ceil(radius).toInt(), 1)
 

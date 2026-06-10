@@ -222,10 +222,8 @@ interface SnapModeClient {
 
         val level = Minecraft.getInstance().level!!
 
-        if (raycastResult.state.isAir) {paClientResetState(); return}
+        paCaughtShip = raycastResult.ship as? ClientShip ?: return paClientResetState()
         val mode = if (posMode != PositionModes.CENTERED_IN_BLOCK) {posMode} else {PositionModes.CENTERED_ON_SIDE}
-
-        paCaughtShip = (level.getShipManagingPos(raycastResult.blockPosition) ?: run {paClientResetState(); return}) as ClientShip
         paCaughtShip!!.transformProvider = SnapModeTransformProvider(raycastResult, mode, paCaughtShip!!, precisePlacementAssistSideNum) {instance.client.playerIsUsingToolgun()}
 
         paStage = ThreeClicksActivationSteps.SECOND_RAYCAST
@@ -378,17 +376,15 @@ interface SnapModeServerPart {
     }
 
     fun paFunctionFirst(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
-        if (raycastResult.state.isAir) {return handleFailure(player)}
-        val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return handleFailure(player)
+        val ship = raycastResult.ship ?: return handleFailure(player)
         paFirstResult = raycastResult
         val traversed = traverseGetConnectedShips(ship.id).traversedShipIds
         paNetworkingObject.s2cSendTraversalInfo.sendToClient(player as ServerPlayer, S2CSendTraversalInfo(traversed.toLongArray()))
     }
 
     fun paFunctionSecond(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
-        if (raycastResult.state.isAir) {return handleFailure(player) }
-        val ship = level.getShipManagingPos(raycastResult.blockPosition)
-        if (ship == level.getShipManagingPos(paFirstResult?.blockPosition ?: return handleFailure(player))) {return handleFailure(player)}
+        val ship = raycastResult.ship ?: return handleFailure(player)
+        if (ship == (paFirstResult?.ship ?: return handleFailure(player))) {return handleFailure(player)}
         paSecondResult = raycastResult
     }
 

@@ -36,9 +36,7 @@ class ScaleMode: ExtendableToolgunMode(), ScaleGUI, ScaleHUD {
     var scale: Double by get(i++, 1.0) { ServerLimits.instance.scale.get(it) }.presettable()
     var scaleAllConnected: Boolean by get(i++, true).presettable().setSetWrapper { old, new -> connectedShips.forEach { ShipsColorModulator.deleteColor(it) }; connectedShips.clear(); new}
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
-        if (raycastResult.state.isAir) {return}
-        level as ServerLevel
+    fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult)  {
         val ship: ServerShip = raycastResult.ship as ServerShip? ?: return
 
         if (scaleAllConnected) {

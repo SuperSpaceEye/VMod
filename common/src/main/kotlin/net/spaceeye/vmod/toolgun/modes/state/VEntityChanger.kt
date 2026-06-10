@@ -168,7 +168,6 @@ class VEntityChanger: ExtendableToolgunMode(), VEntityChangerHUD, VEntityChanger
     }
 
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult)  {
-        if (raycastResult.state.isAir) {return resetSelection(player)}
         val ship = raycastResult.ship ?: return resetSelection(player)
 
         val ventities = level.getAllVEntityIdsOfShipId(ship.id)

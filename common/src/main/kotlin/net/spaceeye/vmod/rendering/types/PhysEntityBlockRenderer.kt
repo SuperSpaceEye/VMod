@@ -52,12 +52,13 @@ class PhysEntityBlockRenderer(): BlockRenderer(), ReflectableObject {
 
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, buffer: MultiBufferSource, timestamp: Long) = with(data) {
         val level = Minecraft.getInstance().level!!
-        val entity = (level.shipObjectWorld as ShipObjectClientWorld).physicsEntities[shipId] ?: return
+
+        val body = (level.shipObjectWorld as ShipObjectClientWorld).getClientBody(shipId) ?: return
         val lookup = BuiltInRegistries.BLOCK.asLookup()
         state = stateTag.let { try { NbtUtils.readBlockState(lookup, it) } catch (e: Exception) { null } } ?: return@with
 
-        val pos = entity.renderTransform.position
-        val rot = entity.renderTransform.rotation
+        val pos = body.renderTransform.position
+        val rot = body.renderTransform.rotation
 
         val light = if (fullbright) LightTexture.FULL_BRIGHT else Vector3d(pos).toBlockPos().let { LightTexture.pack(level.getBrightness(LightLayer.BLOCK, it), level.getBrightness(LightLayer.SKY, it)) }
         val combinedOverlayIn = OverlayTexture.NO_OVERLAY
@@ -67,7 +68,8 @@ class PhysEntityBlockRenderer(): BlockRenderer(), ReflectableObject {
         poseStack.translate(-camera.position.x, -camera.position.y, -camera.position.z)
         poseStack.translate(pos.x(), pos.y(), pos.z())
         poseStack.mulPose(rot.toFloat())
-        poseStack.translate(-0.5, -0.5, -0.5)
+        val offset = 0.25
+        poseStack.translate(-0.5 + offset, -0.5 + offset, -0.5 + offset)
 
         RenderingStuff.renderSingleBlock(state!!, poseStack, buffer, light, combinedOverlayIn, color)
 

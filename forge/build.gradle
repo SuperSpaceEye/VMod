@@ -75,8 +75,12 @@ dependencies {
     compileOnly(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-common:0.3.5-beta.2")) { transitive = false }
     include(implementation("com.github.bawnorton.mixinsquared:mixinsquared-forge:0.3.5-beta.2")) { transitive = false }
 
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.13.3") {transitive = false}
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3") { transitive = false }
+    implementation("com.fasterxml.jackson.core:jackson-core:2.13.3") { transitive = false }
     api('org.joml:joml-primitives:1.10.0') { transitive = false }
     api('org.joml:joml:1.10.4') { transitive = false }
+    implementation "thedarkcolour:kotlinforforge:4.11.0"
 
     forge "net.minecraftforge:forge:${rootProject.forge_version}"
     // Remove the next line if you don't want to depend on the API

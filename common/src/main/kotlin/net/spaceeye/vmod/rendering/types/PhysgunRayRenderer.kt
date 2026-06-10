@@ -99,8 +99,8 @@ class PhysgunRayRenderer: BaseRenderer(), TimedRenderer, PositionDependentRender
         val point2 = if (shipId == -1L) {
             raycastPos
         } else {
-            level.shipObjectWorld.loadedShips.getById(shipId)?.let {
-                posShipToWorldRender(it, hitPosInShipyard)
+            level.shipObjectWorld.allBodies.getById(shipId)?.let {
+                Vector3d(it.renderTransform.toWorld.transformPosition(hitPosInShipyard.toJomlVector3d()))
             } ?: return
         }
 

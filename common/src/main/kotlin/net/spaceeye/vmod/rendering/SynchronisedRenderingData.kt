@@ -197,6 +197,7 @@ private object SynchronisedRenderingData {
 
     private fun makeClientEvents() {
         EnvExecutor.runInEnv(EnvType.CLIENT) { Runnable {
+            //TODO could be abused to get info on ships not in player's FOV
             vsApi.shipLoadEventClient.on { event -> val ship = event.ship
                 clientSynchronisedData.subscribeToPageUpdates(ship.id)
             }
@@ -208,6 +209,13 @@ private object SynchronisedRenderingData {
                 clientSynchronisedData.subscribeToPageUpdates(data.id)
             }
             AVSEvents.clientPhysEntityUnload.on { id, _ ->
+                clientSynchronisedData.unsubscribeFromPageUpdates(id)
+            }
+
+            AVSEvents.clientBodyLoad.on { data, _ ->
+                clientSynchronisedData.subscribeToPageUpdates(data.id)
+            }
+            AVSEvents.clientBodyUnload.on { id, _ ->
                 clientSynchronisedData.unsubscribeFromPageUpdates(id)
             }
         }}

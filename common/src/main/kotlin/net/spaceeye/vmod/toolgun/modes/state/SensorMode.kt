@@ -24,6 +24,7 @@ import net.spaceeye.vmod.toolgun.modes.gui.SensorGUI
 import net.spaceeye.vmod.toolgun.modes.hud.SensorHUD
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.getQuatFromDir
+import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color
 
@@ -41,11 +42,8 @@ class SensorMode: ExtendableToolgunMode(), SensorGUI, SensorHUD {
     val posMode: PositionModes get() = getExtensionOfType<PlacementModesExtension>().posMode
     val precisePlacementAssistSideNum: Int get() = getExtensionOfType<PlacementModesExtension>().precisePlacementAssistSideNum
 
-    fun activatePrimaryFunction(level: Level, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
-        if (raycastResult.state.isAir) {return}
-        level as ServerLevel
-
-        val ship = level.getShipManagingPos(raycastResult.blockPosition)
+    fun activatePrimaryFunction(level: ServerLevel, player: Player, raycastResult: RaycastFunctions.RaycastResult) {
+        val ship = raycastResult.ship as ServerShip? ?: run { if (raycastResult.state.isAir) {return} else null }
 
         val pos = getModePosition(posMode, raycastResult, precisePlacementAssistSideNum)
         val basePos = pos + raycastResult.globalNormalDirection!! * 0.5

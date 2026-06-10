@@ -167,7 +167,6 @@ object VM {
             serverStopping = false
             ServerObjectsHolder.server = server
             ServerObjectsHolder.overworldServerLevel = server.overworld()
-            ServerObjectsHolder.shipObjectWorld = server.shipObjectWorld
             VEntityManager.initNewInstance()
 
             VSGravityManager

@@ -11,7 +11,6 @@ import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.network.FriendlyByteBuf
 import net.spaceeye.vmod.rendering.RenderingUtils
 import net.spaceeye.vmod.rendering.types.BaseRenderer
-import net.spaceeye.vmod.toolgun.VMToolgun
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.createSpacedPoints
@@ -20,7 +19,6 @@ import org.lwjgl.opengl.GL11
 import org.valkyrienskies.core.api.ships.ClientShip
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import org.valkyrienskies.mod.common.getShipManagingPos
 import java.awt.Color
 
 class PrecisePlacementAssistRenderer(
@@ -48,7 +46,7 @@ class PrecisePlacementAssistRenderer(
         val worldNormal = raycastResult.worldNormalDirection!!
         val globalNormal = raycastResult.globalNormalDirection!!
         val point = raycastResult.worldHitPos!! + raycastResult.worldNormalDirection!! * 0.01
-        val ship = level.getShipManagingPos(raycastResult.blockPosition) as ClientShip?
+        val ship = raycastResult.ship as ClientShip
 
         var up = when {
             globalNormal.x > 0 || globalNormal.x < -0 -> Vector3d(0, 1, 0)

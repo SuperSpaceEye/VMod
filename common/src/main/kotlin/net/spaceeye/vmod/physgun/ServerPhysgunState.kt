@@ -1,6 +1,7 @@
 package net.spaceeye.vmod.physgun
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.spaceeye.vmod.MOD_ID
 import net.spaceeye.vmod.VMConfig
@@ -12,23 +13,35 @@ import net.spaceeye.vmod.networking.regC2S
 import net.spaceeye.vmod.rendering.RenderingData
 import net.spaceeye.vmod.rendering.ReservedRenderingPages
 import net.spaceeye.vmod.rendering.types.PhysgunRayRenderer
-import net.spaceeye.vmod.shipAttachments.PhysgunController
+import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.ServerClosable
 import net.spaceeye.vmod.utils.Vector3d
 import net.spaceeye.vmod.utils.vs.traverseGetConnectedShips
 import org.joml.Quaterniond
-import org.valkyrienskies.core.api.ships.ServerShip
+import org.valkyrienskies.core.api.bodies.PhysVsBody
+import org.valkyrienskies.core.api.bodies.ServerVsBody
 import org.valkyrienskies.core.api.ships.properties.ShipId
+import org.valkyrienskies.core.api.util.PhysTickOnly
+import org.valkyrienskies.core.api.world.PhysLevel
+import org.valkyrienskies.mod.api.vsApi
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.math.abs
 import kotlin.math.max
 
 fun playerRotToQuat(pitch: Double, yaw: Double): Quaterniond {
     return Quaterniond().rotateY(Math.toRadians(-yaw)).rotateX(Math.toRadians(pitch))  
 }
+
+data class ShipOffsetData(
+    /** Offset from grab point to ship center, in grab-frame local space */
+    val localOffset: JVector3d,
+    /** Ship rotation relative to the grab-frame rotation at grab time */
+    val localRotation: Quaterniond
+)
 
 data class PlayerPhysgunState(
     var lock: ReentrantLock = ReentrantLock(),
@@ -53,12 +66,14 @@ data class PlayerPhysgunState(
 
     var fromPos: Vector3d = Vector3d(),
     var idealRotation: Quaterniond = Quaterniond(),
+    var rawIdealRotation: Quaterniond = Quaterniond(),
     var mainShipId: ShipId = -1,
     var caughtShipIds: MutableList<ShipId> = mutableListOf(),
 
     var pConst: Double = VMConfig.SERVER.PHYSGUN.PCONST,
     var dConst: Double = VMConfig.SERVER.PHYSGUN.DCONST,
-    var iConst: Double = VMConfig.SERVER.PHYSGUN.IDKCONST,
+
+    var shipOffsets: MutableMap<ShipId, ShipOffsetData> = mutableMapOf()
 ) {
     fun fromPkt(player: ServerPlayer, pkt: ServerPhysgunState.C2SPhysgunStateChanged) {
         serverPlayer = player
@@ -74,7 +89,6 @@ data class PlayerPhysgunState(
 
         pConst = VMConfig.SERVER.PHYSGUN.PCONST
         dConst = VMConfig.SERVER.PHYSGUN.DCONST
-        iConst = VMConfig.SERVER.PHYSGUN.IDKCONST
     }
 }
 
@@ -82,11 +96,13 @@ object ServerPhysgunState: ServerClosable() {
     val playerStates = ConcurrentHashMap<UUID, PlayerPhysgunState>()
     val activelySeeking = ConcurrentHashMap.newKeySet<UUID>()
     val active = ConcurrentHashMap.newKeySet<UUID>()
+    val physTickState = ConcurrentHashMap<Long, PlayerPhysgunState>()
 
     override fun close() {
         playerStates.clear()
         activelySeeking.clear()
         active.clear()
+        physTickState.clear()
     }
 
     class C2SPhysgunStateChanged(): AutoSerializable {
@@ -115,11 +131,9 @@ object ServerPhysgunState: ServerClosable() {
                 val dir = Vector3d(player.lookAngle).snormalize()
                 val pos = Vector3d(player.eyePosition)
 
-                val result = RaycastFunctions.raycast(player.level(), RaycastFunctions.Source(dir, pos))
-                if (result.state.isAir) {return@regC2S}
-                if (result.ship == null) {return@regC2S}
+                val result = RaycastFunctions.fromPhysRaycast(player.uuid) ?: RaycastFunctions.raycast(player.level(), RaycastFunctions.Source(dir, pos))
 
-                (result.ship!! as ServerShip).isStatic = false
+                (result.body as? ServerVsBody)?.isStatic = false
 
                 return@regC2S
             }
@@ -141,19 +155,19 @@ object ServerPhysgunState: ServerClosable() {
                 return@regC2S
             }
             active.add(player.uuid)
-            val level = state.serverPlayer!!.level()
-            val ship = level.shipObjectWorld.loadedShips.getById(state.mainShipId)!!
+            val level = state.serverPlayer!!.level() as ServerLevel
+            val body = level.shipObjectWorld.allBodies.getById(state.mainShipId) ?: return@regC2S
 
             if (state.freezeSelected) {
-                (ship as ServerShip).isStatic = true
+                body.isStatic = true
                 state.mainShipId = -1
                 state.caughtShipIds.clear()
                 return@regC2S
             }
 
             if (state.freezeAll) {
-                traverseGetConnectedShips(ship.id).traversedShipIds.forEach { id ->
-                    ((level.shipObjectWorld.loadedShips.getById(id) ?: return@forEach) as ServerShip).isStatic = true
+                traverseGetConnectedShips(body.id).traversedShipIds.forEach { id ->
+                    (level.shipObjectWorld.allBodies.getById(id) ?: return@forEach).isStatic = true
                 }
                 state.mainShipId = -1
                 state.caughtShipIds.clear()
@@ -161,8 +175,8 @@ object ServerPhysgunState: ServerClosable() {
             }
 
             if (state.unfreezeAllOrOne) {
-                traverseGetConnectedShips(ship.id).traversedShipIds.forEach { id ->
-                    ((level.shipObjectWorld.loadedShips.getById(id) ?: return@forEach) as ServerShip).isStatic = false
+                traverseGetConnectedShips(body.id).traversedShipIds.forEach { id ->
+                    (level.shipObjectWorld.allBodies.getById(id) ?: return@forEach).isStatic = false
                 }
                 return@regC2S
             }
@@ -171,7 +185,7 @@ object ServerPhysgunState: ServerClosable() {
             state.playerDir = Vector3d(player.lookAngle).snormalize()
             state.playerPos = Vector3d(player.eyePosition)
 
-            state.idealRotation = state.quatDiff.mul(state.idealRotation, Quaterniond())
+            state.rawIdealRotation = state.quatDiff.mul(state.rawIdealRotation, Quaterniond()).normalize()
 
             if (state.increaseDistanceBy != 0.0) {
                 state.distanceFromPlayer = max(state.distanceFromPlayer + state.increaseDistanceBy, 0.0)
@@ -180,7 +194,128 @@ object ServerPhysgunState: ServerClosable() {
         }
     }
 
+    @PhysTickOnly
+    fun physTick(state: PlayerPhysgunState, physShip: PhysVsBody, physLevel: PhysLevel) {
+        if (!state.lock.tryLock()) return
+
+        if (state.mainShipId == -1L) {
+            physTickState.remove(physShip.id) // sus as shit
+            state.lock.unlock()
+            return
+        }
+
+        // Compute offsets once on the first tick (e.g. after a fresh grab or server restart)
+        if (state.shipOffsets.isEmpty() || !state.shipOffsets.containsKey(state.mainShipId)) {
+            val mainBody = physLevel.getBodyById(state.mainShipId)
+            if (mainBody == null) {
+                state.lock.unlock()
+                return
+            }
+            computeOffsets(state, mainBody, state.caughtShipIds, physLevel)
+        }
+
+        val targetRefPos = Vector3d(state.playerPos + state.playerDir * state.distanceFromPlayer)
+        val targetRefRot = Quaterniond(state.idealRotation)
+
+        // Influence the main ship AND every connected ship
+        val allShipIds = state.caughtShipIds.toMutableSet()
+        allShipIds.add(state.mainShipId)
+
+        for (shipId in allShipIds) {
+            val body = physLevel.getBodyById(shipId) ?: continue
+            val offset = state.shipOffsets[shipId] ?: continue
+
+            // ===== 1. Target pose for this ship =====
+            val rotatedOffset = JVector3d()
+            targetRefRot.transform(offset.localOffset, rotatedOffset)
+            val targetPos = Vector3d(targetRefPos) + Vector3d(rotatedOffset)
+
+            val targetRot = Quaterniond(targetRefRot).mul(offset.localRotation)
+
+            // ===== 2. Position PD (mass-scaled → uniform acceleration) =====
+            val currentPos = Vector3d(body.kinematics.transform.position)
+            val currentVel = Vector3d(body.velocity)
+
+            val posError = targetPos - currentPos
+            val force = (posError * state.pConst - currentVel * state.dConst) * body.inertiaData.mass
+            body.applyWorldForce(force.toJomlVector3d())
+
+            // ===== 3. Rotation PD =====
+            val currentRot = Quaterniond(body.kinematics.transform.rotation)
+
+            // Shortest rotation from current to target
+            val rotError = Quaterniond(targetRot).mul(currentRot.invert(Quaterniond())).normalize()
+
+            // Take the shortest quaternion path (flip if w < 0)
+            if (rotError.w < 0.0) {
+                rotError.x = -rotError.x
+                rotError.y = -rotError.y
+                rotError.z = -rotError.z
+                rotError.w = -rotError.w
+            }
+
+            // Approximate rotation vector: axis * angle ≈ 2*(x,y,z) for small errors
+            val rotErrorVec = Vector3d(rotError.x * 2.0, rotError.y * 2.0, rotError.z * 2.0)
+            val targetOmega = rotErrorVec * state.pConst
+            targetOmega -= Vector3d(body.angularVelocity) * state.dConst
+
+            // torque = I_world * targetOmega
+            val localOmega = JVector3d()
+            body.kinematics.rotation.transformInverse(targetOmega.toJomlVector3d(), localOmega)
+
+            val localTorque = JVector3d()
+            body.inertiaData.inertiaTensor.transform(localOmega, localTorque)
+
+            val worldTorque = JVector3d()
+            body.kinematics.rotation.transform(localTorque, worldTorque)
+
+            body.applyWorldTorque(worldTorque)
+        }
+
+        state.lock.unlock()
+    }
+
+    /** Call once when the grab starts. Populates [PlayerPhysgunState.shipOffsets] for the main ship and every caught body. */
+    fun computeOffsets(state: PlayerPhysgunState, mainBody: PhysVsBody, caughtShipIds: List<ShipId>, level: PhysLevel) {
+        val mainTransform = mainBody.kinematics.transform
+        val refPos = JVector3d()
+        mainTransform.toWorld.transformPosition(state.fromPos.x, state.fromPos.y, state.fromPos.z, refPos)
+
+        val refRot = Quaterniond(mainTransform.rotation)
+        val refRotInv = Quaterniond(refRot).invert()
+
+        // Include the main ship so it is also controlled
+        val allIds = caughtShipIds.toMutableList()
+        if (!allIds.contains(state.mainShipId)) {
+            allIds.add(state.mainShipId)
+        }
+
+        for (shipId in allIds) {
+            val ship = level.getBodyById(shipId) ?: continue
+            val shipTransform = ship.kinematics.transform
+
+            // Offset from grab-point to ship center, in grab-frame local space
+            val worldOffset = JVector3d(shipTransform.position).sub(refPos)
+            val localOffset = JVector3d()
+            refRotInv.transform(worldOffset, localOffset)
+
+            // Rotation of this ship relative to the grab-frame at grab time
+            val localRotation = Quaterniond(refRotInv).mul(shipTransform.rotation)
+
+            state.shipOffsets[shipId] = ShipOffsetData(localOffset, localRotation)
+        }
+    }
+
     init {
+        vsApi.physTickEvent.on { val level = it.world
+            val keys = physTickState.keys
+            for (id in keys) {
+                val ship = level.getBodyById(id) ?: continue
+                val state = physTickState[id] ?: continue
+                physTick(state, ship, level)
+            }
+        }
+
         PersistentEvents.serverOnTick.on {
             (server), _ ->
             val toRemove = mutableSetOf<UUID>()
@@ -217,7 +352,16 @@ object ServerPhysgunState: ServerClosable() {
                     val newPlayerRot = playerRotToQuat(player.xRot.toDouble(), player.yRot.toDouble())
                     val deltaRot = newPlayerRot.mul(state.playerLastRot.conjugate(), Quaterniond())
                     state.playerLastRot = newPlayerRot
-                    state.idealRotation = deltaRot.mul(state.idealRotation).normalize()
+
+                    // Always accumulate the continuous, unsnapped rotation
+                    state.rawIdealRotation = deltaRot.mul(state.rawIdealRotation).normalize()
+
+                    // Snap to grid only when precise mode is active
+                    state.idealRotation = if (state.preciseRotation) {
+                        snapQuaternion(state.rawIdealRotation, 45.0)
+                    } else {
+                        Quaterniond(state.rawIdealRotation)
+                    }
                 }
             }
 
@@ -250,7 +394,7 @@ object ServerPhysgunState: ServerClosable() {
                 state.playerPos = pos
                 state.playerDir = dir
 
-                val result = RaycastFunctions.raycast(player.level(), RaycastFunctions.Source(dir, pos))
+                val result = RaycastFunctions.fromPhysRaycast(player.uuid) //;/?: RaycastFunctions.raycast(player.level(), RaycastFunctions.Source(dir, pos))
 
                 val pageId = ReservedRenderingPages.TimedRenderingObjects
                 if (state.rID == -1) {
@@ -259,30 +403,29 @@ object ServerPhysgunState: ServerClosable() {
                     state.rID = RenderingData.server.addRenderer(listOf(pageId), renderer)
                 }
 
-                if (result.state.isAir) {return@forEach}
-                if (result.ship == null) {return@forEach}
+                if (result?.body == null) {return@forEach}
 
                 state.distanceFromPlayer = (result.worldHitPos!! - pos).dist()
                 state.fromPos = result.globalHitPos!!
-                state.idealRotation = Quaterniond(result.ship!!.transform.shipToWorldRotation)
+                state.idealRotation = Quaterniond(result.body!!.kinematics.rotation)
+                state.rawIdealRotation = Quaterniond(state.idealRotation)
                 state.mainShipId = result.shipId
+                state.shipOffsets.clear()
                 state.playerLastRot = playerRotToQuat(player.xRot.toDouble(), player.yRot.toDouble())
 
-                val ship = server.shipObjectWorld.loadedShips.getById(state.mainShipId) ?: return@forEach
-                ship.isStatic = false
+                val body = server.shipObjectWorld.allBodies.getById(state.mainShipId) ?: return@forEach
+                body.isStatic = false
 
-                val traversedIds = traverseGetConnectedShips(ship.id).traversedShipIds
-                traversedIds.remove(ship.id)
+                val traversedIds = traverseGetConnectedShips(body.id).traversedShipIds
+                traversedIds.remove(body.id)
 
                 state.caughtShipIds.clear()
                 //TODO finish this
-                if (VMConfig.SERVER.PHYSGUN.GRAB_ALL_CONNECTED_SHIPS) {
+                if (true || VMConfig.SERVER.PHYSGUN.GRAB_ALL_CONNECTED_SHIPS) {
                     state.caughtShipIds.addAll(traversedIds)
                 }
 
-                val controller = PhysgunController.getOrCreate(ship)
-
-                controller.sharedState = state
+                physTickState[body.id] = state
 
                 val renderer = (RenderingData.server.getRenderer(state.rID) ?: return@forEach) as PhysgunRayRenderer
                 renderer.data.player = uuid
@@ -296,48 +439,62 @@ object ServerPhysgunState: ServerClosable() {
             activelySeeking.removeAll(toRemove)
         }
     }
-}
 
-//TODO https://gamedev.stackexchange.com/questions/83601/from-3d-rotation-snap-to-nearest-90-directions https://math.stackexchange.com/questions/40164/how-do-you-rotate-a-vector-by-a-unit-quaternion
-//
-//                    val check = {
-//                        highestDot: Double, closest: org.joml.Vector3d, currentRotation: Quaterniond, axis: org.joml.Vector3d, checkDir: org.joml.Vector3d ->
-//
-//                        val dot = rotateVecByQuat(axis, currentRotation).dot(checkDir)
-//                        if (dot > highestDot) {
-//                            Pair(dot, checkDir)
-//                        } else {
-//                            Pair(highestDot, closest)
-//                        }
-//                    }
-//
-//                    val closestToAxis = {
-//                        currentRot: Quaterniond, axis: org.joml.Vector3d ->
-//                        val checkAxes = listOf(
-//                            org.joml.Vector3d( 1.0,  0.0,  0.0),
-//                            org.joml.Vector3d(-1.0,  0.0,  0.0),
-//                            org.joml.Vector3d( 0.0,  1.0,  0.0),
-//                            org.joml.Vector3d( 0.0, -1.0,  0.0),
-//                            org.joml.Vector3d( 0.0,  0.0,  1.0),
-//                            org.joml.Vector3d( 0.0,  0.0, -1.0)
-//                        )
-//                        var closestAxis = checkAxes[0]
-//                        var highestDot = -1.0
-//                        checkAxes.forEach {
-//                            val (_highestDot, _closestAxis) = check(highestDot, closestAxis, currentRot, axis, it)
-//                            closestAxis = _closestAxis
-//                            highestDot = _highestDot
-//                        }
-//                        closestAxis
-//                    }
-//
-//                    val snapToNearestRightAngle = {
-//                        currentRotation: Quaterniond ->
-//                        val closestToForward = closestToAxis(currentRotation, org.joml.Vector3d(0.0, 0.0, 1.0))
-//                        val closestToUp = closestToAxis(currentRotation, org.joml.Vector3d(0.0, 1.0, 0.0))
-//                        Quaterniond().lookAlong(closestToForward, closestToUp)
-//                    }
-//
-//                    if (state.preciseRotation) {
-//                        state.idealRotation = snapToNearestRightAngle(state.idealRotation)
-//                    }
+    /** Cache of snap tables so we only generate them once per angle. */
+    private val snapTables = mutableMapOf<Double, List<Quaterniond>>()
+
+    /** Generate every Y/P/R combination in [snapDegrees] increments, canonicalized. */
+    private fun generateSnapTable(snapDegrees: Double): List<Quaterniond> {
+        val stepRad = Math.toRadians(snapDegrees)
+        val steps = (360.0 / snapDegrees).toInt().coerceAtLeast(1)
+        val raw = mutableListOf<Quaterniond>()
+
+        for (yi in 0 until steps) {
+            for (pi in 0 until steps) {
+                for (ri in 0 until steps) {
+                    val q = Quaterniond()
+                        .rotateYXZ(yi * stepRad, pi * stepRad, ri * stepRad)
+                        .normalize()
+                    // Canonicalize: force w >= 0 so q and -q don't duplicate
+                    if (q.w < 0.0) {
+                        q.x = -q.x; q.y = -q.y; q.z = -q.z; q.w = -q.w
+                    }
+                    raw.add(q)
+                }
+            }
+        }
+
+        // Deduplicate (90° snapping collapses to 24 unique orientations)
+        val unique = mutableListOf<Quaterniond>()
+        for (q in raw) {
+            if (unique.none { abs(it.dot(q)) > 0.99999 }) {
+                unique.add(Quaterniond(q)) // copy
+            }
+        }
+        return unique
+    }
+
+    /** Return the nearest grid orientation to [q] in quaternion geodesic distance. */
+    fun snapQuaternion(q: Quaterniond, snapDegrees: Double): Quaterniond {
+        if (snapDegrees <= 0.0) return Quaterniond(q)
+
+        val table = snapTables.getOrPut(snapDegrees) { generateSnapTable(snapDegrees) }
+
+        val qw = if (q.w < 0.0) -q.w else q.w
+        val qx = if (q.w < 0.0) -q.x else q.x
+        val qy = if (q.w < 0.0) -q.y else q.y
+        val qz = if (q.w < 0.0) -q.z else q.z
+
+        var bestDot = Double.NEGATIVE_INFINITY
+        val best = Quaterniond()
+
+        for (candidate in table) {
+            val dot = qx * candidate.x + qy * candidate.y + qz * candidate.z + qw * candidate.w
+            if (dot >= bestDot) {
+                bestDot = dot
+                best.set(candidate)
+            }
+        }
+        return best
+    }
+}

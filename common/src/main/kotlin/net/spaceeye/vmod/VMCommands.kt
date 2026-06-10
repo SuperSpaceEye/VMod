@@ -36,7 +36,6 @@ import net.spaceeye.vmod.rendering.types.debug.DebugRenderer
 import net.spaceeye.vmod.schematic.placeAt
 import net.spaceeye.vmod.shipAttachments.CustomMassSave
 import net.spaceeye.vmod.shipAttachments.GravityController
-import net.spaceeye.vmod.shipAttachments.PhysgunController
 import net.spaceeye.vmod.shipAttachments.WeightSynchronizer
 import net.spaceeye.vmod.toolgun.PlayerAccessManager
 import net.spaceeye.vmod.toolgun.ServerToolGunState
@@ -73,7 +72,7 @@ import kotlin.io.path.notExists
 import kotlin.math.max
 
 typealias MCS = CommandContext<CommandSourceStack>
-typealias MCSN = CommandContext<CommandSourceStack?>
+typealias MCSN = CommandContext<CommandSourceStack>
 
 object VMCommands {
     private fun lt(name: String) = LiteralArgumentBuilder.literal<CommandSourceStack>(name)
@@ -328,7 +327,6 @@ object VMCommands {
             val level = cc.source.level
             level.shipObjectWorld.loadedShips.forEach {
                 it.getAttachment(GravityController::class.java)?.let { _ -> it.setAttachment(GravityController::class.java, null) }
-                it.getAttachment(PhysgunController::class.java)?.let { _ -> it.setAttachment(PhysgunController::class.java, null) }
                 it.getAttachment(CustomMassSave::class.java)?.let { _ -> it.setAttachment(CustomMassSave::class.java, null) }
                 it.getAttachment(WeightSynchronizer::class.java)?.let { _ -> it.setAttachment(WeightSynchronizer::class.java, null) }
             }

@@ -19,6 +19,8 @@ import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.api.dimensionId
 import org.valkyrienskies.mod.common.BlockStateInfo
+import org.valkyrienskies.mod.common.ValkyrienSkiesMod
+import org.valkyrienskies.mod.common.allShips
 import org.valkyrienskies.mod.common.config.DimensionParametersResolver
 import org.valkyrienskies.mod.common.shipObjectWorld
 import java.awt.Color
@@ -39,6 +41,14 @@ class TestMode: ExtendableToolgunMode() {
 //            raycastResult.worldHitPos!! + raycastResult.globalNormalDirection!! * 0.5, getQuatFromDir(raycastResult.worldNormalDirection!!), 1f, -1, Color(255, 255, 255, 255), true
 //        ), level.dimensionId)
 //        DimensionParametersResolver.dimensionMap
+
+        val bodies = level.shipObjectWorld.allBodies.toList()
+        val ships = level.allShips.map { it.id }.toSet()
+        for (body in bodies) {
+            if (ships.contains(body.id)) continue
+            level.shipObjectWorld.deleteBody(body)
+        }
+
         val ship = raycastResult.ship as? ServerShip ?: return
         val lship = level.shipObjectWorld.loadedShips.getById(ship.id)
 

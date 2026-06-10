@@ -33,8 +33,7 @@ class DisableCollisionsMode: ExtendableToolgunMode(), DisableCollisionHUD, Disab
     }
 
     fun activateSecondaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult) {
-        if (raycastResult.state.isAir) {return}
-        val ship = level.getShipManagingPos(raycastResult.blockPosition) ?: return
+        val ship = raycastResult.ship ?: return
         level.getAllDisabledCollisionsOfId(ship.id)?.forEach { (id, num) -> for (i in 0 until num) { level.enableCollisionBetween(ship.id, id) } }
     }
 

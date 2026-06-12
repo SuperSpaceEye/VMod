@@ -18,6 +18,7 @@ import net.spaceeye.vmod.vsStuff.PhysRaycastingScheduler
 import org.joml.Quaterniond
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.mod.api.dimensionId
+import org.valkyrienskies.mod.api.vsApi
 import org.valkyrienskies.mod.common.BlockStateInfo
 import org.valkyrienskies.mod.common.ValkyrienSkiesMod
 import org.valkyrienskies.mod.common.allShips
@@ -35,6 +36,13 @@ class TestMode: ExtendableToolgunMode() {
     }
 
     fun activatePrimaryFunction(level: ServerLevel, player: ServerPlayer, raycastResult: RaycastFunctions.RaycastResult)  {
+        ELOG("SHIP SERVER WORLD IS: ${vsApi.getServerShipWorld()!!::class.java.canonicalName}")
+
+        vsApi.physTickEvent.on { event, handler ->
+            ELOG("PHYS LEVEL IS: ${event.world::class.java.canonicalName}")
+            handler.unregister()
+        }
+
         if (raycastResult.state.isAir) {return}
 
 //        RenderingData.server.addRenderer(listOf(), ConeBlockRenderer(

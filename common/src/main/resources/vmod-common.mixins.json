@@ -8,8 +8,10 @@
     "IOWorkerAccessor",
     "LevelChunkMixin",
     "MixinBlockStateInfo",
+    "PhysLevelImpl",
     "RegionFileStorageAccessor",
-    "ShipObjectClientWorldMixin"
+    "ShipObjectClientWorldMixin",
+    "ShipObjectServerWorldMixin"
   ],
   "client": [
     "BlockRenderDispatcherAccessor",

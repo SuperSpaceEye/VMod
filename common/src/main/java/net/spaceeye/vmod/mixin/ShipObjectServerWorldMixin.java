@@ -9,15 +9,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.valkyrienskies.core.api.ships.ServerShip;
-import org.valkyrienskies.core.impl.shadow.Eh;
-import org.valkyrienskies.core.impl.shadow.Et;
+import org.valkyrienskies.core.impl.shadow.Ew;
 import org.valkyrienskies.core.internal.world.chunks.VsiBlockType;
 
 import java.util.Objects;
 
-@Mixin(Et.class)
+@Mixin(Ew.class)
 abstract public class ShipObjectServerWorldMixin {
-//    @Shadow @Final public List<PhysicsEntityServer> l;
 
     //let's hope that this works
     @Inject(method = "deleteShip", at = @At("HEAD"), remap = false)
@@ -45,7 +43,7 @@ abstract public class ShipObjectServerWorldMixin {
     }
 
     @ModifyArg(method = "onSetBlock",
-            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/shadow/Ev;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;DD)V"),
+            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/shadow/Ey;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;DD)V"),
             remap = false,
             index = 6
     )
@@ -57,6 +55,7 @@ abstract public class ShipObjectServerWorldMixin {
         return Objects.requireNonNullElse(mass, vmod$oldMass);
     }
 
+    //VS uses old as balls mixin extras that doesn't have "Args" so i have to do above retardation
 //    @ModifyArgs(
 //            method = "onSetBlock",
 //            at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/impl/shadow/Et;onSetBlock(IIILjava/lang/String;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;Lorg/valkyrienskies/core/internal/world/chunks/VsiBlockType;DD)V"),

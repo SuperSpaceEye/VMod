@@ -37,6 +37,7 @@ import net.spaceeye.vmod.toolgun.clientSettings.ClientSettingsTypes
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.serverSettings.ServerSettingsTypes
 import net.spaceeye.vmod.translate.makeFake
+import net.spaceeye.vmod.utils.RaycastFunctions
 import net.spaceeye.vmod.utils.ServerObjectsHolder
 import net.spaceeye.vmod.utils.closeClientObjects
 import net.spaceeye.vmod.utils.closeServerObjects
@@ -111,6 +112,7 @@ object VM {
         SchemCompatObj
         VSShipyardPruner
         VMToolgun
+        RaycastFunctions
 //        PhysRaycastingScheduler //TODO
         EnvExecutor.runInEnv(Env.CLIENT) { Runnable {
             ScreenWindow

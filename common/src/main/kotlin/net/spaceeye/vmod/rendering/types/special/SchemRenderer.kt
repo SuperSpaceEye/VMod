@@ -1,6 +1,9 @@
 package net.spaceeye.vmod.rendering.types.special
 
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.BufferBuilder
 import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.blaze3d.vertex.VertexBuffer
 import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
@@ -70,7 +73,6 @@ import org.joml.Quaternionf
 import org.joml.Vector3i
 import org.valkyrienskies.core.api.ships.Ship
 import org.valkyrienskies.core.api.ships.properties.ShipId
-import java.awt.Color
 import java.util.function.Supplier
 import kotlin.math.roundToInt
 
@@ -87,7 +89,7 @@ class FakeLevel(
     val defaultFluidState = Fluids.EMPTY.defaultFluidState()
     var offset = Vector3i(0, 0, 0)
 
-    var blockEntities = mutableListOf<Pair<BlockPos, BlockEntity>>()
+    val blockEntities = mutableListOf<Pair<BlockPos, BlockEntity>>()
     private val dummyLightEngine = SchemLightEngine()
     private val fakeChunkSource = DummyChunkSource(this, dummyLightEngine)
 
@@ -95,24 +97,22 @@ class FakeLevel(
         data.forEach { x, y, z, item ->
             try {
                 val state = palette.fromId(item.paletteId) ?: return@forEach
-                if (!state.hasBlockEntity()) {return@forEach}
+                if (!state.hasBlockEntity()) return@forEach
                 val be = (state.block as EntityBlock).newBlockEntity(BlockPos(x, y, z), state) ?: return@forEach
                 be.level = this
                 if (item.extraDataId != -1 && flatTagData.size > item.extraDataId) {
                     be.load(flatTagData[item.extraDataId].copy())
                 }
                 blockEntities.add(BlockPos(x, y, z) to be)
-            } catch (e: Exception) { ELOG("Failed to load block entity\n${e.stackTraceToString()}")
-            } catch (e: Error) { ELOG("Failed to load block entity\n${e.stackTraceToString()}") }
+            } catch (e: Exception) {
+                ELOG("Failed to load block entity\n${e.stackTraceToString()}")
+            }
         }
     }
 
     override fun getShade(direction: Direction, shade: Boolean): Float = 1f
 
-    override fun getBlockTint(
-        blockPos: BlockPos,
-        colorResolver: ColorResolver
-    ): Int {
+    override fun getBlockTint(blockPos: BlockPos, colorResolver: ColorResolver): Int {
         return level.getBlockTint(blockPos, colorResolver)
     }
 
@@ -164,83 +164,19 @@ class FakeLevel(
     override fun getFluidTicks(): LevelTickAccess<Fluid?>? { throw AssertionError("Shouldn't be called")  }
 }
 
-//somehow this is faster than doing things properly
-class FakeBufferBuilder(val source: SchemMultiBufferSource): VertexConsumer {
-    val vertices = mutableListOf<Vertex>()
+class SchemMultiBufferSource : MultiBufferSource {
+    val buffers = mutableMapOf<RenderType, BufferBuilder>()
 
-    var defaultColor = Color(255, 255, 255, 255)
-    var transparency = 0.5f
-
-    var vertexOffset = org.joml.Vector3f(0f, 0f, 0f)
-    var vertexMatrixIndex = 0
-
-    data class Vertex(var x: Float, var y: Float, var z: Float, var red: Float, var green: Float, var blue: Float, var alpha: Float, var texU: Float, var texV: Float, var overlayUV: Int, var lightmapUV: Int, var normalX: Float, var normalY: Float, var normalZ: Float, var matrixIndex: Int) {
-        inline fun apply(buffer: VertexConsumer, transparency: Float, matrices: List<Matrix4f>) {
-            val matrix = matrices[matrixIndex]
-            buffer.vertex(
-                matrix.m00() * x + matrix.m10() * y + matrix.m20() * z + matrix.m30(),
-                matrix.m01() * x + matrix.m11() * y + matrix.m21() * z + matrix.m31(),
-                matrix.m02() * x + matrix.m12() * y + matrix.m22() * z + matrix.m32(),
-                red, green, blue, alpha * transparency, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ)
+    override fun getBuffer(renderType: RenderType): BufferBuilder {
+        return buffers.getOrPut(renderType) {
+            BufferBuilder(renderType.bufferSize()).apply {
+                begin(renderType.mode(), renderType.format())
+            }
         }
     }
 
-    override fun vertex(x: Float, y: Float, z: Float, red: Float, green: Float, blue: Float, alpha: Float, texU: Float, texV: Float, overlayUV: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) {
-        vertices.add(Vertex(x + vertexOffset.x, y + vertexOffset.y, z + vertexOffset.z, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ, vertexMatrixIndex))
-    }
-
-    fun clear() {
-        vertices.clear()
-        unsetDefaultColor()
-    }
-
-    fun apply(buffer: VertexConsumer, matrices: List<Matrix4f>) {
-        var i = 0
-        val size = vertices.size
-        while (i < size) {
-            vertices[i].apply(buffer, transparency, matrices)
-            i++
-        }
-    }
-
-    //liquid renderer uses this
-    lateinit var temp: Vertex
-    override fun vertex(x: Double, y: Double, z: Double): VertexConsumer? {
-        temp = Vertex(
-            x.toFloat() + vertexOffset.x,
-            y.toFloat() + vertexOffset.y,
-            z.toFloat() + vertexOffset.z,
-            defaultColor.red  .toFloat() / 255f,
-            defaultColor.green.toFloat() / 255f,
-            defaultColor.blue .toFloat() / 255f,
-            defaultColor.alpha.toFloat() / 255f,
-            1f, 1f, 0, 0, 1f, 1f, 1f, vertexMatrixIndex)
-        return this
-    }
-    override fun color(red: Int, green: Int, blue: Int, alpha: Int): VertexConsumer? {
-        temp.red   = red  .toFloat() / 255f
-        temp.green = green.toFloat() / 255f
-        temp.blue  = blue .toFloat() / 255f
-        temp.alpha = alpha.toFloat() / 255f
-        return this
-    }
-    override fun uv(u: Float, v: Float): VertexConsumer? { temp.texU = u;temp.texV = v;return this; }
-    override fun overlayCoords(u: Int, v: Int): VertexConsumer? { temp.overlayUV = (u shl 16) or (v and 0xFFFF);return this; }
-    override fun uv2(u: Int, v: Int): VertexConsumer? { temp.lightmapUV = (u shl 16) or (v and 0xFFFF);return this; }
-    override fun normal(x: Float, y: Float, z: Float): VertexConsumer? { temp.normalX = x;temp.normalY = y;temp.normalZ = z;return this; }
-    override fun endVertex() { vertices.add(temp) }
-    override fun defaultColor(defaultR: Int, defaultG: Int, defaultB: Int, defaultA: Int) { defaultColor = Color(defaultR, defaultG, defaultB, defaultA) }
-    override fun unsetDefaultColor() { defaultColor = Color(255, 255, 255, 255) }
-}
-
-class SchemMultiBufferSource: MultiBufferSource {
-    val buffers = mutableMapOf<RenderType,  FakeBufferBuilder>()
-    var transparency: Float = 0.5f
-
-    override fun getBuffer(renderType: RenderType): FakeBufferBuilder {
-        val buf = buffers.getOrPut(renderType) { FakeBufferBuilder(this) }
-        buf.transparency = transparency
-        return buf
+    fun endAll(): Map<RenderType, BufferBuilder.RenderedBuffer> {
+        return buffers.mapValues { (_, builder) -> builder.end() }
     }
 }
 
@@ -257,141 +193,166 @@ class TransparencyWrapperVertexConsumer(val b: VertexConsumer, val transparency:
     override fun vertex(x: Float, y: Float, z: Float, red: Float, green: Float, blue: Float, alpha: Float, texU: Float, texV: Float, overlayUV: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) = b.vertex(x, y, z, red, green, blue, alpha * transparency, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ)
 }
 
+class OffsetVertexConsumer(
+    val delegate: VertexConsumer,
+    val offsetX: Double,
+    val offsetY: Double,
+    val offsetZ: Double
+) : VertexConsumer {
+    override fun vertex(x: Double, y: Double, z: Double): VertexConsumer? {
+        return delegate.vertex(x + offsetX, y + offsetY, z + offsetZ)
+    }
+    override fun color(red: Int, green: Int, blue: Int, alpha: Int) = delegate.color(red, green, blue, alpha)
+    override fun uv(u: Float, v: Float) = delegate.uv(u, v)
+    override fun overlayCoords(u: Int, v: Int) = delegate.overlayCoords(u, v)
+    override fun uv2(u: Int, v: Int) = delegate.uv2(u, v)
+    override fun normal(x: Float, y: Float, z: Float) = delegate.normal(x, y, z)
+    override fun endVertex() = delegate.endVertex()
+    override fun defaultColor(defaultR: Int, defaultG: Int, defaultB: Int, defaultA: Int) = delegate.defaultColor(defaultR, defaultG, defaultB, defaultA)
+    override fun unsetDefaultColor() = delegate.unsetDefaultColor()
+    override fun vertex(x: Float, y: Float, z: Float, red: Float, green: Float, blue: Float, alpha: Float, texU: Float, texV: Float, overlayUV: Int, lightmapUV: Int, normalX: Float, normalY: Float, normalZ: Float) = delegate.vertex(x + offsetX.toFloat(), y + offsetY.toFloat(), z + offsetZ.toFloat(), red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ)
+}
+
 class TransparencyWrapperBufferSource(val source: MultiBufferSource, val transparency: Float): MultiBufferSource {
     override fun getBuffer(renderType: RenderType): VertexConsumer? {
-        //TODO renderType may not support transparency, but i can't just use renderType that supports transparency cuz it doesn't always work
         val buf = source.getBuffer(renderType)
         return TransparencyWrapperVertexConsumer(buf, transparency)
     }
 }
 
-class SchematicRenderer(val schem: IShipSchematic, val transparency: Float, val renderBlockEntities: Boolean = true) {
-    val matrixList: List<Matrix4f>
-    var fakeLevels = mutableListOf<FakeLevel>()
-    val mySources = SchemMultiBufferSource()
+data class ShipRenderData(
+    val renderedBuffers: Map<RenderType, BufferBuilder.RenderedBuffer>,
+    val blockEntities: MutableList<Pair<BlockPos, BlockEntity>>,
+    val localMatrix: Matrix4f,
+    val infoItem: IShipInfo
+) {
+    var vertexBuffers: Map<RenderType, VertexBuffer> = emptyMap()
+}
+
+class SchematicRenderer(
+    val schem: IShipSchematic,
+    val transparency: Float,
+    val renderBlockEntities: Boolean = true
+) {
+    val ships = mutableListOf<ShipRenderData>()
+    private val mySources = SchemMultiBufferSource()
 
     init {
-        val info = schem.info!!.shipsInfo.associate { Pair(it.id, it) }
-        val schem = schem as IShipSchematicDataV1
-
-        mySources.transparency = transparency
-
-        //unpack data without positional info
-        val random = RandomSource.create()
+        val info = schem.info!!.shipsInfo.associate { it.id to it }
+        val schemData = schem as IShipSchematicDataV1
         val level = Minecraft.getInstance().level!!
-        val poseStack = PoseStack()
         val blockRenderer = Minecraft.getInstance().blockRenderer
+        val random = RandomSource.create()
 
-        var matrixIndex = 0
-        matrixList = schem.blockData.map { (shipId, data) ->
+        schemData.blockData.forEach { (shipId, data) ->
             val infoItem = info[shipId]!!
-            val rotationQuat = infoItem.rotation.get(Quaternionf())
+            val flevel = FakeLevel(level, data, schemData.flatTagData, schemData.blockPalette, infoItem)
 
-            val flevel = FakeLevel(level, data, schem.flatTagData, schem.blockPalette, infoItem)
-            fakeLevels.add(flevel)
-
-            //should be in the rotated world frame
-            poseStack.pushPose()
-            poseStack.translate(
-                infoItem.relPositionToCenter.x,
-                infoItem.relPositionToCenter.y,
-                infoItem.relPositionToCenter.z,
-            )
-            //now in the ship frame
-            poseStack.mulPose(rotationQuat)
-            infoItem.shipScale.toFloat().also {
-                poseStack.scale(it, it, it)
+            val poseStack = PoseStack()
+            val offset = infoItem.previousCenterPosition.let {
+                it.sub(it.x.roundToInt().toDouble(), it.y.roundToInt().toDouble(), it.z.roundToInt().toDouble(), JVector3d())
             }
 
             data.forEach { x, y, z, item ->
                 val bpos = BlockPos(x, y, z)
                 val state = flevel.getBlockState(bpos) ?: return@forEach
 
-                val type = when(state.fluidState.isEmpty) {
+                val type = when (state.fluidState.isEmpty) {
                     true -> RenderTypes.schematicBlock.type
                     false -> ItemBlockRenderTypes.getRenderLayer(state.fluidState)
                 }
 
-                val offset = infoItem.previousCenterPosition.let { it.sub(it.x.roundToInt().toDouble(), it.y.roundToInt().toDouble(), it.z.roundToInt().toDouble(), JVector3d()) }
-
                 val buffer = mySources.getBuffer(type)
 
-                buffer.vertexMatrixIndex = matrixIndex
-                buffer.vertexOffset.set(
-                    bpos.x.toDouble() + offset.x,
-                    bpos.y.toDouble() + offset.y,
-                    bpos.z.toDouble() + offset.z,
-                )
-
                 if (state.fluidState.isEmpty) {
-                    blockRenderer.renderBatched(state, bpos, flevel, PoseStack(), buffer, true, random)
+                    poseStack.pushPose()
+                    poseStack.translate(bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
+                    blockRenderer.renderBatched(state, bpos, flevel, poseStack, buffer, true, random)
+                    poseStack.popPose()
                 } else {
-                    //renderLiquid reduces position to a chunk so doing this is easier
                     flevel.offset.set(bpos.x, bpos.y, bpos.z)
-                    blockRenderer.renderLiquid(BlockPos(0, 0, 0), flevel, buffer, state, state.fluidState)
+                    val wrappedBuffer = OffsetVertexConsumer(buffer, bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
+                    blockRenderer.renderLiquid(BlockPos(0, 0, 0), flevel, wrappedBuffer, state, state.fluidState)
                     flevel.offset.set(0, 0, 0)
                 }
             }
-            matrixIndex++
-            poseStack.last().pose().get(Matrix4f()).also { poseStack.popPose() }
+
+            val localMatrix = Matrix4f()
+                .translate(
+                    infoItem.relPositionToCenter.x.toFloat(),
+                    infoItem.relPositionToCenter.y.toFloat(),
+                    infoItem.relPositionToCenter.z.toFloat()
+                )
+                .rotate(infoItem.rotation.get(Quaternionf()))
+                .scale(infoItem.shipScale.toFloat())
+                .translate(offset.x.toFloat(), offset.y.toFloat(), offset.z.toFloat())
+
+            ships.add(ShipRenderData(
+                renderedBuffers = mySources.endAll(),
+                blockEntities = flevel.blockEntities,
+                localMatrix = localMatrix,
+                infoItem = infoItem
+            ))
+        }
+    }
+
+    fun uploadBuffers() {
+        ships.forEach { ship ->
+            ship.vertexBuffers = ship.renderedBuffers.mapValues { (_, renderedBuffer) ->
+                VertexBuffer(VertexBuffer.Usage.STATIC).apply {
+                    bind()
+                    upload(renderedBuffer)
+                    VertexBuffer.unbind()
+                }
+            }
         }
     }
 
     fun render(sources: MultiBufferSource, poseStack: PoseStack) {
-        val matrices = matrixList.map {
-            poseStack.pushPose()
-            poseStack.mulPoseMatrix(it)
-            Matrix4f(poseStack.last().pose()).also { poseStack.popPose() }
-        }
-
-        mySources.buffers.forEach { (type, buf) ->
-            val actualBuffer = sources.getBuffer(type)
-            buf.apply(actualBuffer, matrices)
-        }
-
-        if (!renderBlockEntities) {return}
+        val projection = RenderSystem.getProjectionMatrix()
         val renderer = Minecraft.getInstance().blockEntityRenderDispatcher
-        val sources = TransparencyWrapperBufferSource(sources, transparency)
-        fakeLevels.forEach { level ->
-            val infoItem = level.infoItem
+
+        ships.forEach { ship ->
             poseStack.pushPose()
-            poseStack.translate(
-                infoItem.relPositionToCenter.x,
-                infoItem.relPositionToCenter.y,
-                infoItem.relPositionToCenter.z,
-            )
-            poseStack.mulPose(infoItem.rotation.get(Quaternionf()))
-            infoItem.shipScale.toFloat().also {
-                poseStack.scale(it, it, it)
+            poseStack.mulPoseMatrix(ship.localMatrix)
+
+            RenderSystem.setShaderColor(1f, 1f, 1f, transparency)
+
+            ship.vertexBuffers.forEach { (renderType, vertexBuffer) ->
+                renderType.setupRenderState()
+                val shader = RenderSystem.getShader()
+                vertexBuffer.bind()
+                vertexBuffer.drawWithShader(poseStack.last().pose(), projection, shader)
+                VertexBuffer.unbind()
+                renderType.clearRenderState()
             }
 
-            val toRemove = mutableListOf<Int>()
-            level.blockEntities.forEachIndexed {i, (pos, be) ->
-                val beRenderer = renderer.getRenderer(be) ?: return@forEachIndexed Unit.also { toRemove.add(i) }
-                if (!be.type.isValid(be.blockState)) return@forEachIndexed Unit.also { toRemove.add(i) }
+            RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
 
-                poseStack.pushPose()
+            if (renderBlockEntities) {
+                val wrappedSources = TransparencyWrapperBufferSource(sources, transparency)
+                val toRemove = mutableListOf<Int>()
+                ship.blockEntities.forEachIndexed { i, (pos, be) ->
+                    val beRenderer = renderer.getRenderer(be) ?: run { toRemove.add(i); return@forEachIndexed }
+                    if (!be.type.isValid(be.blockState)) { toRemove.add(i); return@forEachIndexed }
 
-                val offset = infoItem.previousCenterPosition.let { it.sub(it.x.roundToInt().toDouble(), it.y.roundToInt().toDouble(), it.z.roundToInt().toDouble(), JVector3d()) }
+                    poseStack.pushPose()
+                    poseStack.translate(pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble())
 
-                poseStack.translate(
-                    pos.x.toDouble() + offset.x,
-                    pos.y.toDouble() + offset.y,
-                    pos.z.toDouble() + offset.z,
-                )
-
-                try {
-                    PoseStack().also {
-                        it.setIdentity()
-                        it.mulPoseMatrix(poseStack.last().pose())
-                        beRenderer.render(be, 0f, it, sources, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY)
+                    try {
+                        val bePose = PoseStack()
+                        bePose.setIdentity()
+                        bePose.mulPoseMatrix(poseStack.last().pose())
+                        beRenderer.render(be, 0f, bePose, wrappedSources, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY)
+                    } catch (e: Exception) {
+                        WLOG("Failed to render block entity\n${e.stackTraceToString()}")
+                        toRemove.add(i)
                     }
-                //TODO maybe i shouldn't just log everything
-                } catch (e: Exception) { WLOG("Failed to render block entity\n${e.stackTraceToString()}"); toRemove.add(i)
-                } catch (e: Error) { WLOG("Failed to render block entity\n${e.stackTraceToString()}"); toRemove.add(i) }
-                poseStack.popPose()
+                    poseStack.popPose()
+                }
+                toRemove.asReversed().forEach { ship.blockEntities.removeAt(it) }
             }
-            toRemove.reversed().forEach { level.blockEntities.removeAt(it) }
+
             poseStack.popPose()
         }
     }
@@ -404,17 +365,23 @@ open class SchemRenderer(
     var renderBlockEntities: Boolean,
     var doRender: () -> Boolean = { VMToolgun.client.currentMode is SchemMode && VMToolgun.client.playerIsUsingToolgun() }
 ): BlockRenderer() {
-    var renderer: SchematicRenderer? = null
+    @Volatile var renderer: SchematicRenderer? = null
 
     init { init() }
 
     open fun init() {
-        Thread { renderer = SchematicRenderer(schem, transparency, renderBlockEntities) }.start()
+        Thread {
+            val baked = SchematicRenderer(schem, transparency, renderBlockEntities)
+            Minecraft.getInstance().execute {
+                baked.uploadBuffers()
+                renderer = baked
+            }
+        }.start()
     }
 
     override fun renderBlockData(poseStack: PoseStack, camera: Camera, sources: MultiBufferSource, timestamp: Long) {
-        if (!doRender()) {return}
-        if (renderer == null) {return}
+        if (!doRender()) return
+        val r = renderer ?: return
         val level = Minecraft.getInstance().level!!
 
         val raycastResult = RaycastFunctions.renderRaycast(
@@ -432,6 +399,11 @@ open class SchemRenderer(
     }
 
     open fun renderBlocks(poseStack: PoseStack, sources: MultiBufferSource, camera: Camera, pos: Vector3d, worldNormal: Vector3d, rotationAroundNormal: Double) {
+        val r = renderer ?: return
+        renderBlocksInternal(poseStack, sources, camera, pos, worldNormal, rotationAroundNormal, r)
+    }
+
+    private fun renderBlocksInternal(poseStack: PoseStack, sources: MultiBufferSource, camera: Camera, pos: Vector3d, worldNormal: Vector3d, rotationAroundNormal: Double, renderer: SchematicRenderer) {
         val rotation = Quaterniond()
             .mul(Quaterniond(AxisAngle4d(rotationAroundNormal, worldNormal.toJomlVector3d())))
             .mul(getQuatFromDir(worldNormal))
@@ -443,14 +415,13 @@ open class SchemRenderer(
         poseStack.translate(pos.x, pos.y, pos.z)
         poseStack.mulPose(rotation)
 
-        renderer?.render(sources, poseStack)
+        renderer.render(sources, poseStack)
 
         poseStack.popPose()
     }
 
-    // only for internal use on client
-    override fun serialize(): FriendlyByteBuf { throw AssertionError("Shouldn't be serialized") }
+    override fun serialize(): FriendlyByteBuf = throw AssertionError("Shouldn't be serialized")
     override fun deserialize(buf: FriendlyByteBuf) { throw AssertionError("Shouldn't be deserialized") }
-    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? { throw AssertionError("Shouldn't be copied") }
+    override fun copy(oldToNew: Map<ShipId, Ship>, centerPositions: Map<ShipId, Pair<Vector3d, Vector3d>>): BaseRenderer? = throw AssertionError("Shouldn't be copied")
     override fun scaleBy(by: Double) { throw AssertionError("Shouldn't be scaled") }
 }

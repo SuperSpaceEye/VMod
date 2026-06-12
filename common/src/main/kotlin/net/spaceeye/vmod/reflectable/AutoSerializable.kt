@@ -15,6 +15,7 @@ import net.spaceeye.vmod.reflectable.ByteSerializableItem.typeToSerDeser
 import net.spaceeye.vmod.utils.*
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.joml.Quaterniond
+import org.joml.Vector3i
 import org.valkyrienskies.core.util.readQuatd
 import org.valkyrienskies.core.util.writeQuatd
 import java.awt.Color
@@ -77,6 +78,24 @@ interface AutoSerializable: Serializable, ReflectableObject {
     override fun getBuffer() = super.getBuffer()
 }
 
+internal fun resolveElementSerializer(clazz: KClass<*>): ByteSerializeFn {
+    return when {
+        clazz.java.isEnum -> { value, buf -> buf.writeEnum(value as Enum<*>) }
+        else -> typeToSerDeser[clazz]?.first ?: throw AssertionError("Can't serialize list element ${clazz.simpleName}")
+    }
+}
+
+internal fun resolveElementDeserializer(clazz: KClass<*>): (FriendlyByteBuf) -> Any {
+    return when {
+        clazz.java.isEnum -> { buf -> buf.readEnum(clazz.java as Class<out Enum<*>>) }
+        else -> {
+            @Suppress("UNCHECKED_CAST")
+            (ByteSerializableItem.typeToSerDeser[clazz]?.second as? (FriendlyByteBuf) -> Any)
+                ?: throw AssertionError("Can't deserialize list element ${clazz.simpleName}")
+        }
+    }
+}
+
 fun ReflectableObject.serialize(buf: FriendlyByteBuf? = null) = (buf ?: FriendlyByteBuf(Unpooled.buffer(64))).also { buf ->
     getAllReflectableItems().forEach {
         (it.metadata["byteSerialize"] as? ByteSerializeFn)?.invoke(it.it!!, buf)
@@ -116,14 +135,37 @@ fun <T: Serializable> KClass<T>.constructor(buf: FriendlyByteBuf? = null): T {
         return this.primaryConstructor!!.call()
     }
 
-    val members = order.map {item -> this.memberProperties.find { it.name == item.name }!! }
+    val members = order.map { item -> this.memberProperties.find { it.name == item.name }!! }
 
-    val deserializers = members.map {
-        val clazz = it.returnType.jvmErasure
-        if (!clazz.java.isEnum) {
-            typeToSerDeser[clazz]!!.second
-        } else {
-            {buf -> buf.readEnum(clazz.java as Class<out Enum<*>>)}
+    val deserializers = members.map { property ->
+        val ktype = property.returnType
+        val clazz = ktype.jvmErasure
+
+        when {
+            clazz == List::class || clazz == MutableList::class -> {
+                val elementType = ktype.arguments[0].type
+                    ?: throw AssertionError("Star-projected list type not supported for ${property.name}")
+                val elementClassifier = elementType.classifier as? KClass<*>
+                    ?: throw AssertionError("List element classifier not resolved for ${property.name}")
+                val isNullable = elementType.isMarkedNullable
+                val elementDeser = resolveElementDeserializer(elementClassifier);
+
+                { buf: FriendlyByteBuf ->
+                    val size = buf.readInt()
+                    val list = List(size) {
+                        if (isNullable && !buf.readBoolean()) null
+                        else elementDeser(buf)
+                    }
+                    if (clazz == MutableList::class) list.toMutableList() else list
+                }
+            }
+            clazz.java.isEnum -> {
+                { buf -> buf.readEnum(clazz.java as Class<out Enum<*>>) }
+            }
+            else -> {
+                typeToSerDeser[clazz]?.second
+                    ?: throw AssertionError("Can't deserialize ${clazz.simpleName}")
+            }
         }
     }
 
@@ -167,6 +209,8 @@ object ByteSerializableItem {
         rsi(Long::class, {it, buf -> buf.writeLong(it)}) {buf -> buf.readLong()}
         rsi(UUID::class, {it, buf -> buf.writeUUID(it)}) {buf -> buf.readUUID()}
         rsi(Int::class, {it, buf -> buf.writeInt(it)}) {buf -> buf.readInt()}
+
+        rsi(JVector3i::class, {it, buf -> buf.writeInt(it.x); buf.writeInt(it.y); buf.writeInt(it.z)}) {buf -> Vector3i(buf.readInt(), buf.readInt(), buf.readInt()) }
 
         rsi(IntArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeInt(it)}}) {buf -> buf.readCollection({mutableListOf<Int>()}) {buf.readInt()}.toIntArray()}
         rsi(LongArray::class, {it, buf -> buf.writeCollection(it.asList()){buf, it -> buf.writeLong(it)}}) {buf -> buf.readCollection({mutableListOf<Long>()}) {buf.readLong()}.toLongArray()}
@@ -212,5 +256,185 @@ object ByteSerializableItem {
         }
 
         return ReflectableItemDelegate(pos, default, makeByteSerDeser(verification, customSerialize as (Any, FriendlyByteBuf) -> Unit, customDeserialize), getWrapper = if (verifyOnGet) verification else null)
+    }
+
+    @JvmStatic
+    fun <T : Any> getList(
+        pos: Int,
+        default: List<T>,
+        elementDefault: T,
+        verification: (List<T>) -> List<T> = { it }
+    ): ReflectableItemDelegate<List<T>> = getList(pos, default, elementDefault, false, verification)
+
+    @JvmStatic
+    fun <T : Any> getList(
+        pos: Int,
+        default: List<T>,
+        elementDefault: T,
+        verifyOnGet: Boolean,
+        verification: (List<T>) -> List<T> = { it }
+    ): ReflectableItemDelegate<List<T>> {
+        val elementClazz = elementDefault::class
+        val elementSer = resolveElementSerializer(elementClazz)
+        val elementDeser = resolveElementDeserializer(elementClazz)
+
+        val listSer: ByteSerializeFn = { value, buf ->
+            val list = value as List<T>
+            buf.writeInt(list.size)
+            list.forEach { elementSer(it, buf) }
+        }
+
+        val listDeser: ByteDeserializeFn<List<T>> = { buf ->
+            val size = buf.readInt()
+            List(size) { elementDeser(buf) as T }
+        }
+
+        return ReflectableItemDelegate(
+            pos, default,
+            metadata = mutableMapOf(
+                "byteSerialize" to listSer,
+                "byteDeserialize" to listDeser,
+                "verification" to verification
+            ),
+            getWrapper = if (verifyOnGet) verification else null
+        )
+    }
+
+    @JvmStatic
+    fun <T : Any> getMutableList(
+        pos: Int,
+        default: MutableList<T>,
+        elementDefault: T,
+        verification: (MutableList<T>) -> MutableList<T> = { it }
+    ): ReflectableItemDelegate<MutableList<T>> = getMutableList(pos, default, elementDefault, false, verification)
+
+    @JvmStatic
+    fun <T : Any> getMutableList(
+        pos: Int,
+        default: MutableList<T>,
+        elementDefault: T,
+        verifyOnGet: Boolean,
+        verification: (MutableList<T>) -> MutableList<T> = { it }
+    ): ReflectableItemDelegate<MutableList<T>> {
+        val elementClazz = elementDefault::class
+        val elementSer = resolveElementSerializer(elementClazz)
+        val elementDeser = resolveElementDeserializer(elementClazz)
+
+        val listSer: ByteSerializeFn = { value, buf ->
+            val list = value as List<T>
+            buf.writeInt(list.size)
+            list.forEach { elementSer(it, buf) }
+        }
+
+        val listDeser: ByteDeserializeFn<MutableList<T>> = { buf ->
+            val size = buf.readInt()
+            MutableList(size) { elementDeser(buf) as T }
+        }
+
+        return ReflectableItemDelegate(
+            pos, default,
+            metadata = mutableMapOf(
+                "byteSerialize" to listSer,
+                "byteDeserialize" to listDeser,
+                "verification" to verification
+            ),
+            getWrapper = if (verifyOnGet) verification else null
+        )
+    }
+
+// --- Nullable lists ---
+
+    @JvmStatic
+    fun <T : Any> getNullableList(
+        pos: Int,
+        default: List<T?>,
+        elementDefault: T,
+        verification: (List<T?>) -> List<T?> = { it }
+    ): ReflectableItemDelegate<List<T?>> = getNullableList(pos, default, elementDefault, false, verification)
+
+    @JvmStatic
+    fun <T : Any> getNullableList(
+        pos: Int,
+        default: List<T?>,
+        elementDefault: T,
+        verifyOnGet: Boolean,
+        verification: (List<T?>) -> List<T?> = { it }
+    ): ReflectableItemDelegate<List<T?>> {
+        val elementClazz = elementDefault::class
+        val elementSer = resolveElementSerializer(elementClazz)
+        val elementDeser = resolveElementDeserializer(elementClazz)
+
+        val listSer: ByteSerializeFn = { value, buf ->
+            val list = value as List<T?>
+            buf.writeInt(list.size)
+            list.forEach { element ->
+                buf.writeBoolean(element != null)
+                if (element != null) elementSer(element, buf)
+            }
+        }
+
+        val listDeser: ByteDeserializeFn<List<T?>> = { buf ->
+            val size = buf.readInt()
+            List(size) {
+                if (buf.readBoolean()) elementDeser(buf) as T else null
+            }
+        }
+
+        return ReflectableItemDelegate(
+            pos, default,
+            metadata = mutableMapOf(
+                "byteSerialize" to listSer,
+                "byteDeserialize" to listDeser,
+                "verification" to verification
+            ),
+            getWrapper = if (verifyOnGet) verification else null
+        )
+    }
+
+    @JvmStatic
+    fun <T : Any> getNullableMutableList(
+        pos: Int,
+        default: MutableList<T?>,
+        elementDefault: T,
+        verification: (MutableList<T?>) -> MutableList<T?> = { it }
+    ): ReflectableItemDelegate<MutableList<T?>> = getNullableMutableList(pos, default, elementDefault, false, verification)
+
+    @JvmStatic
+    fun <T : Any> getNullableMutableList(
+        pos: Int,
+        default: MutableList<T?>,
+        elementDefault: T,
+        verifyOnGet: Boolean,
+        verification: (MutableList<T?>) -> MutableList<T?> = { it }
+    ): ReflectableItemDelegate<MutableList<T?>> {
+        val elementClazz = elementDefault::class
+        val elementSer = resolveElementSerializer(elementClazz)
+        val elementDeser = resolveElementDeserializer(elementClazz)
+
+        val listSer: ByteSerializeFn = { value, buf ->
+            val list = value as List<T?>
+            buf.writeInt(list.size)
+            list.forEach { element ->
+                buf.writeBoolean(element != null)
+                if (element != null) elementSer(element, buf)
+            }
+        }
+
+        val listDeser: ByteDeserializeFn<MutableList<T?>> = { buf ->
+            val size = buf.readInt()
+            MutableList(size) {
+                if (buf.readBoolean()) elementDeser(buf) as T else null
+            }
+        }
+
+        return ReflectableItemDelegate(
+            pos, default,
+            metadata = mutableMapOf(
+                "byteSerialize" to listSer,
+                "byteDeserialize" to listDeser,
+                "verification" to verification
+            ),
+            getWrapper = if (verifyOnGet) verification else null
+        )
     }
 }

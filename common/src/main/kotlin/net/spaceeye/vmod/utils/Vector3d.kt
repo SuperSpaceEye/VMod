@@ -29,6 +29,8 @@ fun FriendlyByteBuf.readVector3d(): Vector3d {
     )
 }
 
+fun JVector3d.toVMod() = Vector3d(this)
+
 class Vector3d(x:Number, y:Number, z:Number) {
     @JvmField var x = x.toDouble()
     @JvmField var y = y.toDouble()

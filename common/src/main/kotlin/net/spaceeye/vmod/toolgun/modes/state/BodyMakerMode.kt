@@ -4,6 +4,9 @@ import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.level.block.state.BlockState
+import net.spaceeye.vmod.rendering.RenderingData
+import net.spaceeye.vmod.rendering.types.ComplexBodyRenderer
 import net.spaceeye.vmod.toolgun.modes.ExtendableToolgunMode
 import net.spaceeye.vmod.toolgun.modes.ToolgunModes
 import net.spaceeye.vmod.toolgun.modes.extensions.BasicConnectionExtension
@@ -11,6 +14,7 @@ import net.spaceeye.vmod.toolgun.modes.util.SimpleHUD
 import net.spaceeye.vmod.translate.makeFake
 import net.spaceeye.vmod.utils.JVector3d
 import net.spaceeye.vmod.utils.RaycastFunctions
+import net.spaceeye.vmod.utils.toVMod
 import org.joml.Matrix3d
 import org.joml.Quaterniond
 import org.joml.Vector3d
@@ -167,6 +171,7 @@ class BodyMakerMode: ExtendableToolgunMode(), SimpleHUD {
 
         val chunkData = mutableMapOf<Vector3i, MutableList<Pair<Vector3i,  Pair<Double, VsiBlockType>>>>()
         val voxels = mutableListOf<Voxel>()
+        val forRendering = mutableListOf<Pair<Vector3i, BlockState>>()
         var mass = 0.0
 
         aabb.forEach { x, y, z ->
@@ -179,6 +184,8 @@ class BodyMakerMode: ExtendableToolgunMode(), SimpleHUD {
             val x = x - min.x
             val y = y - min.y
             val z = z - min.z
+
+            forRendering.add(Vector3i(x, y, z) to state)
 
             voxels.add(Voxel(x, y, z, type.first))
             mass += type.first
@@ -214,6 +221,12 @@ class BodyMakerMode: ExtendableToolgunMode(), SimpleHUD {
         ))
 
         updates.forEach { body.applyVoxelSegmentUpdate(0, it) }
+
+        RenderingData.server.addRenderer(listOf(body.id), ComplexBodyRenderer(
+            body.id,
+            forRendering,
+            COM.toVMod()
+        ), body.dimension)
     }
 
     companion object {

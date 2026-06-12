@@ -45,7 +45,8 @@ object RaycastFunctions {
     fun fromPhysRaycast(uuid: UUID): RaycastResult? {
         synchronized(raycastQueries) {
             for ((_, res) in raycastQueries) {
-                return res[uuid]?.second ?: continue
+                val mpair = res[uuid] ?: continue
+                return mpair.second
             }
             return null
         }
@@ -56,6 +57,13 @@ object RaycastFunctions {
             server.playerList.players.forEach { player ->
                 raycastQueries.getOrPut(player.level().dimensionId) {ConcurrentHashMap()}[player.uuid] = MPair(
                     PhysRaycastQuery(player.eyePosition.toJOML(), player.lookAngle.toJOML(), 100.0), null)
+
+                val existing = raycastQueries.getOrPut(player.level().dimensionId) {ConcurrentHashMap()}[player.uuid]
+                if (existing != null) {
+                    existing.first = PhysRaycastQuery(player.eyePosition.toJOML(), player.lookAngle.toJOML(), 100.0)
+                } else {
+                    raycastQueries.getOrPut(player.level().dimensionId) {ConcurrentHashMap()}[player.uuid] = MPair(PhysRaycastQuery(player.eyePosition.toJOML(), player.lookAngle.toJOML(), 100.0), null)
+                }
             }
         }
         vsApi.physTickEvent.on { it -> val level = it.world
@@ -65,13 +73,12 @@ object RaycastFunctions {
             for (id in ids) {
                 val mpair = queries[id] ?: continue
                 val query = mpair.first
-                val result = level.rayCast(query.pos, query.direction, query.length) ?: run {
-                    mpair.second = null
-//                    println("NULL WTF ${level.dimension}")
-                    return@on
-                }
+                val result = level.rayCast(query.pos, query.direction, query.length)
 
-//                println("NOT NULL ${level.dimension} ${result.hitBody.id}")
+                if (result == null) {
+                    mpair.second = null
+                    continue
+                }
 
                 val pos = Vector3d(query.pos)
                 val dir = Vector3d(query.direction)

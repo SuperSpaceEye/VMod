@@ -2,6 +2,7 @@ package net.spaceeye.vmod.reflectable
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.jetbrains.annotations.ApiStatus
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
@@ -68,9 +69,35 @@ interface ReflectableObject {
             val order = this::class.primaryConstructor?.parameters ?: listOf()
             val orderNames = order.map { it.name!! }
             val members = orderNames.map { item -> this::class.memberProperties.find { it.name == item }!! }
-            val delegates = members
-                .map { it -> ReflectableItemDelegate(-1, it.call(this)!!) }
-                .filter(filterBy)
+            val delegates = members.map { property ->
+                val value = property.call(this)!!
+                val delegate = ReflectableItemDelegate(-1, value)
+                delegate.cachedName = property.name
+
+                val ktype = property.returnType
+                when (ktype.classifier) {
+                    List::class, MutableList::class -> {
+                        val elementType = ktype.arguments[0].type
+                            ?: throw AssertionError("Star-projected list type not supported for ${property.name}")
+                        val elementClassifier = elementType.classifier as? KClass<*>
+                            ?: throw AssertionError("List element classifier not resolved for ${property.name}")
+                        val isNullable = elementType.isMarkedNullable
+
+                        val elementSer = resolveElementSerializer(elementClassifier)
+
+                        val listSer: ByteSerializeFn = { v, buf ->
+                            val list = v as List<*>
+                            buf.writeInt(list.size)
+                            list.forEach { element ->
+                                if (isNullable) buf.writeBoolean(element != null)
+                                if (element != null) elementSer(element, buf)
+                            }
+                        }
+                        delegate.metadata["byteSerialize"] = listSer
+                    }
+                }
+                delegate
+            }.filter(filterBy)
 
             toReturn.addAll(delegates)
         }

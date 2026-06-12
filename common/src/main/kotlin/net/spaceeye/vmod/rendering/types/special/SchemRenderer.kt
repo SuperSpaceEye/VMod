@@ -81,7 +81,6 @@ class FakeLevel(
     val data: ChunkyBlockData<BlockItem>,
     flatTagData: List<CompoundTag>,
     val palette: IBlockStatePalette,
-    val infoItem: IShipInfo
 ): Level(
     null, level.dimension(), level.registryAccess(), level.dimensionTypeRegistration(), Supplier{level.profiler}, true, false, 0L, 0
 ) {
@@ -220,142 +219,155 @@ class TransparencyWrapperBufferSource(val source: MultiBufferSource, val transpa
     }
 }
 
-data class ShipRenderData(
+data class BakedBlockGhost(
     val renderedBuffers: Map<RenderType, BufferBuilder.RenderedBuffer>,
     val blockEntities: MutableList<Pair<BlockPos, BlockEntity>>,
-    val localMatrix: Matrix4f,
-    val infoItem: IShipInfo
+    val localMatrix: Matrix4f
 ) {
     var vertexBuffers: Map<RenderType, VertexBuffer> = emptyMap()
+
+    fun upload() {
+        vertexBuffers = renderedBuffers.mapValues { (_, buf) ->
+            VertexBuffer(VertexBuffer.Usage.STATIC).apply {
+                bind(); upload(buf); VertexBuffer.unbind()
+            }
+        }
+    }
+
+    fun render(
+        poseStack: PoseStack,
+        sources: MultiBufferSource,
+        transparency: Float,
+        renderBlockEntities: Boolean
+    ) {
+        poseStack.pushPose()
+        poseStack.mulPoseMatrix(localMatrix)
+        val projection = RenderSystem.getProjectionMatrix()
+
+        RenderSystem.setShaderColor(1f, 1f, 1f, transparency)
+        vertexBuffers.forEach { (type, vbo) ->
+            type.setupRenderState()
+            vbo.bind()
+            vbo.drawWithShader(poseStack.last().pose(), projection, RenderSystem.getShader())
+            VertexBuffer.unbind()
+            type.clearRenderState()
+        }
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
+
+        if (!renderBlockEntities) return poseStack.popPose()
+
+        val wrapped = TransparencyWrapperBufferSource(sources, transparency)
+        val toRemove = mutableListOf<Int>()
+        val dispatcher = Minecraft.getInstance().blockEntityRenderDispatcher
+
+        blockEntities.forEachIndexed { i, (pos, be) ->
+            val r = dispatcher.getRenderer(be) ?: run { toRemove.add(i); return@forEachIndexed }
+            if (!be.type.isValid(be.blockState)) { toRemove.add(i); return@forEachIndexed }
+
+            poseStack.pushPose()
+            poseStack.translate(pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble())
+            try {
+                val bePose = PoseStack().apply {
+                    setIdentity()
+                    mulPoseMatrix(poseStack.last().pose())
+                }
+                r.render(be, 0f, bePose, wrapped, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY)
+            } catch (e: Exception) {
+                WLOG("Failed to render block entity\n${e.stackTraceToString()}")
+                toRemove.add(i)
+            }
+            poseStack.popPose()
+        }
+        toRemove.asReversed().forEach { blockEntities.removeAt(it) }
+
+        poseStack.popPose()
+    }
 }
 
-class SchematicRenderer(
-    val schem: IShipSchematic,
-    val transparency: Float,
-    val renderBlockEntities: Boolean = true
-) {
-    val ships = mutableListOf<ShipRenderData>()
-    private val mySources = SchemMultiBufferSource()
-
-    init {
-        val info = schem.info!!.shipsInfo.associate { it.id to it }
-        val schemData = schem as IShipSchematicDataV1
-        val level = Minecraft.getInstance().level!!
+object BlockGhostBaker {
+    fun bake(
+        fakeLevel: Level,
+        positions: Iterable<BlockPos>,
+        localMatrix: Matrix4f,
+    ): BakedBlockGhost {
+        val sources = SchemMultiBufferSource()
+        val poseStack = PoseStack()
         val blockRenderer = Minecraft.getInstance().blockRenderer
         val random = RandomSource.create()
 
-        schemData.blockData.forEach { (shipId, data) ->
-            val infoItem = info[shipId]!!
-            val flevel = FakeLevel(level, data, schemData.flatTagData, schemData.blockPalette, infoItem)
+        positions.forEach { bpos ->
+            val state = fakeLevel.getBlockState(bpos) ?: return@forEach
+            if (state.isAir) return@forEach
 
-            val poseStack = PoseStack()
-            val offset = infoItem.previousCenterPosition.let {
+            val type = when (state.fluidState.isEmpty) {
+                true -> RenderTypes.schematicBlock.type
+                false -> ItemBlockRenderTypes.getRenderLayer(state.fluidState)
+            }
+            val buffer = sources.getBuffer(type)
+
+            if (state.fluidState.isEmpty) {
+                poseStack.pushPose()
+                poseStack.translate(bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
+                blockRenderer.renderBatched(state, bpos, fakeLevel, poseStack, buffer, true, random)
+                poseStack.popPose()
+            } else {
+                // Fluid hack: if the level supports offsetting, use it so renderLiquid
+                // can sample neighbors correctly from the fake level.
+                if (fakeLevel is FakeLevel) {
+                    fakeLevel.offset.set(bpos.x, bpos.y, bpos.z)
+                    val wrapped = OffsetVertexConsumer(buffer, bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
+                    blockRenderer.renderLiquid(BlockPos(0, 0, 0), fakeLevel, wrapped, state, state.fluidState)
+                    fakeLevel.offset.set(0, 0, 0)
+                } else {
+                    // Fallback for non-offsettable levels. Fluid connections may look wrong,
+                    // but it's better than nothing. If you care, make your body fake level
+                    // support the same offset trick.
+                    val wrapped = OffsetVertexConsumer(buffer, bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
+                    blockRenderer.renderLiquid(bpos, fakeLevel, wrapped, state, state.fluidState)
+                }
+            }
+        }
+
+        val blockEntities = if (fakeLevel is FakeLevel) fakeLevel.blockEntities else mutableListOf()
+        return BakedBlockGhost(sources.endAll(), blockEntities, localMatrix)
+    }
+}
+
+class SchematicRenderer(
+    schem: IShipSchematic,
+    val transparency: Float,
+    val renderBlockEntities: Boolean = true
+) {
+    val ships = mutableListOf<BakedBlockGhost>()
+
+    init {
+        val info = schem.info!!.shipsInfo.associate { it.id to it }
+        val data = schem as IShipSchematicDataV1
+        val level = Minecraft.getInstance().level!!
+
+        data.blockData.forEach { (shipId, chunkData) ->
+            val item = info[shipId]!!
+            val fake = FakeLevel(level, chunkData, data.flatTagData, data.blockPalette)
+
+            val offset = item.previousCenterPosition.let {
                 it.sub(it.x.roundToInt().toDouble(), it.y.roundToInt().toDouble(), it.z.roundToInt().toDouble(), JVector3d())
             }
 
-            data.forEach { x, y, z, item ->
-                val bpos = BlockPos(x, y, z)
-                val state = flevel.getBlockState(bpos) ?: return@forEach
-
-                val type = when (state.fluidState.isEmpty) {
-                    true -> RenderTypes.schematicBlock.type
-                    false -> ItemBlockRenderTypes.getRenderLayer(state.fluidState)
-                }
-
-                val buffer = mySources.getBuffer(type)
-
-                if (state.fluidState.isEmpty) {
-                    poseStack.pushPose()
-                    poseStack.translate(bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
-                    blockRenderer.renderBatched(state, bpos, flevel, poseStack, buffer, true, random)
-                    poseStack.popPose()
-                } else {
-                    flevel.offset.set(bpos.x, bpos.y, bpos.z)
-                    val wrappedBuffer = OffsetVertexConsumer(buffer, bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
-                    blockRenderer.renderLiquid(BlockPos(0, 0, 0), flevel, wrappedBuffer, state, state.fluidState)
-                    flevel.offset.set(0, 0, 0)
-                }
-            }
+            val positions = mutableListOf<BlockPos>()
+            chunkData.forEach { x, y, z, _ -> positions.add(BlockPos(x, y, z)) }
 
             val localMatrix = Matrix4f()
-                .translate(
-                    infoItem.relPositionToCenter.x.toFloat(),
-                    infoItem.relPositionToCenter.y.toFloat(),
-                    infoItem.relPositionToCenter.z.toFloat()
-                )
-                .rotate(infoItem.rotation.get(Quaternionf()))
-                .scale(infoItem.shipScale.toFloat())
+                .translate(item.relPositionToCenter.x.toFloat(), item.relPositionToCenter.y.toFloat(), item.relPositionToCenter.z.toFloat())
+                .rotate(item.rotation.get(Quaternionf()))
+                .scale(item.shipScale.toFloat())
                 .translate(offset.x.toFloat(), offset.y.toFloat(), offset.z.toFloat())
 
-            ships.add(ShipRenderData(
-                renderedBuffers = mySources.endAll(),
-                blockEntities = flevel.blockEntities,
-                localMatrix = localMatrix,
-                infoItem = infoItem
-            ))
+            ships.add(BlockGhostBaker.bake(fake, positions, localMatrix))
         }
     }
 
-    fun uploadBuffers() {
-        ships.forEach { ship ->
-            ship.vertexBuffers = ship.renderedBuffers.mapValues { (_, renderedBuffer) ->
-                VertexBuffer(VertexBuffer.Usage.STATIC).apply {
-                    bind()
-                    upload(renderedBuffer)
-                    VertexBuffer.unbind()
-                }
-            }
-        }
-    }
-
-    fun render(sources: MultiBufferSource, poseStack: PoseStack) {
-        val projection = RenderSystem.getProjectionMatrix()
-        val renderer = Minecraft.getInstance().blockEntityRenderDispatcher
-
-        ships.forEach { ship ->
-            poseStack.pushPose()
-            poseStack.mulPoseMatrix(ship.localMatrix)
-
-            RenderSystem.setShaderColor(1f, 1f, 1f, transparency)
-
-            ship.vertexBuffers.forEach { (renderType, vertexBuffer) ->
-                renderType.setupRenderState()
-                val shader = RenderSystem.getShader()
-                vertexBuffer.bind()
-                vertexBuffer.drawWithShader(poseStack.last().pose(), projection, shader)
-                VertexBuffer.unbind()
-                renderType.clearRenderState()
-            }
-
-            RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
-
-            if (renderBlockEntities) {
-                val wrappedSources = TransparencyWrapperBufferSource(sources, transparency)
-                val toRemove = mutableListOf<Int>()
-                ship.blockEntities.forEachIndexed { i, (pos, be) ->
-                    val beRenderer = renderer.getRenderer(be) ?: run { toRemove.add(i); return@forEachIndexed }
-                    if (!be.type.isValid(be.blockState)) { toRemove.add(i); return@forEachIndexed }
-
-                    poseStack.pushPose()
-                    poseStack.translate(pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble())
-
-                    try {
-                        val bePose = PoseStack()
-                        bePose.setIdentity()
-                        bePose.mulPoseMatrix(poseStack.last().pose())
-                        beRenderer.render(be, 0f, bePose, wrappedSources, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY)
-                    } catch (e: Exception) {
-                        WLOG("Failed to render block entity\n${e.stackTraceToString()}")
-                        toRemove.add(i)
-                    }
-                    poseStack.popPose()
-                }
-                toRemove.asReversed().forEach { ship.blockEntities.removeAt(it) }
-            }
-
-            poseStack.popPose()
-        }
-    }
+    fun upload() = ships.forEach { it.upload() }
+    fun render(sources: MultiBufferSource, poseStack: PoseStack) = ships.forEach { it.render(poseStack, sources, transparency, renderBlockEntities) }
 }
 
 open class SchemRenderer(
@@ -373,7 +385,7 @@ open class SchemRenderer(
         Thread {
             val baked = SchematicRenderer(schem, transparency, renderBlockEntities)
             Minecraft.getInstance().execute {
-                baked.uploadBuffers()
+                baked.upload()
                 renderer = baked
             }
         }.start()

@@ -21,6 +21,7 @@ object RenderingTypes: Registry<BaseRenderer>(false) {
         register(TubeRopeRenderer::class)
         register(PhysEntityBlockRenderer::class)
         register(A2BRendererAnimated::class)
+        register(ComplexBodyRenderer::class); ComplexBodyRenderer
 
         register(DebugPointRenderer::class)
         register(RainbowRenderer::class)

@@ -55,9 +55,6 @@ object RaycastFunctions {
     init {
         PersistentEvents.serverOnTick.on { (server), _ ->
             server.playerList.players.forEach { player ->
-                raycastQueries.getOrPut(player.level().dimensionId) {ConcurrentHashMap()}[player.uuid] = MPair(
-                    PhysRaycastQuery(player.eyePosition.toJOML(), player.lookAngle.toJOML(), 100.0), null)
-
                 val existing = raycastQueries.getOrPut(player.level().dimensionId) {ConcurrentHashMap()}[player.uuid]
                 if (existing != null) {
                     existing.first = PhysRaycastQuery(player.eyePosition.toJOML(), player.lookAngle.toJOML(), 100.0)

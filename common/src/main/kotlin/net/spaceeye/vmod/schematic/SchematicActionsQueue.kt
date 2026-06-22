@@ -168,7 +168,7 @@ object SchematicActionsQueue: ServerClosable() {
 
                 level.getChunkAt(pos).also {
                     it.setBlockState(pos, state, false)
-                    if (!blacklisted) it.removeBlockEntity(pos)
+                    if (!blacklisted) it.removeBlockEntity(pos) //TODO SUS
                     settings.statePlacedCallback?.invoke(pos, state)
                 }
                 if (!blacklisted && it.extraDataId != -1) {
@@ -369,7 +369,6 @@ object SchematicActionsQueue: ServerClosable() {
         var centerPositions: Map<Long, JVector3d>? = null
 
         var currentShip = 0
-        var currentChunk = 0
 
         var copyingShip = -1
         var minCx = 0
@@ -482,7 +481,6 @@ object SchematicActionsQueue: ServerClosable() {
                     cx++
                 }
 
-                currentChunk = 0
                 currentShip++
             }
             currentShip = 0

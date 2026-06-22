@@ -110,7 +110,7 @@ object SchematicActionsQueue: ServerClosable() {
     private var placeLastKeys = placeData.keys.toList()
     private var placeLastPosition = 0
 
-    private var saveLastKeys = placeData.keys.toList()
+    private var saveLastKeys = saveData.keys.toList()
     private var saveLastPosition = 0
 
     fun uuidIsQueuedInSomething(uuid: UUID): Boolean = placeData.keys.contains(uuid) || saveData.keys.contains(uuid)
@@ -204,7 +204,6 @@ object SchematicActionsQueue: ServerClosable() {
                 val pos = BlockPos(x + shipCenter.x, y + shipCenter.y, z + shipCenter.z)
                 val state = level.getBlockState(pos)
 
-                level.chunkSource.updateChunkForced(ChunkPos(pos), true)
                 level.chunkSource.blockChanged(pos)
                 level.blockUpdated(pos, state.block)
                 level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS)
@@ -472,8 +471,8 @@ object SchematicActionsQueue: ServerClosable() {
                         var minZ = 0
                         var maxZ = 16
 
-                        if (cz == minCx) {minZ = b.minZ() and 15}
-                        if (cz == maxCx) {maxZ = b.maxZ() and 15}
+                        if (cz == minCz) {minZ = b.minZ() and 15}
+                        if (cz == maxCz) {maxZ = b.maxZ() and 15}
 
                         saveChunk(level, level.getChunk(cx, cz), ships, data, fed, blockPalette, shipCenter, cx, cz, minX, maxX, minZ, maxZ, b.minY, b.maxY)
                         cz++
@@ -607,5 +606,6 @@ object SchematicActionsQueue: ServerClosable() {
     override fun close() {
         placeData.clear()
         saveData.clear()
+        unfreezeData.clear()
     }
 }

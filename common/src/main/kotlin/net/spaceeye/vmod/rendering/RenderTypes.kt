@@ -36,7 +36,6 @@ object RenderTypes {
         "Position" to DefaultVertexFormat.ELEMENT_POSITION,
         "Color"    to DefaultVertexFormat.ELEMENT_COLOR,
         "UV0"      to DefaultVertexFormat.ELEMENT_UV0,
-        "UV1"      to DefaultVertexFormat.ELEMENT_UV1,
         "UV2"      to DefaultVertexFormat.ELEMENT_UV2,
         "Normal"   to DefaultVertexFormat.ELEMENT_NORMAL
     )))
@@ -52,6 +51,7 @@ object RenderTypes {
         it.setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
           .setLightmapState(RenderStateShard.LIGHTMAP)
           .setOverlayState(RenderStateShard.NO_OVERLAY)
-          .createCompositeState(false)
+          .setTextureState(RenderStateShard.BLOCK_SHEET_MIPPED)
+          .createCompositeState(true)
     }.also { states.add(it) }
 }

@@ -208,6 +208,7 @@ object SchematicActionsQueue: ServerClosable() {
                 level.blockUpdated(pos, state.block)
                 level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS)
                 level.updateNeighbourForOutputSignal(pos, state.block)
+                Block.updateFromNeighbourShapes(state, level, pos)
             } }
         }
 

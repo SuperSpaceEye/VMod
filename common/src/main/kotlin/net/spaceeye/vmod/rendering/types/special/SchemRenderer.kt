@@ -285,7 +285,7 @@ data class BakedBlockGhost(
 
 object BlockGhostBaker {
     fun bake(
-        fakeLevel: Level,
+        fakeLevel: FakeLevel,
         positions: Iterable<BlockPos>,
         localMatrix: Matrix4f,
     ): BakedBlockGhost {
@@ -310,24 +310,14 @@ object BlockGhostBaker {
                 blockRenderer.renderBatched(state, bpos, fakeLevel, poseStack, buffer, true, random)
                 poseStack.popPose()
             } else {
-                // Fluid hack: if the level supports offsetting, use it so renderLiquid
-                // can sample neighbors correctly from the fake level.
-                if (fakeLevel is FakeLevel) {
-                    fakeLevel.offset.set(bpos.x, bpos.y, bpos.z)
-                    val wrapped = OffsetVertexConsumer(buffer, bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
-                    blockRenderer.renderLiquid(BlockPos(0, 0, 0), fakeLevel, wrapped, state, state.fluidState)
-                    fakeLevel.offset.set(0, 0, 0)
-                } else {
-                    // Fallback for non-offsettable levels. Fluid connections may look wrong,
-                    // but it's better than nothing. If you care, make your body fake level
-                    // support the same offset trick.
-                    val wrapped = OffsetVertexConsumer(buffer, bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
-                    blockRenderer.renderLiquid(bpos, fakeLevel, wrapped, state, state.fluidState)
-                }
+                fakeLevel.offset.set(bpos.x, bpos.y, bpos.z)
+                val wrapped = OffsetVertexConsumer(buffer, bpos.x.toDouble(), bpos.y.toDouble(), bpos.z.toDouble())
+                blockRenderer.renderLiquid(BlockPos(0, 0, 0), fakeLevel, wrapped, state, state.fluidState)
+                fakeLevel.offset.set(0, 0, 0)
             }
         }
 
-        val blockEntities = if (fakeLevel is FakeLevel) fakeLevel.blockEntities else mutableListOf()
+        val blockEntities = fakeLevel.blockEntities
         return BakedBlockGhost(sources.endAll(), blockEntities, localMatrix)
     }
 }
